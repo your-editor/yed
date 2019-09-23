@@ -9,6 +9,7 @@ typedef struct yed_line_t {
 } yed_line;
 
 typedef struct {
+	const char *path;
     array_t lines;
 } yed_buffer;
 
@@ -17,5 +18,6 @@ static void yed_append_to_line(yed_line *line, char c);
 static void yed_append_to_buff(yed_buffer *buff, char c);
 
 static void yed_fill_buff_from_file(yed_buffer *buff, const char *path);
+static void yed_write_buff_to_file(yed_buffer *buff, const char *path);
 
 #endif

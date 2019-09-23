@@ -6,7 +6,23 @@ static int yed_term_enter(void) {
 
     tcgetattr(0, &ys->sav_term);
     raw_term          = ys->sav_term;
-    raw_term.c_lflag &= ~(ECHO | ICANON | ISIG);
+
+	/* output modes - disable post processing */
+	raw_term.c_oflag &= ~(OPOST);
+	/* control modes - set 8 bit chars */
+	raw_term.c_cflag |= (CS8);
+	/* local modes - choing off, canonical off, no extended functions,
+	 *      * no signal chars (^Z,^C) */
+	raw_term.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+
+
+    /* control chars - set return condition: min number of bytes and timer. */
+
+	/* Return each byte, or zero for timeout. */
+/* 	raw_term.c_cc[VMIN] = 0; */
+	/* 100 ms timeout (unit is tens of second). */
+/* 	raw_term.c_cc[VTIME] = 1; */
+
     tcsetattr(0, TCSAFLUSH, &raw_term);
 
     setvbuf(stdout, NULL, _IONBF, 0);

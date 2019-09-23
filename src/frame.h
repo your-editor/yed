@@ -32,6 +32,7 @@ static void yed_frame_set_pos(yed_frame *frame, int top, int left);
 static void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff);
 static void yed_frame_update(yed_frame *frame);
 static void yed_move_cursor_within_frame(yed_frame *f, int col, int row);
+static void yed_move_cursor_within_active_frame(int col, int row);
 static void yed_update_frames(void);
 static void yed_frame_update_cursor_line(yed_frame *frame);
 static void yed_frame_take_key(yed_frame *frame, int key);

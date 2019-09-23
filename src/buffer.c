@@ -4,6 +4,7 @@ static yed_buffer yed_new_buff(void) {
     yed_buffer buff;
 
     buff.lines = array_make(yed_line);
+	buff.path  = NULL;
 
     return buff;
 }
@@ -43,4 +44,30 @@ static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     while ((c = fgetc(f)) != EOF) {
         yed_append_to_buff(buff, c);
     }
+
+	buff->path = path;
+
+    fclose(f);
+}
+
+static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
+    FILE       *f;
+    yed_line   *line;
+    const char *nl;
+
+    f = fopen(path, "w");
+    if (!f) {
+        ERR;
+        return;
+    }
+
+    nl = "";
+
+    array_traverse(buff->lines, line) {
+        fprintf(f, "%s", nl);
+        fwrite(array_data(line->chars), 1, array_len(line->chars), f);
+        nl = "\n";
+    }
+
+    fclose(f);
 }

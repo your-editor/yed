@@ -55,11 +55,11 @@ int yed_pump(void) {
         yed_service_reload();
     }
 
-    key = yed_read_key();
-
     ys->status = YED_NORMAL;
 
     append_to_output_buff(TERM_CURSOR_HIDE);
+
+    key = yed_read_key();
 
     if (ys->accepting_command) {
         yed_command_take_key(key);

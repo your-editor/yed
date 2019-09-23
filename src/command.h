@@ -29,10 +29,16 @@ DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frames_list);
 DEF_DEFAULT_COMMAND(frame_set_buffer);
 DEF_DEFAULT_COMMAND(frame_new_file);
+DEF_DEFAULT_COMMAND(frame_split_new_file);
+DEF_DEFAULT_COMMAND(insert);
+DEF_DEFAULT_COMMAND(delete_back);
+DEF_DEFAULT_COMMAND(write_buffer);
 
 
 static void yed_command_prompt(void);
 static void yed_do_command(void);
 static void yed_command_take_key(int key);
+
+static int yed_execute_command(const char *name, int n_args, char **args);
 
 #endif

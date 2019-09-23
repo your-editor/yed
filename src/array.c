@@ -41,3 +41,42 @@ static void * _array_push(array_t *array, void *elem) {
 
     return elem_slot;
 }
+
+static void * _array_insert(array_t *array, int idx, void *elem) {
+    void *elem_slot;
+
+    if (idx == array->used) {
+        return _array_push(array, elem);
+    }
+
+    array_grow_if_needed(array);
+
+    elem_slot = array->data + (array->elem_size * idx);
+
+    memmove(elem_slot + array->elem_size,
+            elem_slot,
+            array->elem_size * (array->used - idx));
+
+    memcpy(elem_slot, elem, array->elem_size);
+
+    array->used += 1;
+
+    return elem_slot;
+}
+
+static void _array_delete(array_t *array, int idx) {
+    void *split;
+
+    if (array->used == 0) {
+        return;
+    }
+
+    if (idx != array->used - 1) {
+        split = array->data + (array->elem_size * idx);
+        memmove(split,
+                split + array->elem_size,
+                array->elem_size * (array->used - idx - 1));
+    }
+
+    array->used -= 1;
+}
