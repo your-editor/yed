@@ -4,8 +4,11 @@ CFG_RELEASE=-O3
 # CFG=$(CFG_DEBUG)
 CFG=$(CFG_RELEASE)
 
-ERR_LIM=-fmax-errors=3
-# ERR_LIM=-ferror-limit=3
+ifeq ($(CC),clang)
+	ERR_LIM=-fmax-errors=3
+else
+	ERR_LIM=-ferror-limit=3
+endif
 
 LIB_C_FLAGS=-shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl $(CFG)
 DRV_C_FLAGS=-Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl $(CFG)

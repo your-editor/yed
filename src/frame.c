@@ -54,6 +54,7 @@ static yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int heigh
     frame->buffer_offset = 0;
     frame->cur_x         = left;
     frame->cur_y         = top;
+    frame->desired_x     = 1;
     frame->dirty         = 1;
 
     return frame;
@@ -164,34 +165,44 @@ static int yed_update_frame_buffer_offset(yed_frame *f, int col, int row) {
     return 0;
 }
 
-static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
-    int changed_buff_off;
-
-    if (f->buffer) {
-        changed_buff_off = yed_update_frame_buffer_offset(f, col, row);
-
-        if (changed_buff_off) {
-            return;
-        }
-    }
-
+static void yed_move_cursor_within_bufferless_frame(yed_frame *f, int col, int row) {
     f->cur_x += col;
     f->cur_y += row;
 
-    if (f->cur_x < f->left) {
-        f->cur_x = f->left;
-    } else if (f->cur_x >= f->left + f->width) {
-        f->cur_x = f->left + f->width - 1;
+    LIMIT(f->cur_y, f->top,  f->top + f->height - 1);
+    LIMIT(f->cur_x, f->left, f->left + f->width - 1);
+
+    f->desired_x = f->cur_x;
+}
+
+static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
+    int       changed_buff_off;
+    yed_line *current_line;
+
+    if (!f->buffer) {
+        yed_move_cursor_within_bufferless_frame(f, col, row);
+        return;
     }
 
-    if (f->cur_y < f->top) {
-        f->cur_y = f->top;
-    } else if (f->cur_y >= f->top + f->height) {
-        f->cur_y = f->top + f->height - 1;
+    changed_buff_off = yed_update_frame_buffer_offset(f, col, row);
+
+
+    if (!changed_buff_off) {
+        f->cur_y += row;
+        LIMIT(f->cur_y, f->top,  f->top + f->height - 1);
     }
 
-    if (f->buffer) {
-        f->cursor_line = f->buffer_offset + (f->cur_y - f->top + 1);
+    f->cursor_line = f->buffer_offset + (f->cur_y - f->top + 1);
+    current_line   = array_item(f->buffer->lines, f->cursor_line - 1);
+
+    if (col == 0) {
+        f->cur_x = MIN(f->desired_x, f->left + array_len(current_line->chars));
+    } else {
+        f->cur_x += col;
+        f->cur_x  = MIN(f->cur_x, f->left + array_len(current_line->chars));
+        LIMIT(f->cur_x, f->left, f->left + f->width - 1);
+
+        f->desired_x = f->cur_x;
     }
 }
 

@@ -27,6 +27,13 @@ use_tree(yed_frame_id_t, yed_frame_ptr_t);
 
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
+#define LIMIT(x, lower, upper) do { \
+    if ((x) < (lower)) {            \
+        (x) = (lower);              \
+    } else if ((x) > (upper)) {     \
+        (x) = (upper);              \
+    }                               \
+} while (0)
 
 
 #define ERR ; /* @incomplete */

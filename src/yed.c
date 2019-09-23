@@ -70,10 +70,9 @@ int yed_pump(void) {
             yed_command_prompt();
         } else if (ys->active_frame) {
             yed_frame_take_key(ys->active_frame, key);
+            yed_update_frames();
         }
     }
-
-    yed_update_frames();
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_SHOW);

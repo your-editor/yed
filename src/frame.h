@@ -16,6 +16,7 @@ typedef struct yed_frame_t {
                         buffer_offset;
     int                 cur_x,
                         cur_y;
+    int                 desired_x;
     int                 dirty;
 } yed_frame;
 
