@@ -3,6 +3,7 @@
 
 #include "internal.h"
 
+#undef CTRL
 #define CTRL(k)  ((k) & 0x1f)
 #define NCTRL(k) ((k) | 0x40)
 

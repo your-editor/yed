@@ -1,6 +1,13 @@
 #ifndef __INTERNAL_H__
 #define __INTERNAL_H__
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <ctype.h>
 
 #include "tree.h"
 #include "array.h"
@@ -16,14 +23,6 @@ use_tree(yed_command_name_t, yed_command_t);
 typedef yed_frame *yed_frame_ptr_t;
 use_tree(yed_frame_id_t, yed_frame_ptr_t);
 #undef inline
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
-#include <ctype.h>
 
 
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))

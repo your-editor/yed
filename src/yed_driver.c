@@ -25,7 +25,9 @@ int main(int argc, char **argv) {
 	int                 status;
     struct yed_state_t *state;
 
-	load_yed_lib();
+	if (load_yed_lib() != 0) {
+        return 1;
+    }
 
 	state = yed_lib._init(argc, argv);
     atexit(call_yed_fini);
@@ -62,7 +64,7 @@ int load_yed_lib(void) {
         dlclose(yed_lib.handle);
     }
 
-	yed_lib.handle = dlopen("libyed.so", RTLD_NOW);
+	yed_lib.handle = dlopen("./libyed.so", RTLD_NOW);
 
 	if (yed_lib.handle == NULL) {
 		printf("[yed]! could not load 'libyed.so'\n");

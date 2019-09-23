@@ -4,11 +4,11 @@ CFG_RELEASE=-O3
 # CFG=$(CFG_DEBUG)
 CFG=$(CFG_RELEASE)
 
-# ERR_LIM=-fmax-errors=3
-ERR_LIM=-ferror-limit=3
+ERR_LIM=-fmax-errors=3
+# ERR_LIM=-ferror-limit=3
 
-LIB_C_FLAGS=-ansi -shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function $(CFG)
-DRV_C_FLAGS=-ansi -Wall $(ERR_LIM) -Werror -Wno-unused-function $(CFG)
+LIB_C_FLAGS=-shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl $(CFG)
+DRV_C_FLAGS=-Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl $(CFG)
 
 all: yed_driver
 
