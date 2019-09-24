@@ -7,6 +7,8 @@ static yed_line * yed_buffer_add_line(yed_buffer *buff) {
     memset(line, 0, sizeof(*line));
     line->chars = array_make(char);
 
+    yed_mark_dirty_frames(buff);
+
     return line;
 }
 
@@ -29,7 +31,7 @@ static void yed_append_to_buff(yed_buffer *buff, char c) {
     yed_line *line;
 
     if (c == '\n') {
-        line = yed_buffer_add_line(buff);
+        yed_buffer_add_line(buff);
     } else {
         if (array_len(buff->lines) == 0) {
             line = yed_buffer_add_line(buff);
@@ -69,6 +71,8 @@ static yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
     empty_line.chars = array_make(char);
     line = array_insert(buff->lines, idx, empty_line);
 
+    yed_mark_dirty_frames(buff);
+
     return line;
 }
 
@@ -80,9 +84,11 @@ static void yed_buff_delete_line(yed_buffer *buff, int row) {
     LIMIT(idx, 0, array_len(buff->lines));
 
     array_delete(buff->lines, idx);
+
+    yed_mark_dirty_frames(buff);
 }
 
-static void yed_insert_into_line(yed_line *line, int col, char c) {
+static void yed_insert_into_line(yed_buffer *buff, yed_line *line, int col, char c) {
     int idx;
 
     idx = col - 1;
@@ -90,9 +96,11 @@ static void yed_insert_into_line(yed_line *line, int col, char c) {
     LIMIT(idx, 0, array_len(line->chars));
 
     array_insert(line->chars, idx, c);
+
+    yed_mark_dirty_frames_line(buff, yed_buff_get_line_number(buff, line));
 }
 
-static void yed_delete_from_line(yed_line *line, int col) {
+static void yed_delete_from_line(yed_buffer *buff, yed_line *line, int col) {
     int idx;
 
     idx = col - 1;
@@ -100,6 +108,8 @@ static void yed_delete_from_line(yed_line *line, int col) {
     LIMIT(idx, 0, array_len(line->chars));
 
     array_delete(line->chars, idx);
+
+    yed_mark_dirty_frames_line(buff, yed_buff_get_line_number(buff, line));
 }
 
 
@@ -117,9 +127,11 @@ static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
         yed_append_to_buff(buff, c);
     }
 
-	buff->path = path;
+	buff->path = strdup(path);
 
     fclose(f);
+
+    yed_mark_dirty_frames(buff);
 }
 
 static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
@@ -142,4 +154,12 @@ static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
     }
 
     fclose(f);
+}
+
+static int yed_buff_get_line_number(yed_buffer *buff, yed_line *line) {
+    int row;
+
+    row = 1 + ((((void*)line) - array_data(buff->lines)) / sizeof(*line));
+
+    return row;
 }

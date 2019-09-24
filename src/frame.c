@@ -51,21 +51,32 @@ static yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int heigh
     frame->height        = height;
     frame->width         = width;
     frame->cursor_line   = 1;
+    frame->dirty_line    = frame->cursor_line;
     frame->buffer_offset = 0;
     frame->cur_x         = left;
     frame->cur_y         = top;
     frame->desired_x     = 1;
     frame->dirty         = 1;
+    frame->scroll_off    = 5;
 
     return frame;
 }
 
 static void yed_activate_frame(yed_frame *frame) {
     if (ys->active_frame && ys->active_frame != frame) {
-        ys->active_frame->dirty = 1;
+        ys->active_frame->dirty      = 1;
+        ys->active_frame->dirty_line = 0;
     }
-    ys->active_frame        = frame;
-    ys->active_frame->dirty = 1;
+
+    ys->active_frame             = frame;
+    ys->active_frame->dirty      = 1;
+    ys->active_frame->dirty_line = ys->active_frame->cursor_line;
+
+    /*
+     * Correct the cursor if the buffer has changed
+     * while this frame was inactive.
+     */
+    yed_move_cursor_within_frame(frame, 0, 0);
 }
 
 static void yed_clear_frame(yed_frame *frame) {
@@ -145,16 +156,27 @@ static void yed_frame_update(yed_frame *frame) {
         if (frame->dirty) {
             yed_frame_draw_buff(frame, frame->buffer, frame->buffer_offset);
         }
-        if (frame == ys->active_frame) {
-            yed_frame_update_cursor_line(frame);
+        if (frame->dirty_line != frame->cursor_line) {
+            yed_frame_update_dirty_line(frame);
         }
+        yed_frame_update_cursor_line(frame);
     } else {
         if (frame->dirty) {
             yed_clear_frame(frame);
         }
     }
 
-    frame->dirty = 0;
+    frame->dirty = frame->dirty_line = 0;
+}
+
+static void yed_move_cursor_within_bufferless_frame(yed_frame *f, int col, int row) {
+    f->cur_x += col;
+    f->cur_y += row;
+
+    LIMIT(f->cur_y, f->top,  f->top + f->height - 1);
+    LIMIT(f->cur_x, f->left, f->left + f->width - 1);
+
+    f->desired_x = f->cur_x;
 }
 
 static int yed_update_frame_buffer_offset(yed_frame *f, int col, int row) {
@@ -162,13 +184,15 @@ static int yed_update_frame_buffer_offset(yed_frame *f, int col, int row) {
 
     buff_n_lines = array_len(f->buffer->lines);
 
-    if (buff_n_lines > 10) {
+    if (buff_n_lines > (2 * f->scroll_off)) {
 
-        if ((row > 0 && f->cur_y == f->top + f->height - 1 - 5)
-        ||  (row < 0 && f->cur_y == f->top + 5)) {
+        if ((row > 0 && f->cur_y == f->top + f->height - 1 - f->scroll_off)
+        ||  (row < 0 && f->cur_y == f->top + f->scroll_off)) {
 
             f->buffer_offset += row;
+            f->dirty_line     = f->cursor_line;
             f->cursor_line   += row;
+            LIMIT(f->cursor_line, 1, buff_n_lines);
             f->buffer_offset  = MAX(MIN(f->buffer_offset, buff_n_lines - f->height - 1), 0);
             f->dirty          = 1;
 
@@ -182,16 +206,6 @@ static int yed_update_frame_buffer_offset(yed_frame *f, int col, int row) {
     }
 
     return 0;
-}
-
-static void yed_move_cursor_within_bufferless_frame(yed_frame *f, int col, int row) {
-    f->cur_x += col;
-    f->cur_y += row;
-
-    LIMIT(f->cur_y, f->top,  f->top + f->height - 1);
-    LIMIT(f->cur_x, f->left, f->left + f->width - 1);
-
-    f->desired_x = f->cur_x;
 }
 
 static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
@@ -211,7 +225,10 @@ static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
 			  MIN(array_len(f->buffer->lines), f->top + f->height - 1));
     }
 
+    f->dirty_line  = f->cursor_line;
     f->cursor_line = f->buffer_offset + (f->cur_y - f->top + 1);
+    LIMIT(f->cursor_line, 1, array_len(f->buffer->lines));
+
     current_line   = array_item(f->buffer->lines, f->cursor_line - 1);
 
     if (col == 0) {
@@ -249,34 +266,59 @@ static void yed_update_frames(void) {
     }
 }
 
+static int yed_frame_line_is_visible(yed_frame *frame, int row) {
+    if (!frame->buffer) {
+        return 0;
+    }
+    return    (row >= frame->buffer_offset + 1)
+           && (row <= frame->buffer_offset + frame->height)
+           && (row <= array_len(frame->buffer->lines));
+}
+
+static int yed_frame_line_to_y(yed_frame *frame, int row) {
+    if (!frame->buffer || !yed_frame_line_is_visible(frame, row)) {
+        return 0;
+    }
+
+    return frame->top + row - (frame->buffer_offset + 1);
+}
+
+static void yed_frame_update_dirty_line(yed_frame *frame) {
+    yed_line *line;
+    int       y;
+
+    if (!frame->dirty_line) {
+        return;
+    }
+
+    y = yed_frame_line_to_y(frame, frame->dirty_line);
+    if (y) {
+        line = yed_buff_get_line(frame->buffer, frame->dirty_line);
+        yed_frame_draw_line(frame, line, y - frame->top);
+    }
+}
+
 static void yed_frame_update_cursor_line(yed_frame *frame) {
     yed_line *line;
+    int       y;
 
-    /* Line above */
-    if (frame->cur_y > frame->top
-    &&  frame->cursor_line > 1
-    &&  array_len(frame->buffer->lines) > 1) {
-
-        line = array_item(frame->buffer->lines, frame->cursor_line - 2);
-        yed_frame_draw_line(frame, line, frame->cur_y - frame->top - 1);
+    if (!frame->cursor_line) {
+        return;
     }
 
-    /* Line below */
-    if (frame->cur_y < frame->top + frame->height - 1
-    &&  frame->cursor_line < array_len(frame->buffer->lines)) {
+    y = yed_frame_line_to_y(frame, frame->cursor_line);
+    if (y) {
 
-        line = array_item(frame->buffer->lines, frame->cursor_line);
-        yed_frame_draw_line(frame, line, frame->cur_y - frame->top + 1);
-    }
-
-    /* Current line */
-    if (array_len(frame->buffer->lines)) {
-        line = array_item(frame->buffer->lines, frame->cursor_line - 1);
-        append_to_output_buff(TERM_BG_BLUE);
-        append_to_output_buff(TERM_DARK_GRAY);
-        yed_frame_draw_line(frame, line, frame->cur_y - frame->top);
-        append_to_output_buff(TERM_RESET);
-        append_to_output_buff(TERM_CURSOR_HIDE);
+        if (frame == ys->active_frame) {
+            append_to_output_buff(TERM_BG_BLUE);
+            append_to_output_buff(TERM_DARK_GRAY);
+        }
+        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+        yed_frame_draw_line(frame, line, y - frame->top);
+        if (frame == ys->active_frame) {
+            append_to_output_buff(TERM_RESET);
+            append_to_output_buff(TERM_CURSOR_HIDE);
+        }
     }
 }
 
@@ -290,6 +332,7 @@ static void yed_frame_take_key(yed_frame *frame, int key) {
         case KEY_RIGHT:     yed_execute_command("cursor-right", 0, NULL); break;
         case KEY_LEFT:      yed_execute_command("cursor-left",  0, NULL); break;
         case KEY_BACKSPACE: yed_execute_command("delete-back",  0, NULL); break;
+        case CTRL('l'):     yed_execute_command("frame-next",   0, NULL); break;
         default: {
             if (key == '\n' || !iscntrl(key)) {
                 key_str_buff[0] = (char)key;
@@ -297,6 +340,30 @@ static void yed_frame_take_key(yed_frame *frame, int key) {
                 key_str         = key_str_buff;
                 yed_execute_command("insert", 1, &key_str);
             }
+        }
+    }
+}
+
+static void yed_mark_dirty_frames(yed_buffer *dirty_buff) {
+    tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
+    yed_frame                                *frame;
+
+    tree_traverse(ys->frames, it) {
+        frame = tree_it_val(it);
+        if (frame->buffer == dirty_buff) {
+            frame->dirty = 1;
+        }
+    }
+}
+
+static void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
+    tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
+    yed_frame                                *frame;
+
+    tree_traverse(ys->frames, it) {
+        frame = tree_it_val(it);
+        if (frame->buffer == buff) {
+            frame->dirty_line = dirty_row;
         }
     }
 }

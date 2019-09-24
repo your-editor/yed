@@ -13,11 +13,13 @@ typedef struct yed_frame_t {
                         height,
                         width;
     int                 cursor_line,
+                        dirty_line,
                         buffer_offset;
     int                 cur_x,
                         cur_y;
     int                 desired_x;
     int                 dirty;
+    int                 scroll_off;
 } yed_frame;
 
 static void yed_init_frames(void);
@@ -34,8 +36,10 @@ static void yed_frame_update(yed_frame *frame);
 static void yed_move_cursor_within_frame(yed_frame *f, int col, int row);
 static void yed_move_cursor_within_active_frame(int col, int row);
 static void yed_update_frames(void);
+static void yed_frame_update_dirty_line(yed_frame *frame);
 static void yed_frame_update_cursor_line(yed_frame *frame);
 static void yed_frame_take_key(yed_frame *frame, int key);
-
+static void yed_mark_dirty_frames(yed_buffer *dirty_buff);
+static void yed_mark_dirty_frames_line(yed_buffer *dirty_buff, int row);
 
 #endif
