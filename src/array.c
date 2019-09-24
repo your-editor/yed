@@ -80,3 +80,10 @@ static void _array_delete(array_t *array, int idx) {
 
     array->used -= 1;
 }
+
+static void _array_zero_term(array_t *array) {
+    array_grow_if_needed(array);
+    memset(array->data + (array->used * array->elem_size),
+           0,
+           array->elem_size);
+}

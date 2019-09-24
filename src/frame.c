@@ -97,6 +97,18 @@ static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset) 
     }
 }
 
+static void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
+    int i, n;
+
+    for (i = 0; i < frame->height - y_offset; i += 1) {
+        yed_set_cursor(frame->left, frame->top + y_offset + i);
+        append_n_to_output_buff("~", 1);
+        for (n = 0; n < frame->width - 1; n += 1) {
+            append_n_to_output_buff(" ", 1);
+        }
+    }
+}
+
 static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int offset) {
     yed_line *line;
     int lines_drawn;
@@ -114,6 +126,8 @@ static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int offset) 
 
         if (lines_drawn == frame->height)    { break; }
     }
+
+    yed_frame_draw_fill(frame, lines_drawn);
 }
 
 static void yed_frame_set_pos(yed_frame *frame, int top, int left) {
@@ -240,7 +254,8 @@ static void yed_frame_update_cursor_line(yed_frame *frame) {
 
     /* Line above */
     if (frame->cur_y > frame->top
-    &&  frame->cursor_line > 1) {
+    &&  frame->cursor_line > 1
+    &&  array_len(frame->buffer->lines) > 1) {
 
         line = array_item(frame->buffer->lines, frame->cursor_line - 2);
         yed_frame_draw_line(frame, line, frame->cur_y - frame->top - 1);
@@ -255,12 +270,14 @@ static void yed_frame_update_cursor_line(yed_frame *frame) {
     }
 
     /* Current line */
-    line = array_item(frame->buffer->lines, frame->cursor_line - 1);
-    append_to_output_buff(TERM_BG_BLUE);
-    append_to_output_buff(TERM_DARK_GRAY);
-    yed_frame_draw_line(frame, line, frame->cur_y - frame->top);
-    append_to_output_buff(TERM_RESET);
-    append_to_output_buff(TERM_CURSOR_HIDE);
+    if (array_len(frame->buffer->lines)) {
+        line = array_item(frame->buffer->lines, frame->cursor_line - 1);
+        append_to_output_buff(TERM_BG_BLUE);
+        append_to_output_buff(TERM_DARK_GRAY);
+        yed_frame_draw_line(frame, line, frame->cur_y - frame->top);
+        append_to_output_buff(TERM_RESET);
+        append_to_output_buff(TERM_CURSOR_HIDE);
+    }
 }
 
 static void yed_frame_take_key(yed_frame *frame, int key) {

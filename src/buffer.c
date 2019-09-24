@@ -1,10 +1,22 @@
 #include "internal.h"
 
+static yed_line * yed_buffer_add_line(yed_buffer *buff) {
+    yed_line *line;
+
+    line = array_next_elem(buff->lines);
+    memset(line, 0, sizeof(*line));
+    line->chars = array_make(char);
+
+    return line;
+}
+
 static yed_buffer yed_new_buff(void) {
-    yed_buffer buff;
+    yed_buffer  buff;
 
     buff.lines = array_make(yed_line);
 	buff.path  = NULL;
+
+    yed_buffer_add_line(&buff);
 
     return buff;
 }
@@ -17,12 +29,10 @@ static void yed_append_to_buff(yed_buffer *buff, char c) {
     yed_line *line;
 
     if (c == '\n') {
-        line        = array_next_elem(buff->lines);
-        line->chars = array_make(char);
+        line = yed_buffer_add_line(buff);
     } else {
         if (array_len(buff->lines) == 0) {
-            line        = array_next_elem(buff->lines);
-            line->chars = array_make(char);
+            line = yed_buffer_add_line(buff);
         } else {
             line = array_last(buff->lines);
         }
@@ -30,6 +40,68 @@ static void yed_append_to_buff(yed_buffer *buff, char c) {
         yed_append_to_line(line, c);
     }
 }
+
+
+static yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
+    int idx;
+
+    idx = row - 1;
+
+    if (idx < 0 || idx >= array_len(buff->lines)) {
+        return NULL;
+    }
+
+    return array_item(buff->lines, idx);
+}
+
+static yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
+    int       idx;
+    yed_line  empty_line,
+             *line;
+
+    idx = row - 1;
+
+    if (idx < 0 || idx > array_len(buff->lines)) {
+        return NULL;
+    }
+
+    memset(&empty_line, 0, sizeof(yed_line));
+    empty_line.chars = array_make(char);
+    line = array_insert(buff->lines, idx, empty_line);
+
+    return line;
+}
+
+static void yed_buff_delete_line(yed_buffer *buff, int row) {
+    int idx;
+
+    idx = row - 1;
+
+    LIMIT(idx, 0, array_len(buff->lines));
+
+    array_delete(buff->lines, idx);
+}
+
+static void yed_insert_into_line(yed_line *line, int col, char c) {
+    int idx;
+
+    idx = col - 1;
+
+    LIMIT(idx, 0, array_len(line->chars));
+
+    array_insert(line->chars, idx, c);
+}
+
+static void yed_delete_from_line(yed_line *line, int col) {
+    int idx;
+
+    idx = col - 1;
+
+    LIMIT(idx, 0, array_len(line->chars));
+
+    array_delete(line->chars, idx);
+}
+
 
 static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     FILE *f;

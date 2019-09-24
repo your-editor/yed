@@ -16,6 +16,7 @@ static array_t _array_make(int elem_size);
 static void * _array_push(array_t *array, void *elem);
 static void * _array_next_elem(array_t *array);
 static void _array_delete(array_t *array, int idx);
+static void _array_zero_term(array_t *array);
 
 #define array_make(T) \
     (_array_make(sizeof(T)))
@@ -38,6 +39,9 @@ static void _array_delete(array_t *array, int idx);
 #define array_pop(array) \
     (_array_delete(&(array), (array).used - 1))
 
+#define array_clear(array) \
+    ((array).used = 0)
+
 #define array_item(array, idx) \
     ((array).data + ((array).elem_size * (idx)))
 
@@ -56,5 +60,7 @@ static void _array_delete(array_t *array, int idx);
          it += 1)
 
 #define array_data(array) ((array).data)
+
+#define array_zero_term(array) (_array_zero_term(&(array)))
 
 #endif

@@ -61,6 +61,8 @@ typedef struct yed_state_t {
     tree(yed_frame_id_t, yed_frame_ptr_t) frames;
     yed_frame      *active_frame;
     int             accepting_command;
+    array_t         cmd_buff;
+    int             cmd_cursor_x;
     char            command_buff[128];
     int             status;
     tree(yed_command_name_t, yed_command_t) commands;
