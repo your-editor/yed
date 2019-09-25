@@ -14,7 +14,8 @@ typedef struct yed_frame_t {
                         width;
     int                 cursor_line,
                         dirty_line,
-                        buffer_offset;
+                        buffer_y_offset,
+                        buffer_x_offset;
     int                 cur_x,
                         cur_y;
     int                 desired_x;
@@ -29,7 +30,7 @@ static yed_frame * yed_get_or_add_frame(yed_frame_id_t id);
 static yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int height, int width);
 static void yed_activate_frame(yed_frame *frame);
 static void yed_clear_frame(yed_frame *frame);
-static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int offset);
+static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset);
 static void yed_frame_set_pos(yed_frame *frame, int top, int left);
 static void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff);
 static void yed_frame_update(yed_frame *frame);

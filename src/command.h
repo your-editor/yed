@@ -16,6 +16,10 @@ static yed_command_t yed_get_command(const char *name);
 static void yed_add_default_commands(void);
 static void yed_reload_default_commands(void);
 
+static void yed_append_text_to_cmd_buff(char *s);
+static void yed_append_non_text_to_cmd_buff(char *s);
+static void yed_append_int_to_cmd_buff(int i);
+
 static void yed_draw_command_line(void);
 static void yed_do_command(void);
 static void yed_command_take_key(int key);

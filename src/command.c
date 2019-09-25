@@ -574,7 +574,7 @@ static void yed_default_command_insert(int n_args, char **args) {
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-    col  = frame->cur_x - frame->left + 1;
+    col  = frame->cur_x - frame->left + 1 + frame->buffer_x_offset;
 
     if (args[0][0] == '\n') {
         new_line = yed_buff_insert_line(frame->buffer, frame->cursor_line + 1);
@@ -586,12 +586,8 @@ static void yed_default_command_insert(int n_args, char **args) {
         }
         for (; len > 0; len -= 1)    { array_pop(line->chars); }
 
-        if (frame->cur_y > frame->top + frame->height - frame->scroll_off - 2) {
-            frame->buffer_offset += 1;
-            yed_move_cursor_within_frame(frame, -1 * (col - 1), 0);
-        } else {
-            yed_move_cursor_within_frame(frame, -1 * (col - 1), 1);
-        }
+        frame->buffer_x_offset = 0;
+        yed_set_cursor_within_frame(frame, 1, frame->cur_y + 1);
         frame->dirty = 1;
     } else {
         yed_insert_into_line(frame->buffer, line, col, args[0][0]);
@@ -605,7 +601,7 @@ static void yed_default_command_delete_back(int n_args, char **args) {
     yed_line  *line,
               *previous_line;
     int        col,
-               old_line_len;
+               prev_line_len, old_line_nr;
     char      *char_it;
 
     if (n_args != 0) {
@@ -627,28 +623,38 @@ static void yed_default_command_delete_back(int n_args, char **args) {
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-    col  = frame->cur_x - frame->left + 1;
+    col  = frame->cur_x - frame->left + 1 + frame->buffer_x_offset;
 
     if (col == 1) {
         if (frame->cursor_line > 1) {
+            old_line_nr = frame->cursor_line;
             previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
-            old_line_len = array_len(previous_line->chars);
+            prev_line_len = array_len(previous_line->chars);
 
             array_traverse(line->chars, char_it) {
                 array_push(previous_line->chars, *char_it);
             }
 
-            yed_buff_delete_line(frame->buffer, frame->cursor_line);
+            /*
+             * Move to the previous line.
+             */
+            if (frame->buffer_y_offset
+            && frame->buffer_y_offset + frame->height < array_len(frame->buffer->lines)) {
 
-            if (frame->cur_y > frame->top + frame->height - frame->scroll_off - 2
-            &&  frame->buffer_offset > 0) {
-                frame->buffer_offset -= 1;
-                yed_move_cursor_within_frame(frame, old_line_len, 0);
+                frame->buffer_y_offset -= 1;
+                frame->cursor_line     -= 1;
             } else {
-                yed_move_cursor_within_frame(frame, old_line_len, -1);
+                frame->buffer_x_offset = 0;
+                yed_move_cursor_within_frame(frame, 0, -1);
             }
 
-            frame->dirty = 1;
+            yed_set_cursor_within_frame(frame, 1, frame->cur_y);
+            yed_move_cursor_within_frame(frame, prev_line_len, 0);
+
+            /*
+             * Delete the old line.
+             */
+            yed_buff_delete_line(frame->buffer, old_line_nr);
         }
     } else {
         yed_delete_from_line(frame->buffer, line, col - 1);
