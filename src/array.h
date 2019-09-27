@@ -21,6 +21,9 @@ static void _array_zero_term(array_t *array);
 #define array_make(T) \
     (_array_make(sizeof(T)))
 
+#define array_free(array) \
+    (_array_free(&(array)))
+
 #define array_len(array) \
     ((array).used)
 

@@ -8,6 +8,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #include "tree.h"
 #include "array.h"
@@ -24,6 +25,18 @@ typedef yed_frame *yed_frame_ptr_t;
 use_tree(yed_frame_id_t, yed_frame_ptr_t);
 #undef inline
 
+#define likely(x)   (__builtin_expect(!!(x), 1))
+#define unlikely(x) (__builtin_expect(!!(x), 0))
+
+#ifdef YED_DO_ASSERTIONS
+static void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
+#define ASSERT(cond, msg)                            \
+do { if (unlikely(!(cond))) {                        \
+    yed_assert_fail(msg, __FILE__, __LINE__, #cond); \
+} } while (0)
+#else
+#define ASSERT(cond, mst) ;
+#endif
 
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))

@@ -9,6 +9,13 @@ static array_t _array_make(int elem_size) {
     return a;
 }
 
+static void _array_free(array_t *array) {
+    if (array->data) {
+        free(array->data);
+    }
+    memset(array, 0, sizeof(*array));
+}
+
 static void array_grow_if_needed(array_t *array) {
     void *data_save;
 
@@ -49,6 +56,8 @@ static void * _array_insert(array_t *array, int idx, void *elem) {
         return _array_push(array, elem);
     }
 
+    ASSERT(idx < array->used, "can't insert into arbitrary place in array");
+
     array_grow_if_needed(array);
 
     elem_slot = array->data + (array->elem_size * idx);
@@ -67,9 +76,7 @@ static void * _array_insert(array_t *array, int idx, void *elem) {
 static void _array_delete(array_t *array, int idx) {
     void *split;
 
-    if (array->used == 0) {
-        return;
-    }
+    ASSERT(idx < array->used, "can't delete from arbitrary place in array");
 
     if (idx != array->used - 1) {
         split = array->data + (array->elem_size * idx);

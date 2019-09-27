@@ -25,6 +25,9 @@
 #define TERM_BG_PURPLE       "\e[0;45m"
 #define TERM_BG_GREY         "\e[0;47m"
 #define TERM_BG_WHITE        "\e[1;47m"
+#define TERM_INVERSE         "\e[7m"
+#define TERM_SAVE            "\e7"
+#define TERM_RESTORE         "\e8"
 #define TERM_RESET           "\e[00m"
 
 #define TERM_ALT_SCREEN      "\e[?1049h"

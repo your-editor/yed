@@ -433,7 +433,6 @@ static void yed_default_command_frame_set_buffer(int n_args, char **args) {
     buffer = ys->buff_list[buff_nr];
     yed_frame_set_buff(ys->active_frame, buffer);
     yed_clear_frame(ys->active_frame);
-    ys->active_frame->dirty = 1;
 }
 
 static void yed_default_command_frame_new_file(int n_args, char **args) {
@@ -551,9 +550,10 @@ static void yed_default_command_insert(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line,
               *new_line;
-    int        col,
+    int        col, idx,
                len;
     char      *char_it;
+    yed_cell  *cell_it;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("insert: expected one argument but got ");
@@ -586,9 +586,16 @@ static void yed_default_command_insert(int n_args, char **args) {
         }
         for (; len > 0; len -= 1)    { array_pop(line->chars); }
 
+        len = 0;
+        idx = yed_line_col_to_cell_idx(line, col);
+        array_traverse_from(line->cells, cell_it, idx) {
+            yed_line_append_cell(new_line, cell_it);
+            len += 1;
+        }
+        for (; len > 0; len -= 1)    { yed_line_pop_cell(line); }
+
         frame->buffer_x_offset = 0;
         yed_set_cursor_within_frame(frame, 1, frame->cur_y + 1);
-        frame->dirty = 1;
     } else {
         yed_insert_into_line(frame->buffer, line, col, args[0][0]);
         yed_move_cursor_within_frame(frame, 1, 0);
@@ -603,6 +610,7 @@ static void yed_default_command_delete_back(int n_args, char **args) {
     int        col,
                prev_line_len, old_line_nr;
     char      *char_it;
+    yed_cell  *cell_it;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("delete-back: expected zero argument but got ");
@@ -633,6 +641,10 @@ static void yed_default_command_delete_back(int n_args, char **args) {
 
             array_traverse(line->chars, char_it) {
                 array_push(previous_line->chars, *char_it);
+            }
+
+            array_traverse(line->cells, cell_it) {
+                yed_line_append_cell(previous_line, cell_it);
             }
 
             /*

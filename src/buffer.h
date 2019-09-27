@@ -3,8 +3,26 @@
 
 #include "internal.h"
 
+typedef struct {
+    uint32_t fg;
+    uint32_t bg;
+} yed_cell_attrs;
+
+typedef struct {
+    yed_cell_attrs attrs;
+    union {
+        char     bytes[4];
+        uint32_t __u32;
+    };
+    int width;
+} yed_cell;
+
+static int yed_cell_n_bytes(yed_cell *cell);
+
 typedef struct yed_line_t {
     array_t            chars;
+    array_t            cells;
+    int                visual_width;
     struct yed_line_t *wrap_next;
 } yed_line;
 
@@ -13,9 +31,15 @@ typedef struct {
     array_t     lines;
 } yed_buffer;
 
+static yed_cell yed_new_cell(char c);
+static yed_line yed_new_line(void);
+
 static yed_buffer yed_new_buff(void);
 static void yed_append_to_line(yed_line *line, char c);
 static void yed_append_to_buff(yed_buffer *buff, char c);
+
+static int yed_line_col_to_cell_idx(yed_line *line, int col);
+static yed_cell * yed_line_col_to_cell(yed_line *line, int col);
 
 static yed_line * yed_buff_get_line(yed_buffer *buff, int row);
 static yed_line * yed_buff_insert_line(yed_buffer *buff, int row);

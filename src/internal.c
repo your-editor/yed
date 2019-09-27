@@ -1,5 +1,26 @@
 #include "internal.h"
 
+
+
+#ifdef YED_DO_ASSERTIONS
+static void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
+    volatile int *trap;
+
+    fprintf(stderr, "Assertion failed -- %s\n"
+                    "at  %s :: line %d\n"
+                    "    Condition: '%s'\n",
+                    msg, fname, line, cond_str);
+
+    trap = 0;
+    (void)*trap;
+}
+#endif
+
+
+
+
+
+
 static void yed_add_new_buff(void) {
     yed_buffer **buff_ptr;
 
