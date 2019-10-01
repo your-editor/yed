@@ -23,8 +23,7 @@ static void write_welcome(void) {
 }
 
 yed_state * yed_init(int argc, char **argv) {
-    int        i;
-    yed_frame *first_frame;
+    int i;
 
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
@@ -38,13 +37,12 @@ yed_state * yed_init(int argc, char **argv) {
 
     if (argc > 1) {
         yed_execute_command("frame-new-file", 1, &argv[1]);
-        first_frame = ys->active_frame;
 
         for (i = 2; i < argc; i += 1) {
             yed_execute_command("frame-split-new-file", 1, &argv[i]);
         }
 
-        yed_activate_frame(first_frame);
+        yed_execute_command("frame", 1, &argv[1]);
         yed_update_frames();
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {
