@@ -9,18 +9,17 @@ typedef struct {
 } yed_cell_attrs;
 
 typedef struct {
-    yed_cell_attrs attrs;
     union {
         char     bytes[4];
         uint32_t __u32;
     };
-    int width;
+    uint8_t width;
+    uint8_t attr_idx;
 } yed_cell;
 
 static int yed_cell_n_bytes(yed_cell *cell);
 
 typedef struct yed_line_t {
-    array_t            chars;
     array_t            cells;
     int                visual_width;
     struct yed_line_t *wrap_next;
