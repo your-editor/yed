@@ -43,6 +43,8 @@ static void yed_add_default_commands(void) {
     ADD_DEFAULT_COMMAND("cursor-up",            cursor_up);
     ADD_DEFAULT_COMMAND("cursor-left",          cursor_left);
     ADD_DEFAULT_COMMAND("cursor-right",         cursor_right);
+    ADD_DEFAULT_COMMAND("cursor-line-begin",    cursor_line_begin);
+    ADD_DEFAULT_COMMAND("cursor-line-end",      cursor_line_end);
     ADD_DEFAULT_COMMAND("buffer-new",           buffer_new);
     ADD_DEFAULT_COMMAND("frame",                frame);
     ADD_DEFAULT_COMMAND("frames-list",          frames_list);
@@ -52,6 +54,7 @@ static void yed_add_default_commands(void) {
     ADD_DEFAULT_COMMAND("frame-next",           frame_next);
     ADD_DEFAULT_COMMAND("insert",               insert);
     ADD_DEFAULT_COMMAND("delete-back",          delete_back);
+    ADD_DEFAULT_COMMAND("delete-line",          delete_line);
     ADD_DEFAULT_COMMAND("write-buffer",         write_buffer);
 }
 
@@ -66,6 +69,8 @@ static void yed_reload_default_commands(void) {
     RELOAD_DEFAULT_COMMAND("cursor-up",            cursor_up);
     RELOAD_DEFAULT_COMMAND("cursor-left",          cursor_left);
     RELOAD_DEFAULT_COMMAND("cursor-right",         cursor_right);
+    RELOAD_DEFAULT_COMMAND("cursor-line-begin",    cursor_line_begin);
+    RELOAD_DEFAULT_COMMAND("cursor-line-end",      cursor_line_end);
     RELOAD_DEFAULT_COMMAND("buffer-new",           buffer_new);
     RELOAD_DEFAULT_COMMAND("frame",                frame);
     RELOAD_DEFAULT_COMMAND("frames-list",          frames_list);
@@ -73,6 +78,7 @@ static void yed_reload_default_commands(void) {
     RELOAD_DEFAULT_COMMAND("frame-new-file",       frame_new_file);
     RELOAD_DEFAULT_COMMAND("insert",               insert);
     RELOAD_DEFAULT_COMMAND("delete-back",          delete_back);
+    RELOAD_DEFAULT_COMMAND("delete-line",          delete_line);
     RELOAD_DEFAULT_COMMAND("write-buffer",         write_buffer);
     RELOAD_DEFAULT_COMMAND("frame-split-new-file", frame_split_new_file);
 }
@@ -248,13 +254,27 @@ static void yed_default_command_echo(int n_args, char **args) {
 }
 
 static void yed_default_command_cursor_down(int n_args, char **args) {
-    int rows;
+    int        rows;
+    yed_frame *frame;
 
     if (n_args > 1) {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
         return;
     }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
 
     if (n_args == 0) {
         rows = 1;
@@ -266,13 +286,27 @@ static void yed_default_command_cursor_down(int n_args, char **args) {
 }
 
 static void yed_default_command_cursor_up(int n_args, char **args) {
-    int rows;
+    int        rows;
+    yed_frame *frame;
 
     if (n_args > 1) {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
         return;
     }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
 
     if (n_args == 0) {
         rows = -1;
@@ -284,13 +318,27 @@ static void yed_default_command_cursor_up(int n_args, char **args) {
 }
 
 static void yed_default_command_cursor_left(int n_args, char **args) {
-    int cols;
+    int        cols;
+    yed_frame *frame;
 
     if (n_args > 1) {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
         return;
     }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
 
     if (n_args == 0) {
         cols = -1;
@@ -302,11 +350,24 @@ static void yed_default_command_cursor_left(int n_args, char **args) {
 }
 
 static void yed_default_command_cursor_right(int n_args, char **args) {
-    int cols;
+    int        cols;
+    yed_frame *frame;
 
     if (n_args > 1) {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
     }
 
@@ -317,6 +378,57 @@ static void yed_default_command_cursor_right(int n_args, char **args) {
     }
 
     yed_move_cursor_within_active_frame(cols, 0);
+}
+
+static void yed_default_command_cursor_line_begin(int n_args, char **args) {
+    yed_frame *frame;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+}
+
+static void yed_default_command_cursor_line_end(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *line;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
+    yed_set_cursor_within_frame(frame, line->visual_width + 1, frame->cursor_line);
 }
 
 static void yed_default_command_buffer_new(int n_args, char **args) {
@@ -582,11 +694,16 @@ static void yed_default_command_insert(int n_args, char **args) {
         return;
     }
 
-    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
     col  = frame->cursor_col;
 
     if (args[0][0] == '\n') {
+        /*
+         * Must get 'line' _after_ we've added 'new_line' because
+         * the array might have expanded and so the reference to
+         * 'line' could be invalid if we had acquired it before.
+         */
         new_line = yed_buff_insert_line(frame->buffer, frame->cursor_line + 1);
+        line     = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
         len = 0;
         idx = yed_line_col_to_cell_idx(line, col);
@@ -598,6 +715,8 @@ static void yed_default_command_insert(int n_args, char **args) {
 
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
     } else {
+        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
         yed_insert_into_line(frame->buffer, line, col, args[0][0]);
         yed_move_cursor_within_frame(frame, 1, 0);
     }
@@ -664,6 +783,49 @@ static void yed_default_command_delete_back(int n_args, char **args) {
         yed_move_cursor_within_frame(frame, -1, 0);
     }
 
+}
+
+static void yed_default_command_delete_line(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *line;
+    int        row,
+               n_lines;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    n_lines = array_len(frame->buffer->lines);
+    row     = frame->cursor_line;
+
+    if (n_lines > 1) {
+        if (row == array_len(frame->buffer->lines)) {
+            yed_move_cursor_within_frame(frame, 0, -1);
+        }
+        yed_buff_delete_line(frame->buffer, row);
+    } else {
+        ASSERT(row == 1, "only one line, but not on line one");
+
+        line = yed_buff_get_line(frame->buffer, row);
+        yed_set_cursor_within_frame(frame, 1, 1);
+        yed_line_clear(line);
+    }
+
+    yed_frame_reset_cursor(frame);
 }
 
 static void yed_default_command_write_buffer(int n_args, char **args) {

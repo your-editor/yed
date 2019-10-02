@@ -21,6 +21,36 @@ static void yed_assert_fail(const char *msg, const char *fname, int line, const 
 
 
 
+static char * pretty_bytes(uint64_t n_bytes) {
+    uint64_t    s;
+    double      count;
+    char       *r;
+    const char *suffixes[]
+        = { " B", " KB", " MB", " GB", " TB", " PB", " EB" };
+
+    s     = 0;
+    count = (double)n_bytes;
+
+    while (count >= 1024 && s < 7) {
+        s     += 1;
+        count /= 1024;
+    }
+
+    r = calloc(64, 1);
+
+    if (count - floor(count) == 0.0) {
+        sprintf(r, "%llu", (uint64_t)count);
+    } else {
+        sprintf(r, "%.2f", count);
+    }
+
+    strcat(r, suffixes[s]);
+
+    return r;
+}
+
+
+
 static void yed_add_new_buff(void) {
     yed_buffer **buff_ptr;
 

@@ -40,6 +40,8 @@ static void yed_append_to_buff(yed_buffer *buff, char c);
 static int yed_line_col_to_cell_idx(yed_line *line, int col);
 static yed_cell * yed_line_col_to_cell(yed_line *line, int col);
 
+static void yed_line_clear(yed_line *line);
+
 static yed_line * yed_buff_get_line(yed_buffer *buff, int row);
 static yed_line * yed_buff_insert_line(yed_buffer *buff, int row);
 static void yed_buff_delete_line(yed_buffer *buff, int row);

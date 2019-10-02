@@ -15,14 +15,12 @@ static yed_line yed_new_line(void) {
 
     memset(&line, 0, sizeof(line));
 
-    line.chars = array_make(char);
     line.cells = array_make(yed_cell);
 
     return line;
 }
 
 static void yed_free_line(yed_line *line) {
-    array_free(line->chars);
     array_free(line->cells);
 }
 
@@ -80,8 +78,6 @@ static yed_buffer yed_new_buff(void) {
 
 static void yed_append_to_line(yed_line *line, char c) {
     yed_cell cell;
-
-    array_push(line->chars, c);
 
     cell = yed_new_cell(c);
     yed_line_append_cell(line, &cell);
@@ -147,6 +143,10 @@ static yed_cell * yed_line_col_to_cell(yed_line *line, int col) {
     return array_item(line->cells, idx);
 }
 
+static void yed_line_clear(yed_line *line) {
+    array_clear(line->cells);
+    line->visual_width = 0;
+}
 
 static yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     int idx;
@@ -199,9 +199,7 @@ static void yed_insert_into_line(yed_buffer *buff, yed_line *line, int col, char
 
     idx = col - 1;
 
-    LIMIT(idx, 0, array_len(line->chars));
-
-    array_insert(line->chars, idx, c);
+    LIMIT(idx, 0, line->visual_width);
 
     cell = yed_new_cell(c);
     idx  = yed_line_col_to_cell_idx(line, col);
@@ -215,9 +213,7 @@ static void yed_delete_from_line(yed_buffer *buff, yed_line *line, int col) {
 
     idx = col - 1;
 
-    LIMIT(idx, 0, array_len(line->chars));
-
-    array_delete(line->chars, idx);
+    LIMIT(idx, 0, line->visual_width);
 
     idx = yed_line_col_to_cell_idx(line, col);
     yed_line_delete_cell(line, idx);
@@ -241,7 +237,7 @@ static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
         yed_append_to_buff(buff, c);
     }
 
-    if (array_len(buff->lines)) {
+    if (array_len(buff->lines) > 1) {
         last_line = array_last(buff->lines);
         if (array_len(last_line->cells) == 0) {
             array_pop(buff->lines);
@@ -258,7 +254,7 @@ static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
 static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
     FILE       *f;
     yed_line   *line;
-    const char *nl;
+    yed_cell   *cell;
 
     f = fopen(path, "w");
     if (!f) {
@@ -266,12 +262,11 @@ static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
         return;
     }
 
-    nl = "";
-
     array_traverse(buff->lines, line) {
-        fprintf(f, "%s", nl);
-        fwrite(array_data(line->chars), 1, array_len(line->chars), f);
-        nl = "\n";
+        array_traverse(line->cells, cell) {
+            fwrite(cell->bytes, 1, 1, f);
+        }
+        fprintf(f, "\n");
     }
 
     fclose(f);

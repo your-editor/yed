@@ -17,5 +17,6 @@
 #define IS_ARROW(k)   ((k) >= KEY_UP && (k) <= KEY_LEFT)
 
 static int yed_read_key(void);
+static void yed_take_key(int key);
 
 #endif

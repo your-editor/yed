@@ -9,15 +9,18 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "tree.h"
 #include "array.h"
+#include "list.h"
 #include "yed.h"
 #include "term.h"
 #include "key.h"
 #include "buffer.h"
 #include "frame.h"
 #include "command.h"
+#include "getRSS.h"
 
 #define inline
 use_tree(yed_command_name_t, yed_command_t);
@@ -50,6 +53,9 @@ do { if (unlikely(!(cond))) {                        \
 
 
 #define ERR ; /* @incomplete */
+
+
+static char *pretty_bytes(uint64_t n_bytes);
 
 
 typedef struct {

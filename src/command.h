@@ -35,6 +35,8 @@ DEF_DEFAULT_COMMAND(cursor_down);
 DEF_DEFAULT_COMMAND(cursor_up);
 DEF_DEFAULT_COMMAND(cursor_left);
 DEF_DEFAULT_COMMAND(cursor_right);
+DEF_DEFAULT_COMMAND(cursor_line_begin);
+DEF_DEFAULT_COMMAND(cursor_line_end);
 DEF_DEFAULT_COMMAND(buffer_new);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frames_list);
@@ -44,6 +46,7 @@ DEF_DEFAULT_COMMAND(frame_split_new_file);
 DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(delete_back);
+DEF_DEFAULT_COMMAND(delete_line);
 DEF_DEFAULT_COMMAND(write_buffer);
 
 

@@ -79,8 +79,8 @@ yed_state * yed_get_state(void)         { return ys;  }
 
 int yed_pump(void) {
     int   key;
-    char *key_str;
-    char  key_str_buff[2];
+/*     char *key_str; */
+/*     char  key_str_buff[2]; */
 
     flush_output_buff();
 
@@ -94,6 +94,9 @@ int yed_pump(void) {
 
     key = yed_read_key();
 
+    yed_take_key(key);
+
+#if 0
     if (ys->accepting_command) {
         key_str_buff[0] = (char)key;
         key_str_buff[1] = 0;
@@ -106,6 +109,7 @@ int yed_pump(void) {
             yed_frame_take_key(ys->active_frame, key);
         }
     }
+#endif
 
     yed_update_frames();
 
