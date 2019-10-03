@@ -10,8 +10,8 @@ else
 	ERR_LIM=-ferror-limit=3
 endif
 
-LIB_C_FLAGS=-shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl $(CFG)
-DRV_C_FLAGS=-Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl $(CFG)
+LIB_C_FLAGS=-shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl -lm $(CFG)
+DRV_C_FLAGS=-Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl -lm $(CFG)
 
 all: yed_driver
 
