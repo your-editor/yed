@@ -39,7 +39,7 @@ static char * pretty_bytes(uint64_t n_bytes) {
     r = calloc(64, 1);
 
     if (count - floor(count) == 0.0) {
-        sprintf(r, "%llu", (uint64_t)count);
+        sprintf(r, "%d", (int)count);
     } else {
         sprintf(r, "%.2f", count);
     }
