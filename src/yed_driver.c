@@ -67,7 +67,7 @@ int load_yed_lib(void) {
 	yed_lib.handle = dlopen("./libyed.so", RTLD_NOW);
 
 	if (yed_lib.handle == NULL) {
-		printf("[yed]! could not load 'libyed.so'\n");
+		printf("[yed]! could not load 'libyed.so'\n%s\n", dlerror());
 		return 1;
 	}
 
