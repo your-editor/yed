@@ -34,9 +34,6 @@ static void yed_line_append_cell(yed_line *line, yed_cell *cell) {
 }
 
 static void yed_line_delete_cell(yed_line *line, int idx) {
-    yed_cell *cell;
-
-    cell = array_item(line->cells, idx);
     line->visual_width -= 1;
     array_delete(line->cells, idx);
 }
