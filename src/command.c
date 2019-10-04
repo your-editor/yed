@@ -45,6 +45,7 @@ static void yed_add_default_commands(void) {
     ADD_DEFAULT_COMMAND("cursor-right",         cursor_right);
     ADD_DEFAULT_COMMAND("cursor-line-begin",    cursor_line_begin);
     ADD_DEFAULT_COMMAND("cursor-line-end",      cursor_line_end);
+    ADD_DEFAULT_COMMAND("cursor-next-word",     cursor_next_word);
     ADD_DEFAULT_COMMAND("buffer-new",           buffer_new);
     ADD_DEFAULT_COMMAND("frame",                frame);
     ADD_DEFAULT_COMMAND("frames-list",          frames_list);
@@ -431,6 +432,51 @@ static void yed_default_command_cursor_line_end(int n_args, char **args) {
     yed_set_cursor_within_frame(frame, line->visual_width + 1, frame->cursor_line);
 }
 
+static void yed_default_command_cursor_next_word(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *line;
+    yed_cell  *cell_it;
+    int        cols;
+    char       c;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
+    cols = 0;
+    array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+        c = cell_it->c;
+        if (isalnum(c) || c == '_') {
+            cols += 1;
+        } else {
+            break;
+        }
+    }
+
+    if (cols == 0 && frame->cursor_line < bucket_array_len(frame->buffer->lines)) {
+        yed_move_cursor_within_frame(frame, 0, 1);
+        yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    } else {
+        yed_move_cursor_within_frame(frame, cols, 0);
+    }
+}
+
 static void yed_default_command_buffer_new(int n_args, char **args) {
     int         buff_nr;
     yed_buffer *buffer;
@@ -673,7 +719,7 @@ static void yed_default_command_insert(int n_args, char **args) {
     yed_line  *line,
               *new_line;
     int        col, idx,
-               len;
+               i, len;
     yed_cell  *cell_it;
 
     if (n_args != 1) {
@@ -715,12 +761,16 @@ static void yed_default_command_insert(int n_args, char **args) {
 
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
     } else {
-        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-
-        yed_insert_into_line(frame->buffer, line, col, args[0][0]);
-        yed_move_cursor_within_frame(frame, 1, 0);
+        if (args[0][0] == '\t') {
+            for (i = 0; i < 4; i += 1) {
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, ' ');
+            }
+            yed_move_cursor_within_frame(frame, 4, 0);
+        } else {
+            yed_insert_into_line(frame->buffer, frame->cursor_line, col, args[0][0]);
+            yed_move_cursor_within_frame(frame, 1, 0);
+        }
     }
-
 }
 
 static void yed_default_command_delete_back(int n_args, char **args) {
@@ -749,12 +799,12 @@ static void yed_default_command_delete_back(int n_args, char **args) {
         return;
     }
 
-    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
     col  = frame->cursor_col;
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
     if (col == 1) {
         if (frame->cursor_line > 1) {
-            old_line_nr = frame->cursor_line;
+            old_line_nr   = frame->cursor_line;
             previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
             prev_line_len = previous_line->visual_width;
 
@@ -779,7 +829,7 @@ static void yed_default_command_delete_back(int n_args, char **args) {
             yed_buff_delete_line(frame->buffer, old_line_nr);
         }
     } else {
-        yed_delete_from_line(frame->buffer, line, col - 1);
+        yed_delete_from_line(frame->buffer, frame->cursor_line, col - 1);
         yed_move_cursor_within_frame(frame, -1, 0);
     }
 
@@ -809,11 +859,11 @@ static void yed_default_command_delete_line(int n_args, char **args) {
         return;
     }
 
-    n_lines = array_len(frame->buffer->lines);
+    n_lines = bucket_array_len(frame->buffer->lines);
     row     = frame->cursor_line;
 
     if (n_lines > 1) {
-        if (row == array_len(frame->buffer->lines)) {
+        if (row == n_lines) {
             yed_move_cursor_within_frame(frame, 0, -1);
         }
         yed_buff_delete_line(frame->buffer, row);

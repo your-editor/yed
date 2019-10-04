@@ -101,7 +101,7 @@ static void yed_clear_frame(yed_frame *frame) {
 }
 
 static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
-    int  n, n_col, byte, starting_idx;
+    int  n, n_col, starting_idx;
     char c;
     yed_cell *cell_it;
 
@@ -130,19 +130,17 @@ static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, 
     yed_set_cursor(frame->left, frame->top + y_offset);
 
     array_traverse_from(line->cells, cell_it, starting_idx) {
-        for (byte = 0; byte < cell_it->width; byte += 1) {
-            if (n == n_col)    { break; }
-            c = cell_it->bytes[byte];
-            if (c == '\t') {
-                append_to_output_buff(TERM_BG_RED);
-                append_n_to_output_buff(" ", 1);
-                append_to_output_buff(TERM_RESET);
-                append_to_output_buff(TERM_CURSOR_HIDE);
-            } else {
-                append_n_to_output_buff(&c, 1);
-            }
-            n += 1;
+        if (n == n_col)    { break; }
+        c = cell_it->c;
+        if (c == '\t') {
+            append_to_output_buff(TERM_BG_RED);
+            append_n_to_output_buff(" ", 1);
+            append_to_output_buff(TERM_RESET);
+            append_to_output_buff(TERM_CURSOR_HIDE);
+        } else {
+            append_n_to_output_buff(&c, 1);
         }
+        n += 1;
     }
 
     for (; n < frame->width; n += 1) {
@@ -237,7 +235,7 @@ static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset
     lines_drawn = 0;
     lines_seen  = 0;
 
-    array_traverse(buff->lines, line) {
+    bucket_array_traverse(buff->lines, line) {
         if (lines_seen++ < y_offset)    { continue; }
 
         yed_frame_draw_line(frame, line, lines_drawn, x_offset);
@@ -295,7 +293,7 @@ static void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir) {
 
     new_y = f->cur_y + dir;
 
-    buff_n_lines = array_len(f->buffer->lines);
+    buff_n_lines = bucket_array_len(f->buffer->lines);
 
     if (buff_n_lines > 2 * f->scroll_off) {
         if (f->buffer_y_offset < buff_n_lines - f->height /* - 1 */
@@ -525,7 +523,7 @@ static int yed_frame_line_is_visible(yed_frame *frame, int row) {
     }
     return    (row >= frame->buffer_y_offset + 1)
            && (row <= frame->buffer_y_offset + frame->height)
-           && (row <= array_len(frame->buffer->lines));
+           && (row <= bucket_array_len(frame->buffer->lines));
 }
 
 static int yed_frame_line_to_y(yed_frame *frame, int row) {

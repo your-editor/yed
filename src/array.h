@@ -1,7 +1,7 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
-#include "internal.h"
+/* #include "internal.h" */
 
 #define ARRAY_DEFAULT_CAP (8)
 

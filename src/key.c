@@ -2,29 +2,29 @@
 
 static int yed_read_key(void) {
     int  r;
-	char c;
+    char c;
     int sav_x, sav_y;
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
 
-	read(0, &c, 1);
+    read(0, &c, 1);
 
-	if (c == 27) {
-		read(0, &c, 1);
-		if (c == 91) {
-			read(0, &c, 1);
-			switch (c) {
-				case 65: r = KEY_UP;    break;
-				case 66: r = KEY_DOWN;  break;
-				case 67: r = KEY_RIGHT; break;
-				case 68: r = KEY_LEFT;  break;
+    if (c == 27) {
+        read(0, &c, 1);
+        if (c == 91) {
+            read(0, &c, 1);
+            switch (c) {
+                case 65: r = KEY_UP;    break;
+                case 66: r = KEY_DOWN;  break;
+                case 67: r = KEY_RIGHT; break;
+                case 68: r = KEY_LEFT;  break;
                 default: r = 0;
-			}
-		} else {
+            }
+        } else {
             r = 0;
         }
-	} else {
+    } else {
         r = c;
     }
 
@@ -34,7 +34,7 @@ static int yed_read_key(void) {
     append_int_to_output_buff(r);
     yed_set_cursor(sav_x, sav_y);
 
-	return r;
+    return r;
 }
 
 static void yed_take_key(int key) {
@@ -58,7 +58,7 @@ static void yed_take_key(int key) {
             case CTRL('l'):     yed_execute_command("frame-next",     0, NULL); break;
             case CTRL('d'):     yed_execute_command("delete-line",    0, NULL); break;
             default: {
-                if (key == '\n' || !iscntrl(key)) {
+                if (key == '\n' || key == '\t' || !iscntrl(key)) {
                     yed_execute_command("insert", 1, &key_str);
                 }
             }

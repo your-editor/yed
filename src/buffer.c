@@ -3,9 +3,8 @@
 static yed_cell yed_new_cell(char c) {
     yed_cell cell;
 
-    memset(&cell, 0, sizeof(cell));
-    cell.bytes[0] = c;
-    cell.width    = 1;
+    cell.__data = 0;
+    cell.c      = c;
 
     return cell;
 }
@@ -24,29 +23,21 @@ static void yed_free_line(yed_line *line) {
     array_free(line->cells);
 }
 
-static int yed_cell_n_bytes(yed_cell *cell) {
-	if      (cell->__u32 == 0)             { return 0; }
-	else if (cell->__u32 <= 0xFF000000)    { return 1; }
-	else if (cell->__u32 <= 0xFFFF0000)    { return 2; }
-	else if (cell->__u32 <= 0xFFFFFF00)    { return 3; }
-	return 4;
-}
-
 static void yed_line_add_cell(yed_line *line, yed_cell *cell, int idx) {
     array_insert(line->cells, idx, *cell);
-    line->visual_width += cell->width;
+    line->visual_width += 1;
 }
 
 static void yed_line_append_cell(yed_line *line, yed_cell *cell) {
     array_push(line->cells, *cell);
-    line->visual_width += cell->width;
+    line->visual_width += 1;
 }
 
 static void yed_line_delete_cell(yed_line *line, int idx) {
     yed_cell *cell;
 
     cell = array_item(line->cells, idx);
-    line->visual_width -= cell->width;
+    line->visual_width -= 1;
     array_delete(line->cells, idx);
 }
 
@@ -55,10 +46,12 @@ static void yed_line_pop_cell(yed_line *line) {
 }
 
 static yed_line * yed_buffer_add_line(yed_buffer *buff) {
-    yed_line *line;
+    yed_line new_line,
+             *line;
 
-    line  = array_next_elem(buff->lines);
-    *line = yed_new_line();
+    new_line = yed_new_line();
+
+    line = bucket_array_push(buff->lines, new_line);
 
     yed_mark_dirty_frames(buff);
 
@@ -68,8 +61,8 @@ static yed_line * yed_buffer_add_line(yed_buffer *buff) {
 static yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
-    buff.lines = array_make(yed_line);
-	buff.path  = NULL;
+    buff.lines = bucket_array_make(yed_line);
+	buff.path   = NULL;
 
     yed_buffer_add_line(&buff);
 
@@ -89,10 +82,10 @@ static void yed_append_to_buff(yed_buffer *buff, char c) {
     if (c == '\n') {
         yed_buffer_add_line(buff);
     } else {
-        if (array_len(buff->lines) == 0) {
+        if (bucket_array_len(buff->lines) == 0) {
             line = yed_buffer_add_line(buff);
         } else {
-            line = array_last(buff->lines);
+            line = bucket_array_last(buff->lines);
         }
 
         yed_append_to_line(line, c);
@@ -115,11 +108,11 @@ static int yed_line_col_to_cell_idx(yed_line *line, int col) {
     found    = 0;
 
     array_traverse(line->cells, cell_it) {
-        if (col - cell_it->width <= 0) {
+        if (col - 1 <= 0) {
             found = 1;
             break;
         }
-        col      -= cell_it->width;
+        col      -= 1;
         cell_idx += 1;
     }
 
@@ -153,11 +146,11 @@ static yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
 
     idx = row - 1;
 
-    if (idx < 0 || idx >= array_len(buff->lines)) {
+    if (idx < 0 || idx >= bucket_array_len(buff->lines)) {
         return NULL;
     }
 
-    return array_item(buff->lines, idx);
+    return bucket_array_item(buff->lines, idx);
 }
 
 static yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
@@ -166,12 +159,12 @@ static yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
 
     idx = row - 1;
 
-    if (idx < 0 || idx > array_len(buff->lines)) {
+    if (idx < 0 || idx > bucket_array_len(buff->lines)) {
         return NULL;
     }
 
     new_line = yed_new_line();
-    line     = array_insert(buff->lines, idx, new_line);
+    line     = bucket_array_insert(buff->lines, idx, new_line);
 
     yed_mark_dirty_frames(buff);
 
@@ -184,18 +177,21 @@ static void yed_buff_delete_line(yed_buffer *buff, int row) {
 
     idx = row - 1;
 
-    LIMIT(idx, 0, array_len(buff->lines));
+    LIMIT(idx, 0, bucket_array_len(buff->lines));
 
     line = yed_buff_get_line(buff, row);
     yed_free_line(line);
-    array_delete(buff->lines, idx);
+    bucket_array_delete(buff->lines, idx);
 
     yed_mark_dirty_frames(buff);
 }
 
-static void yed_insert_into_line(yed_buffer *buff, yed_line *line, int col, char c) {
-    int      idx;
-    yed_cell cell;
+static void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
+    int       idx;
+    yed_line *line;
+    yed_cell  cell;
+
+    line = yed_buff_get_line(buff, row);
 
     idx = col - 1;
 
@@ -205,11 +201,14 @@ static void yed_insert_into_line(yed_buffer *buff, yed_line *line, int col, char
     idx  = yed_line_col_to_cell_idx(line, col);
     yed_line_add_cell(line, &cell, idx);
 
-    yed_mark_dirty_frames_line(buff, yed_buff_get_line_number(buff, line));
+    yed_mark_dirty_frames_line(buff, row);
 }
 
-static void yed_delete_from_line(yed_buffer *buff, yed_line *line, int col) {
-    int idx;
+static void yed_delete_from_line(yed_buffer *buff, int row, int col) {
+    int       idx;
+    yed_line *line;
+
+    line = yed_buff_get_line(buff, row);
 
     idx = col - 1;
 
@@ -218,29 +217,45 @@ static void yed_delete_from_line(yed_buffer *buff, yed_line *line, int col) {
     idx = yed_line_col_to_cell_idx(line, col);
     yed_line_delete_cell(line, idx);
 
-    yed_mark_dirty_frames_line(buff, yed_buff_get_line_number(buff, line));
+    yed_mark_dirty_frames_line(buff, row);
 }
 
 
 static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
-    FILE     *f;
-    char      c;
-    yed_line *last_line;
+    FILE        *f;
+    int          fd, i, file_size;
+    struct stat  fs;
+    char        *file_data;
+    yed_line    *last_line;
 
     f = fopen(path, "r");
     if (!f) {
-        ERR;
-        return;
+        ERR("unable to open file");
     }
 
-    while ((c = fgetc(f)) != EOF) {
-        yed_append_to_buff(buff, c);
+    fd = fileno(f);
+
+    if (fstat(fd, &fs) != 0) {
+        ERR("unable to stat file");
     }
 
-    if (array_len(buff->lines) > 1) {
-        last_line = array_last(buff->lines);
+    file_size = fs.st_size;
+    file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
+
+    if (file_data == MAP_FAILED) {
+        ERR("mmap failed");
+    }
+
+    for (i = 0; i < file_size; i += 1) {
+        yed_append_to_buff(buff, file_data[i]);
+    }
+
+    munmap(file_data, file_size);
+
+    if (bucket_array_len(buff->lines) > 1) {
+        last_line = bucket_array_last(buff->lines);
         if (array_len(last_line->cells) == 0) {
-            array_pop(buff->lines);
+            bucket_array_pop(buff->lines);
         }
     }
 
@@ -252,30 +267,22 @@ static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
 }
 
 static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
-    FILE       *f;
-    yed_line   *line;
-    yed_cell   *cell;
+    FILE     *f;
+    yed_line *line;
+    yed_cell *cell;
 
     f = fopen(path, "w");
     if (!f) {
-        ERR;
+        ERR("unable to open file");
         return;
     }
 
-    array_traverse(buff->lines, line) {
+    bucket_array_traverse(buff->lines, line) {
         array_traverse(line->cells, cell) {
-            fwrite(cell->bytes, 1, 1, f);
+            fwrite(&cell->c, 1, 1, f);
         }
         fprintf(f, "\n");
     }
 
     fclose(f);
-}
-
-static int yed_buff_get_line_number(yed_buffer *buff, yed_line *line) {
-    int row;
-
-    row = 1 + ((((void*)line) - array_data(buff->lines)) / sizeof(*line));
-
-    return row;
 }

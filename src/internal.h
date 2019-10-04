@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#if defined(__linux__)
+#include <linux/mman.h> /* linux mmap flags */
+#endif
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -13,6 +18,7 @@
 
 #include "tree.h"
 #include "array.h"
+#include "bucket_array.h"
 #include "list.h"
 #include "yed.h"
 #include "term.h"
@@ -51,8 +57,8 @@ do { if (unlikely(!(cond))) {                        \
     }                               \
 } while (0)
 
-
-#define ERR ; /* @incomplete */
+/* @incomplete */
+#define ERR(msg) ASSERT(0, #msg)
 
 
 static char *pretty_bytes(uint64_t n_bytes);

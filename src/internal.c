@@ -55,7 +55,7 @@ static void yed_add_new_buff(void) {
     yed_buffer **buff_ptr;
 
     if (ys->n_buffers == MAX_BUFFERS) {
-        ERR;
+        ERR("max buffers reached");
     }
 
     buff_ptr   = ys->buff_list + ys->n_buffers++;

@@ -37,6 +37,7 @@ DEF_DEFAULT_COMMAND(cursor_left);
 DEF_DEFAULT_COMMAND(cursor_right);
 DEF_DEFAULT_COMMAND(cursor_line_begin);
 DEF_DEFAULT_COMMAND(cursor_line_end);
+DEF_DEFAULT_COMMAND(cursor_next_word);
 DEF_DEFAULT_COMMAND(buffer_new);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frames_list);

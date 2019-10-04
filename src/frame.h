@@ -13,7 +13,7 @@ typedef struct yed_frame_t {
                         height,
                         width;
     int                 cursor_line,
-						cursor_col,
+                        cursor_col,
                         dirty_line,
                         buffer_y_offset,
                         buffer_x_offset;

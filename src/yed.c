@@ -2,6 +2,7 @@
 
 #include "internal.c"
 #include "array.c"
+#include "bucket_array.c"
 #include "list.c"
 #include "term.c"
 #include "key.c"
