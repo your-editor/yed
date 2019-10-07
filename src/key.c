@@ -49,14 +49,15 @@ static void yed_take_key(int key) {
         yed_execute_command("command-prompt", 1, &key_str);
     } else {
         switch (key) {
-            case KEY_UP:        yed_execute_command("cursor-up",      0, NULL); break;
-            case KEY_DOWN:      yed_execute_command("cursor-down",    0, NULL); break;
-            case KEY_RIGHT:     yed_execute_command("cursor-right",   0, NULL); break;
-            case KEY_LEFT:      yed_execute_command("cursor-left",    0, NULL); break;
-            case KEY_BACKSPACE: yed_execute_command("delete-back",    0, NULL); break;
-            case CTRL('f'):     yed_execute_command("command-prompt", 0, NULL); break;
-            case CTRL('l'):     yed_execute_command("frame-next",     0, NULL); break;
-            case CTRL('d'):     yed_execute_command("delete-line",    0, NULL); break;
+            case KEY_UP:        yed_execute_command("cursor-up",        0, NULL); break;
+            case KEY_DOWN:      yed_execute_command("cursor-down",      0, NULL); break;
+            case KEY_RIGHT:     yed_execute_command("cursor-right",     0, NULL); break;
+            case KEY_LEFT:      yed_execute_command("cursor-left",      0, NULL); break;
+            case KEY_BACKSPACE: yed_execute_command("delete-back",      0, NULL); break;
+            case CTRL('f'):     yed_execute_command("command-prompt",   0, NULL); break;
+            case CTRL('l'):     yed_execute_command("frame-next",       0, NULL); break;
+            case CTRL('d'):     yed_execute_command("delete-line",      0, NULL); break;
+            case CTRL('w'):     yed_execute_command("cursor-next-word", 0, NULL); break;
             default: {
                 if (key == '\n' || key == '\t' || !iscntrl(key)) {
                     yed_execute_command("insert", 1, &key_str);

@@ -514,13 +514,50 @@ static void yed_default_command_cursor_next_word(int n_args, char **args) {
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-    cols = 0;
-    array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-        c = cell_it->c;
-        if (isalnum(c) || c == '_') {
+    cols    = 0;
+    cell_it = array_item(line->cells, frame->cursor_col - 1);
+    c       = cell_it->c;
+    if (isspace(c)) {
+        array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+            c = cell_it->c;
             cols += 1;
-        } else {
-            break;
+            if (!isspace(c)) {
+                break;
+            }
+        }
+    } else if (isalnum(c) || c == '_') {
+        array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+            c = cell_it->c;
+            cols += 1;
+            if (!isalnum(c) && c != '_') {
+                break;
+            }
+        }
+        if (isspace(c)) {
+            array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+                c = cell_it->c;
+                cols += 1;
+                if (!isspace(c)) {
+                    break;
+                }
+            }
+        }
+    } else {
+        array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+            c = cell_it->c;
+            cols += 1;
+            if (!isalnum(c) && c != '_') {
+                break;
+            }
+        }
+        if (isspace(c)) {
+            array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+                c = cell_it->c;
+                cols += 1;
+                if (!isspace(c)) {
+                    break;
+                }
+            }
         }
     }
 
