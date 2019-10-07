@@ -977,7 +977,15 @@ static void yed_default_command_delete_line(int n_args, char **args) {
         yed_line_clear(line);
     }
 
-    yed_frame_reset_cursor(frame);
+    /*
+     * Kinda hacky, but this will help us pull the buffer
+     * up if there is a buffer_y_offset and there's content
+     * to pull up.
+     */
+    n_lines = bucket_array_len(frame->buffer->lines);
+    if (frame->buffer_y_offset >= n_lines - frame->height) {
+        yed_frame_reset_cursor(frame);
+    }
 }
 
 static void yed_default_command_write_buffer(int n_args, char **args) {
