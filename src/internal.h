@@ -134,8 +134,7 @@ typedef struct yed_state_t {
                     cur_y,
                     save_cur_x,
                     save_cur_y;
-    yed_buffer     *buff_list[MAX_BUFFERS];
-    int             n_buffers;
+    array_t         buff_list;
     tree(yed_frame_id_t, yed_frame_ptr_t) frames;
     yed_frame      *active_frame;
     int             accepting_command;

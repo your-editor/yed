@@ -568,8 +568,8 @@ static void yed_default_command_cursor_next_word(int n_args, char **args) {
 }
 
 static void yed_default_command_buffer_new(int n_args, char **args) {
-    int         buff_nr;
-    yed_buffer *buffer;
+    int          buff_nr;
+    yed_buffer **buffer_ptr, *buffer;
 
     yed_set_cursor(1, ys->term_rows);
 
@@ -580,8 +580,9 @@ static void yed_default_command_buffer_new(int n_args, char **args) {
     }
 
     yed_add_new_buff();
-    buff_nr = ys->n_buffers - 1;
-    buffer  = ys->buff_list[buff_nr];
+    buffer_ptr = array_last(ys->buff_list);
+    buffer     = *buffer_ptr;
+    buff_nr    = array_len(ys->buff_list) - 1;
 
     if (n_args == 1) {
         yed_fill_buff_from_file(buffer, args[0]);
@@ -666,7 +667,7 @@ static void yed_default_command_frames_list(int n_args, char **args) {
 }
 
 static void yed_default_command_frame_set_buffer(int n_args, char **args) {
-    yed_buffer *buffer;
+    yed_buffer *buffer, **buffer_ptr;
     int         buff_nr;
 
     if (n_args != 1) {
@@ -682,20 +683,22 @@ static void yed_default_command_frame_set_buffer(int n_args, char **args) {
 
     buff_nr = s_to_i(args[0]);
 
-    if (buff_nr >= ys->n_buffers) {
+    if (buff_nr >= array_len(ys->buff_list)) {
         yed_append_text_to_cmd_buff("[!] no buffer ");
         yed_append_int_to_cmd_buff(buff_nr);
         return;
     }
 
-    buffer = ys->buff_list[buff_nr];
+    buffer_ptr = array_item(ys->buff_list, buff_nr);
+    buffer     = *buffer_ptr;
+
     yed_frame_set_buff(ys->active_frame, buffer);
     yed_clear_frame(ys->active_frame);
 }
 
 static void yed_default_command_frame_new_file(int n_args, char **args) {
     yed_frame  *frame;
-    yed_buffer *buffer;
+    yed_buffer *buffer, **buffer_ptr;
     int         buff_nr, new_file;
     FILE       *f_test;
 
@@ -708,8 +711,9 @@ static void yed_default_command_frame_new_file(int n_args, char **args) {
     frame = yed_get_or_add_frame(args[0]);
 
     yed_add_new_buff();
-    buff_nr = ys->n_buffers - 1;
-    buffer  = ys->buff_list[buff_nr];
+    buffer_ptr = array_last(ys->buff_list);
+    buffer     = *buffer_ptr;
+    buff_nr    = array_len(ys->buff_list) - 1;
 
     new_file = 0;
     f_test   = fopen(args[0], "r");
@@ -737,7 +741,7 @@ static void yed_default_command_frame_new_file(int n_args, char **args) {
 static void yed_default_command_frame_split_new_file(int n_args, char **args) {
     yed_frame  *frame1,
                *frame2;
-    yed_buffer *buffer;
+    yed_buffer *buffer, **buffer_ptr;
     int         buff_nr, new_file;
     FILE       *f_test;
 
@@ -770,8 +774,9 @@ static void yed_default_command_frame_split_new_file(int n_args, char **args) {
     frame2->desired_x = frame2->cur_x;
 
     yed_add_new_buff();
-    buff_nr = ys->n_buffers - 1;
-    buffer  = ys->buff_list[buff_nr];
+    buffer_ptr = array_last(ys->buff_list);
+    buffer     = *buffer_ptr;
+    buff_nr    = array_len(ys->buff_list) - 1;
 
     new_file = 0;
     f_test   = fopen(args[0], "r");

@@ -1,5 +1,4 @@
 * hardening for buffers, the buffer list, and frames
-    * move to array_t of buffers
     * how to handle overlapping frames?
 * keybindings
     * temporal?

@@ -28,6 +28,8 @@ yed_state * yed_init(int argc, char **argv) {
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
+    ys->buff_list = array_make(yed_buffer*);
+
     yed_init_output_stream();
     yed_init_commands();
     yed_init_frames();

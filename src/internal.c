@@ -64,15 +64,11 @@ static char * pretty_bytes(uint64_t n_bytes) {
 
 
 static void yed_add_new_buff(void) {
-    yed_buffer **buff_ptr;
+    yed_buffer *new_buff;
 
-    if (ys->n_buffers == MAX_BUFFERS) {
-        ERR("max buffers reached");
-    }
-
-    buff_ptr   = ys->buff_list + ys->n_buffers++;
-    *buff_ptr  = malloc(sizeof(**buff_ptr));
-    **buff_ptr = yed_new_buff();
+    new_buff  = malloc(sizeof(*new_buff));
+    *new_buff = yed_new_buff();
+    array_push(ys->buff_list, new_buff);
 }
 
 static void clear_output_buff(void) {
