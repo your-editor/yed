@@ -8,6 +8,7 @@
 typedef const char *yed_command_name_t;
 typedef void (*yed_command_t)(int, char**);
 
+
 static void yed_init_commands(void);
 
 static void yed_add_command(const char *name, yed_command_t command);
@@ -38,6 +39,8 @@ DEF_DEFAULT_COMMAND(cursor_right);
 DEF_DEFAULT_COMMAND(cursor_line_begin);
 DEF_DEFAULT_COMMAND(cursor_line_end);
 DEF_DEFAULT_COMMAND(cursor_next_word);
+DEF_DEFAULT_COMMAND(cursor_buffer_begin);
+DEF_DEFAULT_COMMAND(cursor_buffer_end);
 DEF_DEFAULT_COMMAND(buffer_new);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frames_list);

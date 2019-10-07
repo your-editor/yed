@@ -19,6 +19,18 @@ static void yed_assert_fail(const char *msg, const char *fname, int line, const 
 
 
 
+uint64_t next_power_of_2(uint64_t x) {
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    x++;
+    return x;
+}
+
 
 
 static char * pretty_bytes(uint64_t n_bytes) {

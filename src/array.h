@@ -3,7 +3,7 @@
 
 /* #include "internal.h" */
 
-#define ARRAY_DEFAULT_CAP (8)
+#define ARRAY_DEFAULT_CAP (16)
 
 typedef struct {
     void *data;
@@ -13,13 +13,18 @@ typedef struct {
 } array_t;
 
 static array_t _array_make(int elem_size);
+static array_t _array_make_with_cap(int elem_size, int initial_cap);
 static void * _array_push(array_t *array, void *elem);
 static void * _array_next_elem(array_t *array);
 static void _array_delete(array_t *array, int idx);
 static void _array_zero_term(array_t *array);
+static void _array_grow_if_needed(array_t *array);
 
 #define array_make(T) \
     (_array_make(sizeof(T)))
+
+#define array_make_with_cap(T, cap) \
+    (_array_make_with_cap(sizeof(T), (cap)))
 
 #define array_free(array) \
     (_array_free(&(array)))
@@ -65,5 +70,8 @@ static void _array_zero_term(array_t *array);
 #define array_data(array) ((array).data)
 
 #define array_zero_term(array) (_array_zero_term(&(array)))
+
+#define array_grow_if_needed(array) \
+	(_array_grow_if_needed(&(array)))
 
 #endif

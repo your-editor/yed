@@ -24,4 +24,4 @@ lib_yed:
 check: lib_yed
 
 clean:
-	rm -rf
+	rm -rf yed libyed.so yed.dSYM libyed.so.dSYM

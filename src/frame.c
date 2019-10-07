@@ -230,14 +230,10 @@ static void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
 static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset) {
     yed_line *line;
     int lines_drawn;
-    int lines_seen;
 
     lines_drawn = 0;
-    lines_seen  = 0;
 
-    bucket_array_traverse(buff->lines, line) {
-        if (lines_seen++ < y_offset)    { continue; }
-
+    bucket_array_traverse_from(buff->lines, line, y_offset) {
         yed_frame_draw_line(frame, line, lines_drawn, x_offset);
 
         lines_drawn += 1;
@@ -276,47 +272,44 @@ static void yed_frame_update(yed_frame *frame) {
     frame->dirty = frame->dirty_line = 0;
 }
 
-static void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir) {
-    int       new_y;
-    int       buff_n_lines;
-    yed_line *line;
-    int       line_width;
-    int       update_desired_x;
+static void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines, int buff_big_enough_to_scroll) {
+    int new_y,
+        bot;
 
     if (dir > 0) {
         dir = 1;
     } else if (dir < 0) {
         dir = -1;
-    } else {
-        return;
     }
 
-    new_y = f->cur_y + dir;
+    bot = f->top + f->height;
 
-    buff_n_lines = bucket_array_len(f->buffer->lines);
+    if (dir) {
+        new_y = f->cur_y + dir;
 
-    if (buff_n_lines > 2 * f->scroll_off) {
-        if (f->buffer_y_offset < buff_n_lines - f->height /* - 1 */
-        && new_y >= f->top + f->height - f->scroll_off) {
+        if (buff_big_enough_to_scroll) {
+            if (f->buffer_y_offset < buff_n_lines - f->height
+            && new_y >= bot - f->scroll_off) {
 
-            f->buffer_y_offset += dir;
-            f->dirty            = 1;
-        } else if (f->buffer_y_offset >= 1
-               &&  new_y < f->top + f->scroll_off) {
+                f->buffer_y_offset += dir;
+                f->dirty            = 1;
+            } else if (f->buffer_y_offset >= 1
+                   &&  new_y < f->top + f->scroll_off) {
 
-            f->buffer_y_offset += dir;
-            f->dirty            = 1;
+                f->buffer_y_offset += dir;
+                f->dirty            = 1;
+            } else {
+                f->cur_y = new_y;
+            }
         } else {
             f->cur_y = new_y;
         }
-    } else {
-        f->cur_y = new_y;
     }
 
     LIMIT(f->buffer_y_offset, 0, buff_n_lines - 1);
     LIMIT(f->cur_y,
             f->top,
-            MIN(f->top + f->height - 1,
+            MIN(bot - 1,
                 f->top + buff_n_lines - f->buffer_y_offset - 1));
 
     /*
@@ -324,63 +317,38 @@ static void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir) {
      */
     f->dirty_line  = f->cursor_line;
     f->cursor_line = f->buffer_y_offset + (f->cur_y - f->top + 1);
-
-    /*
-     * Update x values tied y.
-     */
-    line             = yed_buff_get_line(f->buffer, f->cursor_line);
-    line_width       = line->visual_width;
-    update_desired_x = 0;
-
-    if (line_width < f->buffer_x_offset) {
-        f->buffer_x_offset = 0;
-        f->dirty           = 1;
-        update_desired_x   = 1;
-    }
-    f->cur_x = MIN(f->desired_x, f->left + line_width - f->buffer_x_offset);
-
-    if (update_desired_x) {
-        f->desired_x = f->cur_x;
-    }
-
-    f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
 }
 
-static void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir) {
+static void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
     int       new_x;
-    yed_line *line;
-    int       line_width;
 
     if (dir > 0) {
         dir = 1;
     } else if (dir < 0) {
         dir = -1;
-    } else {
-        return;
     }
 
-    new_x      = f->cur_x + dir;
-    line       = yed_buff_get_line(f->buffer, f->cursor_line);
-    line_width = line->visual_width;
+    if (dir) {
+        new_x = f->cur_x + dir;
 
-    if (new_x >= f->left + f->width) {
-        if (f->buffer_x_offset <= line_width - f->width) {
-            f->buffer_x_offset += dir;
-            f->dirty            = 1;
+        if (new_x >= f->left + f->width) {
+            if (f->buffer_x_offset <= line_width - f->width) {
+                f->buffer_x_offset += dir;
+                f->dirty            = 1;
+            }
+        } else if (new_x < f->left) {
+            if (f->buffer_x_offset >= 1) {
+                f->buffer_x_offset += dir;
+                f->dirty            = 1;
+            }
+        } else {
+            f->cur_x = new_x;
         }
-    } else if (new_x < f->left) {
-        if (f->buffer_x_offset >= 1) {
-            f->buffer_x_offset += dir;
-            f->dirty            = 1;
-        }
-    } else {
-        f->cur_x = new_x;
     }
 
     LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
 
-    f->desired_x = f->cur_x;
-
+    f->desired_x  = f->cur_x;
     f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
 }
 
@@ -394,103 +362,77 @@ static void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
 }
 
 static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
-    int i, dir;
+    int       i,
+              dir,
+              line_width,
+              update_desired_x,
+              buff_n_lines,
+              buff_big_enough_to_scroll;
+    yed_line *line;
+
+    buff_n_lines              = bucket_array_len(f->buffer->lines);
+    buff_big_enough_to_scroll = buff_n_lines > 2 * f->scroll_off;
+
+    dir = row > 0 ? 1 : -1;
+    for (i = 0; i < dir * row; i += 1) {
+        yed_move_cursor_once_y_within_frame(f, dir, buff_n_lines, buff_big_enough_to_scroll);
+    }
+
+    line             = yed_buff_get_line(f->buffer, f->cursor_line);
+    line_width       = line->visual_width;
 
     if (row) {
-        dir = row > 0 ? 1 : -1;
-        for (i = 0; i < dir * row; i += 1) {
-            yed_move_cursor_once_y_within_frame(f, dir);
+        /*
+         * Update x values tied y.
+         */
+        update_desired_x = 0;
+
+        if (line_width < f->buffer_x_offset) {
+            f->buffer_x_offset = 0;
+            f->dirty           = 1;
+            update_desired_x   = 1;
         }
+        f->cur_x = MIN(f->desired_x, f->left + line_width - f->buffer_x_offset);
+
+        if (update_desired_x) {
+            f->desired_x = f->cur_x;
+        }
+
+        f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
     }
 
-    if (col) {
-        dir = col > 0 ? 1 : -1;
-        for (i = 0; i < dir * col; i += 1) {
-            yed_move_cursor_once_x_within_frame(f, dir);
-        }
+
+    dir = col > 0 ? 1 : -1;
+    for (i = 0; i < dir * col; i += 1) {
+        yed_move_cursor_once_x_within_frame(f, dir, line_width);
     }
 }
 
-#if 0
-
-static int yed_update_frame_buffer_y_offset(yed_frame *f, int col, int row) {
+static void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
     int buff_n_lines;
 
-    buff_n_lines = array_len(f->buffer->lines);
+    if (frame->buffer) {
+        buff_n_lines = bucket_array_len(frame->buffer->lines);
 
-    if (buff_n_lines > (2 * f->scroll_off)) {
+        frame->buffer_x_offset = 0;
+        frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
+        frame->cur_x           = frame->desired_x       = frame->left;
+        frame->cur_y           = frame->top + frame->scroll_off;
+        LIMIT(frame->cur_y,
+                frame->top,
+                MIN(frame->top + frame->height - 1,
+                    frame->top + buff_n_lines - frame->buffer_y_offset - 1));
+        frame->cursor_col      = 1;
+        frame->cursor_line     = frame->buffer_y_offset + frame->cur_y;
 
-        if ((row > 0 && f->cur_y == f->top + f->height - 1 - f->scroll_off)
-        ||  (row < 0 && f->cur_y == f->top + f->scroll_off)) {
+        yed_set_cursor_within_frame(frame, dst_x, dst_y);
 
-            f->buffer_y_offset += row;
-            f->dirty_line     = f->cursor_line;
-            f->cursor_line   += row;
-            LIMIT(f->cursor_line, 1, buff_n_lines);
-            f->buffer_y_offset  = MAX(MIN(f->buffer_y_offset, buff_n_lines - f->height - 1), 0);
-            f->dirty          = 1;
-
-            if (row > 0 && f->buffer_y_offset < buff_n_lines - f->height - 1) {
-                return 1;
-            }
-            if (row < 0 && f->buffer_y_offset >= 1) {
-                return 1;
-            }
-        }
-    }
-
-    return 0;
-}
-
-static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
-    int       changed_buff_off;
-    yed_line *current_line;
-
-    if (!f->buffer) {
-        yed_move_cursor_within_bufferless_frame(f, col, row);
-        return;
-    }
-
-    changed_buff_off = yed_update_frame_buffer_y_offset(f, col, row);
-
-    if (!changed_buff_off) {
-        f->cur_y += row;
-        LIMIT(f->cur_y, f->top,
-              MIN(array_len(f->buffer->lines), f->top + f->height - 1));
-    }
-
-    f->dirty_line  = f->cursor_line;
-    f->cursor_line = f->buffer_y_offset + (f->cur_y - f->top + 1);
-    LIMIT(f->cursor_line, 1, array_len(f->buffer->lines));
-
-    current_line   = array_item(f->buffer->lines, f->cursor_line - 1);
-
-    if (col == 0) {
-        f->cur_x = MIN(f->desired_x, f->left + array_len(current_line->chars));
-    } else {
-        f->cur_x += col;
-        f->cur_x  = MIN(f->cur_x, f->left + array_len(current_line->chars));
-        LIMIT(f->cur_x, f->left, f->left + f->width - 1);
-
-        f->desired_x = f->cur_x;
+        frame->dirty = 1;
     }
 }
-#endif
 
 static void yed_frame_reset_cursor(yed_frame *frame) {
-    int dst_x, dst_y;
-
-    dst_x = frame->cursor_col;
-    dst_y = frame->cursor_line;
-
-    frame->cur_x           = frame->desired_x       = frame->left;
-    frame->cur_y           = frame->top;
-    frame->buffer_x_offset = frame->buffer_y_offset = 0;
-    frame->cursor_col      = 1;
-    frame->cursor_line     = 1;
-
-    yed_move_cursor_within_frame(frame, 0, 0);
-    yed_set_cursor_within_frame(frame, dst_x, dst_y);
+    yed_set_cursor_far_within_frame(frame, frame->cursor_col, frame->cursor_line);
 }
 
 static void yed_move_cursor_within_active_frame(int col, int row) {

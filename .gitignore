@@ -3,3 +3,7 @@ yed.dSYM
 libyed.so
 libyed.so.dSYM
 *.swp
+text
+bprof
+bprofile
+.DS_Store

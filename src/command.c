@@ -46,6 +46,8 @@ static void yed_add_default_commands(void) {
     ADD_DEFAULT_COMMAND("cursor-line-begin",    cursor_line_begin);
     ADD_DEFAULT_COMMAND("cursor-line-end",      cursor_line_end);
     ADD_DEFAULT_COMMAND("cursor-next-word",     cursor_next_word);
+    ADD_DEFAULT_COMMAND("cursor-buffer-begin",  cursor_buffer_begin);
+    ADD_DEFAULT_COMMAND("cursor-buffer-end",    cursor_buffer_end);
     ADD_DEFAULT_COMMAND("buffer-new",           buffer_new);
     ADD_DEFAULT_COMMAND("frame",                frame);
     ADD_DEFAULT_COMMAND("frames-list",          frames_list);
@@ -72,6 +74,8 @@ static void yed_reload_default_commands(void) {
     RELOAD_DEFAULT_COMMAND("cursor-right",         cursor_right);
     RELOAD_DEFAULT_COMMAND("cursor-line-begin",    cursor_line_begin);
     RELOAD_DEFAULT_COMMAND("cursor-line-end",      cursor_line_end);
+    RELOAD_DEFAULT_COMMAND("cursor-buffer-begin",  cursor_buffer_begin);
+    RELOAD_DEFAULT_COMMAND("cursor-buffer-end",    cursor_buffer_end);
     RELOAD_DEFAULT_COMMAND("buffer-new",           buffer_new);
     RELOAD_DEFAULT_COMMAND("frame",                frame);
     RELOAD_DEFAULT_COMMAND("frames-list",          frames_list);
@@ -432,6 +436,57 @@ static void yed_default_command_cursor_line_end(int n_args, char **args) {
     yed_set_cursor_within_frame(frame, line->visual_width + 1, frame->cursor_line);
 }
 
+static void yed_default_command_cursor_buffer_begin(int n_args, char **args) {
+    yed_frame *frame;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    yed_set_cursor_far_within_frame(frame, 1, 1);
+    frame->dirty = 1;
+}
+
+static void yed_default_command_cursor_buffer_end(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *last_line;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    last_line = bucket_array_last(frame->buffer->lines);
+    yed_set_cursor_far_within_frame(frame, last_line->visual_width + 1, bucket_array_len(frame->buffer->lines));
+}
+
 static void yed_default_command_cursor_next_word(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
@@ -606,7 +661,8 @@ static void yed_default_command_frame_set_buffer(int n_args, char **args) {
 static void yed_default_command_frame_new_file(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buffer;
-    int         buff_nr;
+    int         buff_nr, new_file;
+    FILE       *f_test;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -620,7 +676,16 @@ static void yed_default_command_frame_new_file(int n_args, char **args) {
     buff_nr = ys->n_buffers - 1;
     buffer  = ys->buff_list[buff_nr];
 
-    yed_fill_buff_from_file(buffer, args[0]);
+    new_file = 0;
+    f_test   = fopen(args[0], "r");
+
+    if (f_test) {
+        fclose(f_test);
+        yed_fill_buff_from_file(buffer, args[0]);
+    } else {
+        buffer->path = args[0];
+        new_file     = 1;
+    }
 
     yed_frame_set_buff(frame, buffer);
 
@@ -628,13 +693,18 @@ static void yed_default_command_frame_new_file(int n_args, char **args) {
     yed_append_text_to_cmd_buff("active frame is '");
     yed_append_text_to_cmd_buff((char*)ys->active_frame->id);
     yed_append_text_to_cmd_buff("'");
+
+    if (new_file) {
+        yed_append_text_to_cmd_buff(" (new file)");
+    }
 }
 
 static void yed_default_command_frame_split_new_file(int n_args, char **args) {
     yed_frame  *frame1,
                *frame2;
     yed_buffer *buffer;
-    int         buff_nr;
+    int         buff_nr, new_file;
+    FILE       *f_test;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -668,7 +738,16 @@ static void yed_default_command_frame_split_new_file(int n_args, char **args) {
     buff_nr = ys->n_buffers - 1;
     buffer  = ys->buff_list[buff_nr];
 
-    yed_fill_buff_from_file(buffer, args[0]);
+    new_file = 0;
+    f_test   = fopen(args[0], "r");
+
+    if (f_test) {
+        fclose(f_test);
+        yed_fill_buff_from_file(buffer, args[0]);
+    } else {
+        buffer->path = args[0];
+        new_file     = 1;
+    }
 
     yed_frame_set_buff(frame2, buffer);
 
@@ -679,6 +758,10 @@ static void yed_default_command_frame_split_new_file(int n_args, char **args) {
     yed_append_text_to_cmd_buff("active frame is '");
     yed_append_text_to_cmd_buff((char*)ys->active_frame->id);
     yed_append_text_to_cmd_buff("'");
+
+    if (new_file) {
+        yed_append_text_to_cmd_buff(" (new file)");
+    }
 }
 
 static void yed_default_command_frame_next(int n_args, char **args) {
@@ -751,13 +834,20 @@ static void yed_default_command_insert(int n_args, char **args) {
         new_line = yed_buff_insert_line(frame->buffer, frame->cursor_line + 1);
         line     = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-        len = 0;
-        idx = yed_line_col_to_cell_idx(line, col);
-        array_traverse_from(line->cells, cell_it, idx) {
-            yed_line_append_cell(new_line, cell_it);
-            len += 1;
+        if (col == 1) {
+            new_line->cells        = line->cells;
+            line->cells            = array_make(yed_cell);
+            new_line->visual_width = line->visual_width;
+            line->visual_width     = 0;
+        } else {
+            len = 0;
+            idx = yed_line_col_to_cell_idx(line, col);
+            array_traverse_from(line->cells, cell_it, idx) {
+                yed_line_append_cell(new_line, cell_it);
+                len += 1;
+            }
+            for (; len > 0; len -= 1)    { yed_line_pop_cell(line); }
         }
-        for (; len > 0; len -= 1)    { yed_line_pop_cell(line); }
 
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
     } else {
@@ -778,6 +868,7 @@ static void yed_default_command_delete_back(int n_args, char **args) {
     yed_line  *line,
               *previous_line;
     int        col,
+               buff_n_lines,
                prev_line_len, old_line_nr;
     yed_cell  *cell_it;
 
@@ -808,20 +899,31 @@ static void yed_default_command_delete_back(int n_args, char **args) {
             previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
             prev_line_len = previous_line->visual_width;
 
-            array_traverse(line->cells, cell_it) {
-                yed_line_append_cell(previous_line, cell_it);
+            if (prev_line_len == 0) {
+                previous_line->cells        = line->cells;
+                line->cells                 = array_make(yed_cell);
+                previous_line->visual_width = line->visual_width;
+                line->visual_width          = 0;
+            } else {
+                array_traverse(line->cells, cell_it) {
+                    yed_line_append_cell(previous_line, cell_it);
+                }
             }
 
             /*
              * Move to the previous line.
              */
             yed_set_cursor_within_frame(frame, prev_line_len + 1, frame->cursor_line - 1);
+
             /*
              * Kinda hacky, but this will help us pull the buffer
              * up if there is a buffer_y_offset and there's content
              * to pull up.
              */
-            yed_frame_reset_cursor(frame);
+            buff_n_lines = bucket_array_len(frame->buffer->lines);
+            if (frame->buffer_y_offset >= buff_n_lines - frame->height) {
+                yed_frame_reset_cursor(frame);
+            }
 
             /*
              * Delete the old line.

@@ -28,8 +28,10 @@ typedef struct {
     bucket_array_t  lines;
 } yed_buffer;
 
-static yed_cell yed_new_cell(char c);
+#define YED_NEW_CELL__DATA(c) (c)
+
 static yed_line yed_new_line(void);
+static yed_line yed_new_line_with_cap(int len);
 
 static yed_buffer yed_new_buff(void);
 static void yed_append_to_line(yed_line *line, char c);

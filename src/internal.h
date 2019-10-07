@@ -17,9 +17,22 @@
 #include <math.h>
 
 #include "tree.h"
+
+#define inline
+typedef const char *yed_command_name_t;
+typedef void (*yed_command_t)(int, char**);
+use_tree(yed_command_name_t, yed_command_t);
+
+struct yed_frame_t;
+typedef struct yed_frame_t *yed_frame_ptr_t;
+typedef const char *yed_frame_id_t;
+use_tree(yed_frame_id_t, yed_frame_ptr_t);
+
+use_tree(int, int);
+#undef inline
+
 #include "array.h"
 #include "bucket_array.h"
-#include "list.h"
 #include "yed.h"
 #include "term.h"
 #include "key.h"
@@ -27,12 +40,6 @@
 #include "frame.h"
 #include "command.h"
 #include "getRSS.h"
-
-#define inline
-use_tree(yed_command_name_t, yed_command_t);
-typedef yed_frame *yed_frame_ptr_t;
-use_tree(yed_frame_id_t, yed_frame_ptr_t);
-#undef inline
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
@@ -61,6 +68,52 @@ do { if (unlikely(!(cond))) {                        \
 #define ERR(msg) ASSERT(0, #msg)
 
 
+#define UINT(w) uint##w##_t
+#define SINT(w) int##w##_t
+
+#define u8  UINT(8 )
+#define u16 UINT(16)
+#define u32 UINT(32)
+#define u64 UINT(64)
+
+#define i8  SINT(8 )
+#define i16 SINT(16)
+#define i32 SINT(32)
+#define i64 SINT(64)
+
+#define XOR_SWAP_64(a, b) do {   \
+    a = ((u64)(a)) ^ ((u64)(b)); \
+    b = ((u64)(b)) ^ ((u64)(a)); \
+    a = ((u64)(a)) ^ ((u64)(b)); \
+} while (0);
+
+#define XOR_SWAP_PTR(a, b) do {           \
+    a = (void*)(((u64)(a)) ^ ((u64)(b))); \
+    b = (void*)(((u64)(b)) ^ ((u64)(a))); \
+    a = (void*)(((u64)(a)) ^ ((u64)(b))); \
+} while (0);
+
+#define ALIGN(x, align)         ((__typeof(x))((((u64)(x)) + (((u64)align) - 1ULL)) & ~(((u64)align) - 1ULL)))
+#define IS_ALIGNED(x, align)    (!(((u64)(x)) & (((u64)align) - 1ULL)))
+#define IS_ALIGNED_PP(x, align) (!((x) & ((align) - 1ULL)))
+#define IS_POWER_OF_TWO(x)      ((x) != 0 && IS_ALIGNED((x), (x)))
+#define IS_POWER_OF_TWO_PP(x)   ((x) != 0 && IS_ALIGNED_PP((x), (x)))
+
+#define LOG2_8BIT(v)  (8 - 90/(((v)/4+14)|1) - 2/((v)/2+1))
+#define LOG2_16BIT(v) (8*((v)>255) + LOG2_8BIT((v) >>8*((v)>255)))
+#define LOG2_32BIT(v)                                        \
+    (16*((v)>65535L) + LOG2_16BIT((v)*1L >>16*((v)>65535L)))
+#define LOG2_64BIT(v)                                        \
+    (32*((v)/2L>>31 > 0)                                     \
+     + LOG2_32BIT((v)*1L >>16*((v)/2L>>31 > 0)               \
+                         >>16*((v)/2L>>31 > 0)))
+
+static uint64_t next_power_of_2(uint64_t x);
+
+#define KiB(x) ((x) * 1024ULL)
+#define MiB(x) ((x) * 1024ULL * KiB(1ULL))
+#define GiB(x) ((x) * 1024ULL * MiB(1ULL))
+#define TiB(x) ((x) * 1024ULL * GiB(1ULL))
 static char *pretty_bytes(uint64_t n_bytes);
 
 

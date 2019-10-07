@@ -5,6 +5,18 @@ static array_t _array_make(int elem_size) {
 
     memset(&a, 0, sizeof(a));
     a.elem_size = elem_size;
+    a.capacity  = ARRAY_DEFAULT_CAP;
+
+    return a;
+}
+
+static array_t _array_make_with_cap(int elem_size, int initial_cap) {
+    array_t a;
+
+    memset(&a, 0, sizeof(a));
+    a.elem_size = elem_size;
+    a.capacity  = initial_cap;
+/* 	a.data      = malloc(a.capacity * a.elem_size); */
 
     return a;
 }
@@ -16,16 +28,15 @@ static void _array_free(array_t *array) {
     memset(array, 0, sizeof(*array));
 }
 
-static void array_grow_if_needed(array_t *array) {
+static void _array_grow_if_needed(array_t *array) {
     void *data_save;
 
     if (!array->data) {
-        array->capacity = ARRAY_DEFAULT_CAP;
-        array->data     = calloc(array->capacity, array->elem_size);
+        array->data = malloc(array->capacity * array->elem_size);
     } else if (array->used == array->capacity) {
-        array->capacity <<= 1;
+        array->capacity   = next_power_of_2(array->capacity + 1);
         data_save         = array->data;
-        array->data       = calloc(array->capacity, array->elem_size);
+        array->data       = malloc(array->capacity * array->elem_size);
         memcpy(array->data, data_save, array->used * array->elem_size);
     }
 }
@@ -33,7 +44,7 @@ static void array_grow_if_needed(array_t *array) {
 static void * _array_next_elem(array_t *array) {
     void *elem_slot;
 
-    array_grow_if_needed(array);
+    _array_grow_if_needed(array);
     elem_slot = array->data + (array->elem_size * array->used++);
     return elem_slot;
 }
@@ -41,7 +52,7 @@ static void * _array_next_elem(array_t *array) {
 static void * _array_push(array_t *array, void *elem) {
     void *elem_slot;
 
-    array_grow_if_needed(array);
+    _array_grow_if_needed(array);
 
     elem_slot = _array_next_elem(array);
     memcpy(elem_slot, elem, array->elem_size);
@@ -58,7 +69,7 @@ static void * _array_insert(array_t *array, int idx, void *elem) {
 
     ASSERT(idx < array->used, "can't insert into arbitrary place in array");
 
-    array_grow_if_needed(array);
+    _array_grow_if_needed(array);
 
     elem_slot = array->data + (array->elem_size * idx);
 
@@ -89,7 +100,7 @@ static void _array_delete(array_t *array, int idx) {
 }
 
 static void _array_zero_term(array_t *array) {
-    array_grow_if_needed(array);
+    _array_grow_if_needed(array);
     memset(array->data + (array->used * array->elem_size),
            0,
            array->elem_size);
