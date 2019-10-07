@@ -16,7 +16,6 @@ static array_t _array_make_with_cap(int elem_size, int initial_cap) {
     memset(&a, 0, sizeof(a));
     a.elem_size = elem_size;
     a.capacity  = initial_cap;
-/* 	a.data      = malloc(a.capacity * a.elem_size); */
 
     return a;
 }
@@ -38,6 +37,7 @@ static void _array_grow_if_needed(array_t *array) {
         data_save         = array->data;
         array->data       = malloc(array->capacity * array->elem_size);
         memcpy(array->data, data_save, array->used * array->elem_size);
+        free(data_save);
     }
 }
 
