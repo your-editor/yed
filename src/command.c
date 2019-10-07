@@ -543,19 +543,17 @@ static void yed_default_command_cursor_next_word(int n_args, char **args) {
             }
         }
     } else {
-        array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-            c = cell_it->c;
+        if (array_len(line->cells) >= frame->cursor_col) {
             cols += 1;
-            if (!isalnum(c) && c != '_') {
-                break;
-            }
-        }
-        if (isspace(c)) {
-            array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-                c = cell_it->c;
-                cols += 1;
-                if (!isspace(c)) {
-                    break;
+            cell_it = array_item(line->cells, frame->cursor_col - 1 + cols);
+            c       = cell_it->c;
+            if (isspace(c)) {
+                array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+                    c = cell_it->c;
+                    cols += 1;
+                    if (!isspace(c)) {
+                        break;
+                    }
                 }
             }
         }
