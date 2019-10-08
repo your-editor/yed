@@ -205,17 +205,17 @@ static void yed_do_command(void) {
 static void yed_command_take_key(int key) {
     tree_it(yed_command_name_t, yed_command_t) it;
 
-    if (key == CTRL('f')) {
+    if (key == CTRL_F) {
         ys->accepting_command = 0;
         yed_clear_cmd_buff();
-    } else if (key == KEY_TAB) {
+    } else if (key == TAB) {
         array_zero_term(ys->cmd_buff);
         it = tree_gtr(ys->commands, array_data(ys->cmd_buff));
         if (tree_it_good(it)) {
             yed_clear_cmd_buff();
             yed_append_text_to_cmd_buff((char*)tree_it_key(it));
         }
-    } else if (key == '\n') {
+    } else if (key == ENTER) {
         yed_do_command();
         ys->accepting_command = 0;
     } else {
@@ -865,7 +865,7 @@ static void yed_default_command_insert(int n_args, char **args) {
 
     col  = frame->cursor_col;
 
-    if (args[0][0] == '\n') {
+    if (args[0][0] == ENTER) {
         /*
          * Must get 'line' _after_ we've added 'new_line' because
          * the array might have expanded and so the reference to

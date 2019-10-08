@@ -80,9 +80,7 @@ void yed_set_state(yed_state *state)    { ys = state; }
 yed_state * yed_get_state(void)         { return ys;  }
 
 int yed_pump(void) {
-    int   key;
-/*     char *key_str; */
-/*     char  key_str_buff[2]; */
+    int   keys[16], n_keys, i, sav_x, sav_y;
 
     flush_output_buff();
 
@@ -94,24 +92,11 @@ int yed_pump(void) {
 
     append_to_output_buff(TERM_CURSOR_HIDE);
 
-    key = yed_read_key();
+    n_keys = yed_read_keys(keys);
 
-    yed_take_key(key);
-
-#if 0
-    if (ys->accepting_command) {
-        key_str_buff[0] = (char)key;
-        key_str_buff[1] = 0;
-        key_str         = key_str_buff;
-        yed_execute_command("command-prompt", 1, &key_str);
-    } else {
-        if (key == CTRL('f')) {
-            yed_execute_command("command-prompt", 0, NULL);
-        } else if (ys->active_frame) {
-            yed_frame_take_key(ys->active_frame, key);
-        }
+    for (i = 0; i < n_keys; i += 1) {
+        yed_take_key(keys[i]);
     }
-#endif
 
     yed_update_frames();
 
@@ -119,6 +104,14 @@ int yed_pump(void) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
+        sav_x = ys->cur_x;
+        sav_y = ys->cur_y;
+        yed_set_cursor(ys->term_cols - 5, ys->term_rows);
+        append_n_to_output_buff("     ", 5);
+        yed_set_cursor(ys->term_cols - 5, ys->term_rows);
+        append_int_to_output_buff(keys[0]);
+        yed_set_cursor(sav_x, sav_y);
+
         append_to_output_buff(TERM_CURSOR_SHOW);
     }
 
