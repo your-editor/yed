@@ -1,7 +1,40 @@
 #include "internal.h"
 
 void yed_init_plugins(void) {
+    char  buff[256];
+    char *home;
+    char *init_plug;
+    int   err;
+
     ys->plugins = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
+
+    buff[0]   = 0;
+    home      = getenv("HOME");
+    init_plug = "/.yed/init.so";
+
+    if (!home)    { goto not_found; }
+
+    strcat(buff, home);
+    strcat(buff, init_plug);
+
+    if (access(buff, F_OK) != -1) {
+        err = yed_load_plugin(buff);
+
+        switch (err) {
+            case YED_PLUG_SUCCESS:
+                ys->small_message = "loaded init.so";
+                break;
+            case YED_PLUG_NO_BOOT:
+                ys->small_message = "!! init missing 'yed_plugin_boot' !!";
+                break;
+            case YED_PLUG_BOOT_FAIL:
+                ys->small_message = "!! init 'yed_plugin_boot' failed !!";
+                break;
+        }
+    } else {
+not_found:
+        ys->small_message = "no init plugin found";
+    }
 }
 
 void yed_plugin_force_lib_unload(const char *name, yed_plugin *plug) {
@@ -34,7 +67,7 @@ int yed_load_plugin(char *plug_name) {
     }
 
     plug->added_cmds     = array_make(char*);
-    plug->added_bindings = array_make(char*);
+    plug->added_bindings = array_make(int);
 
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
@@ -154,7 +187,7 @@ int yed_reload_plugins(void) {
     return 0;
 }
 
-void yed_plugin_add_command(yed_plugin *plug, char *name, yed_command command) {
+void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
     char *name_dup;
 
     name_dup = strdup(name);

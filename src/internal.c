@@ -120,10 +120,10 @@ void flush_output_buff(void) {
 }
 
 void yed_service_reload(void) {
-    tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,   ys->frames,     strcmp);
-    tree_reset_fns(yed_command_name_t, yed_command, ys->commands,         strcmp);
-    tree_reset_fns(yed_command_name_t, yed_command, ys->default_commands, strcmp);
-    tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,  ys->plugins,    strcmp);
+    tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,  ys->frames,           strcmp);
+    tree_reset_fns(yed_command_name_t, yed_command,      ys->commands,         strcmp);
+    tree_reset_fns(yed_command_name_t, yed_command,      ys->default_commands, strcmp);
+    tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t, ys->plugins,          strcmp);
 
     yed_set_default_commands();
     yed_reload_plugins();

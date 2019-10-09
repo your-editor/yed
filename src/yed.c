@@ -33,7 +33,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     ys->yed_lib       = yed_lib;
     ys->buff_list     = array_make(yed_buffer*);
-    ys->small_message = "* started yed *";
+/*     ys->small_message = "* started yed *"; */
 
     yed_init_output_stream();
     yed_init_commands();
@@ -89,6 +89,10 @@ yed_state * yed_get_state(void)         { return ys;  }
 static void write_small_message(void) {
     int sav_x, sav_y;
 
+    if (!ys->small_message) {
+        return;
+    }
+
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
     yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows);
@@ -102,6 +106,7 @@ static void write_cursor_loc_and_key(int key) {
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
+
     if (ys->active_frame) {
         yed_set_cursor(ys->term_cols - 20, ys->term_rows);
         append_n_to_output_buff("                    ", 20);
@@ -110,6 +115,7 @@ static void write_cursor_loc_and_key(int key) {
         append_to_output_buff(" :: ");
         append_int_to_output_buff(ys->active_frame->cursor_col);
     }
+
     yed_set_cursor(ys->term_cols - 5, ys->term_rows);
     append_n_to_output_buff("     ", 5);
     yed_set_cursor(ys->term_cols - 5, ys->term_rows);
@@ -125,6 +131,11 @@ int yed_pump(void) {
     }
 
     write_small_message();
+
+    /* Not sure why this is necessary, but... */
+    if (!ys->accepting_command && ys->active_frame) {
+        yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
+    }
 
     flush_output_buff();
 
@@ -142,11 +153,11 @@ int yed_pump(void) {
 
     if (ys->accepting_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
+        append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
         write_cursor_loc_and_key(keys[0]);
+        append_to_output_buff(TERM_CURSOR_SHOW);
     }
-
-    append_to_output_buff(TERM_CURSOR_SHOW);
 
     append_to_output_buff(TERM_RESET);
 

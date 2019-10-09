@@ -30,7 +30,7 @@ int yed_unload_plugin_libs(void);
 int yed_unload_plugins(void);
 int yed_reload_plugins(void);
 
-void yed_plugin_add_command(yed_plugin *plug, char *name, yed_command cmd);
+void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command cmd);
 void yed_plugin_bind_key(yed_plugin *plug, int key, char *command_name, int takes_key_as_arg);
 
 #endif

@@ -115,14 +115,20 @@ static yed_key_binding default_key_bindings[] = {
 };
 
 void yed_set_default_key_binding(int key) {
-    int i;
+    int             i;
+    yed_key_binding no_binding;
 
     for (i = 0; i < sizeof(default_key_bindings) / sizeof(yed_key_binding); i += 1) {
 
         if (default_key_bindings[i].key == key) {
             yed_bind_key(default_key_bindings[i]);
+            return;
         }
     }
+
+    memset(&no_binding, 0, sizeof(no_binding));
+    no_binding.key = key;
+    yed_bind_key(no_binding);
 }
 
 void yed_set_default_key_bindings(void) {
@@ -146,6 +152,9 @@ void yed_bind_key(yed_key_binding binding) {
         free(old_binding.cmd);
     }
 
-    binding.cmd              = strdup(binding.cmd);
+    if (binding.is_bound) {
+        binding.cmd = strdup(binding.cmd);
+    }
+
     ys->key_map[binding.key] = binding;
 }

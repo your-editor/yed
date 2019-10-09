@@ -198,7 +198,7 @@ void yed_do_command(void) {
 void yed_command_take_key(int key) {
     tree_it(yed_command_name_t, yed_command) it;
 
-    if (key == CTRL_F) {
+    if (key == CTRL_F || key == CTRL_C) {
         ys->accepting_command = 0;
         yed_clear_cmd_buff();
     } else if (key == TAB) {
