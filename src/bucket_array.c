@@ -1,7 +1,7 @@
 #include "bucket_array.h"
 
 
-static bucket_t new_bucket(bucket_array_t *array) {
+bucket_t new_bucket(bucket_array_t *array) {
     bucket_t bucket;
 
     bucket.data     = malloc(array->n_fit * array->elem_size);
@@ -11,7 +11,7 @@ static bucket_t new_bucket(bucket_array_t *array) {
     return bucket;
 }
 
-static bucket_array_t _bucket_array_make(int count, int elem_size) {
+bucket_array_t _bucket_array_make(int count, int elem_size) {
     bucket_array_t array;
 
     array.buckets   = array_make(bucket_t);
@@ -22,7 +22,7 @@ static bucket_array_t _bucket_array_make(int count, int elem_size) {
     return array;
 }
 
-static bucket_t * bucket_array_add_new_bucket(bucket_array_t *array) {
+bucket_t * bucket_array_add_new_bucket(bucket_array_t *array) {
     bucket_t  new_b,
              *b;
 
@@ -32,7 +32,7 @@ static bucket_t * bucket_array_add_new_bucket(bucket_array_t *array) {
     return b;
 }
 
-static void _bucket_array_free(bucket_array_t *array) {
+void _bucket_array_free(bucket_array_t *array) {
     bucket_t *bucket_it;
 
     array_traverse(array->buckets, bucket_it) {
@@ -45,7 +45,7 @@ static void _bucket_array_free(bucket_array_t *array) {
 #define BUCKET_ITEM(b, idx, elem_size) \
     ((b)->data + ((elem_size) * (idx)))
 
-static int get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
+int get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
     int       b_idx;
     bucket_t *b;
 
@@ -69,7 +69,7 @@ static int get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
     return -1;
 }
 
-static int get_bucket_and_slot_idx_for_idx(bucket_array_t *array, int *idx) {
+int get_bucket_and_slot_idx_for_idx(bucket_array_t *array, int *idx) {
     int       b_idx;
     bucket_t *b, new_b;
 
@@ -95,7 +95,7 @@ static int get_bucket_and_slot_idx_for_idx(bucket_array_t *array, int *idx) {
     return -1;
 }
 
-static void * _bucket_array_item(bucket_array_t *array, int idx) {
+void * _bucket_array_item(bucket_array_t *array, int idx) {
     bucket_t *b;
     int       b_idx;
 
@@ -107,7 +107,7 @@ static void * _bucket_array_item(bucket_array_t *array, int idx) {
     return BUCKET_ITEM(b, idx, array->elem_size);
 }
 
-static void *_bucket_array_last(bucket_array_t *array) {
+void *_bucket_array_last(bucket_array_t *array) {
     bucket_t *b;
 
     if (array_len(array->buckets) == 0) {
@@ -121,7 +121,7 @@ static void *_bucket_array_last(bucket_array_t *array) {
     return BUCKET_ITEM(b, b->used - 1, array->elem_size);
 }
 
-static void bucket_delete(bucket_array_t *array, int b_idx, int idx, int elem_size) {
+void bucket_delete(bucket_array_t *array, int b_idx, int idx, int elem_size) {
     void     *split;
     bucket_t *b;
 
@@ -146,7 +146,7 @@ static void bucket_delete(bucket_array_t *array, int b_idx, int idx, int elem_si
     array->used -= 1;
 }
 
-static void _bucket_array_delete(bucket_array_t *array, int idx) {
+void _bucket_array_delete(bucket_array_t *array, int idx) {
     int b_idx;
 
     if (idx == array->used - 1) {
@@ -160,7 +160,7 @@ static void _bucket_array_delete(bucket_array_t *array, int idx) {
     bucket_delete(array, b_idx, idx, array->elem_size);
 }
 
-static void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *elem, int elem_size) {
+void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *elem, int elem_size) {
     void     *elem_slot;
     bucket_t *b, *spill_b, *next_b, new_b;
 
@@ -222,7 +222,7 @@ static void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *ele
     return elem_slot;
 }
 
-static void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem) {
+void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem) {
     int   b_idx;
     void *new_elem;
 
@@ -239,7 +239,7 @@ static void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem) {
     return new_elem;
 }
 
-static void * _bucket_array_push(bucket_array_t *array, void *elem) {
+void * _bucket_array_push(bucket_array_t *array, void *elem) {
     int       elem_size,
               created_new_bucket;
     bucket_t *b;
@@ -270,7 +270,7 @@ static void * _bucket_array_push(bucket_array_t *array, void *elem) {
     return elem_slot;
 }
 
-static void _bucket_array_pop(bucket_array_t *array) {
+void _bucket_array_pop(bucket_array_t *array) {
     int       b_idx;
     bucket_t *b;
 

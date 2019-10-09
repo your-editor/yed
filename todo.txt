@@ -1,5 +1,4 @@
-* hardening for buffers, the buffer list, and frames
-    * how to handle overlapping frames?
+* how to handle overlapping frames?
 * keybindings
     * temporal?
 * basic plug support

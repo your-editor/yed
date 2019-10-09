@@ -18,14 +18,14 @@ typedef struct {
              used;
 } bucket_array_t;
 
-static bucket_array_t _bucket_array_make(int count, int elem_size);
-static void _bucket_array_free(bucket_array_t *array);
-static void * _bucket_array_item(bucket_array_t *array, int idx);
-static void * _bucket_array_last(bucket_array_t *array);
-static void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem);
-static void * _bucket_array_push(bucket_array_t *array, void *elem);
-static void _bucket_array_delete(bucket_array_t *array, int idx);
-static void _bucket_array_pop(bucket_array_t *array);
+bucket_array_t _bucket_array_make(int count, int elem_size);
+void _bucket_array_free(bucket_array_t *array);
+void * _bucket_array_item(bucket_array_t *array, int idx);
+void * _bucket_array_last(bucket_array_t *array);
+void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem);
+void * _bucket_array_push(bucket_array_t *array, void *elem);
+void _bucket_array_delete(bucket_array_t *array, int idx);
+void _bucket_array_pop(bucket_array_t *array);
 
 #define bucket_array_make(n, T) \
     (_bucket_array_make(n, sizeof(T)))

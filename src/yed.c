@@ -9,6 +9,9 @@
 #include "frame.c"
 #include "command.c"
 #include "getRSS.c"
+#include "plugin.c"
+
+yed_state *ys;
 
 static void write_welcome(void) {
     const char *msg1;
@@ -22,17 +25,21 @@ static void write_welcome(void) {
     append_to_output_buff(msg2);
 }
 
-yed_state * yed_init(int argc, char **argv) {
+yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     int i;
 
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
-    ys->buff_list = array_make(yed_buffer*);
+    ys->yed_lib       = yed_lib;
+    ys->buff_list     = array_make(yed_buffer*);
+    ys->small_message = "* started yed *";
 
     yed_init_output_stream();
     yed_init_commands();
     yed_init_frames();
+    yed_init_keys();
+    yed_init_plugins();
 
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
@@ -79,14 +86,47 @@ void yed_fini(yed_state *state) {
 void yed_set_state(yed_state *state)    { ys = state; }
 yed_state * yed_get_state(void)         { return ys;  }
 
-int yed_pump(void) {
-    int   keys[16], n_keys, i, sav_x, sav_y;
+static void write_small_message(void) {
+    int sav_x, sav_y;
 
-    flush_output_buff();
+    sav_x = ys->cur_x;
+    sav_y = ys->cur_y;
+    yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows);
+    append_to_output_buff(ys->small_message);
+
+    yed_set_cursor(sav_x, sav_y);
+}
+
+static void write_cursor_loc_and_key(int key) {
+    int sav_x, sav_y;
+
+    sav_x = ys->cur_x;
+    sav_y = ys->cur_y;
+    if (ys->active_frame) {
+        yed_set_cursor(ys->term_cols - 20, ys->term_rows);
+        append_n_to_output_buff("                    ", 20);
+        yed_set_cursor(ys->term_cols - 20, ys->term_rows);
+        append_int_to_output_buff(ys->active_frame->cursor_line);
+        append_to_output_buff(" :: ");
+        append_int_to_output_buff(ys->active_frame->cursor_col);
+    }
+    yed_set_cursor(ys->term_cols - 5, ys->term_rows);
+    append_n_to_output_buff("     ", 5);
+    yed_set_cursor(ys->term_cols - 5, ys->term_rows);
+    append_int_to_output_buff(key);
+    yed_set_cursor(sav_x, sav_y);
+}
+
+int yed_pump(void) {
+    int   keys[16], n_keys, i;
 
     if (ys->status == YED_RELOAD) {
         yed_service_reload();
     }
+
+    write_small_message();
+
+    flush_output_buff();
 
     ys->status = YED_NORMAL;
 
@@ -102,18 +142,11 @@ int yed_pump(void) {
 
     if (ys->accepting_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
-        append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
-        sav_x = ys->cur_x;
-        sav_y = ys->cur_y;
-        yed_set_cursor(ys->term_cols - 5, ys->term_rows);
-        append_n_to_output_buff("     ", 5);
-        yed_set_cursor(ys->term_cols - 5, ys->term_rows);
-        append_int_to_output_buff(keys[0]);
-        yed_set_cursor(sav_x, sav_y);
-
-        append_to_output_buff(TERM_CURSOR_SHOW);
+        write_cursor_loc_and_key(keys[0]);
     }
+
+    append_to_output_buff(TERM_CURSOR_SHOW);
 
     append_to_output_buff(TERM_RESET);
 

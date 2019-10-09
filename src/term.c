@@ -1,7 +1,7 @@
 #include "internal.h"
 
 
-static int yed_term_enter(void) {
+int yed_term_enter(void) {
     struct termios raw_term;
 
     tcgetattr(0, &ys->sav_term);
@@ -35,7 +35,7 @@ static int yed_term_enter(void) {
     return 0;
 }
 
-static int yed_term_exit(void) {
+int yed_term_exit(void) {
     printf(TERM_STD_SCREEN);
 
     tcsetattr(0, TCSAFLUSH, &ys->sav_term);
@@ -45,7 +45,7 @@ static int yed_term_exit(void) {
     return 0;
 }
 
-static int yed_term_get_dim(int *r, int *c) {
+int yed_term_get_dim(int *r, int *c) {
     struct winsize ws;
 
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
@@ -57,17 +57,17 @@ static int yed_term_get_dim(int *r, int *c) {
     }
 }
 
-static void yed_clear_screen(void) {
+void yed_clear_screen(void) {
     append_to_output_buff(TERM_CLEAR_SCREEN);
 }
 
-static void yed_cursor_home(void) {
+void yed_cursor_home(void) {
     append_to_output_buff(TERM_CURSOR_HOME);
 
     ys->cur_y = ys->cur_x = 1;
 }
 
-static void yed_set_cursor(int col, int row) {
+void yed_set_cursor(int col, int row) {
 
     if (col < 1)    { col = 1; }
     if (row < 1)    { row = 1; }

@@ -12,13 +12,13 @@ typedef struct {
     int   capacity;
 } array_t;
 
-static array_t _array_make(int elem_size);
-static array_t _array_make_with_cap(int elem_size, int initial_cap);
-static void * _array_push(array_t *array, void *elem);
-static void * _array_next_elem(array_t *array);
-static void _array_delete(array_t *array, int idx);
-static void _array_zero_term(array_t *array);
-static void _array_grow_if_needed(array_t *array);
+array_t _array_make(int elem_size);
+array_t _array_make_with_cap(int elem_size, int initial_cap);
+void * _array_push(array_t *array, void *elem);
+void * _array_next_elem(array_t *array);
+void _array_delete(array_t *array, int idx);
+void _array_zero_term(array_t *array);
+void _array_grow_if_needed(array_t *array);
 
 #define array_make(T) \
     (_array_make(sizeof(T)))

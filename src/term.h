@@ -47,13 +47,13 @@
 #define TERM_CURSOR_MOVE_END "H"
 
 
-static int yed_term_enter(void);
-static int yed_term_exit(void);
+int yed_term_enter(void);
+int yed_term_exit(void);
 
-static int yed_term_get_dim(int *r, int *c);
+int yed_term_get_dim(int *r, int *c);
 
-static void yed_clear_screen(void);
-static void yed_cursor_home(void);
-static void yed_set_cursor(int col, int row);
+void yed_clear_screen(void);
+void yed_cursor_home(void);
+void yed_set_cursor(int col, int row);
 
 #endif

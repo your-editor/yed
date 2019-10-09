@@ -1,11 +1,11 @@
 #include "internal.h"
 
-static void yed_init_frames(void) {
+void yed_init_frames(void) {
     ys->frames       = tree_make_c(yed_frame_id_t, yed_frame_ptr_t, strcmp);
     ys->active_frame = NULL;
 }
 
-static yed_frame * yed_add_new_frame(yed_frame_id_t id, int top, int left, int height, int width) {
+yed_frame * yed_add_new_frame(yed_frame_id_t id, int top, int left, int height, int width) {
     yed_frame *frame;
 
     frame = yed_new_frame(id, top, left, height, width);
@@ -15,7 +15,7 @@ static yed_frame * yed_add_new_frame(yed_frame_id_t id, int top, int left, int h
     return frame;
 }
 
-static yed_frame * yed_get_frame(yed_frame_id_t id) {
+yed_frame * yed_get_frame(yed_frame_id_t id) {
     tree_it(yed_frame_id_t, yed_frame_ptr_t) it;
 
     it = tree_lookup(ys->frames, id);
@@ -27,7 +27,7 @@ static yed_frame * yed_get_frame(yed_frame_id_t id) {
     return NULL;
 }
 
-static yed_frame * yed_get_or_add_frame(yed_frame_id_t id) {
+yed_frame * yed_get_or_add_frame(yed_frame_id_t id) {
     yed_frame *frame;
 
     frame = yed_get_frame(id);
@@ -39,7 +39,7 @@ static yed_frame * yed_get_or_add_frame(yed_frame_id_t id) {
     return frame;
 }
 
-static yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int height, int width) {
+yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int height, int width) {
     yed_frame *frame;
 
     frame = malloc(sizeof(*frame));
@@ -64,7 +64,7 @@ static yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int heigh
     return frame;
 }
 
-static void yed_activate_frame(yed_frame *frame) {
+void yed_activate_frame(yed_frame *frame) {
     if (ys->active_frame && ys->active_frame != frame) {
         ys->active_frame->dirty      = 1;
         ys->active_frame->dirty_line = 0;
@@ -82,7 +82,7 @@ static void yed_activate_frame(yed_frame *frame) {
     ys->active_frame->dirty_line = ys->active_frame->cursor_line;
 }
 
-static void yed_clear_frame(yed_frame *frame) {
+void yed_clear_frame(yed_frame *frame) {
     int r, c;
     int x, y;
 
@@ -100,7 +100,7 @@ static void yed_clear_frame(yed_frame *frame) {
     yed_set_cursor(x, y);
 }
 
-static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
+void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
     int  n, n_col, starting_idx;
     char c;
     yed_cell *cell_it;
@@ -149,7 +149,7 @@ static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, 
 }
 
 #if 0
-static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
+void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
     int  i, n, n_col, n_cell;
     char c;
     yed_cell *cell_it;
@@ -189,7 +189,7 @@ static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, 
 #endif
 
 #if 0
-static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
+void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
     int  i, n;
     char c;
 
@@ -215,7 +215,7 @@ static void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, 
 }
 #endif
 
-static void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
+void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     int i, n;
 
     for (i = 0; i < frame->height - y_offset; i += 1) {
@@ -227,7 +227,7 @@ static void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     }
 }
 
-static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset) {
+void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset) {
     yed_line *line;
     int lines_drawn;
 
@@ -244,17 +244,17 @@ static void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset
     yed_frame_draw_fill(frame, lines_drawn);
 }
 
-static void yed_frame_set_pos(yed_frame *frame, int top, int left) {
+void yed_frame_set_pos(yed_frame *frame, int top, int left) {
     frame->top  = top;
     frame->left = left;
 }
 
-static void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
+void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     frame->buffer = buff;
     frame->dirty  = 1;
 }
 
-static void yed_frame_update(yed_frame *frame) {
+void yed_frame_update(yed_frame *frame) {
     if (frame->buffer) {
         if (frame->dirty) {
             yed_frame_draw_buff(frame, frame->buffer, frame->buffer_y_offset, frame->buffer_x_offset);
@@ -272,7 +272,7 @@ static void yed_frame_update(yed_frame *frame) {
     frame->dirty = frame->dirty_line = 0;
 }
 
-static void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines, int buff_big_enough_to_scroll) {
+void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines, int buff_big_enough_to_scroll) {
     int new_y,
         bot;
 
@@ -319,7 +319,7 @@ static void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_
     f->cursor_line = f->buffer_y_offset + (f->cur_y - f->top + 1);
 }
 
-static void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
+void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
     int       new_x;
 
     if (dir > 0) {
@@ -352,7 +352,7 @@ static void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_
     f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
 }
 
-static void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
+void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     int       col, row;
 
     row = new_y - f->cursor_line;
@@ -361,7 +361,7 @@ static void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_move_cursor_within_frame(f, col, row);
 }
 
-static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
+void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
     int       i,
               dir,
               line_width,
@@ -408,7 +408,7 @@ static void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
     }
 }
 
-static void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
+void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
     int buff_n_lines;
 
     if (frame->buffer) {
@@ -431,17 +431,17 @@ static void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst
     }
 }
 
-static void yed_frame_reset_cursor(yed_frame *frame) {
+void yed_frame_reset_cursor(yed_frame *frame) {
     yed_set_cursor_far_within_frame(frame, frame->cursor_col, frame->cursor_line);
 }
 
-static void yed_move_cursor_within_active_frame(int col, int row) {
+void yed_move_cursor_within_active_frame(int col, int row) {
     if (ys->active_frame) {
         yed_move_cursor_within_frame(ys->active_frame, col, row);
     }
 }
 
-static void yed_update_frames(void) {
+void yed_update_frames(void) {
     yed_frame                                *frame;
     tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
 
@@ -459,7 +459,7 @@ static void yed_update_frames(void) {
     }
 }
 
-static int yed_frame_line_is_visible(yed_frame *frame, int row) {
+int yed_frame_line_is_visible(yed_frame *frame, int row) {
     if (!frame->buffer) {
         return 0;
     }
@@ -468,7 +468,7 @@ static int yed_frame_line_is_visible(yed_frame *frame, int row) {
            && (row <= bucket_array_len(frame->buffer->lines));
 }
 
-static int yed_frame_line_to_y(yed_frame *frame, int row) {
+int yed_frame_line_to_y(yed_frame *frame, int row) {
     if (!frame->buffer || !yed_frame_line_is_visible(frame, row)) {
         return 0;
     }
@@ -476,7 +476,7 @@ static int yed_frame_line_to_y(yed_frame *frame, int row) {
     return frame->top + row - (frame->buffer_y_offset + 1);
 }
 
-static void yed_frame_update_dirty_line(yed_frame *frame) {
+void yed_frame_update_dirty_line(yed_frame *frame) {
     yed_line *line;
     int       y;
 
@@ -493,7 +493,7 @@ static void yed_frame_update_dirty_line(yed_frame *frame) {
     }
 }
 
-static void yed_frame_update_cursor_line(yed_frame *frame) {
+void yed_frame_update_cursor_line(yed_frame *frame) {
     yed_line *line;
     int       y;
 
@@ -519,7 +519,7 @@ static void yed_frame_update_cursor_line(yed_frame *frame) {
     }
 }
 
-static void yed_mark_dirty_frames(yed_buffer *dirty_buff) {
+void yed_mark_dirty_frames(yed_buffer *dirty_buff) {
     tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
     yed_frame                                *frame;
 
@@ -531,7 +531,7 @@ static void yed_mark_dirty_frames(yed_buffer *dirty_buff) {
     }
 }
 
-static void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
+void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
     tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
     yed_frame                                *frame;
 

@@ -1,6 +1,6 @@
 #include "internal.h"
 
-static yed_line yed_new_line(void) {
+yed_line yed_new_line(void) {
     yed_line line;
 
     memset(&line, 0, sizeof(line));
@@ -10,7 +10,7 @@ static yed_line yed_new_line(void) {
     return line;
 }
 
-static yed_line yed_new_line_with_cap(int len) {
+yed_line yed_new_line_with_cap(int len) {
     yed_line line;
 
     memset(&line, 0, sizeof(line));
@@ -20,30 +20,30 @@ static yed_line yed_new_line_with_cap(int len) {
     return line;
 }
 
-static void yed_free_line(yed_line *line) {
+void yed_free_line(yed_line *line) {
     array_free(line->cells);
 }
 
-static void yed_line_add_cell(yed_line *line, yed_cell *cell, int idx) {
+void yed_line_add_cell(yed_line *line, yed_cell *cell, int idx) {
     array_insert(line->cells, idx, *cell);
     line->visual_width += 1;
 }
 
-static void yed_line_append_cell(yed_line *line, yed_cell *cell) {
+void yed_line_append_cell(yed_line *line, yed_cell *cell) {
     array_push(line->cells, *cell);
     line->visual_width += 1;
 }
 
-static void yed_line_delete_cell(yed_line *line, int idx) {
+void yed_line_delete_cell(yed_line *line, int idx) {
     line->visual_width -= 1;
     array_delete(line->cells, idx);
 }
 
-static void yed_line_pop_cell(yed_line *line) {
+void yed_line_pop_cell(yed_line *line) {
     yed_line_delete_cell(line, array_len(line->cells) - 1);
 }
 
-static yed_line * yed_buffer_add_line(yed_buffer *buff) {
+yed_line * yed_buffer_add_line(yed_buffer *buff) {
     yed_line new_line,
              *line;
 
@@ -56,7 +56,7 @@ static yed_line * yed_buffer_add_line(yed_buffer *buff) {
     return line;
 }
 
-static yed_buffer yed_new_buff(void) {
+yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
     buff.lines = bucket_array_make(1024, yed_line);
@@ -67,14 +67,14 @@ static yed_buffer yed_new_buff(void) {
     return buff;
 }
 
-static void yed_append_to_line(yed_line *line, char c) {
+void yed_append_to_line(yed_line *line, char c) {
     yed_cell cell;
 
     cell.__data = YED_NEW_CELL__DATA(c);
     yed_line_append_cell(line, &cell);
 }
 
-static void yed_append_to_new_buff(yed_buffer *buff, char c) {
+void yed_append_to_new_buff(yed_buffer *buff, char c) {
     yed_line *line;
 
     if (c == '\r') {
@@ -91,7 +91,7 @@ static void yed_append_to_new_buff(yed_buffer *buff, char c) {
 }
 
 
-static int yed_line_col_to_cell_idx(yed_line *line, int col) {
+int yed_line_col_to_cell_idx(yed_line *line, int col) {
     int       found;
     int       cell_idx;
     yed_cell *cell_it;
@@ -122,7 +122,7 @@ static int yed_line_col_to_cell_idx(yed_line *line, int col) {
     return cell_idx;
 }
 
-static yed_cell * yed_line_col_to_cell(yed_line *line, int col) {
+yed_cell * yed_line_col_to_cell(yed_line *line, int col) {
     int idx;
 
     idx = yed_line_col_to_cell_idx(line, col);
@@ -134,12 +134,12 @@ static yed_cell * yed_line_col_to_cell(yed_line *line, int col) {
     return array_item(line->cells, idx);
 }
 
-static void yed_line_clear(yed_line *line) {
+void yed_line_clear(yed_line *line) {
     array_clear(line->cells);
     line->visual_width = 0;
 }
 
-static yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
+yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     int idx;
 
     idx = row - 1;
@@ -151,7 +151,7 @@ static yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     return bucket_array_item(buff->lines, idx);
 }
 
-static yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
+yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
     int      idx;
     yed_line new_line, *line;
 
@@ -169,7 +169,7 @@ static yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
     return line;
 }
 
-static void yed_buff_delete_line(yed_buffer *buff, int row) {
+void yed_buff_delete_line(yed_buffer *buff, int row) {
     int       idx;
     yed_line *line;
 
@@ -184,7 +184,7 @@ static void yed_buff_delete_line(yed_buffer *buff, int row) {
     yed_mark_dirty_frames(buff);
 }
 
-static void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
+void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
     int       idx;
     yed_line *line;
     yed_cell  cell;
@@ -202,7 +202,7 @@ static void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
     yed_mark_dirty_frames_line(buff, row);
 }
 
-static void yed_delete_from_line(yed_buffer *buff, int row, int col) {
+void yed_delete_from_line(yed_buffer *buff, int row, int col) {
     int       idx;
     yed_line *line;
 
@@ -219,7 +219,7 @@ static void yed_delete_from_line(yed_buffer *buff, int row, int col) {
 }
 
 
-static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
+void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     FILE        *f;
     int          fd, i, j, k, line_len, file_size;
     struct stat  fs;
@@ -308,7 +308,7 @@ static void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     yed_mark_dirty_frames(buff);
 }
 
-static void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
+void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
     FILE     *f;
     yed_line *line;
     yed_cell *cell;

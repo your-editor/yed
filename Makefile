@@ -13,7 +13,7 @@ endif
 LIB_C_FLAGS=-shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl -lm $(CFG)
 DRV_C_FLAGS=-Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl -lm $(CFG)
 
-all: yed_driver
+all: yed_driver vimish
 
 yed_driver: lib_yed
 	$(CC) src/yed_driver.c $(DRV_C_FLAGS) -o yed
@@ -21,7 +21,10 @@ yed_driver: lib_yed
 lib_yed:
 	$(CC) src/yed.c $(LIB_C_FLAGS) -o libyed.so
 
-check: lib_yed
+check: lib_yed vimish
+
+vimish:
+	$(CC) vimish.c -O0 -g -shared -fPIC -Wall $(ERR_LIM) -Werror -Wno-unused-function -o vimish.so -L. -lyed
 
 clean:
 	rm -rf yed libyed.so yed.dSYM libyed.so.dSYM

@@ -5,28 +5,31 @@
 
 #define YED_CMD_PROMPT ": "
 
-typedef const char *yed_command_name_t;
-typedef void (*yed_command_t)(int, char**);
+typedef char *yed_command_name_t;
+typedef void (*yed_command)(int, char**);
 
+void yed_init_commands(void);
 
-static void yed_init_commands(void);
+yed_command yed_get_command(char *name);
+void yed_set_command(char *name, yed_command command);
+void yed_unset_command(char *name);
 
-static void yed_add_command(const char *name, yed_command_t command);
-static yed_command_t yed_get_command(const char *name);
+void yed_set_default_command(char *name, yed_command command);
+void yed_set_default_commands(void);
 
-static void yed_add_default_commands(void);
-static void yed_reload_default_commands(void);
+void yed_append_text_to_cmd_buff(char *s);
+void yed_append_non_text_to_cmd_buff(char *s);
+void yed_append_int_to_cmd_buff(int i);
 
-static void yed_append_text_to_cmd_buff(char *s);
-static void yed_append_non_text_to_cmd_buff(char *s);
-static void yed_append_int_to_cmd_buff(int i);
+void yed_draw_command_line(void);
+void yed_do_command(void);
+void yed_command_take_key(int key);
 
-static void yed_draw_command_line(void);
-static void yed_do_command(void);
-static void yed_command_take_key(int key);
+int yed_execute_command(char* name, int, char**);
+void yed_add_command(char *name, yed_command cmd);
 
 #define DEF_DEFAULT_COMMAND(name) \
-    static void yed_default_command_##name(int n_args, char **args)
+    void yed_default_command_##name(int, char**)
 
 DEF_DEFAULT_COMMAND(command_prompt);
 DEF_DEFAULT_COMMAND(quit);
@@ -41,6 +44,7 @@ DEF_DEFAULT_COMMAND(cursor_line_end);
 DEF_DEFAULT_COMMAND(cursor_next_word);
 DEF_DEFAULT_COMMAND(cursor_buffer_begin);
 DEF_DEFAULT_COMMAND(cursor_buffer_end);
+DEF_DEFAULT_COMMAND(cursor_line);
 DEF_DEFAULT_COMMAND(buffer_new);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frames_list);
@@ -52,9 +56,8 @@ DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(delete_back);
 DEF_DEFAULT_COMMAND(delete_line);
 DEF_DEFAULT_COMMAND(write_buffer);
-
-
-
-static int yed_execute_command(const char *name, int n_args, char **args);
+DEF_DEFAULT_COMMAND(plugin_load);
+DEF_DEFAULT_COMMAND(plugin_unload);
+DEF_DEFAULT_COMMAND(plugins_list);
 
 #endif

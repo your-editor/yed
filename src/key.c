@@ -1,13 +1,17 @@
 #include "internal.h"
 
-static int esc_timout(char *seq) {
+void yed_init_keys(void) {
+    yed_set_default_key_bindings();
+}
+
+int esc_timout(char *seq) {
     if (read(0, seq, 1)     == 0)    { return ESC; }
     if (read(0, seq + 1, 1) == 0)    { return ESC; }
 
     return 0;
 }
 
-static int esc_sequence(char *seq) {
+int esc_sequence(char *seq) {
     if (seq[0] == '[') { /* ESC [ sequences. */
         if (seq[1] >= '0' && seq[1] <= '9') {
             /* Extended escape, read additional byte. */
@@ -39,13 +43,14 @@ static int esc_sequence(char *seq) {
     return 0;
 }
 
-static int yed_read_keys(int *input) {
+int yed_read_keys(int *input) {
     int  nread;
     char c, seq[3];
 
 
     while ((nread = read(0, &c, 1)) == 0);
-    if (nread == -1)    { ERR("could not read key"); }
+/*     if (nread == -1)    { ERR("could not read key"); } */
+    if (nread == -1)    { return 0; }
 
     switch (c) {
         case ESC:    /* escape sequence */
@@ -75,43 +80,72 @@ static int yed_read_keys(int *input) {
     return 0;
 }
 
-static void yed_take_key(int key) {
-    char *key_str;
-    char  key_str_buff[2];
+void yed_take_key(int key) {
+    yed_key_binding *binding;
+    char             key_str_buff[32];
+    char            *key_str;
 
-    key_str_buff[0] = (char)key;
-    key_str_buff[1] = 0;
-    key_str         = key_str_buff;
+
+    binding = ys->key_map + key;
+
+    sprintf(key_str_buff, "%d", key);
+    key_str = key_str_buff;
 
     if (ys->accepting_command) {
         yed_execute_command("command-prompt", 1, &key_str);
-    } else {
-        switch (key) {
-            case 0:             return;
-            case ARROW_UP:    yed_execute_command("cursor-up",        0, NULL); break;
-            case ARROW_DOWN:  yed_execute_command("cursor-down",      0, NULL); break;
-            case ARROW_RIGHT: yed_execute_command("cursor-right",     0, NULL); break;
-            case ARROW_LEFT:  yed_execute_command("cursor-left",      0, NULL); break;
-            case BACKSPACE:   yed_execute_command("delete-back",      0, NULL); break;
-            case CTRL_F:      yed_execute_command("command-prompt",   0, NULL); break;
-            case CTRL_L:      yed_execute_command("frame-next",       0, NULL); break;
-            case FOOZLE:
-            case CTRL_D:      yed_execute_command("delete-line",      0, NULL); break;
-            case CTRL_W:      yed_execute_command("cursor-next-word", 0, NULL); break;
-            default: {
-                if (key == ENTER || key == TAB || !iscntrl(key)) {
-                    yed_execute_command("insert", 1, &key_str);
-                }
-            }
-        }
+    } else if (binding->is_bound) {
+        yed_execute_command(binding->cmd, binding->takes_key_as_arg, &key_str);
+    } else if (key == ENTER || key == TAB || !iscntrl(key)) {
+        yed_execute_command("insert", 1, &key_str);
     }
 
-    if (ys->active_frame) {
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows);
-        append_n_to_output_buff("                    ", 20);
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows);
-        append_int_to_output_buff(ys->active_frame->cursor_line);
-        append_to_output_buff(" :: ");
-        append_int_to_output_buff(ys->active_frame->cursor_col);
+}
+
+static yed_key_binding default_key_bindings[] = {
+    { 1, CTRL_F,      "command-prompt",   0 },
+    { 1, ARROW_UP,    "cursor-up",        0 },
+    { 1, ARROW_DOWN,  "cursor-down",      0 },
+    { 1, ARROW_RIGHT, "cursor-right",     0 },
+    { 1, ARROW_LEFT,  "cursor-left",      0 },
+    { 1, BACKSPACE,   "delete-back",      0 },
+    { 1, CTRL_F,      "command-prompt",   0 },
+    { 1, CTRL_L,      "frame-next",       0 },
+    { 1, CTRL_D,      "delete-line",      0 },
+    { 1, CTRL_W,      "cursor-next-word", 0 }
+};
+
+void yed_set_default_key_binding(int key) {
+    int i;
+
+    for (i = 0; i < sizeof(default_key_bindings) / sizeof(yed_key_binding); i += 1) {
+
+        if (default_key_bindings[i].key == key) {
+            yed_bind_key(default_key_bindings[i]);
+        }
     }
+}
+
+void yed_set_default_key_bindings(void) {
+    int i;
+
+    for (i = 0; i < sizeof(default_key_bindings) / sizeof(yed_key_binding); i += 1) {
+
+        yed_bind_key(default_key_bindings[i]);
+    }
+}
+
+void yed_bind_key(yed_key_binding binding) {
+    yed_key_binding old_binding;
+
+    if (binding.key >= KEY_MAX) {
+        return;
+    }
+
+    old_binding = ys->key_map[binding.key];
+    if (old_binding.is_bound) {
+        free(old_binding.cmd);
+    }
+
+    binding.cmd              = strdup(binding.cmd);
+    ys->key_map[binding.key] = binding;
 }

@@ -3,7 +3,7 @@
 
 
 #ifdef YED_DO_ASSERTIONS
-static void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
+void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
 
     fprintf(stderr, "Assertion failed -- %s\n"
@@ -33,7 +33,7 @@ uint64_t next_power_of_2(uint64_t x) {
 
 
 
-static char * pretty_bytes(uint64_t n_bytes) {
+char * pretty_bytes(uint64_t n_bytes) {
     uint64_t    s;
     double      count;
     char       *r;
@@ -63,7 +63,7 @@ static char * pretty_bytes(uint64_t n_bytes) {
 
 
 
-static void yed_add_new_buff(void) {
+void yed_add_new_buff(void) {
     yed_buffer *new_buff;
 
     new_buff  = malloc(sizeof(*new_buff));
@@ -71,20 +71,20 @@ static void yed_add_new_buff(void) {
     array_push(ys->buff_list, new_buff);
 }
 
-static void clear_output_buff(void) {
+void clear_output_buff(void) {
     ys->out_s.data[0] = 0;
     ys->out_s.used    = 1; /* 1 for NULL */
 }
 
-static void yed_init_output_stream(void) {
+void yed_init_output_stream(void) {
     ys->out_s.avail = 4096;
     ys->out_s.used  = 1; /* 1 for NULL */
     ys->out_s.data  = calloc(ys->out_s.avail, 1);
 }
 
-static int output_buff_len(void) { return ys->out_s.used; }
+int output_buff_len(void) { return ys->out_s.used; }
 
-static void append_n_to_output_buff(const char *s, int n) {
+void append_n_to_output_buff(const char *s, int n) {
     char *data_save;
 
     if (n) {
@@ -102,11 +102,11 @@ static void append_n_to_output_buff(const char *s, int n) {
     }
 }
 
-static void append_to_output_buff(const char *s) {
+void append_to_output_buff(const char *s) {
     append_n_to_output_buff(s, strlen(s));
 }
 
-static void append_int_to_output_buff(int i) {
+void append_int_to_output_buff(int i) {
     char s[16];
 
     sprintf(s, "%d", i);
@@ -114,18 +114,24 @@ static void append_int_to_output_buff(int i) {
     append_to_output_buff(s);
 }
 
-static void flush_output_buff(void) {
+void flush_output_buff(void) {
     write(1, ys->out_s.data, ys->out_s.used);
     clear_output_buff();
 }
 
-static void yed_service_reload(void) {
-    tree_reset_fns(yed_frame_id_t, yed_frame_ptr_t, ys->frames, strcmp);
-    tree_reset_fns(yed_command_name_t, yed_command_t, ys->commands, strcmp);
-    yed_reload_default_commands();
+void yed_service_reload(void) {
+    tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,   ys->frames,     strcmp);
+    tree_reset_fns(yed_command_name_t, yed_command, ys->commands,         strcmp);
+    tree_reset_fns(yed_command_name_t, yed_command, ys->default_commands, strcmp);
+    tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,  ys->plugins,    strcmp);
+
+    yed_set_default_commands();
+    yed_reload_plugins();
+
+    ys->small_message = "* reload serviced *";
 }
 
-static int s_to_i(const char *s) {
+int s_to_i(const char *s) {
     int i;
 
     sscanf(s, "%d", &i);

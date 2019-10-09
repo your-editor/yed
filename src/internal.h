@@ -15,20 +15,28 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <math.h>
+#include <dlfcn.h>
+#include <unistd.h>
+
 
 #include "tree.h"
 
 #define inline
-typedef const char *yed_command_name_t;
-typedef void (*yed_command_t)(int, char**);
-use_tree(yed_command_name_t, yed_command_t);
+typedef char *yed_command_name_t;
+typedef void (*yed_command)(int, char**);
+use_tree(yed_command_name_t, yed_command);
 
 struct yed_frame_t;
 typedef struct yed_frame_t *yed_frame_ptr_t;
-typedef const char *yed_frame_id_t;
+typedef char *yed_frame_id_t;
 use_tree(yed_frame_id_t, yed_frame_ptr_t);
 
 use_tree(int, int);
+
+typedef char *yed_plugin_name_t;
+struct yed_plugin_t;
+typedef struct yed_plugin_t *yed_plugin_ptr_t;
+use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 #undef inline
 
 #include "array.h"
@@ -40,12 +48,13 @@ use_tree(int, int);
 #include "frame.h"
 #include "command.h"
 #include "getRSS.h"
+#include "plugin.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 
 #ifdef YED_DO_ASSERTIONS
-static void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
+void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
 #define ASSERT(cond, msg)                            \
 do { if (unlikely(!(cond))) {                        \
     yed_assert_fail(msg, __FILE__, __LINE__, #cond); \
@@ -108,13 +117,13 @@ do { if (unlikely(!(cond))) {                        \
      + LOG2_32BIT((v)*1L >>16*((v)/2L>>31 > 0)               \
                          >>16*((v)/2L>>31 > 0)))
 
-static uint64_t next_power_of_2(uint64_t x);
+uint64_t next_power_of_2(uint64_t x);
 
 #define KiB(x) ((x) * 1024ULL)
 #define MiB(x) ((x) * 1024ULL * KiB(1ULL))
 #define GiB(x) ((x) * 1024ULL * MiB(1ULL))
 #define TiB(x) ((x) * 1024ULL * GiB(1ULL))
-static char *pretty_bytes(uint64_t n_bytes);
+char *pretty_bytes(uint64_t n_bytes);
 
 
 typedef struct {
@@ -126,6 +135,7 @@ typedef struct {
 #define MAX_BUFFERS (128)
 
 typedef struct yed_state_t {
+    yed_lib_t      *yed_lib;
     output_stream   out_s;
     struct termios  sav_term;
     int             term_cols,
@@ -142,24 +152,28 @@ typedef struct yed_state_t {
     int             cmd_cursor_x;
     char            command_buff[128];
     int             status;
-    tree(yed_command_name_t, yed_command_t) commands;
+    tree(yed_command_name_t, yed_command) commands;
+    tree(yed_command_name_t, yed_command) default_commands;
+    char           *small_message;
+    tree(yed_plugin_name_t, yed_plugin_ptr_t) plugins;
+    yed_key_binding key_map[KEY_MAX];
 } yed_state;
 
-static yed_state *ys;
+extern yed_state *ys;
 
-static void yed_init_output_stream(void);
+void yed_init_output_stream(void);
 
-static void yed_add_new_buff(void);
+void yed_add_new_buff(void);
 
-static void clear_output_buff(void);
-static int output_buff_len(void);
-static void append_n_to_output_buff(const char *s, int n);
-static void append_to_output_buff(const char *s);
-static void append_int_to_output_buff(int i);
-static void flush_output_buff(void);
+void clear_output_buff(void);
+int output_buff_len(void);
+void append_n_to_output_buff(const char *s, int n);
+void append_to_output_buff(const char *s);
+void append_int_to_output_buff(int i);
+void flush_output_buff(void);
 
-static void yed_service_reload(void);
+void yed_service_reload(void);
 
-static int s_to_i(const char *s);
+int s_to_i(const char *s);
 
 #endif

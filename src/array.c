@@ -1,6 +1,6 @@
 #include "array.h"
 
-static array_t _array_make(int elem_size) {
+array_t _array_make(int elem_size) {
     array_t a;
 
     memset(&a, 0, sizeof(a));
@@ -10,7 +10,7 @@ static array_t _array_make(int elem_size) {
     return a;
 }
 
-static array_t _array_make_with_cap(int elem_size, int initial_cap) {
+array_t _array_make_with_cap(int elem_size, int initial_cap) {
     array_t a;
 
     memset(&a, 0, sizeof(a));
@@ -20,14 +20,14 @@ static array_t _array_make_with_cap(int elem_size, int initial_cap) {
     return a;
 }
 
-static void _array_free(array_t *array) {
+void _array_free(array_t *array) {
     if (array->data) {
         free(array->data);
     }
     memset(array, 0, sizeof(*array));
 }
 
-static void _array_grow_if_needed(array_t *array) {
+void _array_grow_if_needed(array_t *array) {
     void *data_save;
 
     if (!array->data) {
@@ -41,7 +41,7 @@ static void _array_grow_if_needed(array_t *array) {
     }
 }
 
-static void * _array_next_elem(array_t *array) {
+void * _array_next_elem(array_t *array) {
     void *elem_slot;
 
     _array_grow_if_needed(array);
@@ -49,7 +49,7 @@ static void * _array_next_elem(array_t *array) {
     return elem_slot;
 }
 
-static void * _array_push(array_t *array, void *elem) {
+void * _array_push(array_t *array, void *elem) {
     void *elem_slot;
 
     _array_grow_if_needed(array);
@@ -60,7 +60,7 @@ static void * _array_push(array_t *array, void *elem) {
     return elem_slot;
 }
 
-static void * _array_insert(array_t *array, int idx, void *elem) {
+void * _array_insert(array_t *array, int idx, void *elem) {
     void *elem_slot;
 
     if (idx == array->used) {
@@ -84,7 +84,7 @@ static void * _array_insert(array_t *array, int idx, void *elem) {
     return elem_slot;
 }
 
-static void _array_delete(array_t *array, int idx) {
+void _array_delete(array_t *array, int idx) {
     void *split;
 
     ASSERT(idx < array->used, "can't delete from arbitrary place in array");
@@ -99,7 +99,7 @@ static void _array_delete(array_t *array, int idx) {
     array->used -= 1;
 }
 
-static void _array_zero_term(array_t *array) {
+void _array_zero_term(array_t *array) {
     _array_grow_if_needed(array);
     memset(array->data + (array->used * array->elem_size),
            0,

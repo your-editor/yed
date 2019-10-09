@@ -147,7 +147,7 @@
     *tree(K_T, V_T);                                                           \
                                                                                \
     /* tree node */                                                            \
-    static inline tree_node(K_T, V_T)                                          \
+    inline tree_node(K_T, V_T)                                          \
         CAT2(tree_node(K_T, V_T), _make)(K_T key, V_T val) {                   \
         tree_node(K_T, V_T) node =                                             \
             (tree_node(K_T, V_T))malloc(sizeof(struct _tree_node(K_T, V_T)));  \
@@ -160,7 +160,7 @@
         return node;                                                           \
     }                                                                          \
                                                                                \
-    static inline void CAT2(tree_node(K_T, V_T),                               \
+    inline void CAT2(tree_node(K_T, V_T),                               \
                             _free)(tree_node(K_T, V_T) node) {                 \
         if (node) {                                                            \
             CAT2(tree_node(K_T, V_T), _free)(node->_children[0]);              \
@@ -169,7 +169,7 @@
         }                                                                      \
     }                                                                          \
                                                                                \
-    static inline tree_node(K_T, V_T) CAT2(tree_node(K_T, V_T), _rotate)(      \
+    inline tree_node(K_T, V_T) CAT2(tree_node(K_T, V_T), _rotate)(      \
         tree_node(K_T, V_T) node, int dir) {                                   \
         tree_node(K_T, V_T) result = NULL;                                     \
         if (node) {                                                            \
@@ -186,7 +186,7 @@
         return result;                                                         \
     }                                                                          \
                                                                                \
-    static inline tree_node(K_T, V_T) CAT2(tree_node(K_T, V_T), _rotate2)(     \
+    inline tree_node(K_T, V_T) CAT2(tree_node(K_T, V_T), _rotate2)(     \
         tree_node(K_T, V_T) node, int dir) {                                   \
         tree_node(K_T, V_T) result = NULL;                                     \
         if (node) {                                                            \
@@ -200,7 +200,7 @@
     }                                                                          \
                                                                                \
     /* tree it */                                                              \
-    static inline void CAT2(tree_it(K_T, V_T),                                 \
+    inline void CAT2(tree_it(K_T, V_T),                                 \
                             _next)(struct _tree_it(K_T, V_T) * it) {           \
         tree_node(K_T, V_T) node = it->_node;                                  \
                                                                                \
@@ -223,7 +223,7 @@
         it->_node = node;                                                      \
     }                                                                          \
                                                                                \
-    static inline void CAT2(tree_it(K_T, V_T),                                 \
+    inline void CAT2(tree_it(K_T, V_T),                                 \
                             _prev)(struct _tree_it(K_T, V_T) * it) {           \
         tree_node(K_T, V_T) node = it->_node;                                  \
                                                                                \
@@ -248,7 +248,7 @@
     }                                                                          \
                                                                                \
     /* tree */                                                                 \
-    static inline tree_it(K_T, V_T)                                            \
+    inline tree_it(K_T, V_T)                                            \
         CAT2(tree(K_T, V_T), _insert)(tree(K_T, V_T) t, K_T key, V_T val) {    \
         tree_node(K_T, V_T) node;                                              \
         int made_new = 0;                                                      \
@@ -340,7 +340,7 @@
         return _TI_FROM_TN(K_T, V_T, t, node);                                 \
     }                                                                          \
                                                                                \
-    static inline int CAT2(tree(K_T, V_T), _delete)(tree(K_T, V_T) t,          \
+    inline int CAT2(tree(K_T, V_T), _delete)(tree(K_T, V_T) t,          \
                                                     K_T key) {                 \
         if (t->_root == NULL)                                                  \
             return 0;                                                          \
@@ -459,7 +459,7 @@
         return 1;                                                              \
     }                                                                          \
                                                                                \
-    static inline tree_it(K_T, V_T)                                            \
+    inline tree_it(K_T, V_T)                                            \
         CAT2(tree(K_T, V_T), _lookup)(tree(K_T, V_T) t, K_T key) {             \
         tree_node(K_T, V_T) node = t->_root;                                   \
         while (node) {                                                         \
@@ -473,12 +473,12 @@
         return _TI_FROM_TN(K_T, V_T, t, node);                                 \
     }                                                                          \
                                                                                \
-    static inline tree_it(K_T, V_T)                                            \
+    inline tree_it(K_T, V_T)                                            \
         CAT2(tree(K_T, V_T), _begin)(tree(K_T, V_T) t) {                       \
         return _TI_FROM_TN(K_T, V_T, t, t->_beg);                              \
     }                                                                          \
                                                                                \
-    static inline tree_it(K_T, V_T)                                            \
+    inline tree_it(K_T, V_T)                                            \
         CAT2(tree(K_T, V_T), _last)(tree(K_T, V_T) t) {                        \
         tree_node(K_T, V_T) node = t->_root;                                   \
                                                                                \
@@ -491,13 +491,13 @@
         return _TI_FROM_TN(K_T, V_T, t, node);                                 \
     }                                                                          \
                                                                                \
-    static inline void CAT2(tree(K_T, V_T), _free)(tree(K_T, V_T) t) {         \
+    inline void CAT2(tree(K_T, V_T), _free)(tree(K_T, V_T) t) {         \
         if (t->_root)                                                          \
             CAT2(tree_node(K_T, V_T), _free)(t->_root);                        \
         free(t);                                                               \
     }                                                                          \
                                                                                \
-    static inline tree_it(K_T, V_T)                                            \
+    inline tree_it(K_T, V_T)                                            \
         CAT2(tree(K_T, V_T), _geq)(tree(K_T, V_T) t, K_T key) {                \
         tree_node(K_T, V_T) last = NULL, node = t->_root;                      \
                                                                                \
@@ -513,7 +513,7 @@
         return _TI_FROM_TN(K_T, V_T, t, last);                                 \
     }                                                                          \
                                                                                \
-    static inline tree_it(K_T, V_T)                                            \
+    inline tree_it(K_T, V_T)                                            \
         CAT2(tree(K_T, V_T), _gtr)(tree(K_T, V_T) t, K_T key) {                \
         tree_node(K_T, V_T) last = NULL, node = t->_root;                      \
                                                                                \
@@ -529,7 +529,7 @@
         return _TI_FROM_TN(K_T, V_T, t, last);                                 \
     }                                                                          \
                                                                                \
-    static inline tree(K_T, V_T) CAT2(tree(K_T, V_T), _make)(void * cmp) {     \
+    inline tree(K_T, V_T) CAT2(tree(K_T, V_T), _make)(void * cmp) {     \
         tree(K_T, V_T) t =                                                     \
             (tree(K_T, V_T))malloc(sizeof(struct _tree(K_T, V_T)));            \
                                                                                \
@@ -552,7 +552,7 @@
         return t;                                                              \
     }                                                                          \
                                                                                \
-	static inline void CAT2(tree(K_T, V_T), _reset_fns)(                       \
+	inline void CAT2(tree(K_T, V_T), _reset_fns)(                       \
             tree(K_T, V_T) t, void *cmp) {                                     \
                                                                                \
 		t->_free   = CAT2(tree(K_T, V_T), _free);                              \
