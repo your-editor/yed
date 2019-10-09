@@ -21,6 +21,8 @@ void yed_init_plugins(void) {
         err = yed_load_plugin(buff);
 
         switch (err) {
+            case YED_PLUG_NOT_FOUND:
+                goto not_found;
             case YED_PLUG_SUCCESS:
                 ys->small_message = "loaded init.so";
                 break;
