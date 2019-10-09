@@ -16,7 +16,7 @@ DRV_C_FLAGS=-Wall $(ERR_LIM) -Werror -Wno-unused-function -ldl -lm $(CFG)
 all: yed_driver
 
 yed_driver: lib_yed
-	$(CC) src/yed_driver.c $(DRV_C_FLAGS) -o yed
+	$(CC) src/yed_driver.c $(DRV_C_FLAGS) -o _yed
 
 lib_yed:
 	$(CC) src/yed.c $(LIB_C_FLAGS) -o libyed.so
@@ -24,4 +24,4 @@ lib_yed:
 check: lib_yed
 
 clean:
-	rm -rf yed libyed.so yed.dSYM libyed.so.dSYM
+	rm -rf _yed libyed.so yed.dSYM libyed.so.dSYM
