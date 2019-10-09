@@ -556,7 +556,10 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
                 break;
             }
         }
-        if (isspace(c)) {
+        if ((isalnum(c) || c == '_')
+        &&  (frame->cursor_col + cols == array_len(line->cells))) {
+            cols += 1;
+        } else if (isspace(c)) {
             array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
                 c = cell_it->c;
                 cols += 1;
@@ -582,7 +585,7 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
         }
     }
 
-    if (cols == 0 && frame->cursor_line < bucket_array_len(frame->buffer->lines)) {
+    if (frame->cursor_col + cols > array_len(line->cells)) {
         yed_move_cursor_within_frame(frame, 0, 1);
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
     } else {
@@ -722,7 +725,7 @@ void yed_default_command_frame_set_buffer(int n_args, char **args) {
 void yed_default_command_frame_new_file(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buffer, **buffer_ptr;
-    int         buff_nr, new_file;
+    int         new_file;
     FILE       *f_test;
 
     if (n_args != 1) {
@@ -736,7 +739,6 @@ void yed_default_command_frame_new_file(int n_args, char **args) {
     yed_add_new_buff();
     buffer_ptr = array_last(ys->buff_list);
     buffer     = *buffer_ptr;
-    buff_nr    = array_len(ys->buff_list) - 1;
 
     new_file = 0;
     f_test   = fopen(args[0], "r");
@@ -765,7 +767,7 @@ void yed_default_command_frame_split_new_file(int n_args, char **args) {
     yed_frame  *frame1,
                *frame2;
     yed_buffer *buffer, **buffer_ptr;
-    int         buff_nr, new_file;
+    int         new_file;
     FILE       *f_test;
 
     if (n_args != 1) {
@@ -799,7 +801,6 @@ void yed_default_command_frame_split_new_file(int n_args, char **args) {
     yed_add_new_buff();
     buffer_ptr = array_last(ys->buff_list);
     buffer     = *buffer_ptr;
-    buff_nr    = array_len(ys->buff_list) - 1;
 
     new_file = 0;
     f_test   = fopen(args[0], "r");
