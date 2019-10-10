@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #if defined(__linux__)
@@ -15,13 +16,19 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <math.h>
+
+#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <unistd.h>
+#include <libgen.h>
 
 
 #include "tree.h"
 
 #define inline
+typedef struct yed_key_binding_t *yed_key_binding_ptr_t;
+use_tree(int, yed_key_binding_ptr_t);
+
 typedef char *yed_command_name_t;
 typedef void (*yed_command)(int, char**);
 use_tree(yed_command_name_t, yed_command);
@@ -125,18 +132,9 @@ uint64_t next_power_of_2(uint64_t x);
 #define TiB(x) ((x) * 1024ULL * GiB(1ULL))
 char *pretty_bytes(uint64_t n_bytes);
 
-
-typedef struct {
-    char *data;
-    int   avail, used;
-} output_stream;
-
-
-#define MAX_BUFFERS (128)
-
 typedef struct yed_state_t {
     yed_lib_t      *yed_lib;
-    output_stream   out_s;
+    array_t         output_buffer;
     struct termios  sav_term;
     int             term_cols,
                     term_rows;
@@ -156,7 +154,12 @@ typedef struct yed_state_t {
     tree(yed_command_name_t, yed_command) default_commands;
     char           *small_message;
     tree(yed_plugin_name_t, yed_plugin_ptr_t) plugins;
-    yed_key_binding key_map[KEY_MAX];
+    array_t         plugin_dirs;
+    yed_key_binding *real_key_map[REAL_KEY_MAX];
+    tree(int, yed_key_binding_ptr_t) key_seq_map;
+    array_t         key_sequences;
+    int             seq_key_counter;
+    array_t         released_seq_keys;
 } yed_state;
 
 extern yed_state *ys;
@@ -167,8 +170,8 @@ void yed_add_new_buff(void);
 
 void clear_output_buff(void);
 int output_buff_len(void);
-void append_n_to_output_buff(const char *s, int n);
-void append_to_output_buff(const char *s);
+void append_n_to_output_buff(char *s, int n);
+void append_to_output_buff(char *s);
 void append_int_to_output_buff(int i);
 void flush_output_buff(void);
 

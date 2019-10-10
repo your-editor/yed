@@ -6,32 +6,45 @@
 void vimish_take_key(int n_args, char **args);
 void vimish_nav(int key, char* key_str);
 void vimish_insert(int key, char* key_str);
+void vimish_write(int n_args, char **args);
+void vimish_quit(int n_args, char **args);
+void vimish_write_quit(int n_args, char **args);
 /* END COMMANDS */
 
 #define MODE_NAV    (0x0)
 #define MODE_INSERT (0x1)
 
+static yed_plugin *Self;
 static int mode;
+static int exit_insert_key;
 
-void bind_keys(yed_plugin *self);
+void bind_keys(void);
+void enter_insert(void);
+void exit_insert(void);
 
 int yed_plugin_boot(yed_plugin *self) {
+    Self = self;
 
-    yed_plugin_set_command(self, "vimish-take-key", vimish_take_key);
-    bind_keys(self);
+    yed_plugin_set_command(Self, "vimish-take-key", vimish_take_key);
+    yed_plugin_set_command(Self, "w",               vimish_write);
+    yed_plugin_set_command(Self, "W",               vimish_write);
+    yed_plugin_set_command(Self, "q",               vimish_quit);
+    yed_plugin_set_command(Self, "Q",               vimish_quit);
+    yed_plugin_set_command(Self, "wq",              vimish_write_quit);
+    yed_plugin_set_command(Self, "Wq",              vimish_write_quit);
+
+    bind_keys();
 
     mode = MODE_NAV;
 
     return 0;
 }
 
-void bind_keys(yed_plugin *self) {
+void bind_keys(void) {
     int key;
 
-    for (key = 1; key < KEY_MAX; key += 1) {
-        if (key == CTRL_F)    { continue; }
-
-        yed_plugin_bind_key(self, key, "vimish-take-key", 1);
+    for (key = 1; key < REAL_KEY_MAX; key += 1) {
+        yed_plugin_bind_key(Self, key, "vimish-take-key", 1);
     }
 }
 
@@ -109,6 +122,14 @@ void vimish_nav(int key, char *key_str) {
             YEXE("cursor-line-end",    0, NULL);
             break;
 
+        case '{':
+            YEXE("cursor-prev-paragraph", 0, NULL);
+            break;
+
+        case '}':
+            YEXE("cursor-next-paragraph", 0, NULL);
+            break;
+
         case 'g':
             YEXE("cursor-buffer-begin", 0, NULL);
             break;
@@ -129,8 +150,7 @@ void vimish_nav(int key, char *key_str) {
             YEXE("cursor-line-end",   0, NULL);
         case 'i':
 enter_insert:
-            mode = MODE_INSERT;
-            yed_append_text_to_cmd_buff("INSERT");
+            enter_insert();
             break;
 
         case ':':
@@ -144,6 +164,8 @@ enter_insert:
 }
 
 void vimish_insert(int key, char *key_str) {
+    if (key == exit_insert_key)    { goto exit_insert; }
+
     switch (key) {
         case ARROW_LEFT:
             YEXE("cursor-left",  0, NULL);
@@ -166,8 +188,8 @@ void vimish_insert(int key, char *key_str) {
             break;
 
         case CTRL_C:
-            mode = MODE_NAV;
-            yed_append_text_to_cmd_buff("NAV");
+exit_insert:
+            exit_insert();
             break;
 
         default:
@@ -179,4 +201,33 @@ void vimish_insert(int key, char *key_str) {
             }
     }
 
+}
+
+void vimish_write(int n_args, char **args) {
+    YEXE("write-buffer", 0, NULL);
+}
+
+void vimish_quit(int n_args, char **args) {
+    YEXE("quit", 0, NULL);
+}
+
+void vimish_write_quit(int n_args, char **args) {
+    YEXE("write-buffer", 0, NULL);
+    YEXE("quit",         0, NULL);
+}
+
+void enter_insert(void) {
+    mode = MODE_INSERT;
+
+    exit_insert_key = yed_plugin_add_key_sequence(Self, 2, 'j', 'j');
+    yed_plugin_bind_key(Self, exit_insert_key, "vimish-take-key", 1);
+    yed_append_text_to_cmd_buff("INSERT");
+}
+
+void exit_insert(void) {
+    mode = MODE_NAV;
+
+    yed_unbind_key(exit_insert_key);
+    yed_delete_key_sequence(exit_insert_key);
+    yed_append_text_to_cmd_buff("NAV");
 }

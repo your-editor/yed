@@ -14,8 +14,8 @@
 yed_state *ys;
 
 static void write_welcome(void) {
-    const char *msg1;
-    const char *msg2;
+    char *msg1;
+    char *msg2;
 
     msg1 = "This is Your Editor.";
     msg2 = "Hit <ctrl-f> to enter a command.";

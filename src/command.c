@@ -63,34 +63,38 @@ do {                                                              \
     yed_set_default_command(name1, &yed_default_command_##name2); \
 } while (0)
 
-    SET_DEFAULT_COMMAND("command-prompt",       command_prompt);
-    SET_DEFAULT_COMMAND("quit",                 quit);
-    SET_DEFAULT_COMMAND("reload",               reload);
-    SET_DEFAULT_COMMAND("echo",                 echo);
-    SET_DEFAULT_COMMAND("cursor-down",          cursor_down);
-    SET_DEFAULT_COMMAND("cursor-up",            cursor_up);
-    SET_DEFAULT_COMMAND("cursor-left",          cursor_left);
-    SET_DEFAULT_COMMAND("cursor-right",         cursor_right);
-    SET_DEFAULT_COMMAND("cursor-line-begin",    cursor_line_begin);
-    SET_DEFAULT_COMMAND("cursor-line-end",      cursor_line_end);
-    SET_DEFAULT_COMMAND("cursor-next-word",     cursor_next_word);
-    SET_DEFAULT_COMMAND("cursor-buffer-begin",  cursor_buffer_begin);
-    SET_DEFAULT_COMMAND("cursor-buffer-end",    cursor_buffer_end);
-    SET_DEFAULT_COMMAND("cursor-line",          cursor_line);
-    SET_DEFAULT_COMMAND("buffer-new",           buffer_new);
-    SET_DEFAULT_COMMAND("frame",                frame);
-    SET_DEFAULT_COMMAND("frames-list",          frames_list);
-    SET_DEFAULT_COMMAND("frame-set-buffer",     frame_set_buffer);
-    SET_DEFAULT_COMMAND("frame-new-file",       frame_new_file);
-    SET_DEFAULT_COMMAND("frame-split-new-file", frame_split_new_file);
-    SET_DEFAULT_COMMAND("frame-next",           frame_next);
-    SET_DEFAULT_COMMAND("insert",               insert);
-    SET_DEFAULT_COMMAND("delete-back",          delete_back);
-    SET_DEFAULT_COMMAND("delete-line",          delete_line);
-    SET_DEFAULT_COMMAND("write-buffer",         write_buffer);
-    SET_DEFAULT_COMMAND("plugin-load",          plugin_load);
-    SET_DEFAULT_COMMAND("plugin-unload",        plugin_unload);
-    SET_DEFAULT_COMMAND("plugins-list",         plugins_list);
+    SET_DEFAULT_COMMAND("command-prompt",        command_prompt);
+    SET_DEFAULT_COMMAND("quit",                  quit);
+    SET_DEFAULT_COMMAND("reload",                reload);
+    SET_DEFAULT_COMMAND("echo",                  echo);
+    SET_DEFAULT_COMMAND("cursor-down",           cursor_down);
+    SET_DEFAULT_COMMAND("cursor-up",             cursor_up);
+    SET_DEFAULT_COMMAND("cursor-left",           cursor_left);
+    SET_DEFAULT_COMMAND("cursor-right",          cursor_right);
+    SET_DEFAULT_COMMAND("cursor-line-begin",     cursor_line_begin);
+    SET_DEFAULT_COMMAND("cursor-line-end",       cursor_line_end);
+    SET_DEFAULT_COMMAND("cursor-next-word",      cursor_next_word);
+    SET_DEFAULT_COMMAND("cursor-prev-paragraph", cursor_prev_paragraph);
+    SET_DEFAULT_COMMAND("cursor-next-paragraph", cursor_next_paragraph);
+    SET_DEFAULT_COMMAND("cursor-buffer-begin",   cursor_buffer_begin);
+    SET_DEFAULT_COMMAND("cursor-buffer-end",     cursor_buffer_end);
+    SET_DEFAULT_COMMAND("cursor-line",           cursor_line);
+    SET_DEFAULT_COMMAND("buffer-new",            buffer_new);
+    SET_DEFAULT_COMMAND("frame",                 frame);
+    SET_DEFAULT_COMMAND("frames-list",           frames_list);
+    SET_DEFAULT_COMMAND("frame-set-buffer",      frame_set_buffer);
+    SET_DEFAULT_COMMAND("frame-new-file",        frame_new_file);
+    SET_DEFAULT_COMMAND("frame-split-new-file",  frame_split_new_file);
+    SET_DEFAULT_COMMAND("frame-next",            frame_next);
+    SET_DEFAULT_COMMAND("insert",                insert);
+    SET_DEFAULT_COMMAND("delete-back",           delete_back);
+    SET_DEFAULT_COMMAND("delete-line",           delete_line);
+    SET_DEFAULT_COMMAND("write-buffer",          write_buffer);
+    SET_DEFAULT_COMMAND("plugin-load",           plugin_load);
+    SET_DEFAULT_COMMAND("plugin-unload",         plugin_unload);
+    SET_DEFAULT_COMMAND("plugins-list",          plugins_list);
+    SET_DEFAULT_COMMAND("plugins-list-dirs",     plugins_list_dirs);
+    SET_DEFAULT_COMMAND("plugins-add-dir",       plugins_add_dir);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -539,58 +543,160 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
 
     cols    = 0;
     cell_it = array_item(line->cells, frame->cursor_col - 1);
-    c       = cell_it->c;
-    if (isspace(c)) {
-        array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-            c = cell_it->c;
-            cols += 1;
-            if (!isspace(c)) {
-                break;
-            }
-        }
-    } else if (isalnum(c) || c == '_') {
-        array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-            c = cell_it->c;
-            cols += 1;
-            if (!isalnum(c) && c != '_') {
-                break;
-            }
-        }
-        if ((isalnum(c) || c == '_')
-        &&  (frame->cursor_col + cols == array_len(line->cells))) {
-            cols += 1;
-        } else if (isspace(c)) {
-            array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-                c = cell_it->c;
-                cols += 1;
-                if (!isspace(c)) {
-                    break;
-                }
-            }
-        }
-    } else {
-        if (array_len(line->cells) >= frame->cursor_col) {
-            cols += 1;
-            cell_it = array_item(line->cells, frame->cursor_col - 1 + cols);
-            c       = cell_it->c;
-            if (isspace(c)) {
-                array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-                    c = cell_it->c;
-                    cols += 1;
-                    if (!isspace(c)) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
 
-    if (frame->cursor_col + cols > array_len(line->cells)) {
+	if (cell_it) {
+		c       = cell_it->c;
+		if (isspace(c)) {
+			array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+				c = cell_it->c;
+				cols += 1;
+				if (!isspace(c)) {
+					break;
+				}
+			}
+		} else if (isalnum(c) || c == '_') {
+			array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+				c = cell_it->c;
+				cols += 1;
+				if (!isalnum(c) && c != '_') {
+					break;
+				}
+			}
+			if ((isalnum(c) || c == '_')
+			&&  (frame->cursor_col + cols == array_len(line->cells))) {
+				cols += 1;
+			} else if (isspace(c)) {
+				array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+					c = cell_it->c;
+					cols += 1;
+					if (!isspace(c)) {
+						break;
+					}
+				}
+			}
+		} else {
+			if (array_len(line->cells) >= frame->cursor_col) {
+				cols += 1;
+				cell_it = array_item(line->cells, frame->cursor_col - 1 + cols);
+				c       = cell_it->c;
+				if (isspace(c)) {
+					array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+						c = cell_it->c;
+						cols += 1;
+						if (!isspace(c)) {
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+    if ((frame->cursor_col + cols > array_len(line->cells))
+	&&  (frame->cursor_line < bucket_array_len(frame->buffer->lines))) {
         yed_move_cursor_within_frame(frame, 0, 1);
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
     } else {
         yed_move_cursor_within_frame(frame, cols, 0);
     }
+}
+
+void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_line   *line;
+	int         i;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+	line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+	i    = 0;
+
+
+	/* Move through lines in this paragraph. */
+	if (line && line->visual_width != 0) {
+		while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
+		&&      line->visual_width != 0) {
+			i -= 1;
+		}
+	}
+
+	/* Move through empty lines */
+	while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
+	&&      line->visual_width == 0) {
+		i -= 1;
+	}
+
+	if (line && line->visual_width != 0) {
+		while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
+		&&      line->visual_width != 0) {
+			i -= 1;
+		}
+	}
+
+	yed_move_cursor_within_frame(frame, 0, i);
+	frame->dirty = 1;
+}
+
+void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_line   *line;
+	int         i;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+	line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+	i    = 0;
+
+	/* Move through lines in this paragraph. */
+	if (line && line->visual_width != 0) {
+		while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i + 1))
+		&&      line->visual_width != 0) {
+			i += 1;
+		}
+	}
+
+	/* Move through empty lines */
+	while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i + 1))
+	&&      line->visual_width == 0) {
+		i += 1;
+	}
+
+	i += 1;
+
+	yed_move_cursor_within_frame(frame, 0, i);
+	frame->dirty = 1;
 }
 
 void yed_default_command_buffer_new(int n_args, char **args) {
@@ -1166,6 +1272,37 @@ void yed_default_command_plugins_list(int n_args, char **args) {
         yed_append_text_to_cmd_buff((char*)comma);
         yed_append_text_to_cmd_buff("'");
         yed_append_text_to_cmd_buff((char*)tree_it_key(it));
+        yed_append_text_to_cmd_buff("'");
+        comma = ", ";
+    }
+}
+
+void yed_default_command_plugins_add_dir(int n_args, char **args) {
+    if (n_args != 1) {
+        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+	yed_add_plugin_dir(args[0]);
+}
+
+void yed_default_command_plugins_list_dirs(int n_args, char **args) {
+    char  *comma;
+	char **dir_it;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    comma = "";
+
+	array_traverse(ys->plugin_dirs, dir_it) {
+        yed_append_text_to_cmd_buff((char*)comma);
+        yed_append_text_to_cmd_buff("'");
+        yed_append_text_to_cmd_buff(*dir_it);
         yed_append_text_to_cmd_buff("'");
         comma = ", ";
     }

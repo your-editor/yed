@@ -42,6 +42,8 @@ DEF_DEFAULT_COMMAND(cursor_right);
 DEF_DEFAULT_COMMAND(cursor_line_begin);
 DEF_DEFAULT_COMMAND(cursor_line_end);
 DEF_DEFAULT_COMMAND(cursor_next_word);
+DEF_DEFAULT_COMMAND(cursor_prev_paragraph);
+DEF_DEFAULT_COMMAND(cursor_next_paragraph);
 DEF_DEFAULT_COMMAND(cursor_buffer_begin);
 DEF_DEFAULT_COMMAND(cursor_buffer_end);
 DEF_DEFAULT_COMMAND(cursor_line);
@@ -59,5 +61,7 @@ DEF_DEFAULT_COMMAND(write_buffer);
 DEF_DEFAULT_COMMAND(plugin_load);
 DEF_DEFAULT_COMMAND(plugin_unload);
 DEF_DEFAULT_COMMAND(plugins_list);
+DEF_DEFAULT_COMMAND(plugins_list_dirs);
+DEF_DEFAULT_COMMAND(plugins_add_dir);
 
 #endif

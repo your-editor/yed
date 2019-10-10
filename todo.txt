@@ -1,10 +1,5 @@
 * how to handle overlapping frames?
-* keybindings
-    * temporal?
-* basic plug support
-    * custom keybindings
-    * custom commands
-    * modal?
+* selection
 * stylizing
     * ui colors
     * syntax

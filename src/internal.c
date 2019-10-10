@@ -71,38 +71,21 @@ void yed_add_new_buff(void) {
     array_push(ys->buff_list, new_buff);
 }
 
-void clear_output_buff(void) {
-    ys->out_s.data[0] = 0;
-    ys->out_s.used    = 1; /* 1 for NULL */
-}
-
 void yed_init_output_stream(void) {
-    ys->out_s.avail = 4096;
-    ys->out_s.used  = 1; /* 1 for NULL */
-    ys->out_s.data  = calloc(ys->out_s.avail, 1);
+    ys->output_buffer = array_make_with_cap(char, 4096);
 }
 
-int output_buff_len(void) { return ys->out_s.used; }
+int output_buff_len(void) { return array_len(ys->output_buffer); }
 
-void append_n_to_output_buff(const char *s, int n) {
-    char *data_save;
+void append_n_to_output_buff(char *s, int n) {
+    int i;
 
-    if (n) {
-        if (ys->out_s.used + n > ys->out_s.avail) {
-            ys->out_s.avail <<= 1;
-            data_save         = ys->out_s.data;
-            ys->out_s.data    = calloc(ys->out_s.avail, 1);
-
-            memcpy(ys->out_s.data, data_save, ys->out_s.used);
-            free(data_save);
-        }
-
-        strncat(ys->out_s.data, s, n);
-        ys->out_s.used += n;
+    for (i = 0; i < n; i += 1) {
+        array_push(ys->output_buffer, s[i]);
     }
 }
 
-void append_to_output_buff(const char *s) {
+void append_to_output_buff(char *s) {
     append_n_to_output_buff(s, strlen(s));
 }
 
@@ -115,15 +98,16 @@ void append_int_to_output_buff(int i) {
 }
 
 void flush_output_buff(void) {
-    write(1, ys->out_s.data, ys->out_s.used);
-    clear_output_buff();
+    write(1, array_data(ys->output_buffer), array_len(ys->output_buffer));
+    array_clear(ys->output_buffer);
 }
 
 void yed_service_reload(void) {
-    tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,  ys->frames,           strcmp);
-    tree_reset_fns(yed_command_name_t, yed_command,      ys->commands,         strcmp);
-    tree_reset_fns(yed_command_name_t, yed_command,      ys->default_commands, strcmp);
-    tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t, ys->plugins,          strcmp);
+    tree_reset_fns(int,                yed_key_binding_ptr_t, ys->key_seq_map,      NULL);
+    tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,       ys->frames,           strcmp);
+    tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
+    tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
+    tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
 
     yed_set_default_commands();
     yed_reload_plugins();

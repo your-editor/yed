@@ -1,30 +1,33 @@
 #include "internal.h"
 
 void yed_init_plugins(void) {
-    char  buff[256];
-    char *home;
-    char *init_plug;
-    int   err;
+    char     buff[256];
+    char    *home,
+            *yed_dir;
+    int      err;
 
-    ys->plugins = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
+    ys->plugin_dirs = array_make(char*);
+    ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
 
-    buff[0]   = 0;
-    home      = getenv("HOME");
-    init_plug = "/.yed/init.so";
+    home = getenv("HOME");
 
     if (!home)    { goto not_found; }
 
+    buff[0] = 0;
     strcat(buff, home);
-    strcat(buff, init_plug);
+    strcat(buff, "/.yed");
+    yed_dir = buff;
+
+    yed_add_plugin_dir(yed_dir);
 
     if (access(buff, F_OK) != -1) {
-        err = yed_load_plugin(buff);
+        err = yed_load_plugin("init");
 
         switch (err) {
             case YED_PLUG_NOT_FOUND:
                 goto not_found;
             case YED_PLUG_SUCCESS:
-                ys->small_message = "loaded init.so";
+                ys->small_message = "loaded init";
                 break;
             case YED_PLUG_NO_BOOT:
                 ys->small_message = "!! init missing 'yed_plugin_boot' !!";
@@ -39,10 +42,10 @@ not_found:
     }
 }
 
-void yed_plugin_force_lib_unload(const char *name, yed_plugin *plug) {
+void yed_plugin_force_lib_unload(yed_plugin *plug) {
     void *try_handle;
 
-    while ((try_handle = dlopen(name, RTLD_NOW | RTLD_NOLOAD))) {
+    while ((try_handle = dlopen(plug->path, RTLD_NOW | RTLD_NOLOAD))) {
         dlclose(try_handle);
         dlclose(plug->handle);
     }
@@ -50,6 +53,8 @@ void yed_plugin_force_lib_unload(const char *name, yed_plugin *plug) {
 
 int yed_load_plugin(char *plug_name) {
     int                         err;
+    char                      **dir_it;
+    char                        buff[256];
     yed_plugin                 *plug;
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)   it;
@@ -62,20 +67,36 @@ int yed_load_plugin(char *plug_name) {
 
     plug = malloc(sizeof(*plug));
 
-    plug->handle = dlopen(plug_name, RTLD_NOW | RTLD_LOCAL);
+    array_traverse(ys->plugin_dirs, dir_it) {
+        buff[0] = 0;
+        strcat(buff, *dir_it);
+        strcat(buff, "/");
+        strcat(buff, plug_name);
+        strcat(buff, ".so");
+
+        plug->handle = dlopen(buff, RTLD_NOW | RTLD_LOCAL);
+
+        if (plug->handle) {
+            break;
+        }
+    }
+
     if (!plug->handle) {
         free(plug);
         return YED_PLUG_NOT_FOUND;
     }
 
-    plug->added_cmds     = array_make(char*);
-    plug->added_bindings = array_make(int);
+    plug->path                = strdup(buff);
+    plug->added_cmds          = array_make(char*);
+    plug->added_bindings      = array_make(int);
+    plug->added_key_sequences = array_make(int);
 
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
         dlclose(plug->handle);
         array_free(plug->added_bindings);
         array_free(plug->added_cmds);
+        array_free(plug->added_key_sequences);
         free(plug);
         return YED_PLUG_NO_BOOT;
     }
@@ -85,6 +106,7 @@ int yed_load_plugin(char *plug_name) {
         dlclose(plug->handle);
         array_free(plug->added_bindings);
         array_free(plug->added_cmds);
+        array_free(plug->added_key_sequences);
         free(plug);
         return YED_PLUG_BOOT_FAIL;
     }
@@ -114,7 +136,7 @@ int yed_unload_plugin(char *plug_name) {
     tree_delete(ys->plugins, old_key);
 
     if (old_plug) {
-        yed_plugin_force_lib_unload(old_key, old_plug);
+        yed_plugin_force_lib_unload(old_plug);
 
         array_traverse(old_plug->added_cmds, cmd_name_it) {
             yed_unset_command(*cmd_name_it);
@@ -132,6 +154,12 @@ int yed_unload_plugin(char *plug_name) {
         }
         array_free(old_plug->added_bindings);
 
+        array_traverse(old_plug->added_key_sequences, key_it) {
+            yed_delete_key_sequence(*key_it);
+        }
+        array_free(old_plug->added_key_sequences);
+
+        free(old_plug->path);
         free(old_plug);
     }
 
@@ -157,7 +185,7 @@ int yed_unload_plugin_libs(void) {
             yed_plugin_ptr_t)  it;
 
     tree_traverse(ys->plugins, it) {
-        yed_plugin_force_lib_unload(tree_it_key(it), tree_it_val(it));
+        yed_plugin_force_lib_unload(tree_it_val(it));
     }
 
     return 0;
@@ -200,11 +228,33 @@ void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
 void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int takes_key_as_arg) {
     yed_key_binding binding;
 
-    binding.is_bound         = 1;
     binding.key              = key;
     binding.cmd              = cmd_name;
     binding.takes_key_as_arg = takes_key_as_arg;
 
     yed_bind_key(binding);
     array_push(plug->added_bindings, key);
+}
+
+int yed_plugin_add_key_sequence(yed_plugin *plug, int len, ...) {
+    va_list args;
+    int     r;
+
+    va_start(args, len);
+    r = yed_vadd_key_sequence(len, args);
+    va_end(args);
+
+    if (r != KEY_NULL) {
+        array_push(plug->added_key_sequences, r);
+    }
+
+    return r;
+}
+
+void yed_add_plugin_dir(char *s) {
+    char *s_dup;
+
+    s_dup = strdup(s);
+
+    array_insert(ys->plugin_dirs, 0, s_dup);
 }

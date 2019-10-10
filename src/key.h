@@ -35,9 +35,14 @@ enum KEY_ACTION {
     END_KEY,
     PAGE_UP,
     PAGE_DOWN,
-    FOOZLE,
-    KEY_MAX
+
+    REAL_KEY_MAX,
+
+    SEQ_START,
 };
+
+#define SEQ(x)      (SEQ_START + (x))
+#define MAX_SEQ_LEN (8)
 
 #define IS_ARROW(k)   ((k) >= ARROW_LEFT && (k) <= ARROW_DOWN)
 
@@ -46,8 +51,7 @@ void yed_init_keys(void);
 int yed_read_keys(int *input);
 void yed_take_key(int key);
 
-typedef struct {
-    int   is_bound;
+typedef struct yed_key_binding_t {
     int   key;
     char *cmd;
     int   takes_key_as_arg;
@@ -56,5 +60,18 @@ typedef struct {
 void yed_set_default_key_binding(int key);
 void yed_set_default_key_bindings(void);
 void yed_bind_key(yed_key_binding binding);
+void yed_unbind_key(int key);
+yed_key_binding * yed_get_key_binding(int key);
+
+typedef struct {
+    int len;
+    int keys[MAX_SEQ_LEN];
+    int seq_key;
+} yed_key_sequence;
+
+int yed_vadd_key_sequence(int len, va_list args);
+int yed_add_key_sequence(int len, ...);
+int yed_delete_key_sequence(int seq_key);
+int yed_get_key_sequence(int len, ...);
 
 #endif

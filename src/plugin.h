@@ -14,10 +14,12 @@ struct yed_plugin_t;
 typedef int (*yed_plugin_boot_t)(struct yed_plugin_t*);
 
 typedef struct yed_plugin_t {
-    yed_plugin_handle_t handle;
-    yed_plugin_boot_t   boot;
-    array_t             added_cmds;
-    array_t             added_bindings;
+    yed_plugin_handle_t  handle;
+    char                *path;
+    yed_plugin_boot_t    boot;
+    array_t              added_cmds;
+    array_t              added_bindings;
+    array_t              added_key_sequences;
 } yed_plugin;
 
 void yed_init_plugins(void);
@@ -32,5 +34,8 @@ int yed_reload_plugins(void);
 
 void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command cmd);
 void yed_plugin_bind_key(yed_plugin *plug, int key, char *command_name, int takes_key_as_arg);
+int yed_plugin_add_key_sequence(yed_plugin *plug, int len, ...);
+
+void yed_add_plugin_dir(char *s);
 
 #endif
