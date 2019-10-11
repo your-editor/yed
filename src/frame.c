@@ -308,9 +308,9 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     int       col, row;
 
     row = new_y - f->cursor_line;
+    yed_move_cursor_within_frame(f, 0, row);
     col = new_x - f->cursor_col;
-
-    yed_move_cursor_within_frame(f, col, row);
+    yed_move_cursor_within_frame(f, col, 0);
 }
 
 void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
