@@ -166,6 +166,7 @@ static yed_key_binding default_key_bindings[] = {
     { CTRL_F,      "command-prompt",   0 },
     { CTRL_L,      "frame-next",       0 },
     { CTRL_D,      "delete-line",      0 },
+    { CTRL_S,      "select",           0 },
     { CTRL_W,      "cursor-next-word", 0 }
 };
 
@@ -221,6 +222,7 @@ void yed_unbind_key(int key) {
         old_binding = ys->real_key_map[key];
         if (old_binding) {
             free(old_binding);
+            ys->real_key_map[key] = NULL;
         }
     } else {
         it = tree_lookup(ys->key_seq_map, key);

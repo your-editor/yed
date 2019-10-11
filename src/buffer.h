@@ -23,9 +23,19 @@ typedef struct yed_line_t {
     int                visual_width;
 } yed_line;
 
+#define RANGE_NORMAL  (0x1)
+#define RANGE_LINE    (0x2)
 typedef struct {
-	const char     *path;
+    int kind;
+    int locked;
+    int anchor_row, anchor_col, cursor_row, cursor_col;
+} yed_range;
+
+typedef struct {
+    const char     *path;
     bucket_array_t  lines;
+    int             has_selection;
+    yed_range       selection;
 } yed_buffer;
 
 #define YED_NEW_CELL__DATA(c) (c)
@@ -50,5 +60,8 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col);
 
 void yed_fill_buff_from_file(yed_buffer *buff, const char *path);
 void yed_write_buff_to_file(yed_buffer *buff, const char *path);
+
+int yed_is_in_range(yed_range *range, int row, int col);
+void yed_buff_delete_selection(yed_buffer *buff);
 
 #endif

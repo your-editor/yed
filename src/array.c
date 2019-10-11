@@ -52,8 +52,6 @@ void * _array_next_elem(array_t *array) {
 void * _array_push(array_t *array, void *elem) {
     void *elem_slot;
 
-    _array_grow_if_needed(array);
-
     elem_slot = _array_next_elem(array);
     memcpy(elem_slot, elem, array->elem_size);
 

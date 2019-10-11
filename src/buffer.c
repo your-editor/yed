@@ -59,8 +59,9 @@ yed_line * yed_buffer_add_line(yed_buffer *buff) {
 yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
-    buff.lines = bucket_array_make(1024, yed_line);
-	buff.path   = NULL;
+    buff.lines         = bucket_array_make(1024, yed_line);
+    buff.path          = NULL;
+    buff.has_selection = 0;
 
     yed_buffer_add_line(&buff);
 
@@ -274,23 +275,23 @@ void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
         }
     }
 
-	if (!bucket_array_len(buff->lines) && file_size) {
-		/* There's only one line in the file, but it doesn't have a newline. */
+    if (!bucket_array_len(buff->lines) && file_size) {
+        /* There's only one line in the file, but it doesn't have a newline. */
 
-		line = yed_new_line_with_cap(line_len);
-		array_grow_if_needed(line.cells);
-		line.cells.used = line.visual_width = line_len;
-		for (j = 0, k = 0; j < line_len; j += 1) {
-			c = file_data[i - line_len + j];
+        line = yed_new_line_with_cap(line_len);
+        array_grow_if_needed(line.cells);
+        line.cells.used = line.visual_width = line_len;
+        for (j = 0, k = 0; j < line_len; j += 1) {
+            c = file_data[i - line_len + j];
 
-			if (c == '\r')    { continue; }
+            if (c == '\r')    { continue; }
 
-			(*(yed_cell*)(line.cells.data + (k * sizeof(yed_cell)))).__data = YED_NEW_CELL__DATA(c);
-			k += 1;
-		}
+            (*(yed_cell*)(line.cells.data + (k * sizeof(yed_cell)))).__data = YED_NEW_CELL__DATA(c);
+            k += 1;
+        }
 
-		bucket_array_push(buff->lines, line);
-	}
+        bucket_array_push(buff->lines, line);
+    }
 
     munmap(file_data, file_size);
 
@@ -301,7 +302,7 @@ void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
         }
     }
 
-	buff->path = strdup(path);
+    buff->path = strdup(path);
 
     fclose(f);
 
@@ -327,4 +328,108 @@ void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
     }
 
     fclose(f);
+}
+
+static void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2) {
+    *r1 = MIN(range->anchor_row, range->cursor_row);
+    *r2 = MAX(range->anchor_row, range->cursor_row);
+
+    if (range->kind == RANGE_NORMAL) {
+        if (range->anchor_row == range->cursor_row) {
+            *c1 = MIN(range->anchor_col, range->cursor_col);
+            *c2 = MAX(range->anchor_col, range->cursor_col);
+        } else {
+            if (*r1 == range->anchor_row) {
+                *c1 = range->anchor_col;
+                *c2 = range->cursor_col;
+            } else {
+                *c1 = range->cursor_col;
+                *c2 = range->anchor_col;
+            }
+        }
+    }
+}
+
+int yed_is_in_range(yed_range *range, int row, int col) {
+    int r1, c1, r2, c2;
+
+    yed_range_sorted_points(range, &r1, &c1, &r2, &c2);
+
+    if (row < r1 || row > r2) {
+        return 0;
+    }
+
+    if (range->kind == RANGE_NORMAL) {
+        if (range->anchor_row == range->cursor_row) {
+            if (col < c1 || col >= c2) {
+                return 0;
+            }
+        } else {
+            if (row < r1 || row > r2) {
+                return 0;
+            }
+
+            if (row == r1) {
+                if (col < c1) {
+                    return 0;
+                }
+            } else if (row == r2) {
+                if (col >= c2) {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+
+void yed_buff_delete_selection(yed_buffer *buff) {
+    yed_range *range;
+    yed_line  *line1,
+              *line2;
+    yed_cell  *cell;
+    int        r1, c1, r2, c2,
+               n, i;
+
+    range = &buff->selection;
+
+    yed_range_sorted_points(range, &r1, &c1, &r2, &c2);
+
+    if (range->kind == RANGE_LINE) {
+        for (i = r1; i <= r2; i += 1) {
+            yed_buff_delete_line(buff, r1);
+        }
+    } else if (r1 == r2) {
+        for (i = c1; i < c2; i += 1) {
+            yed_delete_from_line(buff, r1, c1);
+        }
+    } else {
+        line1 = yed_buff_get_line(buff, r1);
+        ASSERT(line1, "didn't get line1 in yed_buff_delete_selection()");
+        n = line1->visual_width - c1 + 1;
+        for (i = 0; i < n; i += 1) {
+            yed_line_pop_cell(line1);
+        }
+        for (i = r1 + 1; i < r2; i += 1) {
+            yed_buff_delete_line(buff, r1 + 1);
+        }
+        line2 = yed_buff_get_line(buff, r1 + 1);
+        ASSERT(line2, "didn't get line2 in yed_buff_delete_selection()");
+        n = line2->visual_width - c2 + 1;
+        for (i = 0; i < n; i += 1) {
+            cell = yed_line_col_to_cell(line2, c2 + i);
+            yed_line_append_cell(line1, cell);
+        }
+        for (i = c2 - 1; i < n; i += 1) {
+            yed_delete_from_line(buff, r1 + 1, 1);
+        }
+        yed_buff_delete_line(buff, r1 + 1);
+    }
+
+    if (!bucket_array_len(buff->lines)) {
+        yed_buffer_add_line(buff);
+    }
+
+    buff->has_selection = 0;
 }

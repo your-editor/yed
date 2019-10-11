@@ -73,6 +73,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-right",          cursor_right);
     SET_DEFAULT_COMMAND("cursor-line-begin",     cursor_line_begin);
     SET_DEFAULT_COMMAND("cursor-line-end",       cursor_line_end);
+    SET_DEFAULT_COMMAND("cursor-prev-word",      cursor_prev_word);
     SET_DEFAULT_COMMAND("cursor-next-word",      cursor_next_word);
     SET_DEFAULT_COMMAND("cursor-prev-paragraph", cursor_prev_paragraph);
     SET_DEFAULT_COMMAND("cursor-next-paragraph", cursor_next_paragraph);
@@ -95,6 +96,9 @@ do {                                                              \
     SET_DEFAULT_COMMAND("plugins-list",          plugins_list);
     SET_DEFAULT_COMMAND("plugins-list-dirs",     plugins_list_dirs);
     SET_DEFAULT_COMMAND("plugins-add-dir",       plugins_add_dir);
+    SET_DEFAULT_COMMAND("select",                select);
+    SET_DEFAULT_COMMAND("select-lines",          select_lines);
+    SET_DEFAULT_COMMAND("select-off",            select_off);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -459,7 +463,6 @@ void yed_default_command_cursor_buffer_begin(int n_args, char **args) {
     }
 
     yed_set_cursor_far_within_frame(frame, 1, 1);
-    frame->dirty = 1;
 }
 
 void yed_default_command_cursor_buffer_end(int n_args, char **args) {
@@ -514,6 +517,70 @@ void yed_default_command_cursor_line(int n_args, char **args) {
     yed_set_cursor_far_within_frame(frame, 1, line);
 }
 
+void yed_default_command_cursor_prev_word(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *line;
+    yed_cell  *cell_it;
+    int        col;
+    char       c;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
+    col = frame->cursor_col - 1;
+
+    while (col > 0) {
+        cell_it = yed_line_col_to_cell(line, col);
+        c       = cell_it->c;
+
+        if (isspace(c)) {
+            col -= 1;
+        } else {
+            break;
+        }
+    }
+
+    if (col > 0) {
+        cell_it = yed_line_col_to_cell(line, col);
+        c       = cell_it->c;
+
+        if (isalnum(c) || c == '_') {
+            col -= 1;
+            while (col > 0) {
+                cell_it = yed_line_col_to_cell(line, col);
+                c       = cell_it->c;
+                if (isalnum(c) || c == '_') {
+                    col -= 1;
+                    cell_it = yed_line_col_to_cell(line, col);
+                } else {
+                    break;
+                }
+            }
+        } else {
+            col -= 1;
+        }
+    }
+
+    yed_move_cursor_within_frame(frame, col - frame->cursor_col + 1, 0);
+}
+
 void yed_default_command_cursor_next_word(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
@@ -544,56 +611,56 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
     cols    = 0;
     cell_it = array_item(line->cells, frame->cursor_col - 1);
 
-	if (cell_it) {
-		c       = cell_it->c;
-		if (isspace(c)) {
-			array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-				c = cell_it->c;
-				cols += 1;
-				if (!isspace(c)) {
-					break;
-				}
-			}
-		} else if (isalnum(c) || c == '_') {
-			array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-				c = cell_it->c;
-				cols += 1;
-				if (!isalnum(c) && c != '_') {
-					break;
-				}
-			}
-			if ((isalnum(c) || c == '_')
-			&&  (frame->cursor_col + cols == array_len(line->cells))) {
-				cols += 1;
-			} else if (isspace(c)) {
-				array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-					c = cell_it->c;
-					cols += 1;
-					if (!isspace(c)) {
-						break;
-					}
-				}
-			}
-		} else {
-			if (array_len(line->cells) >= frame->cursor_col) {
-				cols += 1;
-				cell_it = array_item(line->cells, frame->cursor_col - 1 + cols);
-				c       = cell_it->c;
-				if (isspace(c)) {
-					array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-						c = cell_it->c;
-						cols += 1;
-						if (!isspace(c)) {
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
+    if (cell_it) {
+        c       = cell_it->c;
+        if (isspace(c)) {
+            array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+                c = cell_it->c;
+                cols += 1;
+                if (!isspace(c)) {
+                    break;
+                }
+            }
+        } else if (isalnum(c) || c == '_') {
+            array_traverse_from(line->cells, cell_it, frame->cursor_col) {
+                c = cell_it->c;
+                cols += 1;
+                if (!isalnum(c) && c != '_') {
+                    break;
+                }
+            }
+            if ((isalnum(c) || c == '_')
+            &&  (frame->cursor_col + cols == array_len(line->cells))) {
+                cols += 1;
+            } else if (isspace(c)) {
+                array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+                    c = cell_it->c;
+                    cols += 1;
+                    if (!isspace(c)) {
+                        break;
+                    }
+                }
+            }
+        } else {
+            if (array_len(line->cells) >= frame->cursor_col) {
+                cols += 1;
+                cell_it = array_item(line->cells, frame->cursor_col - 1 + cols);
+                c       = cell_it->c;
+                if (isspace(c)) {
+                    array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
+                        c = cell_it->c;
+                        cols += 1;
+                        if (!isspace(c)) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     if ((frame->cursor_col + cols > array_len(line->cells))
-	&&  (frame->cursor_line < bucket_array_len(frame->buffer->lines))) {
+    &&  (frame->cursor_line < bucket_array_len(frame->buffer->lines))) {
         yed_move_cursor_within_frame(frame, 0, 1);
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
     } else {
@@ -604,7 +671,7 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
 void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
     yed_frame  *frame;
     yed_line   *line;
-	int         i;
+    int         i;
 
     if (n_args > 0) {
         yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
@@ -624,39 +691,38 @@ void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
         return;
     }
 
-	line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-	i    = 0;
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    i    = 0;
 
 
-	/* Move through lines in this paragraph. */
-	if (line && line->visual_width != 0) {
-		while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
-		&&      line->visual_width != 0) {
-			i -= 1;
-		}
-	}
+    /* Move through lines in this paragraph. */
+    if (line && line->visual_width != 0) {
+        while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
+        &&      line->visual_width != 0) {
+            i -= 1;
+        }
+    }
 
-	/* Move through empty lines */
-	while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
-	&&      line->visual_width == 0) {
-		i -= 1;
-	}
+    /* Move through empty lines */
+    while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
+    &&      line->visual_width == 0) {
+        i -= 1;
+    }
 
-	if (line && line->visual_width != 0) {
-		while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
-		&&      line->visual_width != 0) {
-			i -= 1;
-		}
-	}
+    if (line && line->visual_width != 0) {
+        while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i - 1))
+        &&      line->visual_width != 0) {
+            i -= 1;
+        }
+    }
 
-	yed_move_cursor_within_frame(frame, 0, i);
-	frame->dirty = 1;
+    yed_move_cursor_within_frame(frame, 0, i);
 }
 
 void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
     yed_frame  *frame;
     yed_line   *line;
-	int         i;
+    int         i;
 
     if (n_args > 0) {
         yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
@@ -676,27 +742,26 @@ void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
         return;
     }
 
-	line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-	i    = 0;
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    i    = 0;
 
-	/* Move through lines in this paragraph. */
-	if (line && line->visual_width != 0) {
-		while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i + 1))
-		&&      line->visual_width != 0) {
-			i += 1;
-		}
-	}
+    /* Move through lines in this paragraph. */
+    if (line && line->visual_width != 0) {
+        while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i + 1))
+        &&      line->visual_width != 0) {
+            i += 1;
+        }
+    }
 
-	/* Move through empty lines */
-	while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i + 1))
-	&&      line->visual_width == 0) {
-		i += 1;
-	}
+    /* Move through empty lines */
+    while ((line = yed_buff_get_line(frame->buffer, frame->cursor_line + i + 1))
+    &&      line->visual_width == 0) {
+        i += 1;
+    }
 
-	i += 1;
+    i += 1;
 
-	yed_move_cursor_within_frame(frame, 0, i);
-	frame->dirty = 1;
+    yed_move_cursor_within_frame(frame, 0, i);
 }
 
 void yed_default_command_buffer_new(int n_args, char **args) {
@@ -1040,7 +1105,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line,
               *previous_line;
-    int        col,
+    int        r1, c1, r2, c2,
+               col,
                buff_n_lines,
                prev_line_len, old_line_nr;
     yed_cell  *cell_it;
@@ -1063,49 +1129,60 @@ void yed_default_command_delete_back(int n_args, char **args) {
         return;
     }
 
-    col  = frame->cursor_col;
-    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-
-    if (col == 1) {
-        if (frame->cursor_line > 1) {
-            old_line_nr   = frame->cursor_line;
-            previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
-            prev_line_len = previous_line->visual_width;
-
-            if (prev_line_len == 0) {
-                previous_line->cells        = line->cells;
-                line->cells                 = array_make(yed_cell);
-                previous_line->visual_width = line->visual_width;
-                line->visual_width          = 0;
-            } else {
-                array_traverse(line->cells, cell_it) {
-                    yed_line_append_cell(previous_line, cell_it);
-                }
-            }
-
-            /*
-             * Move to the previous line.
-             */
-            yed_set_cursor_within_frame(frame, prev_line_len + 1, frame->cursor_line - 1);
-
-            /*
-             * Kinda hacky, but this will help us pull the buffer
-             * up if there is a buffer_y_offset and there's content
-             * to pull up.
-             */
-            buff_n_lines = bucket_array_len(frame->buffer->lines);
-            if (frame->buffer_y_offset >= buff_n_lines - frame->height) {
-                yed_frame_reset_cursor(frame);
-            }
-
-            /*
-             * Delete the old line.
-             */
-            yed_buff_delete_line(frame->buffer, old_line_nr);
+    if (frame->buffer->has_selection) {
+        yed_range_sorted_points(&frame->buffer->selection, &r1, &c1, &r2, &c2);
+        frame->buffer->selection.locked = 1;
+        if (frame->buffer->selection.kind == RANGE_LINE) {
+            yed_set_cursor_far_within_frame(frame, 1, r1);
+        } else {
+            yed_set_cursor_far_within_frame(frame, c1, r1);
         }
+        yed_buff_delete_selection(frame->buffer);
     } else {
-        yed_delete_from_line(frame->buffer, frame->cursor_line, col - 1);
-        yed_move_cursor_within_frame(frame, -1, 0);
+        col  = frame->cursor_col;
+        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
+        if (col == 1) {
+            if (frame->cursor_line > 1) {
+                old_line_nr   = frame->cursor_line;
+                previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
+                prev_line_len = previous_line->visual_width;
+
+                if (prev_line_len == 0) {
+                    previous_line->cells        = line->cells;
+                    line->cells                 = array_make(yed_cell);
+                    previous_line->visual_width = line->visual_width;
+                    line->visual_width          = 0;
+                } else {
+                    array_traverse(line->cells, cell_it) {
+                        yed_line_append_cell(previous_line, cell_it);
+                    }
+                }
+
+                /*
+                 * Move to the previous line.
+                 */
+                yed_set_cursor_within_frame(frame, prev_line_len + 1, frame->cursor_line - 1);
+
+                /*
+                 * Kinda hacky, but this will help us pull the buffer
+                 * up if there is a buffer_y_offset and there's content
+                 * to pull up.
+                 */
+                buff_n_lines = bucket_array_len(frame->buffer->lines);
+                if (frame->buffer_y_offset >= buff_n_lines - frame->height) {
+                    yed_frame_reset_cursor(frame);
+                }
+
+                /*
+                 * Delete the old line.
+                 */
+                yed_buff_delete_line(frame->buffer, old_line_nr);
+            }
+        } else {
+            yed_delete_from_line(frame->buffer, frame->cursor_line, col - 1);
+            yed_move_cursor_within_frame(frame, -1, 0);
+        }
     }
 
 }
@@ -1284,12 +1361,12 @@ void yed_default_command_plugins_add_dir(int n_args, char **args) {
         return;
     }
 
-	yed_add_plugin_dir(args[0]);
+    yed_add_plugin_dir(args[0]);
 }
 
 void yed_default_command_plugins_list_dirs(int n_args, char **args) {
     char  *comma;
-	char **dir_it;
+    char **dir_it;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
@@ -1299,7 +1376,7 @@ void yed_default_command_plugins_list_dirs(int n_args, char **args) {
 
     comma = "";
 
-	array_traverse(ys->plugin_dirs, dir_it) {
+    array_traverse(ys->plugin_dirs, dir_it) {
         yed_append_text_to_cmd_buff((char*)comma);
         yed_append_text_to_cmd_buff("'");
         yed_append_text_to_cmd_buff(*dir_it);
@@ -1308,7 +1385,102 @@ void yed_default_command_plugins_list_dirs(int n_args, char **args) {
     }
 }
 
+void yed_default_command_select(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
 
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    buff = frame->buffer;
+
+    buff->has_selection        = !buff->has_selection || buff->selection.kind != RANGE_NORMAL;
+    buff->selection.kind       = RANGE_NORMAL;
+    buff->selection.locked     = 0;
+    buff->selection.anchor_row = frame->cursor_line;
+    buff->selection.anchor_col = frame->cursor_col;
+    buff->selection.cursor_row = frame->cursor_line;
+    buff->selection.cursor_col = frame->cursor_col;
+    frame->dirty               = 1;
+}
+
+
+void yed_default_command_select_lines(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    buff = frame->buffer;
+
+    buff->has_selection        = !buff->has_selection || buff->selection.kind != RANGE_LINE;
+    buff->selection.kind       = RANGE_LINE;
+    buff->selection.locked     = 0;
+    buff->selection.anchor_row = frame->cursor_line;
+    buff->selection.anchor_col = frame->cursor_col;
+    buff->selection.cursor_row = frame->cursor_line;
+    buff->selection.cursor_col = frame->cursor_col;
+    frame->dirty               = 1;
+}
+
+void yed_default_command_select_off(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    buff = frame->buffer;
+
+    frame->dirty        = frame->dirty || buff->has_selection;
+    buff->has_selection = 0;
+}
 
 int yed_execute_command(char *name, int n_args, char **args) {
     tree_it(yed_command_name_t, yed_command)  it;
@@ -1348,4 +1520,3 @@ int yed_execute_command(char *name, int n_args, char **args) {
 
     return 0;
 }
-

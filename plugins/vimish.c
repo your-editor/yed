@@ -4,8 +4,6 @@
 
 /* COMMANDS */
 void vimish_take_key(int n_args, char **args);
-void vimish_nav(int key, char* key_str);
-void vimish_insert(int key, char* key_str);
 void vimish_write(int n_args, char **args);
 void vimish_quit(int n_args, char **args);
 void vimish_write_quit(int n_args, char **args);
@@ -13,14 +11,20 @@ void vimish_write_quit(int n_args, char **args);
 
 #define MODE_NAV    (0x0)
 #define MODE_INSERT (0x1)
+#define MODE_DELETE (0x2)
 
 static yed_plugin *Self;
 static int mode;
 static int exit_insert_key;
 
+void vimish_nav(int key, char* key_str);
+void vimish_insert(int key, char* key_str);
+void vimish_delete(int key, char* key_str);
 void bind_keys(void);
 void enter_insert(void);
 void exit_insert(void);
+void enter_delete(int by_line);
+void exit_delete(int cancel);
 
 int yed_plugin_boot(yed_plugin *self) {
     Self = self;
@@ -44,6 +48,10 @@ void bind_keys(void) {
     int key;
 
     for (key = 1; key < REAL_KEY_MAX; key += 1) {
+        if (key == CTRL_S) {
+            yed_plugin_bind_key(Self, key, "select", 0);
+            continue;
+        }
         yed_plugin_bind_key(Self, key, "vimish-take-key", 1);
     }
 }
@@ -62,6 +70,7 @@ void vimish_take_key(int n_args, char **args) {
     switch (mode) {
         case MODE_NAV:    vimish_nav(key, args[0]);    break;
         case MODE_INSERT: vimish_insert(key, args[0]); break;
+        case MODE_DELETE: vimish_delete(key, args[0]); break;
         default:
             yed_append_text_to_cmd_buff("[!] invalid mode (?)");
     }
@@ -87,7 +96,7 @@ static void fill_cmd_prompt(const char *cmd) {
     YEXE("command-prompt", 1, &key_str);
 }
 
-void vimish_nav(int key, char *key_str) {
+int vimish_nav_common(int key, char *key_str) {
     switch (key) {
         case 'h':
         case ARROW_LEFT:
@@ -109,9 +118,12 @@ void vimish_nav(int key, char *key_str) {
             YEXE("cursor-right", 0, NULL);
             break;
 
-        case 'L':
         case 'w':
             YEXE("cursor-next-word",    0, NULL);
+            break;
+
+        case 'b':
+            YEXE("cursor-prev-word",    0, NULL);
             break;
 
         case '0':
@@ -138,10 +150,31 @@ void vimish_nav(int key, char *key_str) {
             YEXE("cursor-buffer-end",   0, NULL);
             break;
 
+        default:
+            return 0;
+    }
+    return 1;
+}
+
+void vimish_nav(int key, char *key_str) {
+    if (vimish_nav_common(key, key_str)) {
+        return;
+    }
+
+    YEXE("select-off", 0, NULL);
+
+    switch (key) {
         case CTRL_P:
             fill_cmd_prompt("plugin-load");
             break;
 
+        case 'd':
+            enter_delete(0);
+            break;
+
+        case 'D':
+            enter_delete(1);
+            break;
 
         case 'a':
             YEXE("cursor-right",   0, NULL);
@@ -203,6 +236,27 @@ exit_insert:
 
 }
 
+void vimish_delete(int key, char *key_str) {
+    if (vimish_nav_common(key, key_str)) {
+        return;
+    }
+
+    switch (key) {
+        case 'd':
+            exit_delete(0);
+            break;
+
+        case CTRL_C:
+            exit_delete(1);
+            break;
+
+        default:
+            yed_append_text_to_cmd_buff("[!] [DELETE] unhandled key ");
+            yed_append_int_to_cmd_buff(key);
+    }
+
+}
+
 void vimish_write(int n_args, char **args) {
     YEXE("write-buffer", 0, NULL);
 }
@@ -229,5 +283,44 @@ void exit_insert(void) {
 
     yed_unbind_key(exit_insert_key);
     yed_delete_key_sequence(exit_insert_key);
+    yed_append_text_to_cmd_buff("NAV");
+}
+
+void enter_delete(int by_line) {
+    mode = MODE_DELETE;
+
+    if (by_line) {
+        YEXE("select-lines", 0, NULL);
+        yed_append_text_to_cmd_buff("DELETE LINES");
+    } else {
+        YEXE("select", 0, NULL);
+        yed_append_text_to_cmd_buff("DELETE");
+    }
+
+}
+
+void exit_delete(int cancel) {
+    yed_range *sel;
+
+    mode = MODE_NAV;
+
+    if (!cancel) {
+        if (ys->active_frame
+        &&  ys->active_frame->buffer
+        &&  ys->active_frame->buffer->has_selection) {
+
+            sel = &ys->active_frame->buffer->selection;
+            if (sel->anchor_row == sel->cursor_row
+            &&  sel->anchor_col == sel->cursor_col) {
+
+                YEXE("select-lines", 0, NULL);
+            }
+
+            YEXE("delete-back", 0, NULL);
+        }
+    }
+
+    YEXE("select-off", 0, NULL);
+
     yed_append_text_to_cmd_buff("NAV");
 }

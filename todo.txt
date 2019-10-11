@@ -1,5 +1,6 @@
 * how to handle overlapping frames?
-* selection
+* yank
+* undo/redo
 * stylizing
     * ui colors
     * syntax

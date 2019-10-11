@@ -100,8 +100,8 @@ void yed_clear_frame(yed_frame *frame) {
     yed_set_cursor(x, y);
 }
 
-void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
-    int  n, n_col, starting_idx;
+void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
+    int  n, col, n_col, starting_idx, set_sel_style;
     char c;
     yed_cell *cell_it;
 
@@ -129,47 +129,18 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_o
 
     yed_set_cursor(frame->left, frame->top + y_offset);
 
+    col = starting_idx + 1;
+
     array_traverse_from(line->cells, cell_it, starting_idx) {
         if (n == n_col)    { break; }
         c = cell_it->c;
-        if (c == '\t') {
-            append_to_output_buff(TERM_BG_RED);
-            append_n_to_output_buff(" ", 1);
-            append_to_output_buff(TERM_RESET);
-            append_to_output_buff(TERM_CURSOR_HIDE);
-        } else {
-            append_n_to_output_buff(&c, 1);
+
+        set_sel_style = 0;
+        if (frame->buffer->has_selection
+        && yed_is_in_range(&frame->buffer->selection, row, col)) {
+            append_to_output_buff(TERM_INVERSE);
+            set_sel_style = 1;
         }
-        n += 1;
-    }
-
-    for (; n < frame->width; n += 1) {
-        append_n_to_output_buff(" ", 1);
-    }
-}
-
-#if 0
-void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
-    int  i, n, n_col, n_cell;
-    char c;
-    yed_cell *cell_it;
-
-    n_col  = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
-    n_cell = 0;
-    n      = 0;
-    array_traverse(line->cells, cell_it) {
-        if (n + cell_it->width >= n_col) {
-            break;
-        }
-        n      += cell_it->width;
-        n_cell += 1;
-    }
-
-    yed_set_cursor(frame->left, frame->top + y_offset);
-
-    for (i = 0; i < n_cell; i += 1) {
-        cell_it = array_item(line->cells, i);
-        c       = cell_it->bytes[0];
 
         if (c == '\t') {
             append_to_output_buff(TERM_BG_RED);
@@ -179,41 +150,20 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_o
         } else {
             append_n_to_output_buff(&c, 1);
         }
-    }
 
-/*     append_n_to_output_buff(array_data(line->chars) + x_offset, n); */
-    for (; n < frame->width; n += 1) {
-        append_n_to_output_buff(" ", 1);
-    }
-}
-#endif
-
-#if 0
-void yed_frame_draw_line(yed_frame *frame, yed_line *line, int y_offset, int x_offset) {
-    int  i, n;
-    char c;
-
-    yed_set_cursor(frame->left, frame->top + y_offset);
-    n = MIN(MAX(array_len(line->chars) - x_offset, 0), frame->width);
-
-    for (i = 0; i < n; i += 1) {
-        c = *(char*)(array_data(line->chars) + x_offset + i);
-        if (c == '\t') {
-            append_to_output_buff(TERM_BG_RED);
-            append_n_to_output_buff(" ", 1);
+        if (set_sel_style) {
             append_to_output_buff(TERM_RESET);
             append_to_output_buff(TERM_CURSOR_HIDE);
-        } else {
-            append_n_to_output_buff(&c, 1);
         }
+
+        n   += 1;
+        col += 1;
     }
 
-/*     append_n_to_output_buff(array_data(line->chars) + x_offset, n); */
     for (; n < frame->width; n += 1) {
         append_n_to_output_buff(" ", 1);
     }
 }
-#endif
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     int i, n;
@@ -230,15 +180,18 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset) {
     yed_line *line;
     int lines_drawn;
+    int row;
 
     lines_drawn = 0;
 
+    row = y_offset + 1;
     bucket_array_traverse_from(buff->lines, line, y_offset) {
-        yed_frame_draw_line(frame, line, lines_drawn, x_offset);
+        yed_frame_draw_line(frame, line, row, lines_drawn, x_offset);
 
         lines_drawn += 1;
 
         if (lines_drawn == frame->height)    { break; }
+        row += 1;
     }
 
     yed_frame_draw_fill(frame, lines_drawn);
@@ -315,7 +268,6 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
     /*
      * Update the cursor line.
      */
-    f->dirty_line  = f->cursor_line;
     f->cursor_line = f->buffer_y_offset + (f->cur_y - f->top + 1);
 }
 
@@ -367,15 +319,22 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
               line_width,
               update_desired_x,
               buff_n_lines,
-              buff_big_enough_to_scroll;
+              buff_big_enough_to_scroll,
+              save_cursor_line;
     yed_line *line;
 
     buff_n_lines              = bucket_array_len(f->buffer->lines);
     buff_big_enough_to_scroll = buff_n_lines > 2 * f->scroll_off;
 
+    save_cursor_line = f->cursor_line;
+
     dir = row > 0 ? 1 : -1;
     for (i = 0; i < dir * row; i += 1) {
         yed_move_cursor_once_y_within_frame(f, dir, buff_n_lines, buff_big_enough_to_scroll);
+    }
+
+    if (save_cursor_line != f->cursor_line) {
+        f->dirty_line = save_cursor_line;
     }
 
     line             = yed_buff_get_line(f->buffer, f->cursor_line);
@@ -406,6 +365,16 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
     for (i = 0; i < dir * col; i += 1) {
         yed_move_cursor_once_x_within_frame(f, dir, line_width);
     }
+
+    if (f->buffer->has_selection && !f->buffer->selection.locked) {
+        f->buffer->selection.cursor_row = f->cursor_line;
+        f->buffer->selection.cursor_col = f->cursor_col;
+    }
+
+    if (row > 1 || row < -1) {
+        f->dirty = 1;
+    }
+
 }
 
 void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
@@ -414,16 +383,20 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
     if (frame->buffer) {
         buff_n_lines = bucket_array_len(frame->buffer->lines);
 
-        frame->buffer_x_offset = 0;
-        frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
-        frame->cur_x           = frame->desired_x       = frame->left;
-        frame->cur_y           = frame->top + frame->scroll_off;
-        LIMIT(frame->cur_y,
-                frame->top,
-                MIN(frame->top + frame->height - 1,
-                    frame->top + buff_n_lines - frame->buffer_y_offset - 1));
-        frame->cursor_col      = 1;
-        frame->cursor_line     = frame->buffer_y_offset + frame->cur_y;
+        if ((dst_y <  frame->buffer_y_offset + 1 + frame->scroll_off)
+        ||  (dst_y >= frame->buffer_y_offset + frame->height - frame->scroll_off)) {
+
+            frame->buffer_x_offset = 0;
+            frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
+            frame->cur_x           = frame->desired_x       = frame->left;
+            frame->cur_y           = frame->top + frame->scroll_off;
+            LIMIT(frame->cur_y,
+                    frame->top,
+                    MIN(frame->top + frame->height - 1,
+                        frame->top + buff_n_lines - frame->buffer_y_offset - 1));
+            frame->cursor_col      = 1;
+            frame->cursor_line     = frame->buffer_y_offset + frame->cur_y;
+        }
 
         yed_set_cursor_within_frame(frame, dst_x, dst_y);
 
@@ -488,7 +461,7 @@ void yed_frame_update_dirty_line(yed_frame *frame) {
     if (y) {
         line = yed_buff_get_line(frame->buffer, frame->dirty_line);
         if (line) {
-            yed_frame_draw_line(frame, line, y - frame->top, frame->buffer_x_offset);
+            yed_frame_draw_line(frame, line, frame->dirty_line, y - frame->top, frame->buffer_x_offset);
         }
     }
 }
@@ -504,15 +477,15 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
     y = yed_frame_line_to_y(frame, frame->cursor_line);
     if (y) {
 
-        if (frame == ys->active_frame) {
+        if (frame == ys->active_frame && !frame->buffer->has_selection) {
             append_to_output_buff(TERM_BG_BLUE);
         }
         line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
         ASSERT(line != NULL, "didn't get a cursor line");
 
-        yed_frame_draw_line(frame, line, y - frame->top, frame->buffer_x_offset);
-        if (frame == ys->active_frame) {
+        yed_frame_draw_line(frame, line, frame->cursor_line, y - frame->top, frame->buffer_x_offset);
+        if (frame == ys->active_frame && !frame->buffer->has_selection) {
             append_to_output_buff(TERM_RESET);
             append_to_output_buff(TERM_CURSOR_HIDE);
         }
