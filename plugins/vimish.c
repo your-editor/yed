@@ -48,10 +48,6 @@ void bind_keys(void) {
     int key;
 
     for (key = 1; key < REAL_KEY_MAX; key += 1) {
-        if (key == CTRL_S) {
-            yed_plugin_bind_key(Self, key, "select", 0);
-            continue;
-        }
         yed_plugin_bind_key(Self, key, "vimish-take-key", 1);
     }
 }
@@ -164,6 +160,10 @@ void vimish_nav(int key, char *key_str) {
     YEXE("select-off", 0, NULL);
 
     switch (key) {
+        case CTRL_L:
+            YEXE("frame-next", 0, NULL);
+            break;
+
         case CTRL_P:
             fill_cmd_prompt("plugin-load");
             break;

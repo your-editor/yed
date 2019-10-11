@@ -478,7 +478,9 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
     if (y) {
 
         if (frame == ys->active_frame && !frame->buffer->has_selection) {
-            append_to_output_buff(TERM_BG_BLUE);
+            append_to_output_buff("\e[0;30;46m");
+/*             append_to_output_buff(TERM_BG_GREEN); */
+/*             append_to_output_buff(TERM_BLACK); */
         }
         line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 

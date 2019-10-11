@@ -521,7 +521,7 @@ void yed_default_command_cursor_prev_word(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
     yed_cell  *cell_it;
-    int        col;
+    int        col, row;
     char       c;
 
     if (n_args > 0) {
@@ -542,50 +542,71 @@ void yed_default_command_cursor_prev_word(int n_args, char **args) {
         return;
     }
 
+again:
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-    col = frame->cursor_col - 1;
+    col      = frame->cursor_col - 1;
+    cell_it  = yed_line_col_to_cell(line, col);
+    c        = cell_it->c;
 
-    while (col > 0) {
-        cell_it = yed_line_col_to_cell(line, col);
-        c       = cell_it->c;
+    if (isspace(c)) {
+        while (col > 1) {
+            cell_it  = yed_line_col_to_cell(line, col - 1);
+            c        = cell_it->c;
 
-        if (isspace(c)) {
-            col -= 1;
-        } else {
-            break;
-        }
-    }
-
-    if (col > 0) {
-        cell_it = yed_line_col_to_cell(line, col);
-        c       = cell_it->c;
-
-        if (isalnum(c) || c == '_') {
-            col -= 1;
-            while (col > 0) {
-                cell_it = yed_line_col_to_cell(line, col);
-                c       = cell_it->c;
-                if (isalnum(c) || c == '_') {
-                    col -= 1;
-                    cell_it = yed_line_col_to_cell(line, col);
-                } else {
-                    break;
-                }
+            if (!isspace(c)) {
+                break;
             }
-        } else {
+
             col -= 1;
         }
     }
 
-    yed_move_cursor_within_frame(frame, col - frame->cursor_col + 1, 0);
+    if (isalnum(c) || c == '_') {
+        while (col > 1) {
+            cell_it  = yed_line_col_to_cell(line, col - 1);
+            c        = cell_it->c;
+
+            if (!isalnum(c) && c != '_') {
+                break;
+            }
+
+            col -= 1;
+        }
+    } else {
+        while (col > 1) {
+            cell_it  = yed_line_col_to_cell(line, col - 1);
+            c        = cell_it->c;
+
+            if (isalnum(c) || c == '_' || isspace(c)) {
+                break;
+            }
+
+            col -= 1;
+        }
+    }
+
+    if (col == 0 || (col == 1 && (isspace(c)))) {
+        row = frame->cursor_line;
+        do {
+            row -= 1;
+            line = yed_buff_get_line(frame->buffer, row);
+        } while (line && !line->visual_width);
+
+        if (line) {
+            yed_move_cursor_within_frame(frame, line->visual_width, row - frame->cursor_line);
+            goto again;
+        }
+    } else {
+        yed_move_cursor_within_frame(frame, col - frame->cursor_col, 0);
+    }
 }
 
 void yed_default_command_cursor_next_word(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
     yed_cell  *cell_it;
-    int        cols;
+    int        col, row;
     char       c;
 
     if (n_args > 0) {
@@ -606,65 +627,72 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
         return;
     }
 
+again:
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-    cols    = 0;
-    cell_it = array_item(line->cells, frame->cursor_col - 1);
+    col      = frame->cursor_col;
 
-    if (cell_it) {
-        c       = cell_it->c;
-        if (isspace(c)) {
-            array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-                c = cell_it->c;
-                cols += 1;
-                if (!isspace(c)) {
-                    break;
-                }
+    if (col >= line->visual_width) {
+        goto skip_lines;
+    }
+
+    cell_it  = yed_line_col_to_cell(line, col);
+    c        = cell_it->c;
+
+    if (isalnum(c) || c == '_') {
+        while (col <= line->visual_width) {
+            col += 1;
+            cell_it  = yed_line_col_to_cell(line, col);
+            c        = cell_it->c;
+
+            if (!isalnum(c) && c != '_') {
+                break;
             }
-        } else if (isalnum(c) || c == '_') {
-            array_traverse_from(line->cells, cell_it, frame->cursor_col) {
-                c = cell_it->c;
-                cols += 1;
-                if (!isalnum(c) && c != '_') {
-                    break;
-                }
+        }
+    } else {
+        while (col <= line->visual_width) {
+            col += 1;
+            cell_it  = yed_line_col_to_cell(line, col);
+            c        = cell_it->c;
+
+            if (isalnum(c) || c == '_' || isspace(c)) {
+                break;
             }
-            if ((isalnum(c) || c == '_')
-            &&  (frame->cursor_col + cols == array_len(line->cells))) {
-                cols += 1;
-            } else if (isspace(c)) {
-                array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-                    c = cell_it->c;
-                    cols += 1;
-                    if (!isspace(c)) {
-                        break;
-                    }
-                }
-            }
-        } else {
-            if (array_len(line->cells) >= frame->cursor_col) {
-                cols += 1;
-                cell_it = array_item(line->cells, frame->cursor_col - 1 + cols);
-                c       = cell_it->c;
-                if (isspace(c)) {
-                    array_traverse_from(line->cells, cell_it, frame->cursor_col + cols) {
-                        c = cell_it->c;
-                        cols += 1;
-                        if (!isspace(c)) {
-                            break;
-                        }
-                    }
-                }
-            }
+
         }
     }
 
-    if ((frame->cursor_col + cols > array_len(line->cells))
-    &&  (frame->cursor_line < bucket_array_len(frame->buffer->lines))) {
-        yed_move_cursor_within_frame(frame, 0, 1);
-        yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    if (isspace(c)) {
+        while (col <= line->visual_width) {
+            col += 1;
+            cell_it  = yed_line_col_to_cell(line, col);
+            c        = cell_it->c;
+
+            if (!isspace(c)) {
+                break;
+            }
+
+        }
+    }
+
+    if (col == line->visual_width + 1) {
+skip_lines:
+        row = frame->cursor_line;
+        do {
+            row += 1;
+            line = yed_buff_get_line(frame->buffer, row);
+        } while (line && !line->visual_width);
+
+        if (line) {
+            yed_set_cursor_far_within_frame(frame, 1, row);
+            line = yed_buff_get_line(frame->buffer, row);
+            cell_it = yed_line_col_to_cell(line, 1);
+            if (cell_it && isspace(cell_it->c)) {
+                goto again;
+            }
+        }
     } else {
-        yed_move_cursor_within_frame(frame, cols, 0);
+        yed_move_cursor_within_frame(frame, col - frame->cursor_col, 0);
     }
 }
 
