@@ -310,7 +310,8 @@ void exit_delete(int cancel) {
         &&  ys->active_frame->buffer->has_selection) {
 
             sel = &ys->active_frame->buffer->selection;
-            if (sel->anchor_row == sel->cursor_row
+            if (sel->kind != RANGE_LINE
+            &&  sel->anchor_row == sel->cursor_row
             &&  sel->anchor_col == sel->cursor_col) {
 
                 YEXE("select-lines", 0, NULL);
