@@ -246,6 +246,11 @@ void vimish_delete(int key, char *key_str) {
             exit_delete(0);
             break;
 
+        case 'c':
+            exit_delete(0);
+            enter_insert();
+            break;
+
         case CTRL_C:
             exit_delete(1);
             break;
@@ -309,7 +314,8 @@ void exit_delete(int cancel) {
         &&  ys->active_frame->buffer
         &&  ys->active_frame->buffer->has_selection) {
 
-            sel = &ys->active_frame->buffer->selection;
+            sel = &(ys->active_frame->buffer->selection);
+
             if (sel->kind != RANGE_LINE
             &&  sel->anchor_row == sel->cursor_row
             &&  sel->anchor_col == sel->cursor_col) {
