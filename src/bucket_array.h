@@ -26,6 +26,7 @@ void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem);
 void * _bucket_array_push(bucket_array_t *array, void *elem);
 void _bucket_array_delete(bucket_array_t *array, int idx);
 void _bucket_array_pop(bucket_array_t *array);
+void _bucket_array_pop(bucket_array_t *array);
 
 #define bucket_array_make(n, T) \
     (_bucket_array_make(n, sizeof(T)))
@@ -53,6 +54,9 @@ void _bucket_array_pop(bucket_array_t *array);
 
 #define bucket_array_pop(array) \
     (_bucket_array_pop(&(array)))
+
+#define bucket_array_clear(array) \
+    (_bucket_array_clear(&(array)))
 
 #define bucket_array_traverse(array, it)                                              \
     for (int __idx = 0;                                                               \

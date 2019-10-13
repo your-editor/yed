@@ -78,10 +78,10 @@ int get_bucket_and_slot_idx_for_idx(bucket_array_t *array, int *idx) {
     while (b_idx < array_len(array->buckets)) {
         b = array_item(array->buckets, b_idx);
 
-        if (*idx < b->capacity) {
+        if (*idx < b->used) {
             return b_idx;
         } else {
-            *idx  -= b->capacity;
+            *idx  -= b->used;
             b_idx += 1;
         }
     }
@@ -280,4 +280,16 @@ void _bucket_array_pop(bucket_array_t *array) {
     b     = array_item(array->buckets, b_idx);
 
     bucket_delete(array, b_idx, b->used - 1, array->elem_size);
+}
+
+void _bucket_array_clear(bucket_array_t *array) {
+    bucket_t *b_it;
+
+    array_traverse(array->buckets, b_it) {
+        free(b_it->data);
+    }
+
+    array_clear(array->buckets);
+
+    array->used = 0;
 }

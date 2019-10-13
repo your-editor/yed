@@ -51,6 +51,7 @@ use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 #include "yed.h"
 #include "term.h"
 #include "key.h"
+#include "fs.h"
 #include "buffer.h"
 #include "frame.h"
 #include "command.h"
@@ -143,12 +144,12 @@ typedef struct yed_state_t {
                     save_cur_x,
                     save_cur_y;
     array_t         buff_list;
+    yed_buffer      yank_buff;
     tree(yed_frame_id_t, yed_frame_ptr_t) frames;
     yed_frame      *active_frame;
     int             accepting_command;
     array_t         cmd_buff;
     int             cmd_cursor_x;
-    char            command_buff[128];
     int             status;
     tree(yed_command_name_t, yed_command) commands;
     tree(yed_command_name_t, yed_command) default_commands;

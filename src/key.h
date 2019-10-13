@@ -22,7 +22,7 @@ enum KEY_ACTION {
     CTRL_U    = 21,   /* Ctrl-u    */
     CTRL_W    = 23,   /* Ctrl-w    */
     ESC       = 27,   /* Escape    */
-    BACKSPACE =  127, /* Backspace */
+    BACKSPACE = 127,  /* Backspace */
 
     /* The following are just soft codes, not really reported by the
      * terminal directly. */

@@ -12,6 +12,7 @@ void vimish_write_quit(int n_args, char **args);
 #define MODE_NAV    (0x0)
 #define MODE_INSERT (0x1)
 #define MODE_DELETE (0x2)
+#define MODE_YANK   (0x3)
 
 static yed_plugin *Self;
 static int mode;
@@ -20,11 +21,14 @@ static int exit_insert_key;
 void vimish_nav(int key, char* key_str);
 void vimish_insert(int key, char* key_str);
 void vimish_delete(int key, char* key_str);
+void vimish_yank(int key, char* key_str);
 void bind_keys(void);
 void enter_insert(void);
 void exit_insert(void);
 void enter_delete(int by_line);
 void exit_delete(int cancel);
+void enter_yank(int by_line);
+void exit_yank(int cancel);
 
 int yed_plugin_boot(yed_plugin *self) {
     Self = self;
@@ -67,6 +71,7 @@ void vimish_take_key(int n_args, char **args) {
         case MODE_NAV:    vimish_nav(key, args[0]);    break;
         case MODE_INSERT: vimish_insert(key, args[0]); break;
         case MODE_DELETE: vimish_delete(key, args[0]); break;
+        case MODE_YANK:   vimish_yank(key, args[0]);   break;
         default:
             yed_append_text_to_cmd_buff("[!] invalid mode (?)");
     }
@@ -176,6 +181,18 @@ void vimish_nav(int key, char *key_str) {
             enter_delete(1);
             break;
 
+        case 'y':
+            enter_yank(0);
+            break;
+
+        case 'Y':
+            enter_yank(1);
+            break;
+
+        case 'p':
+            YEXE("paste-yank-buffer", 0, NULL);
+            break;
+
         case 'a':
             YEXE("cursor-right",   0, NULL);
             goto enter_insert;
@@ -254,12 +271,31 @@ void vimish_delete(int key, char *key_str) {
         case CTRL_C:
             exit_delete(1);
             break;
-
+        
         default:
             yed_append_text_to_cmd_buff("[!] [DELETE] unhandled key ");
             yed_append_int_to_cmd_buff(key);
     }
+}
 
+void vimish_yank(int key, char *key_str) {
+    if (vimish_nav_common(key, key_str)) {
+        return;
+    }
+
+    switch (key) {
+        case 'y':
+            exit_yank(0);
+            break;
+
+        case CTRL_C:
+            exit_yank(1);
+            break;
+
+        default:
+            yed_append_text_to_cmd_buff("[!] [YANK] unhandled key ");
+            yed_append_int_to_cmd_buff(key);
+    }
 }
 
 void vimish_write(int n_args, char **args) {
@@ -304,8 +340,23 @@ void enter_delete(int by_line) {
 
 }
 
+void enter_yank(int by_line) {
+    mode = MODE_YANK;
+
+    if (by_line) {
+        YEXE("select-lines", 0, NULL);
+        yed_append_text_to_cmd_buff("YANK LINES");
+    } else {
+        YEXE("select", 0, NULL);
+        yed_append_text_to_cmd_buff("YANK");
+    }
+}
+
 void exit_delete(int cancel) {
-    yed_range *sel;
+    yed_frame  *frame;
+    yed_buffer *buff;
+    yed_range  *sel;
+    char       *preserve;
 
     mode = MODE_NAV;
 
@@ -314,7 +365,43 @@ void exit_delete(int cancel) {
         &&  ys->active_frame->buffer
         &&  ys->active_frame->buffer->has_selection) {
 
-            sel = &(ys->active_frame->buffer->selection);
+            frame = ys->active_frame;
+            buff  = frame->buffer;
+            sel   = &buff->selection;
+
+            if (sel->kind != RANGE_LINE
+            &&  sel->anchor_row == sel->cursor_row
+            &&  sel->anchor_col == sel->cursor_col) {
+
+                YEXE("select-lines", 0, NULL);
+            }
+ 
+            preserve = "1";
+            YEXE("yank-selection", 1, &preserve);           
+            YEXE("delete-back",    0, NULL);
+        }
+    }
+
+    YEXE("select-off", 0, NULL);
+
+    yed_append_text_to_cmd_buff("NAV");
+}
+
+void exit_yank(int cancel) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+    yed_range  *sel;
+
+    mode = MODE_NAV;
+
+    if (!cancel) {
+        if (ys->active_frame
+        &&  ys->active_frame->buffer
+        &&  ys->active_frame->buffer->has_selection) {
+
+            frame = ys->active_frame;
+            buff  = frame->buffer;
+            sel   = &buff->selection;
 
             if (sel->kind != RANGE_LINE
             &&  sel->anchor_row == sel->cursor_row
@@ -323,7 +410,7 @@ void exit_delete(int cancel) {
                 YEXE("select-lines", 0, NULL);
             }
 
-            YEXE("delete-back", 0, NULL);
+            YEXE("yank-selection", 0, NULL);
         }
     }
 

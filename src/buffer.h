@@ -31,7 +31,18 @@ typedef struct {
     int anchor_row, anchor_col, cursor_row, cursor_col;
 } yed_range;
 
+#define BUFF_KIND_FILE  (0x1)
+#define BUFF_KIND_YANK  (0x2)
+#define BUFF_KIND_UNDO  (0x3)
+
+#define BUFF_MODIFIED   (0x1)
+#define BUFF_RD_ONLY    (0x2)
+#define BUFF_YANK_LINES (0x4)
+
 typedef struct {
+    int             kind;
+    int             flags;
+    yed_file       *file;
     const char     *path;
     bucket_array_t  lines;
     int             has_selection;

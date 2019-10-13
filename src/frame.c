@@ -76,8 +76,10 @@ void yed_activate_frame(yed_frame *frame) {
      * Correct the cursor if the buffer has changed
      * while this frame was inactive.
      */
+    if (frame->buffer->kind == BUFF_KIND_YANK) {
+        yed_set_cursor_far_within_frame(frame, 1, 1);
+    }
     yed_frame_reset_cursor(frame);
-/*     yed_move_cursor_within_frame(frame, 0, 0); */
     ys->active_frame->dirty      = 1;
     ys->active_frame->dirty_line = ys->active_frame->cursor_line;
 }
@@ -383,8 +385,8 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
     if (frame->buffer) {
         buff_n_lines = bucket_array_len(frame->buffer->lines);
 
-        if ((dst_y <  frame->buffer_y_offset + 1 + frame->scroll_off)
-        ||  (dst_y >= frame->buffer_y_offset + frame->height - frame->scroll_off)) {
+        if ((dst_y <  frame->buffer_y_offset + 1)
+        ||  (dst_y >= frame->buffer_y_offset + frame->height)) {
 
             frame->buffer_x_offset = 0;
             frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));

@@ -6,6 +6,7 @@
 #include "term.c"
 #include "key.c"
 #include "buffer.c"
+#include "fs.c"
 #include "frame.c"
 #include "command.c"
 #include "getRSS.c"
@@ -31,13 +32,17 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
-    ys->yed_lib       = yed_lib;
-    ys->buff_list     = array_make(yed_buffer*);
+    yed_init_frames();
+
+    ys->yed_lib          = yed_lib;
+    ys->buff_list        = array_make(yed_buffer*);
+    ys->yank_buff        = yed_new_buff();
+    ys->yank_buff.kind   = BUFF_KIND_YANK;
+    ys->yank_buff.flags |= BUFF_RD_ONLY;
 /*     ys->small_message = "* started yed *"; */
 
     yed_init_output_stream();
     yed_init_commands();
-    yed_init_frames();
     yed_init_keys();
     yed_init_plugins();
 

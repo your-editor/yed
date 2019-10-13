@@ -67,5 +67,7 @@ DEF_DEFAULT_COMMAND(plugins_add_dir);
 DEF_DEFAULT_COMMAND(select);
 DEF_DEFAULT_COMMAND(select_lines);
 DEF_DEFAULT_COMMAND(select_off);
+DEF_DEFAULT_COMMAND(yank_selection);
+DEF_DEFAULT_COMMAND(paste_yank_buffer);
 
 #endif

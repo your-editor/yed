@@ -62,6 +62,7 @@ yed_buffer yed_new_buff(void) {
     buff.lines         = bucket_array_make(1024, yed_line);
     buff.path          = NULL;
     buff.has_selection = 0;
+    buff.flags         = 0;
 
     yed_buffer_add_line(&buff);
 
