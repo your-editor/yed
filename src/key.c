@@ -157,17 +157,19 @@ void yed_take_key(int key) {
 }
 
 static yed_key_binding default_key_bindings[] = {
-    { CTRL_F,      "command-prompt",   0 },
-    { ARROW_UP,    "cursor-up",        0 },
-    { ARROW_DOWN,  "cursor-down",      0 },
-    { ARROW_RIGHT, "cursor-right",     0 },
-    { ARROW_LEFT,  "cursor-left",      0 },
-    { BACKSPACE,   "delete-back",      0 },
-    { CTRL_F,      "command-prompt",   0 },
-    { CTRL_L,      "frame-next",       0 },
-    { CTRL_D,      "delete-line",      0 },
-    { CTRL_S,      "select",           0 },
-    { CTRL_W,      "cursor-next-word", 0 }
+    { CTRL_F,      "command-prompt",    0 },
+    { ARROW_UP,    "cursor-up",         0 },
+    { ARROW_DOWN,  "cursor-down",       0 },
+    { ARROW_RIGHT, "cursor-right",      0 },
+    { ARROW_LEFT,  "cursor-left",       0 },
+    { BACKSPACE,   "delete-back",       0 },
+    { CTRL_C,      "yank-selection",    0 },
+    { CTRL_F,      "command-prompt",    0 },
+    { CTRL_L,      "frame-next",        0 },
+    { CTRL_D,      "delete-line",       0 },
+    { CTRL_S,      "select",            0 },
+    { CTRL_V,      "paste-yank-buffer", 0 },
+    { CTRL_W,      "write-buffer",      0 }
 };
 
 void yed_set_default_key_binding(int key) {

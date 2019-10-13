@@ -20,6 +20,7 @@ enum KEY_ACTION {
     CTRL_Q    = 17,   /* Ctrl-q    */
     CTRL_S    = 19,   /* Ctrl-s    */
     CTRL_U    = 21,   /* Ctrl-u    */
+    CTRL_V    = 22,   /* Ctrl-v    */
     CTRL_W    = 23,   /* Ctrl-w    */
     ESC       = 27,   /* Escape    */
     BACKSPACE = 127,  /* Backspace */
