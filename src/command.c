@@ -547,7 +547,10 @@ void yed_default_command_cursor_prev_word(int n_args, char **args) {
 again:
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-    col      = frame->cursor_col - 1;
+    col = frame->cursor_col - 1;
+
+    if (col <= 0)    { goto skip_lines; }
+
     cell_it  = yed_line_col_to_cell(line, col);
     c        = cell_it->c;
 
@@ -589,6 +592,7 @@ again:
     }
 
     if (col == 0 || (col == 1 && (isspace(c)))) {
+skip_lines:
         row = frame->cursor_line;
         do {
             row -= 1;
