@@ -175,6 +175,9 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         col += 1;
     }
 
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
+
     for (; n < frame->width; n += 1) {
         append_n_to_output_buff(" ", 1);
     }
