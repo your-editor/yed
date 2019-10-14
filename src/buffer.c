@@ -411,6 +411,8 @@ void yed_buff_delete_selection(yed_buffer *buff) {
     int        r1, c1, r2, c2,
                n, i;
 
+    r1 = c1 = r2 = c2 = 0;
+
     range = &buff->selection;
 
     yed_range_sorted_points(range, &r1, &c1, &r2, &c2);

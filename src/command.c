@@ -1179,6 +1179,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
     }
 
     if (frame->buffer->has_selection) {
+        r1 = c1 = r2 = c2 = 0;
         yed_range_sorted_points(&frame->buffer->selection, &r1, &c1, &r2, &c2);
         frame->buffer->selection.locked = 1;
         if (frame->buffer->selection.kind == RANGE_LINE) {
@@ -1587,6 +1588,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
 
     /* Copy the selection into the yank buffer. */
     sel = &buff->selection;
+    r1 = c1 = r2 = c2 = 0;
     yed_range_sorted_points(sel, &r1, &c1, &r2, &c2);
     if (sel->kind == RANGE_LINE) {
         ys->yank_buff.flags |= BUFF_YANK_LINES;

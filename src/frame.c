@@ -109,6 +109,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     yed_cell *cell_it;
     yed_event event;
 
+    attr_idx = 0;
+
     event.kind  = EVENT_LINE_PRE_DRAW;
     event.frame = frame;
     event.row   = row;
