@@ -6,6 +6,8 @@
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
 
+    yed_term_exit();
+
     fprintf(stderr, "Assertion failed -- %s\n"
                     "at  %s :: line %d\n"
                     "    Condition: '%s'\n",
