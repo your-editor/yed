@@ -26,6 +26,7 @@ void syntax_c_handler(yed_event *event) {
                   "switch",
                   "case",
                   "default",
+                  "return",
                   "goto",
               };
 
