@@ -4,7 +4,7 @@ void syntax_c_handler(yed_event *event) {
     yed_frame *frame;
     yed_line  *line;
     yed_cell  *cell_it;
-    int        col, old_col, i, j;
+    int        col, old_col, i, j, match;
     char       c, buff[1024],
               *kwds[] = {
                   "unsigned",
@@ -83,12 +83,14 @@ void syntax_c_handler(yed_event *event) {
         }
 
         for (i = 0; i < sizeof(kwds) / sizeof(const char*); i += 1) {
-            if (strcmp(buff, kwds[i]) == 0) {
-                for (j = 0; j < strlen(buff); j += 1) {
-                    cell_it = yed_line_col_to_cell(line, old_col + j);
-                    cell_it->attr_idx = 1;
-                }
+            match = (strcmp(buff, kwds[i]) == 0);
+            if (match) {
+                break;
             }
+        }
+        for (j = 0; j < strlen(buff); j += 1) {
+            cell_it = yed_line_col_to_cell(line, old_col + j);
+            cell_it->attr_idx = match;
         }
     }
 }
