@@ -60,7 +60,7 @@ void call_yed_fini(void)    { yed_lib._fini(state); }
 void force_yed_unload(void *handle) {
     void *try_handle;
 
-    while ((try_handle = dlopen("./libyed.so", RTLD_NOW | RTLD_NOLOAD))) {
+    while ((try_handle = dlopen("libyed.so", RTLD_NOW | RTLD_NOLOAD))) {
         dlclose(try_handle);
         dlclose(handle);
     }
@@ -80,7 +80,7 @@ int load_yed_lib(void) {
         force_yed_unload(yed_lib.handle);
     }
 
-    yed_lib.handle = dlopen("./libyed.so", RTLD_NOW | RTLD_LOCAL);
+    yed_lib.handle = dlopen("libyed.so", RTLD_NOW | RTLD_LOCAL);
 
     if (yed_lib.handle == NULL) {
         printf("[yed]! could not load 'libyed.so'\n%s\n", dlerror());

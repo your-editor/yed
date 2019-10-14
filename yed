@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH" ./_yed $@
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+LD_LIBRARY_PATH="$DIR:$LD_LIBRARY_PATH" $DIR/_yed $@
