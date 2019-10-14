@@ -104,8 +104,16 @@ void yed_clear_frame(yed_frame *frame) {
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
     int  n, col, n_col, starting_idx, set_sel_style;
+    uint8_t attr_idx;
     char c;
     yed_cell *cell_it;
+    yed_event event;
+
+    event.kind  = EVENT_LINE_PRE_DRAW;
+    event.frame = frame;
+    event.row   = row;
+
+    yed_trigger_event(&event);
 
     /*
      * @bad @incorrect
@@ -136,6 +144,11 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     array_traverse_from(line->cells, cell_it, starting_idx) {
         if (n == n_col)    { break; }
         c = cell_it->c;
+
+        if (cell_it->attr_idx != attr_idx) {
+            attr_idx = cell_it->attr_idx;
+            yed_set_attr(attr_idx);
+        }
 
         set_sel_style = 0;
         if (frame->buffer->has_selection
@@ -479,20 +492,20 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
     y = yed_frame_line_to_y(frame, frame->cursor_line);
     if (y) {
 
-        if (frame == ys->active_frame && !frame->buffer->has_selection) {
-            append_to_output_buff("\e[0;30;46m");
+/*         if (frame == ys->active_frame && !frame->buffer->has_selection) { */
+/*             append_to_output_buff("\e[0;30;46m"); */
 /*             append_to_output_buff(TERM_BG_GREEN); */
 /*             append_to_output_buff(TERM_BLACK); */
-        }
+/*         } */
         line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
         ASSERT(line != NULL, "didn't get a cursor line");
 
         yed_frame_draw_line(frame, line, frame->cursor_line, y - frame->top, frame->buffer_x_offset);
-        if (frame == ys->active_frame && !frame->buffer->has_selection) {
-            append_to_output_buff(TERM_RESET);
-            append_to_output_buff(TERM_CURSOR_HIDE);
-        }
+/*         if (frame == ys->active_frame && !frame->buffer->has_selection) { */
+/*             append_to_output_buff(TERM_RESET); */
+/*             append_to_output_buff(TERM_CURSOR_HIDE); */
+/*         } */
     }
 }
 

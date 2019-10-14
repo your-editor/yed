@@ -38,8 +38,6 @@ typedef struct yed_frame_t *yed_frame_ptr_t;
 typedef char *yed_frame_id_t;
 use_tree(yed_frame_id_t, yed_frame_ptr_t);
 
-use_tree(int, int);
-
 typedef char *yed_plugin_name_t;
 struct yed_plugin_t;
 typedef struct yed_plugin_t *yed_plugin_ptr_t;
@@ -56,6 +54,7 @@ use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 #include "frame.h"
 #include "command.h"
 #include "getRSS.h"
+#include "event.h"
 #include "plugin.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
@@ -161,6 +160,8 @@ typedef struct yed_state_t {
     array_t         key_sequences;
     int             seq_key_counter;
     array_t         released_seq_keys;
+    array_t         event_handlers[N_EVENTS];
+    yed_cell_attrs  attrs[256];
 } yed_state;
 
 extern yed_state *ys;

@@ -10,6 +10,7 @@
 #include "frame.c"
 #include "command.c"
 #include "getRSS.c"
+#include "event.c"
 #include "plugin.c"
 
 yed_state *ys;
@@ -42,8 +43,10 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 /*     ys->small_message = "* started yed *"; */
 
     yed_init_output_stream();
+    yed_init_attrs();
     yed_init_commands();
     yed_init_keys();
+    yed_init_events();
     yed_init_plugins();
 
     yed_term_enter();

@@ -17,7 +17,8 @@ static void add_home_plug_dir(void) {
 int yed_plugin_boot(yed_plugin *self) {
     int   i;
     char *plugins[] = {
-        "vimish"
+        "vimish",
+        "syntax_c"
     };
 
     /* Not necessary. */

@@ -86,10 +86,11 @@ int yed_load_plugin(char *plug_name) {
         return YED_PLUG_NOT_FOUND;
     }
 
-    plug->path                = strdup(buff);
-    plug->added_cmds          = array_make(char*);
-    plug->added_bindings      = array_make(int);
-    plug->added_key_sequences = array_make(int);
+    plug->path                 = strdup(buff);
+    plug->added_cmds           = array_make(char*);
+    plug->added_bindings       = array_make(int);
+    plug->added_key_sequences  = array_make(int);
+    plug->added_event_handlers = array_make(yed_event_handler);
 
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
@@ -97,6 +98,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_bindings);
         array_free(plug->added_cmds);
         array_free(plug->added_key_sequences);
+        array_free(plug->added_event_handlers);
         free(plug);
         return YED_PLUG_NO_BOOT;
     }
@@ -107,6 +109,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_bindings);
         array_free(plug->added_cmds);
         array_free(plug->added_key_sequences);
+        array_free(plug->added_event_handlers);
         free(plug);
         return YED_PLUG_BOOT_FAIL;
     }
@@ -116,15 +119,45 @@ int yed_load_plugin(char *plug_name) {
     return YED_PLUG_SUCCESS;
 }
 
+static void yed_plugin_uninstall_features(yed_plugin *plug) {
+    tree_it(yed_command_name_t,
+            yed_command)          cmd_it;
+    char                        **cmd_name_it;
+    int                          *key_it;
+    yed_event_handler            *handler_it;
+
+    array_traverse(plug->added_cmds, cmd_name_it) {
+        yed_unset_command(*cmd_name_it);
+
+        /* If this is a default command, restore it. */
+        cmd_it = tree_lookup(ys->default_commands, *cmd_name_it);
+        if (tree_it_good(cmd_it)) {
+            yed_set_command(tree_it_key(cmd_it), tree_it_val(cmd_it));
+        }
+    }
+    array_free(plug->added_cmds);
+
+    array_traverse(plug->added_bindings, key_it) {
+        yed_set_default_key_binding(*key_it);
+    }
+    array_free(plug->added_bindings);
+
+    array_traverse(plug->added_key_sequences, key_it) {
+        yed_delete_key_sequence(*key_it);
+    }
+    array_free(plug->added_key_sequences);
+
+    array_traverse(plug->added_event_handlers, handler_it) {
+        yed_delete_event_handler(*handler_it);
+    }
+    array_free(plug->added_event_handlers);
+}
+
 int yed_unload_plugin(char *plug_name) {
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)     it;
-    tree_it(yed_command_name_t,
-            yed_command)          cmd_it;
-    char                        **cmd_name_it,
-                                 *old_key;
+    char                         *old_key;
     yed_plugin                   *old_plug;
-    int                          *key_it;
 
     it = tree_lookup(ys->plugins, plug_name);
 
@@ -137,27 +170,7 @@ int yed_unload_plugin(char *plug_name) {
 
     if (old_plug) {
         yed_plugin_force_lib_unload(old_plug);
-
-        array_traverse(old_plug->added_cmds, cmd_name_it) {
-            yed_unset_command(*cmd_name_it);
-
-            /* If this is a default command, restore it. */
-            cmd_it = tree_lookup(ys->default_commands, *cmd_name_it);
-            if (tree_it_good(cmd_it)) {
-                yed_set_command(tree_it_key(cmd_it), tree_it_val(cmd_it));
-            }
-        }
-        array_free(old_plug->added_cmds);
-
-        array_traverse(old_plug->added_bindings, key_it) {
-            yed_set_default_key_binding(*key_it);
-        }
-        array_free(old_plug->added_bindings);
-
-        array_traverse(old_plug->added_key_sequences, key_it) {
-            yed_delete_key_sequence(*key_it);
-        }
-        array_free(old_plug->added_key_sequences);
+        yed_plugin_uninstall_features(old_plug);
 
         free(old_plug->path);
         free(old_plug);
@@ -182,10 +195,14 @@ int yed_unload_plugins(void) {
 
 int yed_unload_plugin_libs(void) {
     tree_it(yed_plugin_name_t,
-            yed_plugin_ptr_t)  it;
+            yed_plugin_ptr_t)   it;
+    yed_plugin                 *plug;
 
     tree_traverse(ys->plugins, it) {
-        yed_plugin_force_lib_unload(tree_it_val(it));
+        plug = tree_it_val(it);
+
+        yed_plugin_force_lib_unload(plug);
+        yed_plugin_uninstall_features(plug);
     }
 
     return 0;
@@ -249,6 +266,11 @@ int yed_plugin_add_key_sequence(yed_plugin *plug, int len, ...) {
     }
 
     return r;
+}
+
+void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler) {
+    array_push(plug->added_event_handlers, handler);
+    yed_add_event_handler(handler);
 }
 
 void yed_add_plugin_dir(char *s) {

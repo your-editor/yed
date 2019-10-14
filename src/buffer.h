@@ -3,7 +3,12 @@
 
 #include "internal.h"
 
+#define ATTR_NORMAL (0x1)
+#define ATTR_256    (0x2)
+#define ATTR_RGB    (0x4)
+
 typedef struct {
+    uint32_t flags;
     uint32_t fg;
     uint32_t bg;
 } yed_cell_attrs;
@@ -50,6 +55,10 @@ typedef struct {
 } yed_buffer;
 
 #define YED_NEW_CELL__DATA(c) (c)
+
+void yed_init_attrs(void);
+
+void yed_set_attr(uint8_t attr_idx);
 
 yed_line yed_new_line(void);
 yed_line yed_new_line_with_cap(int len);

@@ -20,6 +20,7 @@ typedef struct yed_plugin_t {
     array_t              added_cmds;
     array_t              added_bindings;
     array_t              added_key_sequences;
+    array_t              added_event_handlers;
 } yed_plugin;
 
 void yed_init_plugins(void);
@@ -35,6 +36,7 @@ int yed_reload_plugins(void);
 void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command cmd);
 void yed_plugin_bind_key(yed_plugin *plug, int key, char *command_name, int takes_key_as_arg);
 int yed_plugin_add_key_sequence(yed_plugin *plug, int len, ...);
+void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler);
 
 void yed_add_plugin_dir(char *s);
 

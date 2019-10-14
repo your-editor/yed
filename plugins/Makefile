@@ -1,10 +1,13 @@
-all: vimish init
+all: syntax_c vimish init
 
 init:
 	$(CC) init.c -O0 -g -shared -fPIC -Wall -Werror -Wno-unused-function -o init.so -L.. -lyed -I../src
 
 vimish:
 	$(CC) vimish.c -O0 -g -shared -fPIC -Wall -Werror -Wno-unused-function -o vimish.so -L.. -lyed -I../src
+
+syntax_c:
+	$(CC) syntax_c.c -O0 -g -shared -fPIC -Wall -Werror -Wno-unused-function -o syntax_c.so -L.. -lyed -I../src
 
 clean:
 	rm -rf *.so *.so.dSYM

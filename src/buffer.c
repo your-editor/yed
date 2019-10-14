@@ -1,5 +1,22 @@
 #include "internal.h"
 
+void yed_init_attrs(void) {
+    ys->attrs[0].flags |= ATTR_NORMAL;
+}
+
+void yed_set_attr(uint8_t attr_idx) {
+    yed_cell_attrs *attr;
+
+    attr = ys->attrs + attr_idx;
+
+    if (attr->flags & ATTR_NORMAL) {
+        append_to_output_buff(TERM_RESET);
+        append_to_output_buff(TERM_CURSOR_HIDE);
+    } else {
+        append_to_output_buff(TERM_RED);
+    }
+}
+
 yed_line yed_new_line(void) {
     yed_line line;
 
@@ -304,6 +321,7 @@ void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     }
 
     buff->path = strdup(path);
+    buff->kind = BUFF_KIND_FILE;
 
     fclose(f);
 
