@@ -192,28 +192,16 @@ void syntax_c_highlight(yed_event *event) {
             }
         }
 
-        /* YED */
-        if (!match) {
-            if (strncmp(word, "YED", word_len) == 0) {
-                match = 1;
-
-                for (i = 0; i < word_len; i += 1) {
-                    attr         = array_item(event->line_attrs, old_col + i - 1);
-                    attr->flags  = ATTR_RGB;
-                    attr->fg     = RGB_32(252, 163, 17);
-                }
-            }
-        }
-
-
         last_was_hash  = !spaces && word_len == 1 && (strncmp(word, "#", 1) == 0);
         last_was_minus = !last_was_hash && !spaces && word_len == 1 && (strncmp(word, "-", 1) == 0);
     }
 
+    match = 0;
 
     /*
      * Highlight character literals.
      */
+    i = 0;
     while (i < array_len(line->chars) - 2) {
         word = array_item(line->chars, i);
         if (*word == '\'') {
