@@ -52,6 +52,10 @@ int yed_term_exit(void);
 
 int yed_term_get_dim(int *r, int *c);
 
+void yed_term_set_fg_rgb(int r, int g, int b);
+void yed_term_set_bg_rgb(int r, int g, int b);
+void yed_term_set_rgb(int fr, int fg, int fb, int br, int bg, int bb);
+
 void yed_clear_screen(void);
 void yed_cursor_home(void);
 void yed_set_cursor(int col, int row);

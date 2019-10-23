@@ -60,6 +60,7 @@ yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int height, int 
     frame->desired_x       = 1;
     frame->dirty           = 1;
     frame->scroll_off      = 5;
+    frame->line_attrs      = array_make(yed_attrs);
 
     return frame;
 }
@@ -103,90 +104,154 @@ void yed_clear_frame(yed_frame *frame) {
 }
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    int  n, col, n_col, starting_idx, set_sel_style;
-    uint8_t attr_idx;
-    char c;
-    yed_cell *cell_it;
+    int  n, col, n_col, starting_idx, run_len, is_left;
+    yed_attrs cur_attr, base_attr, tmp_attr, *attr_it;
+    char *c, *run_start;
     yed_event event;
 
-    attr_idx = 0;
+    memset(&base_attr, 0, sizeof(base_attr));
 
-    event.kind  = EVENT_LINE_PRE_DRAW;
-    event.frame = frame;
-    event.row   = row;
+/* #define C_LIGHT */
+
+    if (frame == ys->active_frame
+    &&  frame->cursor_line == row
+    &&  !frame->buffer->has_selection) {
+
+#ifdef C_LIGHT
+        base_attr.flags = ATTR_RGB;
+        base_attr.bg    = RGB_32(207, 215, 199);
+        base_attr.fg    = RGB_32(11, 32, 39);
+#else        
+        base_attr.flags = ATTR_RGB;
+        base_attr.fg    = RGB_32(246, 241, 209);
+        base_attr.bg    = RGB_32(11, 32, 39);
+#endif
+    } else {
+
+#ifdef C_LIGHT
+        base_attr.flags = ATTR_RGB;
+        base_attr.bg    = RGB_32(246, 241, 209);
+        base_attr.fg    = RGB_32(11, 32, 39);
+#else
+        base_attr.flags = ATTR_RGB;
+        base_attr.fg    = RGB_32(246, 241, 209);
+#endif
+    }
+
+    array_clear(frame->line_attrs);
+    for (col = 1; col <= line->visual_width; col += 1) {
+        array_push(frame->line_attrs, base_attr);
+    }
+
+    event.kind       = EVENT_LINE_PRE_DRAW;
+    event.frame      = frame;
+    event.row        = row;
+    event.line_attrs = frame->line_attrs;
 
     yed_trigger_event(&event);
 
-    /*
-     * @bad @incorrect
-     *
-     * This isn't how this is going to work.
-     * A cell's width indicates how many columns the displayed
-     * data takes up.
-     *
-     * That is TOTALLY DIFFERENT than the number of bytes!!!
-     *
-     * For now this is what I'm doing though.
-     *
-     *                  - Brandon Kammerdiener, Sept. 25, 2019
-     */
+    if (frame->buffer->has_selection) {
+        col = 1;
+        array_traverse(frame->line_attrs, attr_it) {
+            if (yed_is_in_range(&frame->buffer->selection, row, col)) {
+                attr_it->flags |= ATTR_INVERSE;
+            }
+            col += 1;
+        }
+    }
+
+    if (line->visual_width) {
+        cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
+        yed_set_attr(cur_attr);
+    } else {
+        cur_attr = base_attr;
+        yed_set_attr(cur_attr);
+    }
 
     n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
     n     = 0;
-    if (array_len(line->cells) < x_offset) {
-        starting_idx = array_len(line->cells);
+    if (array_len(line->chars) < x_offset) {
+        starting_idx = array_len(line->chars);
     } else {
-        starting_idx = yed_line_col_to_cell_idx(line, x_offset + 1);
+        starting_idx = yed_line_col_to_idx(line, x_offset + 1);
+    }
+
+    is_left = (frame->left == 1);
+    if (is_left) {
+        /* Clear the line. */
+        yed_set_cursor(frame->left + frame->width - 1, frame->top + y_offset);
+        append_n_to_output_buff("\e[1K", 4);
     }
 
     yed_set_cursor(frame->left, frame->top + y_offset);
 
     col = starting_idx + 1;
 
-    array_traverse_from(line->cells, cell_it, starting_idx) {
+    run_start = array_data(line->chars) + starting_idx;
+    run_len   = 0;
+    array_traverse_from(line->chars, c, starting_idx) {
         if (n == n_col)    { break; }
-        c = cell_it->c;
 
-        if (cell_it->attr_idx != attr_idx) {
-            attr_idx = cell_it->attr_idx;
-            yed_set_attr(attr_idx);
+        tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, col - 1);
+
+        if (*c == '\t') {
+            append_n_to_output_buff(run_start, run_len);
+
+            run_start = c;
+            run_len   = 0;
+        } else if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+            if (run_len && *run_start == '\t') {
+                append_to_output_buff("»");
+                append_n_to_output_buff(run_start + 1, run_len - 1);
+            } else {
+                append_n_to_output_buff(run_start, run_len);
+            }
+
+            run_start = c;
+            run_len   = 0;
+
+            yed_set_attr(tmp_attr);
+            cur_attr = tmp_attr;
         }
 
-        set_sel_style = 0;
-        if (frame->buffer->has_selection
-        && yed_is_in_range(&frame->buffer->selection, row, col)) {
-            append_to_output_buff(TERM_INVERSE);
-            set_sel_style = 1;
-        }
+        run_len += 1;
+        n       += 1;
+        col     += 1;
+    }
 
-        if (c == '\t') {
-            append_to_output_buff(TERM_BG_RED);
-            append_n_to_output_buff(" ", 1);
-            append_to_output_buff(TERM_RESET);
-            append_to_output_buff(TERM_CURSOR_HIDE);
-        } else {
-            append_n_to_output_buff(&c, 1);
-        }
+    if (run_len && *run_start == '\t') {
+        append_to_output_buff("»");
+        append_n_to_output_buff(run_start + 1, run_len - 1);
+    } else {
+        append_n_to_output_buff(run_start, run_len);
+    }
+    yed_set_attr(base_attr);
 
-        if (set_sel_style) {
-            append_to_output_buff(TERM_RESET);
-            append_to_output_buff(TERM_CURSOR_HIDE);
-        }
-
-        n   += 1;
-        col += 1;
+    if (!is_left) {
+        append_n_to_output_buff(ys->_4096_spaces, frame->width - n);
     }
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
 
-    for (; n < frame->width; n += 1) {
-        append_n_to_output_buff(" ", 1);
-    }
 }
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     int i, n;
+    yed_attrs base_attr;
+
+    memset(&base_attr, 0, sizeof(base_attr));
+
+#ifdef C_LIGHT
+        base_attr.flags = ATTR_RGB;
+        base_attr.bg    = RGB_32(246, 241, 209);
+        base_attr.fg    = RGB_32(11, 32, 39);
+#else
+        base_attr.flags = ATTR_RGB;
+        base_attr.fg    = RGB_32(246, 241, 209);
+#endif
+
+    yed_set_attr(base_attr);
 
     for (i = 0; i < frame->height - y_offset; i += 1) {
         yed_set_cursor(frame->left, frame->top + y_offset + i);
@@ -195,6 +260,9 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
             append_n_to_output_buff(" ", 1);
         }
     }
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
+
 }
 
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset) {
@@ -229,7 +297,7 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
 
 void yed_frame_update(yed_frame *frame) {
     if (frame->buffer) {
-        if (frame->dirty) {
+        if (frame->dirty || ys->redraw) {
             yed_frame_draw_buff(frame, frame->buffer, frame->buffer_y_offset, frame->buffer_x_offset);
         }
         if (frame->dirty_line != frame->cursor_line) {
@@ -237,7 +305,7 @@ void yed_frame_update(yed_frame *frame) {
         }
         yed_frame_update_cursor_line(frame);
     } else {
-        if (frame->dirty) {
+        if (frame->dirty || ys->redraw) {
             yed_clear_frame(frame);
         }
     }

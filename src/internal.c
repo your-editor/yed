@@ -74,29 +74,42 @@ void yed_add_new_buff(void) {
 }
 
 void yed_init_output_stream(void) {
-    ys->output_buffer = array_make_with_cap(char, 4096);
+    ys->output_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
+    ys->writer_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
 }
 
 int output_buff_len(void) { return array_len(ys->output_buffer); }
 
 void append_n_to_output_buff(char *s, int n) {
-    int i;
-
-    for (i = 0; i < n; i += 1) {
-        array_push(ys->output_buffer, s[i]);
-    }
+    array_push_n(ys->output_buffer, s, n);
 }
 
 void append_to_output_buff(char *s) {
     append_n_to_output_buff(s, strlen(s));
 }
 
+static char *itoa(char *p, unsigned x) {
+    p += 3*sizeof(int);
+    *--p = 0;
+    do {
+        *--p = '0' + x % 10;
+        x /= 10;
+    } while (x);
+    return p;
+}
+
 void append_int_to_output_buff(int i) {
-    char s[16];
+    char  s[16],
+         *p;
 
-    sprintf(s, "%d", i);
+    p = itoa(s, i);
 
-    append_to_output_buff(s);
+    append_to_output_buff(p);
+}
+
+void flush_writer_buff(void) {
+    write(1, array_data(ys->writer_buffer), array_len(ys->writer_buffer));
+    array_clear(ys->writer_buffer);
 }
 
 void flush_output_buff(void) {
@@ -115,6 +128,16 @@ void yed_service_reload(void) {
     yed_reload_plugins();
 
     ys->small_message = "* reload serviced *";
+    
+    ys->redraw = 1;
+    yed_update_frames();
+
+    if (ys->accepting_command) {
+        yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
+        append_to_output_buff(TERM_CURSOR_SHOW);
+    } else if (ys->active_frame) {
+        append_to_output_buff(TERM_CURSOR_SHOW);
+    }
 }
 
 int s_to_i(const char *s) {

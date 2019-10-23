@@ -3,29 +3,26 @@
 
 #include "internal.h"
 
-#define ATTR_NORMAL (0x1)
-#define ATTR_256    (0x2)
-#define ATTR_RGB    (0x4)
+#define ATTR_NORMAL  (0x1)
+#define ATTR_INVERSE (0x2)
+#define ATTR_BOLD    (0x4)
+#define ATTR_256     (0x8)
+#define ATTR_RGB     (0x10)
+
+#define RGB_32(r, g, b) (((r) << 16) | ((g) << 8) | (b))
+#define RGB_32_r(rgb)   ((rgb) >> 16)
+#define RGB_32_g(rgb)   (((rgb) >> 8) & 0xFF)
+#define RGB_32_b(rgb)   ((rgb) & 0xFF)
 
 typedef struct {
     uint32_t flags;
     uint32_t fg;
     uint32_t bg;
-} yed_cell_attrs;
-
-typedef struct {
-    union {
-        struct {
-            char    c;
-            uint8_t attr_idx;
-        };
-        uint16_t __data;
-    };
-} yed_cell;
+} yed_attrs;
 
 typedef struct yed_line_t {
-    array_t            cells;
-    int                visual_width;
+    array_t chars;
+    int     visual_width;
 } yed_line;
 
 #define RANGE_NORMAL  (0x1)
@@ -54,11 +51,8 @@ typedef struct {
     yed_range       selection;
 } yed_buffer;
 
-#define YED_NEW_CELL__DATA(c) (c)
-
-void yed_init_attrs(void);
-
-void yed_set_attr(uint8_t attr_idx);
+void yed_set_attr(yed_attrs attr);
+int  yed_attrs_eq(yed_attrs attr1, yed_attrs attr2);
 
 yed_line yed_new_line(void);
 yed_line yed_new_line_with_cap(int len);
@@ -67,8 +61,8 @@ yed_buffer yed_new_buff(void);
 void yed_append_to_line(yed_line *line, char c);
 void yed_append_to_buff(yed_buffer *buff, char c);
 
-int yed_line_col_to_cell_idx(yed_line *line, int col);
-yed_cell * yed_line_col_to_cell(yed_line *line, int col);
+int yed_line_col_to_idx(yed_line *line, int col);
+char yed_line_col_to_char(yed_line *line, int col);
 
 void yed_line_clear(yed_line *line);
 

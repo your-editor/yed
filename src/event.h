@@ -13,6 +13,7 @@ typedef struct {
     yed_event_kind_t  kind;
     yed_frame        *frame;
     int               row, col;
+    array_t           line_attrs;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

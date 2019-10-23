@@ -27,6 +27,18 @@ static void write_welcome(void) {
     append_to_output_buff(msg2);
 }
 
+static void * writer(void *arg) {
+    (void)arg;
+    while (1) {
+        pthread_mutex_lock(&ys->write_mtx);
+        pthread_cond_wait(&ys->write_signal, &ys->write_mtx);
+        flush_writer_buff();
+        pthread_mutex_unlock(&ys->write_mtx);
+    }
+
+    return NULL;
+}
+
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     int i;
 
@@ -42,15 +54,18 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys->yank_buff.flags |= BUFF_RD_ONLY;
 /*     ys->small_message = "* started yed *"; */
 
+    yed_term_enter();
+    yed_term_get_dim(&ys->term_rows, &ys->term_cols);
+
+    memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
-    yed_init_attrs();
+    pthread_mutex_init(&ys->write_mtx, NULL);
+    pthread_cond_init(&ys->write_signal, NULL);
+    pthread_create(&ys->writer_id, NULL, writer, NULL);
     yed_init_commands();
     yed_init_keys();
     yed_init_events();
     yed_init_plugins();
-
-    yed_term_enter();
-    yed_term_get_dim(&ys->term_rows, &ys->term_cols);
 
     if (argc > 1) {
         yed_execute_command("frame-new-file", 1, &argv[1]);
@@ -68,6 +83,10 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         yed_cursor_home();
         write_welcome();
     }
+
+    pthread_mutex_lock(&ys->write_mtx);
+
+    ys->redraw = 1;
 
     return ys;
 }
@@ -145,7 +164,11 @@ int yed_pump(void) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
 
-    flush_output_buff();
+    array_copy(ys->writer_buffer, ys->output_buffer);
+    array_clear(ys->output_buffer);
+    pthread_mutex_unlock(&ys->write_mtx);
+    pthread_cond_signal(&ys->write_signal);
+
 
     ys->status = YED_NORMAL;
 
@@ -159,6 +182,8 @@ int yed_pump(void) {
 
     yed_update_frames();
 
+    ys->redraw = 0;
+
     if (ys->accepting_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_CURSOR_SHOW);
@@ -168,6 +193,12 @@ int yed_pump(void) {
     }
 
     append_to_output_buff(TERM_RESET);
+
+    pthread_mutex_lock(&ys->write_mtx);
+
+    if (ys->status == YED_RELOAD) {
+        yed_unload_plugin_libs();
+    }
 
     return ys->status;
 }

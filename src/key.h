@@ -8,6 +8,7 @@
 
 enum KEY_ACTION {
     KEY_NULL  = 0,    /* NULL      */
+    CTRL_A    = 1,    /* Ctrl-a    */
     CTRL_C    = 3,    /* Ctrl-c    */
     CTRL_D    = 4,    /* Ctrl-d    */
     CTRL_F    = 6,    /* Ctrl-f    */
@@ -22,6 +23,8 @@ enum KEY_ACTION {
     CTRL_U    = 21,   /* Ctrl-u    */
     CTRL_V    = 22,   /* Ctrl-v    */
     CTRL_W    = 23,   /* Ctrl-w    */
+    CTRL_X    = 24,   /* Ctrl-x    */
+    CTRL_Y    = 25,   /* Ctrl-y    */
     ESC       = 27,   /* Escape    */
     BACKSPACE = 127,  /* Backspace */
 

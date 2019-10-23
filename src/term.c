@@ -57,6 +57,36 @@ int yed_term_get_dim(int *r, int *c) {
     }
 }
 
+void yed_term_set_fg_rgb(int r, int g, int b) {
+    char buff[128];
+
+    buff[0] = 0;
+
+    sprintf(buff, "\e[38;2;%d;%d;%dm", r, g, b);
+
+    append_to_output_buff(buff);
+}
+
+void yed_term_set_bg_rgb(int r, int g, int b) {
+    char buff[128];
+
+    buff[0] = 0;
+
+    sprintf(buff, "\e[48;2;%d;%d;%dm", r, g, b);
+
+    append_to_output_buff(buff);
+}
+
+void yed_term_set_rgb(int fr, int fg, int fb, int br, int bg, int bb) {
+    char buff[128];
+
+    buff[0] = 0;
+
+    sprintf(buff, "\e[38;2;%d;%d;%d;48;2;%d;%d;%dm", fr, fg, fb, br, bg, bb);
+
+    append_to_output_buff(buff);
+}
+
 void yed_clear_screen(void) {
     append_to_output_buff(TERM_CLEAR_SCREEN);
 }

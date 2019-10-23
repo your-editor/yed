@@ -66,6 +66,9 @@ do {                                                              \
     SET_DEFAULT_COMMAND("command-prompt",        command_prompt);
     SET_DEFAULT_COMMAND("quit",                  quit);
     SET_DEFAULT_COMMAND("reload",                reload);
+    SET_DEFAULT_COMMAND("redraw",                redraw);
+    SET_DEFAULT_COMMAND("make-and-reload",       make_and_reload);
+    SET_DEFAULT_COMMAND("sh",                    sh);
     SET_DEFAULT_COMMAND("echo",                  echo);
     SET_DEFAULT_COMMAND("cursor-down",           cursor_down);
     SET_DEFAULT_COMMAND("cursor-up",             cursor_up);
@@ -249,8 +252,56 @@ void yed_default_command_quit(int n_args, char **args) {
 
 void yed_default_command_reload(int n_args, char **args) {
     ys->status = YED_RELOAD;
-    yed_unload_plugin_libs();
     yed_append_text_to_cmd_buff("issued reload");
+}
+
+void yed_default_command_redraw(int n_args, char **args) {
+    ys->redraw = 1;
+}
+
+void yed_default_command_make_and_reload(int n_args, char **args) {
+    int err;
+
+    printf(TERM_STD_SCREEN);
+    printf(TERM_CURSOR_HOME);    
+    err = system("make 2>&1 | less");
+    printf(TERM_ALT_SCREEN);
+
+    if (err == 0) {
+        ys->status = YED_RELOAD;
+        yed_append_text_to_cmd_buff("issued reload");
+    } else {
+        yed_append_text_to_cmd_buff("'make' failed");
+    }
+}
+
+void yed_default_command_sh(int n_args, char **args) {
+    char buff[1024];
+    int i;
+    int err;
+
+    buff[0] = 0;
+
+    for (i = 0; i < n_args; i += 1) {
+        strcat(buff, args[i]);
+        strcat(buff, " ");
+    }
+
+    printf(TERM_STD_SCREEN);
+    printf(TERM_CURSOR_HOME);    
+    err = system(buff);
+    printf(TERM_ALT_SCREEN);
+
+    yed_append_text_to_cmd_buff("'");
+    yed_append_text_to_cmd_buff(buff);
+    yed_append_text_to_cmd_buff("'");
+
+    if (err != 0) {
+        yed_append_text_to_cmd_buff(" exited with non-zero status ");
+        yed_append_int_to_cmd_buff(err);
+    }
+
+    ys->redraw = 1;
 }
 
 void yed_default_command_echo(int n_args, char **args) {
@@ -522,7 +573,6 @@ void yed_default_command_cursor_line(int n_args, char **args) {
 void yed_default_command_cursor_prev_word(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
-    yed_cell  *cell_it;
     int        col, row;
     char       c;
 
@@ -551,13 +601,11 @@ again:
 
     if (col <= 0)    { goto skip_lines; }
 
-    cell_it  = yed_line_col_to_cell(line, col);
-    c        = cell_it->c;
+    c = yed_line_col_to_char(line, col);
 
     if (isspace(c)) {
         while (col > 1) {
-            cell_it  = yed_line_col_to_cell(line, col - 1);
-            c        = cell_it->c;
+            c = yed_line_col_to_char(line, col - 1);
 
             if (!isspace(c)) {
                 break;
@@ -569,8 +617,7 @@ again:
 
     if (isalnum(c) || c == '_') {
         while (col > 1) {
-            cell_it  = yed_line_col_to_cell(line, col - 1);
-            c        = cell_it->c;
+            c = yed_line_col_to_char(line, col - 1);
 
             if (!isalnum(c) && c != '_') {
                 break;
@@ -580,8 +627,7 @@ again:
         }
     } else {
         while (col > 1) {
-            cell_it  = yed_line_col_to_cell(line, col - 1);
-            c        = cell_it->c;
+            c = yed_line_col_to_char(line, col - 1);
 
             if (isalnum(c) || c == '_' || isspace(c)) {
                 break;
@@ -611,7 +657,6 @@ skip_lines:
 void yed_default_command_cursor_next_word(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
-    yed_cell  *cell_it;
     int        col, row;
     char       c;
 
@@ -635,21 +680,18 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
 
 again:
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
-
-    col      = frame->cursor_col;
+    col  = frame->cursor_col;
 
     if (col >= line->visual_width) {
         goto skip_lines;
     }
 
-    cell_it  = yed_line_col_to_cell(line, col);
-    c        = cell_it->c;
+    c = yed_line_col_to_char(line, col);
 
     if (isalnum(c) || c == '_') {
         while (col <= line->visual_width) {
             col += 1;
-            cell_it  = yed_line_col_to_cell(line, col);
-            c        = cell_it->c;
+            c    = yed_line_col_to_char(line, col);
 
             if (!isalnum(c) && c != '_') {
                 break;
@@ -658,26 +700,22 @@ again:
     } else {
         while (col <= line->visual_width) {
             col += 1;
-            cell_it  = yed_line_col_to_cell(line, col);
-            c        = cell_it->c;
+            c    = yed_line_col_to_char(line, col);
 
             if (isalnum(c) || c == '_' || isspace(c)) {
                 break;
             }
-
         }
     }
 
     if (isspace(c)) {
         while (col <= line->visual_width) {
             col += 1;
-            cell_it  = yed_line_col_to_cell(line, col);
-            c        = cell_it->c;
+            c = yed_line_col_to_char(line, col);
 
             if (!isspace(c)) {
                 break;
             }
-
         }
     }
 
@@ -692,8 +730,8 @@ skip_lines:
         if (line) {
             yed_set_cursor_far_within_frame(frame, 1, row);
             line = yed_buff_get_line(frame->buffer, row);
-            cell_it = yed_line_col_to_cell(line, 1);
-            if (cell_it && isspace(cell_it->c)) {
+            c    = yed_line_col_to_char(line, 1);
+            if (c && isspace(c)) {
                 goto again;
             }
         }
@@ -1078,7 +1116,7 @@ void yed_default_command_insert(int n_args, char **args) {
     int        key,
                col, idx,
                i, len;
-    yed_cell  *cell_it;
+    char      *c;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -1105,7 +1143,7 @@ void yed_default_command_insert(int n_args, char **args) {
         return;
     }
 
-    col  = frame->cursor_col;
+    col = frame->cursor_col;
 
     if (key == ENTER) {
         /*
@@ -1117,18 +1155,18 @@ void yed_default_command_insert(int n_args, char **args) {
         line     = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
         if (col == 1) {
-            new_line->cells        = line->cells;
-            line->cells            = array_make(yed_cell);
+            new_line->chars        = line->chars;
+            line->chars            = array_make(char);
             new_line->visual_width = line->visual_width;
             line->visual_width     = 0;
         } else {
             len = 0;
-            idx = yed_line_col_to_cell_idx(line, col);
-            array_traverse_from(line->cells, cell_it, idx) {
-                yed_line_append_cell(new_line, cell_it);
+            idx = yed_line_col_to_idx(line, col);
+            array_traverse_from(line->chars, c, idx) {
+                yed_line_append_char(new_line, *c);
                 len += 1;
             }
-            for (; len > 0; len -= 1)    { yed_line_pop_cell(line); }
+            for (; len > 0; len -= 1)    { yed_line_pop_char(line); }
         }
 
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
@@ -1153,7 +1191,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
                col,
                buff_n_lines,
                prev_line_len, old_line_nr;
-    yed_cell  *cell_it;
+    char      *c;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
@@ -1199,13 +1237,13 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 prev_line_len = previous_line->visual_width;
 
                 if (prev_line_len == 0) {
-                    previous_line->cells        = line->cells;
-                    line->cells                 = array_make(yed_cell);
+                    previous_line->chars        = line->chars;
+                    line->chars                 = array_make(char);
                     previous_line->visual_width = line->visual_width;
                     line->visual_width          = 0;
                 } else {
-                    array_traverse(line->cells, cell_it) {
-                        yed_line_append_cell(previous_line, cell_it);
+                    array_traverse(line->chars, c) {
+                        yed_line_append_char(previous_line, *c);
                     }
                 }
 
@@ -1572,6 +1610,11 @@ void yed_default_command_yank_selection(int n_args, char **args) {
 
     buff = frame->buffer;
 
+    if (buff->kind == BUFF_KIND_YANK) {
+        yed_append_text_to_cmd_buff("[!] can't yank from yank buffer");
+        return;
+    }
+
     if (!buff->has_selection) {
         yed_append_text_to_cmd_buff("[!] nothing is selected");
         return;
@@ -1597,7 +1640,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
             line_it  = yed_buff_get_line(buff, row);
             for (col = 1; col <= line_it->visual_width; col += 1) {
                 yed_append_to_line(new_line,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
         }
     } else {
@@ -1607,26 +1650,26 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         if (r1 == r2) {
             for (col = c1; col < c2; col += 1) {
                 yed_append_to_line(new_line,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
         } else {
             for (col = c1; col <= line_it->visual_width; col += 1) {
                 yed_append_to_line(new_line,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
             for (row = r1 + 1; row <= r2 - 1; row += 1) {
                 new_line = yed_buffer_add_line(&ys->yank_buff);
                 line_it  = yed_buff_get_line(buff, row);
                 for (col = 1; col <= line_it->visual_width; col += 1) {
                     yed_append_to_line(new_line,
-                        yed_line_col_to_cell(line_it, col)->c);
+                        yed_line_col_to_char(line_it, col));
                 }
             }
             new_line = yed_buffer_add_line(&ys->yank_buff);
             line_it  = yed_buff_get_line(buff, r2);
             for (col = 1; col < c2; col += 1) {
                 yed_append_to_line(new_line,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
         }
     }
@@ -1666,6 +1709,16 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
 
     buff = frame->buffer;
 
+    if (buff->kind == BUFF_KIND_YANK) {
+        yed_append_text_to_cmd_buff("[!] can't paste into yank buffer");
+        return;
+    }
+
+    if (buff->flags & BUFF_RD_ONLY) {
+        yed_append_text_to_cmd_buff("[!] buffer is read-only");
+        return;
+    }
+
     yank_buff_n_lines = bucket_array_len(ys->yank_buff.lines);
 
     ASSERT(yank_buff_n_lines, "yank buffer has no lines");
@@ -1676,7 +1729,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             new_line = yed_buff_insert_line(buff, frame->cursor_line + row);
             for (col = 1; col <= line_it->visual_width; col += 1) {
                 yed_append_to_line(new_line,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
         }
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
@@ -1687,29 +1740,29 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 yed_insert_into_line(buff,
                     frame->cursor_line,
                     frame->cursor_col + col - 1,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
         } else {
             first_line = yed_buff_get_line(buff, frame->cursor_line);
             last_line  = yed_buff_insert_line(buff, frame->cursor_line + 1);
             for (col = frame->cursor_col; col <= first_line->visual_width; col += 1) {
                 yed_append_to_line(last_line,
-                    yed_line_col_to_cell(first_line, col)->c);
+                    yed_line_col_to_char(first_line, col));
             }
             for (col = first_line->visual_width; col >= frame->cursor_col; col -= 1) {
-                yed_line_pop_cell(first_line);
+                yed_line_pop_char(first_line);
             }
             line_it  = yed_buff_get_line(&ys->yank_buff, 1);
             for (col = 1; col <= line_it->visual_width; col += 1) {
                 yed_append_to_line(first_line,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
             for (row = 2; row <= yank_buff_n_lines - 1; row += 1) {
                 line_it  = yed_buff_get_line(&ys->yank_buff, row);
                 new_line = yed_buff_insert_line(buff, frame->cursor_line + row - 1);
                 for (col = 1; col <= line_it->visual_width; col += 1) {
                     yed_append_to_line(new_line,
-                        yed_line_col_to_cell(line_it, col)->c);
+                        yed_line_col_to_char(line_it, col));
                 }
             }
             line_it  = yed_buff_get_line(&ys->yank_buff, yank_buff_n_lines);
@@ -1717,7 +1770,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 yed_insert_into_line(buff,
                     frame->cursor_line + yank_buff_n_lines - 1,
                     col,
-                    yed_line_col_to_cell(line_it, col)->c);
+                    yed_line_col_to_char(line_it, col));
             }
         }
     }

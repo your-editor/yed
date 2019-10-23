@@ -173,6 +173,14 @@ void vimish_nav(int key, char *key_str) {
             fill_cmd_prompt("plugin-load");
             break;
 
+        case CTRL_S:
+            fill_cmd_prompt("sh");
+            break;
+
+        case CTRL_Y:
+            YEXE("make-and-reload", 0, NULL);
+            break;
+
         case 'd':
             enter_delete(0);
             break;

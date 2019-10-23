@@ -22,6 +22,7 @@ typedef struct yed_frame_t {
     int                 desired_x;
     int                 dirty;
     int                 scroll_off;
+    array_t             line_attrs;
 } yed_frame;
 
 void yed_init_frames(void);
