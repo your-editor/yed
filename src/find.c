@@ -65,8 +65,7 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
     yed_buffer *buff;
     yed_line   *line;
     char       *line_data,
-               *line_data_start,
-               *line_data_end;
+               *line_data_start;
     int         i,
                 r,
                 search_len,
@@ -91,14 +90,18 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
             continue;
         }
 
-        line_data     = line_data_start = array_data(line->chars);
-        line_data_end = line_data + data_len;
+        line_data = line_data_start = array_data(line->chars);
 
-        for (i = 0; i < data_len; i += 1) {
+        if (r == row)    { i = col - 1; }
+        else             { i = 0;       }
+
+        for (; i < data_len - search_len + 1; i += 1) {
             if (strncmp(ys->current_search, line_data + i, search_len) == 0) {
-                *row_out = r;
-                *col_out = i + 1;
-                return 1;
+                if (r != row || i + 1 != col) {
+                    *row_out = r;
+                    *col_out = i + 1;
+                    return 1;
+                }
             }
         }
 
@@ -107,8 +110,6 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
 
     r = 1;
     bucket_array_traverse(buff->lines, line) {
-        if (r == row)    { break; }
-
         data_len = array_len(line->chars);
 
         if (!data_len) {
@@ -116,14 +117,17 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
             continue;
         }
 
-        line_data     = line_data_start = array_data(line->chars);
-        line_data_end = line_data + data_len;
+        line_data = line_data_start = array_data(line->chars);
 
-        for (i = 0; i < data_len; i += 1) {
+        if (r == row)    { data_len = col - 1; }
+
+        for (i = 0; i < data_len - search_len + 1; i += 1) {
             if (strncmp(ys->current_search, line_data + i, search_len) == 0) {
-                *row_out = r;
-                *col_out = i + 1;
-                return 1;
+                if (r != row || i + 1 != col) {
+                    *row_out = r;
+                    *col_out = i + 1;
+                    return 1;
+                }
             }
         }
 

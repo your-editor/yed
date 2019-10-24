@@ -156,6 +156,7 @@ typedef struct yed_state_t {
     yed_command_name_t interactive_command;
     char           *cmd_prompt;
     char           *current_search;
+    char           *save_search;
     int             search_save_row, search_save_col;
     array_t         cmd_buff;
     int             cmd_cursor_x;

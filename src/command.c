@@ -105,6 +105,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("yank-selection",        yank_selection);
     SET_DEFAULT_COMMAND("paste-yank-buffer",     paste_yank_buffer);
     SET_DEFAULT_COMMAND("find-in-buffer",        find_in_buffer);
+    SET_DEFAULT_COMMAND("find-next-in-buffer",   find_next_in_buffer);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -349,6 +350,10 @@ void yed_default_command_cursor_down(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
 
     if (n_args == 0) {
         rows = 1;
@@ -379,6 +384,11 @@ void yed_default_command_cursor_up(int n_args, char **args) {
     if (!frame->buffer) {
         yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
     }
 
 
@@ -413,6 +423,11 @@ void yed_default_command_cursor_left(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
 
     if (n_args == 0) {
         cols = -1;
@@ -445,6 +460,12 @@ void yed_default_command_cursor_right(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
+
     if (n_args == 0) {
         cols = 1;
     } else {
@@ -475,6 +496,12 @@ void yed_default_command_cursor_line_begin(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
+
     yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
 }
 
@@ -498,6 +525,11 @@ void yed_default_command_cursor_line_end(int n_args, char **args) {
     if (!frame->buffer) {
         yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
@@ -526,6 +558,11 @@ void yed_default_command_cursor_buffer_begin(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
     yed_set_cursor_far_within_frame(frame, 1, 1);
 }
 
@@ -549,6 +586,11 @@ void yed_default_command_cursor_buffer_end(int n_args, char **args) {
     if (!frame->buffer) {
         yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
     }
 
     last_line = bucket_array_last(frame->buffer->lines);
@@ -577,6 +619,11 @@ void yed_default_command_cursor_line(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
     sscanf(args[0], "%d", &line);
     yed_set_cursor_far_within_frame(frame, 1, line);
 }
@@ -603,6 +650,11 @@ void yed_default_command_cursor_prev_word(int n_args, char **args) {
     if (!frame->buffer) {
         yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
     }
 
 again:
@@ -687,6 +739,11 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
     if (!frame->buffer) {
         yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
     }
 
 again:
@@ -774,6 +831,11 @@ void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
         return;
     }
 
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
     i    = 0;
 
@@ -823,6 +885,11 @@ void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
     if (!frame->buffer) {
         yed_append_text_to_cmd_buff("[!] active frame has no buffer");
         return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
@@ -1789,29 +1856,43 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
     }
 }
 
-void yed_inc_find_in_buffer(void) {
+int yed_inc_find_in_buffer(void) {
     int r, c;
-
-    array_zero_term(ys->cmd_buff);
-    ys->current_search = array_data(ys->cmd_buff);
 
     yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
     if (yed_find_next(ys->active_frame->cursor_line, ys->active_frame->cursor_col, &r, &c)) {
         yed_set_cursor_far_within_frame(ys->active_frame, c, r);
+        return 1;
     }
+    return 0;
 }
 
 void yed_find_in_buffer_take_key(int key) {
+    int found;
+
     if (key == CTRL_F || key == CTRL_C) {
         ys->interactive_command = NULL;
         ys->current_search      = NULL;
         yed_clear_cmd_buff();
         yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
     } else if (key == ENTER) {
-        /* execute search */
-        ys->interactive_command = NULL;
+        found = yed_inc_find_in_buffer();
+        if (ys->save_search) {
+            free(ys->save_search);
+        }
+        ys->save_search         = strdup(ys->current_search);
         ys->current_search      = NULL;
-        // yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+
+        ys->interactive_command = NULL;
+        yed_clear_cmd_buff();
+
+        if (!found) {
+            yed_append_text_to_cmd_buff(ys->cmd_prompt);
+            yed_append_text_to_cmd_buff("[!] '");
+            yed_append_text_to_cmd_buff(ys->save_search);
+            yed_append_text_to_cmd_buff("' not found");
+        }
+
     } else {
         if (key == BACKSPACE) {
             if (array_len(ys->cmd_buff)) {
@@ -1820,6 +1901,10 @@ void yed_find_in_buffer_take_key(int key) {
         } else if (!iscntrl(key)) {
             yed_cmd_buff_push(key);
         }
+
+        array_zero_term(ys->cmd_buff);
+        ys->current_search = array_data(ys->cmd_buff);
+
         yed_inc_find_in_buffer();
     }
 }
@@ -1855,6 +1940,45 @@ void yed_default_command_find_in_buffer(int n_args, char **args) {
         sscanf(args[0], "%d", &key);
         yed_find_in_buffer_take_key(key);
         frame->dirty = 1;
+    }
+}
+
+void yed_default_command_find_next_in_buffer(int n_args, char **args) {
+    yed_frame *frame;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    if (!ys->save_search) {
+        yed_append_text_to_cmd_buff("[!] no previous search");
+        return;
+    }
+
+    ys->current_search  = ys->save_search;
+    ys->search_save_row = ys->active_frame->cursor_line;
+    ys->search_save_col = ys->active_frame->cursor_col;
+    
+    if (!yed_inc_find_in_buffer()) {
+        yed_append_text_to_cmd_buff("[!] '");
+        yed_append_text_to_cmd_buff(ys->current_search);
+        yed_append_text_to_cmd_buff("' not found");
+    } else {
+        yed_append_text_to_cmd_buff(ys->current_search);
     }
 }
 
