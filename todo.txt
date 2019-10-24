@@ -1,6 +1,13 @@
 * how to handle overlapping frames?
-* yank
 * undo/redo
 * stylizing
     * ui colors
-    * syntax
+* indent
+* search
+* resizing 
+* line numbers
+
+here's some stuff /* now a
+multi
+line
+comment */ some more stuff

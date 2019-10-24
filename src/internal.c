@@ -125,14 +125,15 @@ void yed_service_reload(void) {
     tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
 
     yed_set_default_commands();
+    yed_reload_default_event_handlers();    
     yed_reload_plugins();
 
     ys->small_message = "* reload serviced *";
-    
+
     ys->redraw = 1;
     yed_update_frames();
 
-    if (ys->accepting_command) {
+    if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {

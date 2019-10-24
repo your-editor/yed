@@ -151,6 +151,10 @@ int vimish_nav_common(int key, char *key_str) {
             YEXE("cursor-buffer-end",   0, NULL);
             break;
 
+        case '/':
+            YEXE("find-in-buffer", 0, NULL);
+            break;
+
         default:
             return 0;
     }

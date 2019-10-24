@@ -104,12 +104,17 @@ do {                                                              \
     SET_DEFAULT_COMMAND("select-off",            select_off);
     SET_DEFAULT_COMMAND("yank-selection",        yank_selection);
     SET_DEFAULT_COMMAND("paste-yank-buffer",     paste_yank_buffer);
+    SET_DEFAULT_COMMAND("find-in-buffer",        find_in_buffer);
 }
 
 void yed_clear_cmd_buff(void) {
     array_clear(ys->cmd_buff);
     array_zero_term(ys->cmd_buff);
-    ys->cmd_cursor_x = 1 + strlen(YED_CMD_PROMPT);
+    ys->cmd_cursor_x = 1;
+
+    if (ys->cmd_prompt) {
+        ys->cmd_cursor_x += strlen(ys->cmd_prompt);
+    }
 }
 
 void yed_append_to_cmd_buff(char *s) {
@@ -148,18 +153,21 @@ void yed_cmd_buff_pop(void) {
     ys->cmd_cursor_x -= 1;
 }
 
-void yed_draw_command_line(void) {
+void yed_draw_command_line() {
     yed_set_cursor(1, ys->term_rows);
     append_to_output_buff(TERM_CLEAR_LINE);
-    if (ys->accepting_command) {
-        append_to_output_buff(YED_CMD_PROMPT);
+    if (ys->interactive_command) {
+        if (ys->cmd_prompt) {
+            append_to_output_buff(ys->cmd_prompt);
+        }
     }
     append_n_to_output_buff(array_data(ys->cmd_buff), array_len(ys->cmd_buff));
 }
 
 void yed_start_command_prompt(void) {
-    ys->accepting_command = 1;
-    ys->small_message = "";
+    ys->interactive_command = "command-prompt";
+    ys->cmd_prompt          = ": ";
+    ys->small_message       = "";
     yed_clear_cmd_buff();
 }
 
@@ -201,7 +209,7 @@ void yed_do_command(void) {
         cmd_curs += 1;
     }
 
-    ys->accepting_command = 0;
+    ys->interactive_command = NULL;
 
     yed_execute_command(cmd_beg, n_split - 1, cmd_split + 1);
 
@@ -212,7 +220,7 @@ void yed_command_take_key(int key) {
     tree_it(yed_command_name_t, yed_command) it;
 
     if (key == CTRL_F || key == CTRL_C) {
-        ys->accepting_command = 0;
+        ys->interactive_command = NULL;
         yed_clear_cmd_buff();
     } else if (key == TAB) {
         array_zero_term(ys->cmd_buff);
@@ -222,10 +230,10 @@ void yed_command_take_key(int key) {
             yed_append_text_to_cmd_buff((char*)tree_it_key(it));
         }
     } else if (key == ENTER) {
+        ys->interactive_command = NULL;
         yed_do_command();
-        ys->accepting_command = 0;
     } else {
-        if (key == 127) {
+        if (key == BACKSPACE) {
             if (array_len(ys->cmd_buff)) {
                 yed_cmd_buff_pop();
             }
@@ -238,7 +246,7 @@ void yed_command_take_key(int key) {
 void yed_default_command_command_prompt(int n_args, char **args) {
     int key;
 
-    if (!ys->accepting_command) {
+    if (!ys->interactive_command) {
         yed_start_command_prompt();
     } else {
         sscanf(args[0], "%d", &key);
@@ -263,7 +271,7 @@ void yed_default_command_make_and_reload(int n_args, char **args) {
     int err;
 
     printf(TERM_STD_SCREEN);
-    printf(TERM_CURSOR_HOME);    
+    printf(TERM_CURSOR_HOME);
     err = system("make 2>&1 | less");
     printf(TERM_ALT_SCREEN);
 
@@ -277,18 +285,21 @@ void yed_default_command_make_and_reload(int n_args, char **args) {
 
 void yed_default_command_sh(int n_args, char **args) {
     char buff[1024];
+    const char *lazy_space;
     int i;
     int err;
 
     buff[0] = 0;
 
+    lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
+        strcat(buff, lazy_space);
         strcat(buff, args[i]);
-        strcat(buff, " ");
+        lazy_space = " ";
     }
 
     printf(TERM_STD_SCREEN);
-    printf(TERM_CURSOR_HOME);    
+    printf(TERM_CURSOR_HOME);
     err = system(buff);
     printf(TERM_ALT_SCREEN);
 
@@ -1221,7 +1232,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
         yed_range_sorted_points(&frame->buffer->selection, &r1, &c1, &r2, &c2);
         frame->buffer->selection.locked = 1;
         if (frame->buffer->selection.kind == RANGE_LINE) {
-            yed_set_cursor_far_within_frame(frame, 1, r1 - (r1 == bucket_array_len(frame->buffer->lines)));
+            r1 = MIN(r1, bucket_array_len(frame->buffer->lines) - (r2 - r1) - 1);
+            yed_set_cursor_far_within_frame(frame, 1, r1);
         } else {
             yed_set_cursor_far_within_frame(frame, c1, r1);
         }
@@ -1392,7 +1404,8 @@ void yed_default_command_plugin_load(int n_args, char **args) {
 
         switch (err) {
             case YED_PLUG_NOT_FOUND:
-                yed_append_text_to_cmd_buff("could not find plugin");
+                yed_append_text_to_cmd_buff("could not find plugin -- ");
+                yed_append_text_to_cmd_buff(dlerror());
                 break;
             case YED_PLUG_NO_BOOT:
                 yed_append_text_to_cmd_buff("could not find symbol 'yed_plugin_boot'");
@@ -1776,14 +1789,80 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
     }
 }
 
+void yed_inc_find_in_buffer(void) {
+    int r, c;
+
+    array_zero_term(ys->cmd_buff);
+    ys->current_search = array_data(ys->cmd_buff);
+
+    yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+    if (yed_find_next(ys->active_frame->cursor_line, ys->active_frame->cursor_col, &r, &c)) {
+        yed_set_cursor_far_within_frame(ys->active_frame, c, r);
+    }
+}
+
+void yed_find_in_buffer_take_key(int key) {
+    if (key == CTRL_F || key == CTRL_C) {
+        ys->interactive_command = NULL;
+        ys->current_search      = NULL;
+        yed_clear_cmd_buff();
+        yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+    } else if (key == ENTER) {
+        /* execute search */
+        ys->interactive_command = NULL;
+        ys->current_search      = NULL;
+        // yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+    } else {
+        if (key == BACKSPACE) {
+            if (array_len(ys->cmd_buff)) {
+                yed_cmd_buff_pop();
+            }
+        } else if (!iscntrl(key)) {
+            yed_cmd_buff_push(key);
+        }
+        yed_inc_find_in_buffer();
+    }
+}
+
+void yed_start_find_in_buffer(void) {
+    ys->interactive_command = "find-in-buffer";
+    ys->cmd_prompt          = "(find-in-buffer) ";
+    ys->small_message       = "";
+    ys->search_save_row     = ys->active_frame->cursor_line;
+    ys->search_save_col     = ys->active_frame->cursor_col;
+    yed_clear_cmd_buff();
+}
+
+void yed_default_command_find_in_buffer(int n_args, char **args) {
+    yed_frame *frame;
+    int        key;
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    if (!ys->interactive_command) {
+        yed_start_find_in_buffer();
+    } else {
+        sscanf(args[0], "%d", &key);
+        yed_find_in_buffer_take_key(key);
+        frame->dirty = 1;
+    }
+}
+
 int yed_execute_command(char *name, int n_args, char **args) {
     tree_it(yed_command_name_t, yed_command)  it;
     yed_command                               cmd;
-    int                                       is_cmd_prompt;
 
-    is_cmd_prompt = (strcmp(name, "command-prompt") == 0);
-
-    if (!is_cmd_prompt) {
+    if (!ys->interactive_command) {
         yed_clear_cmd_buff();
     }
 
@@ -1802,7 +1881,7 @@ int yed_execute_command(char *name, int n_args, char **args) {
 
     cmd = tree_it_val(it);
 
-    if (!is_cmd_prompt) {
+    if (!ys->interactive_command) {
         yed_append_text_to_cmd_buff("(");
         yed_append_text_to_cmd_buff(name);
         yed_append_text_to_cmd_buff(") ");

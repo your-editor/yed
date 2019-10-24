@@ -1,8 +1,8 @@
 CFG_DEBUG=-g -O0 -DYED_DO_ASSERTIONS -DYED_DO_LOGGING
 CFG_RELEASE=-O3
 
-# CFG=$(CFG_DEBUG)
-CFG=$(CFG_RELEASE)
+CFG=$(CFG_DEBUG)
+# CFG=$(CFG_RELEASE)
 
 ifeq ($(CC),clang)
 	ERR_LIM=-fmax-errors=3
@@ -26,5 +26,10 @@ plugs:
 
 check: lib_yed
 
+install:
+	cp _yed /usr/local/bin/yed
+	cp libyed.so /usr/local/lib
+
 clean:
 	rm -rf _yed libyed.so yed.dSYM libyed.so.dSYM
+	cd plugins && $(MAKE) clean

@@ -6,6 +6,22 @@ void yed_init_events(void) {
     for (i = 0; i < N_EVENTS; i += 1) {
         ys->event_handlers[i] = array_make(yed_event_handler);
     }
+
+    yed_reload_default_event_handlers();
+}
+
+void yed_reload_default_event_handlers(void) {
+    int               i;
+    yed_event_handler h;
+
+    for (i = 0; i < N_EVENTS; i += 1) {
+        array_clear(ys->event_handlers[i]);
+    }
+
+    h.kind = EVENT_LINE_PRE_DRAW;
+    h.fn   = yed_search_line_handler;
+
+    yed_add_event_handler(h);
 }
 
 void yed_add_event_handler(yed_event_handler handler) {

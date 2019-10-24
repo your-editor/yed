@@ -4,6 +4,8 @@
 #include "internal.h"
 
 typedef enum {
+    EVENT_FRAME_PRE_UPDATE,
+    EVENT_FRAME_PRE_BUFF_DRAW,
     EVENT_LINE_PRE_DRAW,
 
     N_EVENTS,
@@ -24,6 +26,7 @@ typedef struct {
 } yed_event_handler;
 
 void yed_init_events(void);
+void yed_reload_default_event_handlers(void);
 void yed_add_event_handler(yed_event_handler handler);
 void yed_delete_event_handler(yed_event_handler handler);
 

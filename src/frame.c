@@ -121,7 +121,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         base_attr.flags = ATTR_RGB;
         base_attr.bg    = RGB_32(207, 215, 199);
         base_attr.fg    = RGB_32(11, 32, 39);
-#else        
+#else
         base_attr.flags = ATTR_RGB;
         base_attr.fg    = RGB_32(246, 241, 209);
         base_attr.bg    = RGB_32(11, 32, 39);
@@ -180,7 +180,9 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     if (is_left) {
         /* Clear the line. */
         yed_set_cursor(frame->left + frame->width - 1, frame->top + y_offset);
+        yed_set_attr(base_attr);
         append_n_to_output_buff("\e[1K", 4);
+        yed_set_attr(cur_attr);
     }
 
     yed_set_cursor(frame->left, frame->top + y_offset);
@@ -225,6 +227,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     } else {
         append_n_to_output_buff(run_start, run_len);
     }
+    
     yed_set_attr(base_attr);
 
     if (!is_left) {
@@ -296,16 +299,30 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
 }
 
 void yed_frame_update(yed_frame *frame) {
+    yed_event update_event, buff_draw_event;
+
+    update_event.kind     = EVENT_FRAME_PRE_UPDATE;
+    update_event.frame    = frame;
+    buff_draw_event.kind  = EVENT_FRAME_PRE_BUFF_DRAW;
+    buff_draw_event.frame = frame;
+
+
+    yed_trigger_event(&update_event);
+
     if (frame->buffer) {
         if (frame->dirty || ys->redraw) {
+            yed_trigger_event(&buff_draw_event);
+
             yed_frame_draw_buff(frame, frame->buffer, frame->buffer_y_offset, frame->buffer_x_offset);
+        } else {
+            if (frame->dirty_line != frame->cursor_line) {
+                yed_frame_update_dirty_line(frame);
+            }
+            yed_frame_update_cursor_line(frame);
         }
-        if (frame->dirty_line != frame->cursor_line) {
-            yed_frame_update_dirty_line(frame);
-        }
-        yed_frame_update_cursor_line(frame);
     } else {
         if (frame->dirty || ys->redraw) {
+            yed_trigger_event(&buff_draw_event);
             yed_clear_frame(frame);
         }
     }

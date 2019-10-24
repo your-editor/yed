@@ -146,8 +146,8 @@ void yed_take_key(int key) {
     sprintf(key_str_buff, "%d", key);
     key_str = key_str_buff;
 
-    if (ys->accepting_command) {
-        yed_execute_command("command-prompt", 1, &key_str);
+    if (ys->interactive_command) {
+        yed_execute_command(ys->interactive_command, 1, &key_str);
     } else if (binding) {
         yed_execute_command(binding->cmd, binding->takes_key_as_arg, &key_str);
     } else if (key == ENTER || key == TAB || !iscntrl(key)) {

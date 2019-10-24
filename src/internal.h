@@ -57,6 +57,7 @@ use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 #include "getRSS.h"
 #include "event.h"
 #include "plugin.h"
+#include "find.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
@@ -152,7 +153,10 @@ typedef struct yed_state_t {
     yed_buffer      yank_buff;
     tree(yed_frame_id_t, yed_frame_ptr_t) frames;
     yed_frame      *active_frame;
-    int             accepting_command;
+    yed_command_name_t interactive_command;
+    char           *cmd_prompt;
+    char           *current_search;
+    int             search_save_row, search_save_col;
     array_t         cmd_buff;
     int             cmd_cursor_x;
     int             status;

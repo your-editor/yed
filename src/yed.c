@@ -12,6 +12,7 @@
 #include "getRSS.c"
 #include "event.c"
 #include "plugin.c"
+#include "find.c"
 
 yed_state *ys;
 
@@ -65,6 +66,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_commands();
     yed_init_keys();
     yed_init_events();
+    yed_init_search();
     yed_init_plugins();
 
     if (argc > 1) {
@@ -160,7 +162,7 @@ int yed_pump(void) {
     write_small_message();
 
     /* Not sure why this is necessary, but... */
-    if (!ys->accepting_command && ys->active_frame) {
+    if (!ys->interactive_command) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
 
@@ -184,7 +186,7 @@ int yed_pump(void) {
 
     ys->redraw = 0;
 
-    if (ys->accepting_command) {
+    if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {

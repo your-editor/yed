@@ -1,22 +1,28 @@
 #include "plugin.h"
 
-void syntax_c_handler(yed_event *event);
+void syntax_c_line_handler(yed_event *event);
+void syntax_c_frame_handler(yed_event *event);
+
 void syntax_c_highlight(yed_event *event);
-void syntax_c_highlight_keywords(yed_event *event);
-void syntax_c_highlight_numbers(yed_event *event);
+int  syntax_c_line_has_comment_delim(yed_line *line);
+
+static int lines_in_comment[4096];
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler h;
+    yed_event_handler frame, line;
 
-    h.kind = EVENT_LINE_PRE_DRAW;
-    h.fn   = syntax_c_handler;
+    frame.kind = EVENT_FRAME_PRE_BUFF_DRAW;
+    frame.fn   = syntax_c_frame_handler;
+    line.kind  = EVENT_LINE_PRE_DRAW;
+    line.fn    = syntax_c_line_handler;
 
-    yed_plugin_add_event_handler(self, h);
+    yed_plugin_add_event_handler(self, frame);
+    yed_plugin_add_event_handler(self, line);
 
     return 0;
 }
 
-void syntax_c_handler(yed_event *event) {
+void syntax_c_line_handler(yed_event *event) {
     yed_frame *frame;
 
     frame = event->frame;
@@ -30,11 +36,76 @@ void syntax_c_handler(yed_event *event) {
     syntax_c_highlight(event);
 }
 
+void syntax_c_frame_handler(yed_event *event) {
+    yed_frame *frame;
+    yed_line  *line;
+    int        row, delim, i, visited, currently_in_comment;
+
+    frame = event->frame;
+
+    if (!frame
+    ||  !frame->buffer
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
+        return;
+    }
+
+    row     = frame->buffer_y_offset + 1;
+    visited = 0;
+
+    lines_in_comment[visited] = 0;
+
+    for (i = row - 1; i >= 1; i -= 1) {
+        /* Give up after 100 lines. */
+        if (row - i > 100)    { break; }
+
+        line = yed_buff_get_line(frame->buffer, i);
+
+        if (!line)    { break; }
+
+        delim = syntax_c_line_has_comment_delim(line);
+
+        if (delim != 0) {
+            if (delim > 0) {
+                lines_in_comment[visited] = 1;
+            }
+            break;
+        }
+    }
+
+    currently_in_comment = (lines_in_comment[visited]);
+
+    row     += 1;
+    visited += 1;
+
+    bucket_array_traverse_from(frame->buffer->lines, line, frame->buffer_y_offset) {
+        delim = syntax_c_line_has_comment_delim(line);
+
+        if (delim < 0) {
+            currently_in_comment = 0;
+        }
+
+        lines_in_comment[visited] = currently_in_comment;
+        
+        if (currently_in_comment) {
+            lines_in_comment[visited] = 1;
+        }
+
+        if (delim > 0) {
+            currently_in_comment = 1;
+        }
+
+        visited += 1;
+        if (visited == frame->height)    { break; }
+
+        row += 1;
+    }
+}
+
 void syntax_c_highlight(yed_event *event) {
     yed_frame *frame;
     yed_line  *line;
     yed_attrs *attr;
-    int        col, old_col, word_len, spaces, i, j, k, match, last_was_hash, last_was_minus;
+    int        col, old_col, word_len, spaces, i, j, k, match, last_was_hash, last_was_minus, delim;
     char       c, *word,
               *kwds[][8] = {
                   { "do",       "if",       NULL,      NULL,       NULL,     NULL,     NULL,     NULL   }, /* 2 */
@@ -61,6 +132,16 @@ void syntax_c_highlight(yed_event *event) {
     frame = event->frame;
     line  = yed_buff_get_line(frame->buffer, event->row);
     col   = 1;
+
+    if (lines_in_comment[event->row - frame->buffer_y_offset]) {
+        for (k = 0 ; k < array_len(line->chars); k += 1) {
+            attr         = array_item(event->line_attrs, k);
+            attr->flags  = ATTR_RGB;
+            attr->flags |= ATTR_BOLD;
+            attr->fg     = RGB_32(72, 180, 235);
+        }
+        return;
+    }
 
     last_was_hash  = 0;
     last_was_minus = 0;
@@ -218,7 +299,7 @@ void syntax_c_highlight(yed_event *event) {
                             attr->flags  = ATTR_RGB;
                             attr->fg     = RGB_32(83, 170, 111);
                         }
-                        
+
                     }
                 }
             }
@@ -227,9 +308,9 @@ void syntax_c_highlight(yed_event *event) {
             i += 1;
         }
     }
-        
+
     /*
-     * Highlight string literals.
+     * Highlight string literals and comments.
      */
     i = 0;
     while (i < array_len(line->chars) - 1) {
@@ -259,18 +340,23 @@ void syntax_c_highlight(yed_event *event) {
             }
 
             i += j + 1;
-        } else {
-            i += 1;
-        }
-    }
 
-    /*
-     * Highlight C-style comments.
-     */
-    i = 0;
-    while (i < array_len(line->chars) - 3) {
-        word = array_item(line->chars, i);
-        if (*word == '/' && *(word + 1) == '*') {
+        /*
+         * Highlight C++-style comments.
+         */
+        } else if (*word == '/' && *(word + 1) == '/') {
+            for (k = i; k < array_len(line->chars); k += 1) {
+                attr         = array_item(event->line_attrs, k);
+                attr->flags  = ATTR_RGB;
+                attr->flags |= ATTR_BOLD;
+                attr->fg     = RGB_32(72, 180, 235);
+            }
+            break;
+
+        /*
+         * Highlight single-line C-style comments.
+         */
+        } else if (*word == '/' && *(word + 1) == '*') {
             j = 2;
             while (1) {
                 if (i + j + 1 >= array_len(line->chars)) {
@@ -298,4 +384,61 @@ void syntax_c_highlight(yed_event *event) {
             i += 1;
         }
     }
+
+    /*
+     * See if there's a delimiter of a multi-line C-style comment.
+     */
+    delim = syntax_c_line_has_comment_delim(line);
+
+    if (delim) {
+        if (delim < 0) {
+            for (k = 0; k < (0 - delim + 2); k += 1) {
+                attr         = array_item(event->line_attrs, k);
+                attr->flags  = ATTR_RGB;
+                attr->flags |= ATTR_BOLD;
+                attr->fg     = RGB_32(72, 180, 235);
+            }
+        } else if (delim > 0) {
+            for (k = delim; k < array_len(line->chars); k += 1) {
+                attr         = array_item(event->line_attrs, k);
+                attr->flags  = ATTR_RGB;
+                attr->flags |= ATTR_BOLD;
+                attr->fg     = RGB_32(72, 180, 235);
+            }
+        }
+    }
+}
+
+int syntax_c_line_has_comment_delim(yed_line *line) {
+    char c, *start, *data, *end;
+    int  len;
+    int  open, delim;
+
+    start = data = array_data(line->chars);
+    len   = array_len(line->chars);
+
+    if (!len)    { return 0; }
+
+    end = start + len;
+
+    delim = 0;
+    open  = 0;
+    for (; data < end - 1; data += 1) {
+        c = *data;
+        if (c == '/') {
+            if (*(data + 1) == '*') {
+                open  += 1;
+                delim  = data - start;
+                data  += 1; /* skip the star so it isn't counted in a close */
+            }
+        } else if (c == '*') {
+            if (*(data + 1) == '/') {
+                open  -= 1;
+                delim  = -(data - start);
+                data  += 1; /* skip the slash so it isn't counted in an open */
+            }
+        }
+    }
+
+    return (!!open) * delim;
 }
