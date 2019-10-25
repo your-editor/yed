@@ -162,7 +162,7 @@ int yed_pump(void) {
     write_small_message();
 
     /* Not sure why this is necessary, but... */
-    if (!ys->interactive_command) {
+    if (!ys->interactive_command && ys->active_frame) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
 
