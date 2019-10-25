@@ -1191,6 +1191,7 @@ void yed_default_command_insert(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line,
               *new_line;
+    yed_event  event;
     int        key,
                col, idx,
                i, len;
@@ -1222,6 +1223,17 @@ void yed_default_command_insert(int n_args, char **args) {
     }
 
     col = frame->cursor_col;
+
+    event.kind  = EVENT_BUFFER_PRE_INSERT;
+    event.frame = frame;
+    event.row   = frame->cursor_line;
+    event.col   = col;
+    event.key   = key;
+
+    yed_trigger_event(&event);
+
+    event.kind = EVENT_BUFFER_PRE_MOD;
+    yed_trigger_event(&event);
 
     if (key == ENTER) {
         /*
@@ -1259,12 +1271,16 @@ void yed_default_command_insert(int n_args, char **args) {
             yed_move_cursor_within_frame(frame, 1, 0);
         }
     }
+
+    event.kind = EVENT_BUFFER_POST_MOD;
+    yed_trigger_event(&event);
 }
 
 void yed_default_command_delete_back(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line,
               *previous_line;
+    yed_event  event;
     int        r1, c1, r2, c2,
                col,
                buff_n_lines,
@@ -1293,6 +1309,12 @@ void yed_default_command_delete_back(int n_args, char **args) {
         yed_append_text_to_cmd_buff("[!] buffer is read-only");
         return;
     }
+
+    event.kind  = EVENT_BUFFER_PRE_MOD;
+    event.frame = frame;
+    event.row   = frame->cursor_line;
+
+    yed_trigger_event(&event);
 
     if (frame->buffer->has_selection) {
         r1 = c1 = r2 = c2 = 0;
@@ -1352,11 +1374,14 @@ void yed_default_command_delete_back(int n_args, char **args) {
         }
     }
 
+    event.kind = EVENT_BUFFER_POST_MOD;
+    yed_trigger_event(&event);
 }
 
 void yed_default_command_delete_line(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line;
+    yed_event  event;
     int        row,
                n_lines;
 
@@ -1386,6 +1411,12 @@ void yed_default_command_delete_line(int n_args, char **args) {
     n_lines = bucket_array_len(frame->buffer->lines);
     row     = frame->cursor_line;
 
+    event.kind  = EVENT_BUFFER_PRE_MOD;
+    event.frame = frame;
+    event.row   = frame->cursor_line;
+
+    yed_trigger_event(&event);
+
     if (n_lines > 1) {
         if (row == n_lines) {
             yed_move_cursor_within_frame(frame, 0, -1);
@@ -1408,6 +1439,9 @@ void yed_default_command_delete_line(int n_args, char **args) {
     if (frame->buffer_y_offset >= n_lines - frame->height) {
         yed_frame_reset_cursor(frame);
     }
+
+    event.kind = EVENT_BUFFER_POST_MOD;
+    yed_trigger_event(&event);
 }
 
 void yed_default_command_write_buffer(int n_args, char **args) {
@@ -1758,6 +1792,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         buff->has_selection = 0;
     }
     frame->dirty = 1;
+
 }
 
 void yed_default_command_paste_yank_buffer(int n_args, char **args) {
@@ -1767,6 +1802,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                *new_line,
                *first_line,
                *last_line;
+    yed_event   event;
     int         yank_buff_n_lines, row, col;
 
     if (n_args != 0) {
@@ -1798,6 +1834,11 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
         yed_append_text_to_cmd_buff("[!] buffer is read-only");
         return;
     }
+
+    event.kind  = EVENT_BUFFER_PRE_MOD;
+    event.frame = frame;
+
+    yed_trigger_event(&event);
 
     yank_buff_n_lines = bucket_array_len(ys->yank_buff.lines);
 
@@ -1854,6 +1895,9 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             }
         }
     }
+    
+    event.kind = EVENT_BUFFER_POST_MOD;
+    yed_trigger_event(&event);
 }
 
 int yed_inc_find_in_buffer(void) {

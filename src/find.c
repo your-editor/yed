@@ -24,6 +24,10 @@ void yed_search_line_handler(yed_event *event) {
 
     frame = event->frame;
 
+    if (frame != ys->active_frame) {
+        return;
+    }
+
     if (!frame->buffer) {
         return;
     }

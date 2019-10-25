@@ -7,6 +7,9 @@ typedef enum {
     EVENT_FRAME_PRE_UPDATE,
     EVENT_FRAME_PRE_BUFF_DRAW,
     EVENT_LINE_PRE_DRAW,
+    EVENT_BUFFER_PRE_INSERT,
+    EVENT_BUFFER_PRE_MOD,
+    EVENT_BUFFER_POST_MOD,
 
     N_EVENTS,
 } yed_event_kind_t;
@@ -16,6 +19,7 @@ typedef struct {
     yed_frame        *frame;
     int               row, col;
     array_t           line_attrs;
+    int               key;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

@@ -2,22 +2,32 @@
 
 void syntax_c_line_handler(yed_event *event);
 void syntax_c_frame_handler(yed_event *event);
+void syntax_c_buff_mod_pre_handler(yed_event *event);
+void syntax_c_buff_mod_post_handler(yed_event *event);
 
 void syntax_c_highlight(yed_event *event);
+void syntax_c_find_comment_lines(yed_frame *frame);
 int  syntax_c_line_has_comment_delim(yed_line *line);
 
 static int lines_in_comment[4096];
+static int line_has_delim;
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler frame, line;
+    yed_event_handler frame, line, buff_mod_pre, buff_mod_post;
 
-    frame.kind = EVENT_FRAME_PRE_BUFF_DRAW;
-    frame.fn   = syntax_c_frame_handler;
-    line.kind  = EVENT_LINE_PRE_DRAW;
-    line.fn    = syntax_c_line_handler;
+    frame.kind          = EVENT_FRAME_PRE_BUFF_DRAW;
+    frame.fn            = syntax_c_frame_handler;
+    line.kind           = EVENT_LINE_PRE_DRAW;
+    line.fn             = syntax_c_line_handler;
+    buff_mod_pre.kind   = EVENT_BUFFER_PRE_MOD;
+    buff_mod_pre.fn     = syntax_c_buff_mod_pre_handler;
+    buff_mod_post.kind  = EVENT_BUFFER_POST_MOD;
+    buff_mod_post.fn    = syntax_c_buff_mod_post_handler;
 
     yed_plugin_add_event_handler(self, frame);
     yed_plugin_add_event_handler(self, line);
+    yed_plugin_add_event_handler(self, buff_mod_pre);
+    yed_plugin_add_event_handler(self, buff_mod_post);
 
     return 0;
 }
@@ -38,8 +48,6 @@ void syntax_c_line_handler(yed_event *event) {
 
 void syntax_c_frame_handler(yed_event *event) {
     yed_frame *frame;
-    yed_line  *line;
-    int        row, delim, i, visited, currently_in_comment;
 
     frame = event->frame;
 
@@ -49,55 +57,51 @@ void syntax_c_frame_handler(yed_event *event) {
         return;
     }
 
-    row     = frame->buffer_y_offset + 1;
-    visited = 0;
+    syntax_c_find_comment_lines(frame);
+}
 
-    lines_in_comment[visited] = 0;
+void syntax_c_buff_mod_pre_handler(yed_event *event) {
+    yed_frame *frame;
+    yed_line  *line;
 
-    for (i = row - 1; i >= 1; i -= 1) {
-        /* Give up after 100 lines. */
-        if (row - i > 100)    { break; }
+    frame = event->frame;
 
-        line = yed_buff_get_line(frame->buffer, i);
-
-        if (!line)    { break; }
-
-        delim = syntax_c_line_has_comment_delim(line);
-
-        if (delim != 0) {
-            if (delim > 0) {
-                lines_in_comment[visited] = 1;
-            }
-            break;
-        }
+    if (!frame
+    ||  !frame->buffer
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
+        return;
     }
 
-    currently_in_comment = (lines_in_comment[visited]);
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    if (!line) {
+        return;
+    }
 
-    row     += 1;
-    visited += 1;
+    line_has_delim = syntax_c_line_has_comment_delim(line);
+}
 
-    bucket_array_traverse_from(frame->buffer->lines, line, frame->buffer_y_offset) {
-        delim = syntax_c_line_has_comment_delim(line);
+void syntax_c_buff_mod_post_handler(yed_event *event) {
+    yed_frame *frame;
+    yed_line  *line;
+    int        delim;
 
-        if (delim < 0) {
-            currently_in_comment = 0;
-        }
+    frame = event->frame;
 
-        lines_in_comment[visited] = currently_in_comment;
-        
-        if (currently_in_comment) {
-            lines_in_comment[visited] = 1;
-        }
+    if (!frame
+    ||  !frame->buffer
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
+        return;
+    }
 
-        if (delim > 0) {
-            currently_in_comment = 1;
-        }
+    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    if (!line) {
+        return;
+    }
 
-        visited += 1;
-        if (visited == frame->height)    { break; }
+    delim = syntax_c_line_has_comment_delim(line);
 
-        row += 1;
+    if (line_has_delim != delim) {
+        frame->dirty = 1;
     }
 }
 
@@ -392,20 +396,87 @@ void syntax_c_highlight(yed_event *event) {
 
     if (delim) {
         if (delim < 0) {
-            for (k = 0; k < (0 - delim + 2); k += 1) {
+            for (k = 0; k < (0 - delim + 1); k += 1) {
                 attr         = array_item(event->line_attrs, k);
                 attr->flags  = ATTR_RGB;
                 attr->flags |= ATTR_BOLD;
                 attr->fg     = RGB_32(72, 180, 235);
             }
         } else if (delim > 0) {
-            for (k = delim; k < array_len(line->chars); k += 1) {
+            for (k = delim - 1; k < array_len(line->chars); k += 1) {
                 attr         = array_item(event->line_attrs, k);
                 attr->flags  = ATTR_RGB;
                 attr->flags |= ATTR_BOLD;
                 attr->fg     = RGB_32(72, 180, 235);
             }
         }
+    }
+}
+
+void syntax_c_find_comment_lines(yed_frame *frame) {
+    yed_line  *line;
+    int        row, delim, i, visited, currently_in_comment;
+
+    row     = frame->buffer_y_offset + 1;
+    visited = 0;
+
+    lines_in_comment[visited] = 0;
+
+    if (row == 1) {
+        line = yed_buff_get_line(frame->buffer, 1);
+        if (line) {
+            delim = syntax_c_line_has_comment_delim(line);
+
+            if (delim > 0) {
+                lines_in_comment[visited] = 1;
+            }
+        }
+    } else {
+        for (i = row - 1; i >= 1; i -= 1) {
+            /* Give up after 100 lines. */
+            if (row - i > 100)    { break; }
+
+            line = yed_buff_get_line(frame->buffer, i);
+
+            if (!line)    { break; }
+
+            delim = syntax_c_line_has_comment_delim(line);
+
+            if (delim != 0) {
+                if (delim > 0) {
+                    lines_in_comment[visited] = 1;
+                }
+                break;
+            }
+        }
+    }
+
+    currently_in_comment = (lines_in_comment[visited]);
+
+    row     += 1;
+    visited += 1;
+
+    bucket_array_traverse_from(frame->buffer->lines, line, frame->buffer_y_offset) {
+        delim = syntax_c_line_has_comment_delim(line);
+
+        if (delim < 0) {
+            currently_in_comment = 0;
+        }
+
+        lines_in_comment[visited] = currently_in_comment;
+
+        if (currently_in_comment) {
+            lines_in_comment[visited] = 1;
+        }
+
+        if (delim > 0) {
+            currently_in_comment = 1;
+        }
+
+        if (visited == frame->height)    { break; }
+
+        visited += 1;
+        row     += 1;
     }
 }
 
@@ -428,13 +499,13 @@ int syntax_c_line_has_comment_delim(yed_line *line) {
         if (c == '/') {
             if (*(data + 1) == '*') {
                 open  += 1;
-                delim  = data - start;
+                delim  = data - start + 1;
                 data  += 1; /* skip the star so it isn't counted in a close */
             }
         } else if (c == '*') {
             if (*(data + 1) == '/') {
                 open  -= 1;
-                delim  = -(data - start);
+                delim  = -(data - start + 1);
                 data  += 1; /* skip the slash so it isn't counted in an open */
             }
         }
