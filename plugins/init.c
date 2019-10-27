@@ -19,6 +19,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char *plugins[] = {
         "vimish",
         "syntax_c",
+        "indent_c",
         "proj"
     };
     char *cwd_yed = "./.yed";

@@ -112,13 +112,13 @@ void syntax_c_highlight(yed_event *event) {
     int        col, old_col, word_len, spaces, i, j, k, match, last_was_hash, last_was_minus, delim;
     char       c, *word,
               *kwds[][8] = {
-                  { "do",       "if",       NULL,      NULL,       NULL,     NULL,     NULL,     NULL   }, /* 2 */
-                  { "int",      "for",      NULL,      NULL,       NULL,     NULL,     NULL,     NULL   }, /* 3 */
-                  { "long",     "char",     "bool",    "void",     "enum",   "else",   "case",   "goto" }, /* 4 */
-                  { "const",    "short",    "float",   "while",    "break",  NULL,     NULL,     NULL   }, /* 5 */
-                  { "static",   "size_t",   "double",  "struct",   "switch", "return", "sizeof", NULL   }, /* 6 */
-                  { "ssize_t",  "typedef",  "default", NULL,       NULL,     NULL,     NULL,     NULL   }, /* 7 */
-                  { "unsigned", "continue", NULL,      NULL,       NULL,     NULL,     NULL,     NULL   }  /* 8 */
+                  { "do",       "if",       NULL,       NULL,       NULL,     NULL,     NULL,     NULL     }, /* 2 */
+                  { "int",      "for",      NULL,       NULL,       NULL,     NULL,     NULL,     NULL     }, /* 3 */
+                  { "long",     "char",     "bool",     "void",     "enum",   "else",   "case",   "goto"   }, /* 4 */
+                  { "const",    "short",    "float",    "while",    "break",  NULL,     NULL,     NULL     }, /* 5 */
+                  { "static",   "size_t",   "double",   "struct",   "switch", "return", "sizeof", "inline" }, /* 6 */
+                  { "ssize_t",  "typedef",  "default",  "__asm__",  NULL,     NULL,     NULL,     NULL     }, /* 7 */
+                  { "unsigned", "continue", "volatile", "restrict", NULL,     NULL,     NULL,     NULL     }  /* 8 */
               },
              *pp_kwds[][3] = {
                   { "if",      NULL,     NULL     }, /* 2 */

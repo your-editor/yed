@@ -140,3 +140,74 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
 
     return 0;
 }
+
+int yed_find_prev(int row, int col, int *row_out, int *col_out) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+    yed_line   *line;
+    char       *line_data,
+               *line_data_start;
+    int         i,
+                r,
+                search_len,
+                data_len;
+
+    if (!ys->current_search)    { return 0; }
+    if (!ys->active_frame)      { return 0; }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer)    { return 0; }
+
+    buff       = frame->buffer;
+    search_len = strlen(ys->current_search);
+
+    for (r = row; r > 0; r -= 1) {
+        line = yed_buff_get_line(buff, r);
+        
+        data_len = array_len(line->chars);
+
+        if (!data_len) {
+            continue;
+        }
+
+        line_data = line_data_start = array_data(line->chars);
+
+        if (r == row)    { i = col - 2 - search_len;  }
+        else             { i = data_len - search_len; }
+
+        for (; i >= 0; i -= 1) {
+            if (strncmp(ys->current_search, line_data + i, search_len) == 0) {
+                if (r != row || i + 1 != col) {
+                    *row_out = r;
+                    *col_out = i + 1;
+                    return 1;
+                }
+            }
+        }
+    }
+
+    for (r = bucket_array_len(buff->lines); r > row; r -= 1) {
+        line = yed_buff_get_line(buff, r);
+        
+        data_len = array_len(line->chars);
+
+        if (!data_len) {
+            continue;
+        }
+
+        line_data = line_data_start = array_data(line->chars);
+
+        for (i = data_len - search_len; i >= 0; i -= 1) {
+            if (strncmp(ys->current_search, line_data + i, search_len) == 0) {
+                if (r != row || i + 1 != col) {
+                    *row_out = r;
+                    *col_out = i + 1;
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}

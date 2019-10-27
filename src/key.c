@@ -115,20 +115,6 @@ int yed_read_keys(int *input) {
         if ((*input = esc_timout(esc_seq)))      { return 1; }
         if ((*input = esc_sequence(esc_seq)))    { return 1; }
     } else {
-
-        /* Here's an example of how we can do some multi-key bindings */
-/*         case 'd': */
-/*             if (read(0, seq, 1)) { */
-/*                 if (seq[0] == 'd') { */
-/*                     *input = FOOZLE; */
-/*                     return 1; */
-/*                 } else { */
-/*                     *(input++) = 'd'; */
-/*                     *input     = seq[0]; */
-/*                     return 2; */
-/*                 } */
-/*             } */
-
         return yed_read_key_sequences(c, input);
     }
 
@@ -150,7 +136,8 @@ void yed_take_key(int key) {
         yed_execute_command(ys->interactive_command, 1, &key_str);
     } else if (binding) {
         yed_execute_command(binding->cmd, binding->takes_key_as_arg, &key_str);
-    } else if (key == ENTER || key == TAB || !iscntrl(key)) {
+    } else if (key < REAL_KEY_MAX
+      &&      (key == ENTER || key == TAB || !iscntrl(key))) {
         yed_execute_command("insert", 1, &key_str);
     }
 
@@ -361,6 +348,7 @@ int yed_delete_key_sequence(int seq_key) {
             found = 1;
             break;
         }
+        i += 1;
     }
 
     if (!found)    { return 1; }

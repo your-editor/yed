@@ -2,12 +2,12 @@
 * undo/redo
 * stylizing
     * ui colors
-* indent
-* search
 * resizing 
 * line numbers
-
-here's some stuff /* now a
-multi
-line
-comment */ some more stuff
+* things from vimrc
+    * clear whitespace on write
+    * make-check that works only in vimish normal mode
+    * commenting stuff out
+    * aligment
+    * completion
+    * LaTeX compile/view

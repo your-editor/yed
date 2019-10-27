@@ -159,6 +159,10 @@ int vimish_nav_common(int key, char *key_str) {
             YEXE("find-next-in-buffer", 0, NULL);
             break;
 
+        case 'N':
+            YEXE("find-prev-in-buffer", 0, NULL);
+            break;
+
         default:
             return 0;
     }
