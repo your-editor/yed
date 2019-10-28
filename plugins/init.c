@@ -20,6 +20,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "vimish",
         "syntax_c",
         "indent_c",
+        "autotrim",
         "proj"
     };
     char *cwd_yed = "./.yed";

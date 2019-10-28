@@ -13,6 +13,7 @@ typedef enum {
     EVENT_BUFFER_POST_DELETE_BACK,
     EVENT_BUFFER_PRE_MOD,
     EVENT_BUFFER_POST_MOD,
+    EVENT_BUFFER_PRE_WRITE,
 
     N_EVENTS,
 } yed_event_kind_t;
@@ -20,6 +21,7 @@ typedef enum {
 typedef struct {
     yed_event_kind_t  kind;
     yed_frame        *frame;
+    yed_buffer       *buffer;
     int               row, col;
     array_t           line_attrs;
     int               key;

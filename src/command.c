@@ -1315,13 +1315,13 @@ void yed_default_command_delete_back(int n_args, char **args) {
         yed_append_text_to_cmd_buff("[!] buffer is read-only");
         return;
     }
-    
+
     event.kind  = EVENT_BUFFER_PRE_MOD;
     event.frame = frame;
     event.row   = frame->cursor_line;
 
     yed_trigger_event(&event);
-    
+
     event.kind  = EVENT_BUFFER_PRE_DELETE_BACK;
     yed_trigger_event(&event);
 
@@ -1907,7 +1907,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             }
         }
     }
-    
+
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
 }
@@ -2028,7 +2028,7 @@ void yed_default_command_find_next_in_buffer(int n_args, char **args) {
     ys->current_search  = ys->save_search;
     ys->search_save_row = ys->active_frame->cursor_line;
     ys->search_save_col = ys->active_frame->cursor_col;
-    
+
     if (!yed_inc_find_in_buffer()) {
         yed_append_text_to_cmd_buff("[!] '");
         yed_append_text_to_cmd_buff(ys->current_search);
@@ -2078,7 +2078,7 @@ void yed_default_command_find_prev_in_buffer(int n_args, char **args) {
     ys->current_search  = ys->save_search;
     ys->search_save_row = ys->active_frame->cursor_line;
     ys->search_save_col = ys->active_frame->cursor_col;
-    
+
     if (!yed_inc_find_prev_in_buffer()) {
         yed_append_text_to_cmd_buff("[!] '");
         yed_append_text_to_cmd_buff(ys->current_search);

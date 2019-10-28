@@ -430,8 +430,13 @@ void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
 }
 
 void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
-    FILE     *f;
-    yed_line *line;
+    FILE      *f;
+    yed_line  *line;
+    yed_event  event;
+
+    event.kind   = EVENT_BUFFER_PRE_WRITE;
+    event.buffer = buff;
+    yed_trigger_event(&event);
 
     f = fopen(path, "w");
     if (!f) {
