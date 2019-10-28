@@ -31,6 +31,7 @@ static void write_welcome(void) {
 static void * writer(void *arg) {
     (void)arg;
     while (1) {
+        pthread_mutex_lock(&ys->write_ready_mtx);
         pthread_mutex_lock(&ys->write_mtx);
         flush_writer_buff();
         ys->writer_done = 1;
@@ -62,9 +63,10 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
     pthread_mutex_init(&ys->write_mtx, NULL);
+    pthread_mutex_init(&ys->write_ready_mtx, NULL);
+    pthread_mutex_lock(&ys->write_ready_mtx);
     pthread_cond_init(&ys->write_signal, NULL);
 
-    pthread_mutex_lock(&ys->write_mtx);
     pthread_create(&ys->writer_id, NULL, writer, NULL);
     yed_init_commands();
     yed_init_keys();
@@ -91,7 +93,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     ys->redraw = 1;
 
-    pthread_mutex_unlock(&ys->write_mtx);
+    pthread_mutex_unlock(&ys->write_ready_mtx);
 
     return ys;
 }
@@ -169,6 +171,7 @@ int yed_pump(void) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
 
+    pthread_mutex_lock(&ys->write_mtx);
     while (!ys->writer_done) {
         pthread_cond_wait(&ys->write_signal, &ys->write_mtx);
     }
@@ -176,6 +179,7 @@ int yed_pump(void) {
     array_copy(ys->writer_buffer, ys->output_buffer);
     array_clear(ys->output_buffer);
     pthread_mutex_unlock(&ys->write_mtx);
+    pthread_mutex_unlock(&ys->write_ready_mtx);
 
     ys->status = YED_NORMAL;
 
@@ -205,8 +209,6 @@ int yed_pump(void) {
     if (ys->status == YED_RELOAD) {
         yed_unload_plugin_libs();
     }
-
-    pthread_mutex_lock(&ys->write_mtx);
 
     return ys->status;
 }

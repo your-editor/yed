@@ -135,45 +135,51 @@ uint64_t next_power_of_2(uint64_t x);
 char *pretty_bytes(uint64_t n_bytes);
 
 typedef struct yed_state_t {
-    yed_lib_t      *yed_lib;
-    array_t         output_buffer;
-    array_t         writer_buffer;
-    pthread_mutex_t write_mtx;
-    pthread_cond_t  write_signal;
-    pthread_t       writer_id;
-    int             writer_done;
-    char            _4096_spaces[4096];
-    struct termios  sav_term;
-    int             term_cols,
-                    term_rows;
-    int             cur_x,
-                    cur_y,
-                    save_cur_x,
-                    save_cur_y;
-    array_t         buff_list;
-    yed_buffer      yank_buff;
-    tree(yed_frame_id_t, yed_frame_ptr_t) frames;
-    yed_frame      *active_frame;
-    yed_command_name_t interactive_command;
-    char           *cmd_prompt;
-    char           *current_search;
-    char           *save_search;
-    int             search_save_row, search_save_col;
-    array_t         cmd_buff;
-    int             cmd_cursor_x;
-    int             status;
-    int             redraw;
-    tree(yed_command_name_t, yed_command) commands;
-    tree(yed_command_name_t, yed_command) default_commands;
-    char           *small_message;
-    tree(yed_plugin_name_t, yed_plugin_ptr_t) plugins;
-    array_t         plugin_dirs;
-    yed_key_binding *real_key_map[REAL_KEY_MAX];
-    tree(int, yed_key_binding_ptr_t) key_seq_map;
-    array_t         key_sequences;
-    int             seq_key_counter;
-    array_t         released_seq_keys;
-    array_t         event_handlers[N_EVENTS];
+    yed_lib_t                   *yed_lib;
+    array_t                      output_buffer;
+    array_t                      writer_buffer;
+    pthread_mutex_t              write_mtx, write_ready_mtx;
+    pthread_cond_t               write_signal;
+    pthread_t                    writer_id;
+    int                          writer_done;
+    char                         _4096_spaces[4096];
+    struct termios               sav_term;
+    int                          term_cols,
+                                 term_rows;
+    int                          cur_x,
+                                 cur_y,
+                                 save_cur_x,
+                                 save_cur_y;
+    array_t                      buff_list;
+    yed_buffer                   yank_buff;
+    tree(yed_frame_id_t,
+         yed_frame_ptr_t)        frames;
+    yed_frame                   *active_frame;
+    yed_command_name_t           interactive_command;
+    char                        *cmd_prompt;
+    char                        *current_search;
+    char                        *save_search;
+    int                          search_save_row,
+                                 search_save_col;
+    array_t                      cmd_buff;
+    int                          cmd_cursor_x;
+    int                          status;
+    int                          redraw;
+    tree(yed_command_name_t,
+         yed_command)            commands;
+    tree(yed_command_name_t,
+         yed_command)            default_commands;
+    char                        *small_message;
+    tree(yed_plugin_name_t,
+         yed_plugin_ptr_t)       plugins;
+    array_t                      plugin_dirs;
+    yed_key_binding             *real_key_map[REAL_KEY_MAX];
+    tree(int,
+         yed_key_binding_ptr_t)  key_seq_map;
+    array_t                      key_sequences;
+    int                          seq_key_counter;
+    array_t                      released_seq_keys;
+    array_t                      event_handlers[N_EVENTS];
 } yed_state;
 
 extern yed_state *ys;
