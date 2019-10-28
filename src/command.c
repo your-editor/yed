@@ -67,6 +67,9 @@ do {                                                              \
     SET_DEFAULT_COMMAND("quit",                  quit);
     SET_DEFAULT_COMMAND("reload",                reload);
     SET_DEFAULT_COMMAND("redraw",                redraw);
+    SET_DEFAULT_COMMAND("set",                   set);
+    SET_DEFAULT_COMMAND("get",                   get);
+    SET_DEFAULT_COMMAND("unset",                 unset);
     SET_DEFAULT_COMMAND("make-and-reload",       make_and_reload);
     SET_DEFAULT_COMMAND("sh",                    sh);
     SET_DEFAULT_COMMAND("echo",                  echo);
@@ -267,6 +270,15 @@ void yed_default_command_reload(int n_args, char **args) {
 
 void yed_default_command_redraw(int n_args, char **args) {
     ys->redraw = 1;
+}
+
+void yed_default_command_set(int n_args, char **args) {
+}
+
+void yed_default_command_get(int n_args, char **args) {
+}
+
+void yed_default_command_unset(int n_args, char **args) {
 }
 
 void yed_default_command_make_and_reload(int n_args, char **args) {

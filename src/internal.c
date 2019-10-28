@@ -127,6 +127,7 @@ void yed_service_reload(void) {
     tree_it(yed_command_name_t, yed_command)  cmd_it;
     char                                     *key;
 
+    tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             NULL);
     tree_reset_fns(int,                yed_key_binding_ptr_t, ys->key_seq_map,      NULL);
     tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,       ys->frames,           strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);

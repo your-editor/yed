@@ -2,10 +2,10 @@
 * undo/redo
 * stylizing
     * ui colors
-* resizing 
+* resizing
 * line numbers
 * things from vimrc
-    * clear whitespace on write
+    * remember last place in file
     * make-check that works only in vimish normal mode
     * commenting stuff out
     * aligment

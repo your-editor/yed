@@ -43,6 +43,10 @@ typedef char *yed_plugin_name_t;
 struct yed_plugin_t;
 typedef struct yed_plugin_t *yed_plugin_ptr_t;
 use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
+
+typedef char *yed_var_name_t;
+typedef char *yed_var_val_t;
+use_tree(yed_var_name_t, yed_var_val_t);
 #undef inline
 
 #include "array.h"
@@ -58,6 +62,7 @@ use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 #include "event.h"
 #include "plugin.h"
 #include "find.h"
+#include "var.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
@@ -180,6 +185,8 @@ typedef struct yed_state_t {
     int                          seq_key_counter;
     array_t                      released_seq_keys;
     array_t                      event_handlers[N_EVENTS];
+    tree(yed_var_name_t,
+         yed_var_val_t)          vars;
 } yed_state;
 
 extern yed_state *ys;

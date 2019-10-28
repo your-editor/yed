@@ -13,6 +13,7 @@
 #include "event.c"
 #include "plugin.c"
 #include "find.c"
+#include "var.c"
 
 yed_state *ys;
 
@@ -29,17 +30,56 @@ static void write_welcome(void) {
 }
 
 static void * writer(void *arg) {
+    int status;
+
     (void)arg;
+
     while (1) {
         pthread_mutex_lock(&ys->write_ready_mtx);
         pthread_mutex_lock(&ys->write_mtx);
         flush_writer_buff();
         ys->writer_done = 1;
+        status = ys->status;
         pthread_cond_signal(&ys->write_signal);
         pthread_mutex_unlock(&ys->write_mtx);
+
+        if (status == YED_RELOAD) {
+            break;
+        }
     }
 
     return NULL;
+}
+
+static void kill_writer(void) {
+    /*
+     * Wait for the writer thread to signal that it
+     * is finished writing the previous update.
+     */
+    pthread_mutex_lock(&ys->write_mtx);
+    while (!ys->writer_done) {
+        pthread_cond_wait(&ys->write_signal, &ys->write_mtx);
+    }
+
+    /*
+     * Let the writer thread continue.
+     * This time, ys->status = YED_RELOAD, so the
+     * writer thread will break its loop and leave
+     * ys->write_mtx unlocked.
+     */
+    pthread_mutex_unlock(&ys->write_mtx);
+    pthread_mutex_unlock(&ys->write_ready_mtx);
+
+    /*
+     * We will wait here until the writer thread has
+     * exited.
+     */
+    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_unlock(&ys->write_mtx);
+}
+
+static void restart_writer(void) {
+    pthread_create(&ys->writer_id, NULL, writer, NULL);
 }
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
@@ -48,6 +88,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
+    yed_init_vars();
     yed_init_frames();
 
     ys->yed_lib          = yed_lib;
@@ -162,6 +203,7 @@ int yed_pump(void) {
 
     if (ys->status == YED_RELOAD) {
         yed_service_reload();
+        restart_writer();
     }
 
     write_small_message();
@@ -171,17 +213,32 @@ int yed_pump(void) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
 
+    ys->status = YED_NORMAL;
+
+
+    /*
+     * Wait for the writer thread to signal that it
+     * is finished writing the previous update.
+     */
     pthread_mutex_lock(&ys->write_mtx);
     while (!ys->writer_done) {
         pthread_cond_wait(&ys->write_signal, &ys->write_mtx);
     }
+
+    /*
+     * Give the writer thread the new screen update.
+     */
     ys->writer_done = 0;
     array_copy(ys->writer_buffer, ys->output_buffer);
     array_clear(ys->output_buffer);
     pthread_mutex_unlock(&ys->write_mtx);
+
+    /*
+     * Signal the writer thread to go ahead and start writing.
+     */
     pthread_mutex_unlock(&ys->write_ready_mtx);
 
-    ys->status = YED_NORMAL;
+
 
     append_to_output_buff(TERM_CURSOR_HIDE);
 
@@ -208,6 +265,7 @@ int yed_pump(void) {
 
     if (ys->status == YED_RELOAD) {
         yed_unload_plugin_libs();
+        kill_writer();
     }
 
     return ys->status;
