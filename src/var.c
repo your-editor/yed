@@ -4,6 +4,10 @@ void yed_init_vars(void) {
     ys->vars = tree_make_c(yed_var_name_t, yed_var_val_t, strcmp);
 }
 
+void yed_set_default_vars(void) {
+    yed_set_var("tab-width", "4");
+}
+
 void yed_set_var(char *var, char *val) {
     tree_it(yed_var_name_t,
             yed_var_val_t)     it;
@@ -19,7 +23,7 @@ void yed_set_var(char *var, char *val) {
         tree_insert(ys->vars, strdup(var), strdup(val));
     } else {
         old_val = tree_it_val(it);
-        tree_insert(ys->vars, var, strdup(var));
+        tree_insert(ys->vars, var, strdup(val));
         free(old_val);
     }
 }

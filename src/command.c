@@ -273,12 +273,62 @@ void yed_default_command_redraw(int n_args, char **args) {
 }
 
 void yed_default_command_set(int n_args, char **args) {
+    if (n_args != 2) {
+        yed_append_text_to_cmd_buff("[!] expected two arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    yed_set_var(args[0], args[1]);
+
+    yed_append_text_to_cmd_buff("set '");
+    yed_append_text_to_cmd_buff(args[0]);
+    yed_append_text_to_cmd_buff("' to '");
+    yed_append_text_to_cmd_buff(args[1]);
+    yed_append_text_to_cmd_buff("'");
 }
 
 void yed_default_command_get(int n_args, char **args) {
+    char *result;
+
+    if (n_args != 1) {
+        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    result = yed_get_var(args[0]);
+
+    if (result) {
+        yed_append_text_to_cmd_buff("'");
+        yed_append_text_to_cmd_buff(result);
+        yed_append_text_to_cmd_buff("'");
+    } else {
+        yed_append_text_to_cmd_buff("undefined");
+    }
 }
 
 void yed_default_command_unset(int n_args, char **args) {
+    char *result;
+
+    if (n_args != 1) {
+        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    result = yed_get_var(args[0]);
+
+    if (result) {
+        yed_unset_var(args[0]);
+        yed_append_text_to_cmd_buff("unset '");
+        yed_append_text_to_cmd_buff(args[0]);
+        yed_append_text_to_cmd_buff("'");
+    } else {
+        yed_append_text_to_cmd_buff("'");
+        yed_append_text_to_cmd_buff(args[0]);
+        yed_append_text_to_cmd_buff("' was not set");
+    }
 }
 
 void yed_default_command_make_and_reload(int n_args, char **args) {
@@ -1207,8 +1257,10 @@ void yed_default_command_insert(int n_args, char **args) {
     yed_event  event;
     int        key,
                col, idx,
-               i, len;
-    char      *c;
+               i, len,
+               tabw;
+    char      *c,
+              *tabw_str;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -1275,10 +1327,16 @@ void yed_default_command_insert(int n_args, char **args) {
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
     } else {
         if (key == TAB) {
-            for (i = 0; i < 4; i += 1) {
+            tabw_str = yed_get_var("tab-width");
+            if (tabw_str) {
+                sscanf(tabw_str, "%d", &tabw);
+            } else {
+                tabw = 4;
+            }
+            for (i = 0; i < tabw; i += 1) {
                 yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, ' ');
             }
-            yed_move_cursor_within_frame(frame, 4, 0);
+            yed_move_cursor_within_frame(frame, tabw, 0);
         } else {
             yed_insert_into_line(frame->buffer, frame->cursor_line, col, key);
             yed_move_cursor_within_frame(frame, 1, 0);

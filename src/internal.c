@@ -125,14 +125,31 @@ void flush_output_buff(void) {
 
 void yed_service_reload(void) {
     tree_it(yed_command_name_t, yed_command)  cmd_it;
-    char                                     *key;
+    tree_it(yed_var_name_t, yed_var_val_t)    var_it;
+    char                                     *key, *val;
 
-    tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             NULL);
+    tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);
     tree_reset_fns(int,                yed_key_binding_ptr_t, ys->key_seq_map,      NULL);
     tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,       ys->frames,           strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
     tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
+
+    /*
+     * Clear out all of the old vars.
+     */
+    while (tree_len(ys->vars)) {
+        var_it = tree_begin(ys->vars);
+        key = tree_it_key(var_it);
+        val = tree_it_val(var_it);
+        tree_delete(ys->vars, key);
+        free(key);
+        free(val);
+    }
+    /*
+     * Reset the defaults.
+     */
+    yed_set_default_vars();
 
     /*
      * Clear out all of the old commands.
