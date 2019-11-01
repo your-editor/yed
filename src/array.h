@@ -14,6 +14,7 @@ typedef struct {
 
 array_t _array_make(int elem_size);
 array_t _array_make_with_cap(int elem_size, int initial_cap);
+void _array_free(array_t *array);
 void * _array_push(array_t *array, void *elem);
 void * _array_push_n(array_t *array, void *elems, int n);
 void * _array_next_elem(array_t *array);
@@ -71,6 +72,11 @@ void _array_copy(array_t *dst, array_t *src);
     for (it = (array).data + ((starting_idx) * (array).elem_size);               \
          it < (__typeof(it))((array).data + ((array).used * (array).elem_size)); \
          it += 1)
+
+#define array_rtraverse(array, it)                                     \
+    for (it = (array).data + (((array).used - 1) * (array).elem_size); \
+         (array).used && it >= (__typeof(it))((array).data);           \
+         it -= 1)
 
 #define array_data(array) ((array).data)
 

@@ -10,6 +10,7 @@ void syntax_c_find_comment_lines(yed_frame *frame);
 int  syntax_c_line_has_comment_delim(yed_line *line);
 
 static int lines_in_comment[4096];
+static yed_frame *last_frame;
 static int line_has_delim;
 
 int yed_plugin_boot(yed_plugin *self) {
@@ -136,6 +137,10 @@ void syntax_c_highlight(yed_event *event) {
     frame = event->frame;
     line  = yed_buff_get_line(frame->buffer, event->row);
     col   = 1;
+
+    if (frame != last_frame) {
+        syntax_c_find_comment_lines(frame);
+    }
 
     if (lines_in_comment[event->row - frame->buffer_y_offset]) {
         for (k = 0 ; k < array_len(line->chars); k += 1) {
@@ -266,10 +271,10 @@ void syntax_c_highlight(yed_event *event) {
 
         /* NULL */
         if (!match) {
-            if (strncmp(word, "NULL", word_len) == 0) {
+            if (strncmp(word, "NULL", 4) == 0) {
                 match = 1;
 
-                for (i = 0; i < word_len; i += 1) {
+                for (i = 0; i < 4; i += 1) {
                     attr         = array_item(event->line_attrs, old_col + i - 1);
                     attr->flags  = ATTR_RGB;
                     attr->fg     = RGB_32(252, 163, 17);
@@ -417,6 +422,8 @@ void syntax_c_find_comment_lines(yed_frame *frame) {
     yed_line  *line;
     int        row, delim, i, visited, currently_in_comment;
 
+    memset(lines_in_comment, 0, sizeof(lines_in_comment));
+
     row     = frame->buffer_y_offset + 1;
     visited = 0;
 
@@ -478,6 +485,8 @@ void syntax_c_find_comment_lines(yed_frame *frame) {
         visited += 1;
         row     += 1;
     }
+
+    last_frame = frame;
 }
 
 int syntax_c_line_has_comment_delim(yed_line *line) {

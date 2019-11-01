@@ -14,6 +14,7 @@
 #include "plugin.c"
 #include "find.c"
 #include "var.c"
+#include "util.c"
 
 yed_state *ys;
 
@@ -52,6 +53,8 @@ static void * writer(void *arg) {
 }
 
 static void kill_writer(void) {
+    void *junk;
+
     /*
      * Wait for the writer thread to signal that it
      * is finished writing the previous update.
@@ -74,8 +77,7 @@ static void kill_writer(void) {
      * We will wait here until the writer thread has
      * exited.
      */
-    pthread_mutex_lock(&ys->write_mtx);
-    pthread_mutex_unlock(&ys->write_mtx);
+     pthread_join(ys->writer_id, &junk);
 }
 
 static void restart_writer(void) {
@@ -88,18 +90,18 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
+    ys->yed_lib          = yed_lib;
+
     yed_init_vars();
+    yed_init_buffers();
     yed_init_frames();
 
-    ys->yed_lib          = yed_lib;
-    ys->buff_list        = array_make(yed_buffer*);
-    ys->yank_buff        = yed_new_buff();
-    ys->yank_buff.kind   = BUFF_KIND_YANK;
-    ys->yank_buff.flags |= BUFF_RD_ONLY;
 /*     ys->small_message = "* started yed *"; */
 
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
+
+    ys->written_cells = malloc(ys->term_rows * ys->term_cols);
 
     memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
@@ -115,14 +117,20 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_search();
     yed_init_plugins();
 
+    (void)i;
     if (argc > 1) {
-        yed_execute_command("frame-new-file", 1, &argv[1]);
+        YEXE("frame-new");
+        YEXE("buffer", argv[1]);
 
         for (i = 2; i < argc; i += 1) {
-            yed_execute_command("frame-split-new-file", 1, &argv[i]);
+            YEXE("frame-vsplit");
+            YEXE("buffer", argv[i]);
         }
 
-        yed_execute_command("frame", 1, &argv[1]);
+        if (argc > 2) {
+            YEXE("frame-next");
+        }
+
         yed_update_frames();
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {
@@ -215,6 +223,7 @@ int yed_pump(void) {
 
     ys->status = YED_NORMAL;
 
+    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
 
     /*
      * Wait for the writer thread to signal that it

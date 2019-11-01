@@ -103,6 +103,8 @@ int yed_load_plugin(char *plug_name) {
         return YED_PLUG_NO_BOOT;
     }
 
+    plug->unload = NULL;
+
     err = plug->boot(plug);
     if (err) {
         dlclose(plug->handle);
@@ -169,6 +171,10 @@ int yed_unload_plugin(char *plug_name) {
     tree_delete(ys->plugins, old_key);
 
     if (old_plug) {
+        if (old_plug->unload) {
+            old_plug->unload(old_plug);
+        }
+
         yed_plugin_force_lib_unload(old_plug);
         yed_plugin_uninstall_features(old_plug);
 
@@ -201,6 +207,11 @@ int yed_unload_plugin_libs(void) {
     tree_traverse(ys->plugins, it) {
         plug = tree_it_val(it);
 
+        if (plug->unload) {
+            plug->unload(plug);
+            plug->unload = NULL;
+        }
+
         yed_plugin_force_lib_unload(plug);
         yed_plugin_uninstall_features(plug);
     }
@@ -225,7 +236,10 @@ int yed_reload_plugins(void) {
     yed_unload_plugins();
 
     array_traverse(plugs, name_it) {
-        yed_load_plugin(*name_it);
+        it = tree_lookup(ys->plugins, *name_it);
+        if (!tree_it_good(it)) {
+            yed_load_plugin(*name_it);
+        }
         free(*name_it);
     }
 
@@ -253,13 +267,23 @@ void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int takes_ke
     array_push(plug->added_bindings, key);
 }
 
-int yed_plugin_add_key_sequence(yed_plugin *plug, int len, ...) {
+int yed_plugin_vadd_key_sequence(yed_plugin *plug, int len, ...) {
     va_list args;
-    int     r;
+    int     i, keys[MAX_SEQ_LEN];
 
     va_start(args, len);
-    r = yed_vadd_key_sequence(len, args);
+    for (i = 0; i < len; i += 1) {
+        keys[i] = va_arg(args, int);
+    }
     va_end(args);
+
+    return yed_plugin_add_key_sequence(plug, len, keys);
+}
+
+int yed_plugin_add_key_sequence(yed_plugin *plug, int len, int *keys) {
+    int r;
+
+    r = yed_add_key_sequence(len, keys);
 
     if (r != KEY_NULL) {
         array_push(plug->added_key_sequences, r);
@@ -279,4 +303,8 @@ void yed_add_plugin_dir(char *s) {
     s_dup = strdup(s);
 
     array_insert(ys->plugin_dirs, 0, s_dup);
+}
+
+void yed_plugin_set_unload_fn(yed_plugin *plug, yed_plugin_unload_fn_t fn) {
+    plug->unload = fn;
 }

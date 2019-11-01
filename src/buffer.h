@@ -41,23 +41,29 @@ typedef struct {
 #define BUFF_RD_ONLY    (0x2)
 #define BUFF_YANK_LINES (0x4)
 
-typedef struct {
+typedef struct yed_buffer_t {
     int             kind;
     int             flags;
     yed_file       *file;
-    const char     *path;
+    char           *name;
+    char           *path;
     bucket_array_t  lines;
     int             has_selection;
     yed_range       selection;
 } yed_buffer;
+
+void yed_init_buffers(void);
 
 void yed_set_attr(yed_attrs attr);
 int  yed_attrs_eq(yed_attrs attr1, yed_attrs attr2);
 
 yed_line yed_new_line(void);
 yed_line yed_new_line_with_cap(int len);
+void yed_free_line(yed_line *line);
 
 yed_buffer yed_new_buff(void);
+yed_buffer *yed_create_buffer(char *name);
+void yed_free_buffer(yed_buffer *buffer);
 void yed_append_to_line(yed_line *line, char c);
 void yed_append_to_buff(yed_buffer *buff, char c);
 
@@ -72,7 +78,7 @@ void yed_buff_delete_line(yed_buffer *buff, int row);
 void yed_insert_into_line(yed_buffer *buff, int row, int col, char c);
 void yed_delete_from_line(yed_buffer *buff, int row, int col);
 
-void yed_fill_buff_from_file(yed_buffer *buff, const char *path);
+int yed_fill_buff_from_file(yed_buffer *buff, const char *path);
 void yed_write_buff_to_file(yed_buffer *buff, const char *path);
 
 int yed_is_in_range(yed_range *range, int row, int col);

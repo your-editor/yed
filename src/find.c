@@ -37,7 +37,7 @@ void yed_search_line_handler(yed_event *event) {
     data_len   = array_len(line->chars);
     search_len = strlen(ys->current_search);
 
-    if (!data_len)    { return; }
+    if (!data_len || !search_len)    { return; }
 
     line_data     = line_data_start = array_data(line->chars);
     line_data_end = line_data + data_len;
@@ -49,13 +49,15 @@ void yed_search_line_handler(yed_event *event) {
                 for (i = 0; i < search_len; i += 1) {
                     attr         = array_item(event->line_attrs, (line_data - line_data_start) + i);
                     attr->flags  = ATTR_RGB;
+                    attr->flags |= ATTR_BOLD;
                     attr->bg     = RGB_32(255, 150, 0);
                     attr->fg     = RGB_32(0, 0, 255);
                 }
             } else {
                 for (i = 0; i < search_len; i += 1) {
-                    attr         = array_item(event->line_attrs, (line_data - line_data_start) + i);
+                    attr          = array_item(event->line_attrs, (line_data - line_data_start) + i);
                     attr->flags  = ATTR_RGB;
+                    attr->flags |= ATTR_BOLD;
                     attr->bg     = RGB_32(255, 255, 0);
                     attr->fg     = RGB_32(0, 0, 255);
                 }
@@ -84,6 +86,8 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
 
     buff       = frame->buffer;
     search_len = strlen(ys->current_search);
+
+    if (!search_len)    { return 0; }
 
     r = row;
     bucket_array_traverse_from(buff->lines, line, row - 1) {
@@ -162,9 +166,11 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
     buff       = frame->buffer;
     search_len = strlen(ys->current_search);
 
+    if (!search_len)    { return 0; }
+
     for (r = row; r > 0; r -= 1) {
         line = yed_buff_get_line(buff, r);
-        
+
         data_len = array_len(line->chars);
 
         if (!data_len) {
@@ -189,7 +195,7 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
 
     for (r = bucket_array_len(buff->lines); r > row; r -= 1) {
         line = yed_buff_get_line(buff, r);
-        
+
         data_len = array_len(line->chars);
 
         if (!data_len) {

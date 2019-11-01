@@ -4,7 +4,7 @@ CFG_RELEASE=-O3
 CFG=$(CFG_DEBUG)
 # CFG=$(CFG_RELEASE)
 
-all: autotrim indent_c syntax_c vimish init
+all: make_check autotrim indent_c syntax_c vimish init
 
 init:
 	$(CC) init.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o init.so -L.. -lyed -I../src
@@ -20,6 +20,9 @@ indent_c:
 
 autotrim:
 	$(CC) autotrim.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o autotrim.so -L.. -lyed -I../src
+
+make_check:
+	$(CC) make_check.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o make_check.so -L.. -lyed -I../src
 
 clean:
 	rm -rf *.so *.so.dSYM

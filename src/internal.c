@@ -64,15 +64,6 @@ char * pretty_bytes(uint64_t n_bytes) {
 }
 
 
-
-void yed_add_new_buff(void) {
-    yed_buffer *new_buff;
-
-    new_buff  = malloc(sizeof(*new_buff));
-    *new_buff = yed_new_buff();
-    array_push(ys->buff_list, new_buff);
-}
-
 void yed_init_output_stream(void) {
     ys->output_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
     ys->writer_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
@@ -129,8 +120,8 @@ void yed_service_reload(void) {
     char                                     *key, *val;
 
     tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);
+    tree_reset_fns(yed_buffer_name_t,  yed_buffer_ptr_t,      ys->buffers,          strcmp);
     tree_reset_fns(int,                yed_key_binding_ptr_t, ys->key_seq_map,      NULL);
-    tree_reset_fns(yed_frame_id_t,     yed_frame_ptr_t,       ys->frames,           strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
     tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
@@ -171,6 +162,7 @@ void yed_service_reload(void) {
     ys->small_message = "* reload serviced *";
 
     ys->redraw = 1;
+    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
     yed_update_frames();
 
     if (ys->interactive_command) {

@@ -14,6 +14,7 @@ typedef enum {
     EVENT_BUFFER_PRE_MOD,
     EVENT_BUFFER_POST_MOD,
     EVENT_BUFFER_PRE_WRITE,
+    EVENT_FRAME_ACTIVATED,
 
     N_EVENTS,
 } yed_event_kind_t;

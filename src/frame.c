@@ -1,62 +1,61 @@
 #include "internal.h"
 
 void yed_init_frames(void) {
-    ys->frames       = tree_make_c(yed_frame_id_t, yed_frame_ptr_t, strcmp);
+    ys->frames       = array_make(yed_frame*);
     ys->active_frame = NULL;
 }
 
-yed_frame * yed_add_new_frame(yed_frame_id_t id, int top, int left, int height, int width) {
+yed_frame * yed_add_new_frame(float top_f, float left_f, float height_f, float width_f) {
     yed_frame *frame;
 
-    frame = yed_new_frame(id, top, left, height, width);
+    frame = yed_new_frame(top_f, left_f, height_f, width_f);
 
-    tree_insert(ys->frames, frame->id, frame);
+    array_push(ys->frames, frame);
 
     return frame;
 }
 
-yed_frame * yed_get_frame(yed_frame_id_t id) {
-    tree_it(yed_frame_id_t, yed_frame_ptr_t) it;
-
-    it = tree_lookup(ys->frames, id);
-
-    if (tree_it_good(it)) {
-        return tree_it_val(it);
-    }
-
-    return NULL;
-}
-
-yed_frame * yed_get_or_add_frame(yed_frame_id_t id) {
+yed_frame * yed_add_new_frame_full(void) {
     yed_frame *frame;
 
-    frame = yed_get_frame(id);
+    frame = yed_new_frame(0.0, 0.0, 1.0, 1.0);
 
-    if (!frame) {
-        frame = yed_add_new_frame(id, 1, 1, ys->term_rows - 1, ys->term_cols);
-    }
+    array_push(ys->frames, frame);
 
     return frame;
 }
 
-yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int height, int width) {
+static void frame_get_rect(yed_frame *frame, int *top, int *left, int *height, int *width) {
+    *top    = 1 + (int)(frame->top_f * (ys->term_rows));
+    *left   = 1 + (int)(frame->left_f * ys->term_cols);
+    *height = (int)(frame->height_f * (ys->term_rows - 1)); /* -1 for command/status line */
+    *width  = (int)(frame->width_f * ys->term_cols);
+}
+
+#define FRAME_RESET_RECT(f) frame_get_rect((f), &(f)->top, &(f)->left, &(f)->height, &(f)->width)
+
+yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
     yed_frame *frame;
 
     frame = malloc(sizeof(*frame));
 
-    frame->id              = strdup(id);
+    frame->v_link          = NULL;
+    frame->h_link          = NULL;
     frame->buffer          = NULL;
-    frame->top             = top;
-    frame->left            = left;
-    frame->height          = height;
-    frame->width           = width;
+    frame->top_f           = top_f;
+    frame->left_f          = left_f;
+    frame->height_f        = height_f;
+    frame->width_f         = width_f;
+
+    FRAME_RESET_RECT(frame);
+
     frame->cursor_line     = 1;
     frame->dirty_line      = frame->cursor_line;
     frame->cursor_col      = 1;
     frame->buffer_y_offset = 0;
     frame->buffer_x_offset = 0;
-    frame->cur_x           = left;
-    frame->cur_y           = top;
+    frame->cur_x           = frame->left;
+    frame->cur_y           = frame->top;
     frame->desired_x       = 1;
     frame->dirty           = 1;
     frame->scroll_off      = 5;
@@ -65,48 +64,235 @@ yed_frame * yed_new_frame(yed_frame_id_t id, int top, int left, int height, int 
     return frame;
 }
 
-void yed_activate_frame(yed_frame *frame) {
-    if (ys->active_frame && ys->active_frame != frame) {
-        ys->active_frame->dirty      = 1;
-        ys->active_frame->dirty_line = 0;
+void yed_delete_frame(yed_frame *frame) {
+    int        i, save_cursor_row, save_cursor_col;
+    yed_frame *new_active_frame, **frame_it;
+
+    if (frame == ys->prev_active_frame) {
+        ys->prev_active_frame = NULL;
     }
 
-    ys->active_frame             = frame;
+    new_active_frame = NULL;
+
+    if (frame->v_link) {
+        if (frame->v_link->left > frame->left) {
+            frame->v_link->left_f = frame->left_f;
+        }
+        frame->v_link->width_f += frame->width_f;
+        LIMIT(frame->v_link->width_f, 0.1, 1.0);
+        frame->v_link->v_link = NULL;
+        FRAME_RESET_RECT(frame->v_link);
+        yed_frame_hard_reset_cursor_x(frame->v_link);
+        new_active_frame = frame->v_link;
+    } else if (frame->h_link) {
+        save_cursor_row = frame->h_link->cursor_line;
+        save_cursor_col = frame->h_link->cursor_col;
+        if (frame->h_link->top > frame->top) {
+            frame->h_link->top_f = frame->top_f;
+        }
+        frame->h_link->height_f += frame->height_f;
+        LIMIT(frame->h_link->height_f, 0.1, 1.0);
+        frame->h_link->height += frame->height;
+        frame->h_link->h_link = NULL;
+        FRAME_RESET_RECT(frame->h_link);
+        yed_set_cursor_far_within_frame(frame->h_link, save_cursor_col, save_cursor_row);
+        new_active_frame = frame->h_link;
+    }
+
+    i = 0;
+    array_traverse(ys->frames, frame_it) {
+        if ((*frame_it) == frame) {
+            break;
+        }
+        i += 1;
+    }
+
+    if (i < array_len(ys->frames)) {
+        array_delete(ys->frames, i);
+    }
+
+    if (!new_active_frame) {
+        new_active_frame = ys->prev_active_frame;
+    }
+
+    if (!new_active_frame) {
+        if (array_len(ys->frames)) {
+            if (i < array_len(ys->frames)) {
+                new_active_frame = *(yed_frame**)array_item(ys->frames, i);
+            } else {
+                new_active_frame = *(yed_frame**)array_item(ys->frames, 0);
+            }
+        }
+    }
+
+    if (ys->active_frame == frame) {
+        ys->active_frame = NULL;
+        yed_activate_frame(new_active_frame);
+    }
+
+    array_free(frame->line_attrs);
+
+    free(frame);
+}
+
+yed_frame * yed_vsplit_frame(yed_frame *frame) {
+    yed_frame *new_frame;
+    int        orig_width, save_cursor_row, save_cursor_col, new_left_i, new_width_i;
+    float      new_left_f, new_width_f;
+
+    save_cursor_row = frame->cursor_line;
+    save_cursor_col = frame->cursor_col;
+
+    yed_set_cursor_far_within_frame(frame, 1, save_cursor_row);
+
+    orig_width = frame->width;
+
+    frame->width_f /= 2.0;
+    FRAME_RESET_RECT(frame);
+
+    new_left_i  = frame->left + frame->width - 1;
+    new_width_i = orig_width - frame->width;
+
+    new_left_f   = (float)new_left_i    / (float)(ys->term_cols);
+    new_width_f  = (float)new_width_i / (float)(ys->term_cols - 1);
+
+    new_frame = yed_add_new_frame(frame->top_f,
+                                  new_left_f,
+                                  frame->height_f,
+                                  new_width_f);
+
+    frame->v_link     = new_frame;
+    new_frame->v_link = frame;
+
+    yed_set_cursor_far_within_frame(frame, save_cursor_col, save_cursor_row);
+
+    return new_frame;
+}
+
+yed_frame * yed_hsplit_frame(yed_frame *frame) {
+    yed_frame *new_frame;
+    int        orig_height, save_cursor_row, save_cursor_col, new_top_i, new_height_i;
+    float      new_top_f, new_height_f;
+
+    save_cursor_row = frame->cursor_line;
+    save_cursor_col = frame->cursor_col;
+
+    yed_set_cursor_far_within_frame(frame, 1, 1);
+
+    orig_height  = frame->height;
+
+    frame->height_f /= 2.0;
+    FRAME_RESET_RECT(frame);
+
+    new_top_i    = frame->top + frame->height - 1;
+    new_height_i = orig_height - frame->height;
+
+    new_top_f     = (float)new_top_i    / (float)(ys->term_rows);
+    new_height_f  = (float)new_height_i / (float)(ys->term_rows - 1);
+
+    new_frame = yed_add_new_frame(new_top_f,
+                                  frame->left_f,
+                                  new_height_f,
+                                  frame->width_f);
+
+    frame->h_link     = new_frame;
+    new_frame->h_link = frame;
+
+    yed_set_cursor_far_within_frame(frame, save_cursor_col, save_cursor_row);
+
+    return new_frame;
+}
+
+void yed_activate_frame(yed_frame *frame) {
+    yed_event event;
+
+    event.kind  = EVENT_FRAME_ACTIVATED;
+    event.frame = frame;
+
+    if (ys->active_frame && ys->active_frame != frame) {
+        ys->prev_active_frame = ys->active_frame;
+        ys->active_frame->dirty = 1;
+    }
+
+    ys->active_frame = frame;
 
     /*
      * Correct the cursor if the buffer has changed
      * while this frame was inactive.
      */
-    if (frame->buffer->kind == BUFF_KIND_YANK) {
+    if (frame->buffer && frame->buffer->kind == BUFF_KIND_YANK) {
         yed_set_cursor_far_within_frame(frame, 1, 1);
     }
     yed_frame_reset_cursor(frame);
     ys->active_frame->dirty      = 1;
-    ys->active_frame->dirty_line = ys->active_frame->cursor_line;
+    ys->redraw = 1;
+
+    yed_trigger_event(&event);
+}
+
+static char *frame_cell(yed_frame *frame, int y_off, int x_off) {
+    return ys->written_cells + ((frame->top + y_off - 1) * ys->term_cols)
+                             + frame->left + x_off - 1;
 }
 
 void yed_clear_frame(yed_frame *frame) {
-    int r, c;
-    int x, y;
+    int i, n, x, y, run_len, run_start_n;
+    yed_attrs base_attr;
+    char *cell;
 
     x = ys->cur_x;
     y = ys->cur_y;
 
-    for (r = 0; r < frame->height; r += 1) {
-        yed_set_cursor(frame->left, frame->top + r);
+    memset(&base_attr, 0, sizeof(base_attr));
 
-        for (c = 0; c < frame->width; c += 1) {
-            append_n_to_output_buff(" ", 1);
+#ifdef C_LIGHT
+        base_attr.flags = ATTR_RGB;
+        base_attr.bg    = RGB_32(246, 241, 209);
+        base_attr.fg    = RGB_32(11, 32, 39);
+#else
+        base_attr.flags = ATTR_RGB;
+        base_attr.fg    = RGB_32(246, 241, 209);
+
+        if (frame == ys->active_frame) {
+            base_attr.bg = RGB_32(10, 20, 30);
         }
+#endif
+
+    yed_set_cursor(frame->left, frame->top);
+    yed_set_attr(base_attr);
+
+    for (i = 0; i < frame->height; i += 1) {
+        yed_set_cursor(frame->left, frame->top + i);
+
+        run_len     = 0;
+        run_start_n = 0;
+        for (n = 0; n < frame->width; n += 1) {
+            cell = frame_cell(frame, i, n);
+
+            if (*cell) {
+                yed_set_cursor(frame->left + run_start_n, frame->top + i);
+                append_n_to_output_buff(ys->_4096_spaces, run_len);
+                run_len     = -1;
+                run_start_n = n + 1;
+            }
+
+            run_len += 1;
+        }
+
+        yed_set_cursor(frame->left + run_start_n, frame->top + i);
+        append_n_to_output_buff(ys->_4096_spaces, run_len);
     }
+
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
 
     yed_set_cursor(x, y);
 }
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    int  n, col, n_col, starting_idx, run_len, is_left;
+    int  n, col, n_col, starting_idx, run_len, run_start_n;
     yed_attrs cur_attr, base_attr, tmp_attr, *attr_it;
-    char *c, *run_start;
+    char *c, *run_start, *cell;
     yed_event event;
 
     memset(&base_attr, 0, sizeof(base_attr));
@@ -135,6 +321,10 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 #else
         base_attr.flags = ATTR_RGB;
         base_attr.fg    = RGB_32(246, 241, 209);
+
+        if (frame == ys->active_frame) {
+            base_attr.bg = RGB_32(10, 20, 30);
+        }
 #endif
     }
 
@@ -176,32 +366,30 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         starting_idx = yed_line_col_to_idx(line, x_offset + 1);
     }
 
-    is_left = (frame->left == 1);
-    if (is_left) {
-        /* Clear the line. */
-        yed_set_cursor(frame->left + frame->width - 1, frame->top + y_offset);
-        yed_set_attr(base_attr);
-        append_n_to_output_buff("\e[1K", 4);
-        yed_set_attr(cur_attr);
-    }
-
     yed_set_cursor(frame->left, frame->top + y_offset);
 
     col = starting_idx + 1;
 
-    run_start = array_data(line->chars) + starting_idx;
-    run_len   = 0;
+    run_start   = array_data(line->chars) + starting_idx;
+    run_len     = 0;
+    run_start_n = n;
+
     array_traverse_from(line->chars, c, starting_idx) {
         if (n == n_col)    { break; }
 
+        cell     = frame_cell(frame, y_offset, n);
         tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, col - 1);
 
-        if (*c == '\t') {
-            append_n_to_output_buff(run_start, run_len);
+        if (*cell) {
+            /*
+             * If this cell is already written, it will break our run.
+             * So we output the run and start a new one.
+             * We must make sure that we don't put this character into
+             * the next run because it shouldn't be written at all.
+             */
 
-            run_start = c;
-            run_len   = 0;
-        } else if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
+
             if (run_len && *run_start == '\t') {
                 append_to_output_buff("»");
                 append_n_to_output_buff(run_start + 1, run_len - 1);
@@ -209,9 +397,42 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
                 append_n_to_output_buff(run_start, run_len);
             }
 
-            run_start = c;
-            run_len   = 0;
+            run_start   = c;
+            run_len     = -1;
+            run_start_n = n + 1;
+        } else if (*c == '\t') {
+            /*
+             * A TAB character will end our current run and be placed as
+             * the first character of the next run.
+             */
 
+            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
+            append_n_to_output_buff(run_start, run_len);
+
+            run_start   = c;
+            run_len     = 0;
+            run_start_n = n;
+        } else if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+            /*
+             * If the attributes change, our run will be broken.
+             */
+
+            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
+
+            if (run_len && *run_start == '\t') {
+                append_to_output_buff("»");
+                append_n_to_output_buff(run_start + 1, run_len - 1);
+            } else {
+                append_n_to_output_buff(run_start, run_len);
+            }
+
+            run_start   = c;
+            run_len     = 0;
+            run_start_n = n;
+
+            /*
+             * Set the new attributes for the next run.
+             */
             yed_set_attr(tmp_attr);
             cur_attr = tmp_attr;
         }
@@ -221,27 +442,46 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         col     += 1;
     }
 
+    /*
+     * At end. Dump the run.
+     */
+    yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
     if (run_len && *run_start == '\t') {
         append_to_output_buff("»");
         append_n_to_output_buff(run_start + 1, run_len - 1);
     } else {
         append_n_to_output_buff(run_start, run_len);
     }
-    
+
+    yed_set_cursor(frame->left + n, frame->top + y_offset);
     yed_set_attr(base_attr);
 
-    if (!is_left) {
-        append_n_to_output_buff(ys->_4096_spaces, frame->width - n);
+    run_len     = 0;
+    run_start_n = n;
+    for (; n < frame->width; n += 1) {
+        cell = frame_cell(frame, y_offset, n);
+
+        if (*cell) {
+            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
+            append_n_to_output_buff(ys->_4096_spaces, run_len);
+            run_len     = -1;
+            run_start_n = n + 1;
+        }
+
+        run_len += 1;
     }
+
+    yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
+    append_n_to_output_buff(ys->_4096_spaces, run_len);
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
-
 }
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
-    int i, n;
+    int i, n, run_len, run_start_n;
     yed_attrs base_attr;
+    char *cell;
 
     memset(&base_attr, 0, sizeof(base_attr));
 
@@ -252,20 +492,48 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
 #else
         base_attr.flags = ATTR_RGB;
         base_attr.fg    = RGB_32(246, 241, 209);
+
+        if (frame == ys->active_frame) {
+            base_attr.bg = RGB_32(10, 20, 30);
+        }
 #endif
 
+     yed_set_cursor(frame->left, frame->top + y_offset);
     yed_set_attr(base_attr);
 
     for (i = 0; i < frame->height - y_offset; i += 1) {
-        yed_set_cursor(frame->left, frame->top + y_offset + i);
-        append_n_to_output_buff("~", 1);
-        for (n = 0; n < frame->width - 1; n += 1) {
-            append_n_to_output_buff(" ", 1);
+        cell = frame_cell(frame, y_offset + i, 0);
+
+        if (*cell) {
+            yed_set_cursor(frame->left + 1, frame->top + y_offset + i);
+        } else {
+            yed_set_cursor(frame->left, frame->top + y_offset + i);
+            append_n_to_output_buff("~", 1);
         }
+
+        yed_set_cursor(frame->left, frame->top + i);
+
+        run_len     = 0;
+        run_start_n = 1;
+        for (n = 1; n < frame->width; n += 1) {
+            cell = frame_cell(frame, y_offset + i, n);
+
+            if (*cell) {
+                yed_set_cursor(frame->left + run_start_n, frame->top + y_offset + i);
+                append_n_to_output_buff(ys->_4096_spaces, run_len);
+                run_len     = -1;
+                run_start_n = n + 1;
+            }
+
+            run_len += 1;
+        }
+
+        yed_set_cursor(frame->left + run_start_n, frame->top + y_offset + i);
+        append_n_to_output_buff(ys->_4096_spaces, run_len);
     }
+
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
-
 }
 
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset) {
@@ -288,9 +556,11 @@ void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x
     yed_frame_draw_fill(frame, lines_drawn);
 }
 
-void yed_frame_set_pos(yed_frame *frame, int top, int left) {
-    frame->top  = top;
-    frame->left = left;
+void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
+    frame->top_f  = top_f;
+    frame->left_f = left_f;
+
+    FRAME_RESET_RECT(frame);
 }
 
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
@@ -299,7 +569,9 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
 }
 
 void yed_frame_update(yed_frame *frame) {
-    yed_event update_event, buff_draw_event;
+    int        i;
+    char      *cell_row;
+    yed_event  update_event, buff_draw_event;
 
     update_event.kind     = EVENT_FRAME_PRE_UPDATE;
     update_event.frame    = frame;
@@ -315,16 +587,22 @@ void yed_frame_update(yed_frame *frame) {
 
             yed_frame_draw_buff(frame, frame->buffer, frame->buffer_y_offset, frame->buffer_x_offset);
         } else {
-            if (frame->dirty_line != frame->cursor_line) {
-                yed_frame_update_dirty_line(frame);
+            yed_frame_update_dirty_line(frame);
+            if (frame == ys->active_frame
+            &&  frame->cursor_line != frame->dirty_line) {
+                yed_frame_update_cursor_line(frame);
             }
-            yed_frame_update_cursor_line(frame);
         }
     } else {
         if (frame->dirty || ys->redraw) {
             yed_trigger_event(&buff_draw_event);
             yed_clear_frame(frame);
         }
+    }
+
+    for (i = 0; i < frame->height; i += 1) {
+        cell_row = frame_cell(frame, i, 0);
+        memset(cell_row, 1, frame->width);
     }
 
     frame->dirty = frame->dirty_line = 0;
@@ -405,8 +683,8 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
 
     LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
 
-    f->desired_x  = f->cur_x;
     f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
+    f->desired_x  = f->cursor_col;
 }
 
 void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
@@ -422,7 +700,7 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
     int       i,
               dir,
               line_width,
-              update_desired_x,
+              potential_new_x,
               buff_n_lines,
               buff_big_enough_to_scroll,
               save_cursor_line;
@@ -449,18 +727,19 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
         /*
          * Update x values tied y.
          */
-        update_desired_x = 0;
+        potential_new_x  = f->desired_x;
 
-        if (line_width < f->buffer_x_offset) {
-            f->buffer_x_offset = 0;
+        if (f->desired_x > line_width) {
+            potential_new_x = line_width + 1;
+        }
+
+        if (potential_new_x <= f->buffer_x_offset) {
+            f->buffer_x_offset = MAX(0, potential_new_x - f->width);
+            f->desired_x       = potential_new_x;
             f->dirty           = 1;
-            update_desired_x   = 1;
         }
-        f->cur_x = MIN(f->desired_x, f->left + line_width - f->buffer_x_offset);
 
-        if (update_desired_x) {
-            f->desired_x = f->cur_x;
-        }
+        f->cur_x = MIN(f->desired_x - 1, line_width) + f->left - f->buffer_x_offset;
 
         f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
     }
@@ -493,14 +772,15 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
 
             frame->buffer_x_offset = 0;
             frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
-            frame->cur_x           = frame->desired_x       = frame->left;
+            frame->desired_x       = 1;
+            frame->cur_x           = frame->left;
             frame->cur_y           = frame->top + frame->scroll_off;
             LIMIT(frame->cur_y,
                     frame->top,
                     MIN(frame->top + frame->height - 1,
                         frame->top + buff_n_lines - frame->buffer_y_offset - 1));
             frame->cursor_col      = 1;
-            frame->cursor_line     = frame->buffer_y_offset + frame->cur_y;
+            frame->cursor_line     = frame->buffer_y_offset + (frame->cur_y - frame->top + 1);
         }
 
         yed_set_cursor_within_frame(frame, dst_x, dst_y);
@@ -510,7 +790,36 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
 }
 
 void yed_frame_reset_cursor(yed_frame *frame) {
-    yed_set_cursor_far_within_frame(frame, frame->cursor_col, frame->cursor_line);
+    if (frame->cur_y < frame->top
+    ||  frame->cur_y >= frame->top + frame->height
+    ||  frame->cur_x < frame->left
+    ||  frame->cur_x >= frame->left + frame->width) {
+
+        frame->cur_y = frame->top;
+        frame->cur_x = frame->left;
+    }
+
+    if (frame->buffer) {
+        yed_set_cursor_far_within_frame(frame, frame->cursor_col, frame->cursor_line);
+    } else {
+        frame->cur_y = frame->top;
+        frame->cur_x = frame->left;
+    }
+}
+
+void yed_frame_hard_reset_cursor_x(yed_frame *frame) {
+    int dst_x;
+
+    if (frame->buffer) {
+        dst_x = frame->cursor_col;
+        frame->buffer_x_offset = 0;
+        frame->cur_x = frame->left;
+        frame->cursor_col = 1;
+        yed_set_cursor_within_frame(frame, dst_x, frame->cursor_line);
+    } else {
+        frame->cur_y = frame->top;
+        frame->cur_x = frame->left;
+    }
 }
 
 void yed_move_cursor_within_active_frame(int col, int row) {
@@ -520,19 +829,20 @@ void yed_move_cursor_within_active_frame(int col, int row) {
 }
 
 void yed_update_frames(void) {
-    yed_frame                                *frame;
-    tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
-
-    tree_traverse(ys->frames, it) {
-        frame = tree_it_val(it);
-        if (frame == ys->active_frame) {
-            continue;
-        }
-        yed_frame_update(frame);
-    }
+    yed_frame **frame;
 
     if (ys->active_frame) {
         yed_frame_update(ys->active_frame);
+    }
+
+    array_rtraverse(ys->frames, frame) {
+        if (*frame == ys->active_frame) {
+            continue;
+        }
+        yed_frame_update(*frame);
+    }
+
+    if (ys->active_frame) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
 }
@@ -599,26 +909,34 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
     }
 }
 
-void yed_mark_dirty_frames(yed_buffer *dirty_buff) {
-    tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
-    yed_frame                                *frame;
+void yed_frames_remove_buffer(yed_buffer *buff) {
+    yed_frame **frame;
 
-    tree_traverse(ys->frames, it) {
-        frame = tree_it_val(it);
-        if (frame->buffer == dirty_buff) {
-            frame->dirty = 1;
+    array_traverse(ys->frames, frame) {
+        if ((*frame)->buffer == buff) {
+            yed_set_cursor_far_within_frame((*frame), 1, 1);
+            (*frame)->buffer = NULL;
+            (*frame)->dirty  = 1;
+        }
+    }
+}
+
+void yed_mark_dirty_frames(yed_buffer *dirty_buff) {
+    yed_frame **frame;
+
+    array_traverse(ys->frames, frame) {
+        if ((*frame)->buffer == dirty_buff) {
+            (*frame)->dirty = 1;
         }
     }
 }
 
 void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
-    tree_it(yed_frame_id_t, yed_frame_ptr_t)  it;
-    yed_frame                                *frame;
+    yed_frame **frame;
 
-    tree_traverse(ys->frames, it) {
-        frame = tree_it_val(it);
-        if (frame->buffer == buff) {
-            frame->dirty_line = dirty_row;
+    array_traverse(ys->frames, frame) {
+        if ((*frame)->buffer == buff) {
+            (*frame)->dirty_line = dirty_row;
         }
     }
 }

@@ -1,5 +1,17 @@
 #include "internal.h"
 
+void yed_init_buffers(void) {
+    yed_buffer *yank_buff;
+
+    ys->buffers = tree_make_c(yed_buffer_name_t, yed_buffer_ptr_t, strcmp);
+
+    yank_buff         = yed_create_buffer("*yank");
+    yank_buff->kind   = BUFF_KIND_YANK;
+    yank_buff->flags |= BUFF_RD_ONLY;
+
+    ys->yank_buff = yank_buff;
+}
+
 void yed_set_attr(yed_attrs attr) {
 
 #define BUFFCATN(buff_p, str, n) \
@@ -165,6 +177,49 @@ yed_buffer yed_new_buff(void) {
     return buff;
 }
 
+yed_buffer *yed_create_buffer(char *name) {
+    yed_buffer                                   *buff;
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+
+    it = tree_lookup(ys->buffers, name);
+
+    if (tree_it_good(it)) {
+        return NULL;
+    }
+
+    buff = malloc(sizeof(*buff));
+
+    *buff = yed_new_buff();
+    buff->name = strdup(name);
+
+    tree_insert(ys->buffers, strdup(name), buff);
+
+    return buff;
+}
+
+void yed_free_buffer(yed_buffer *buffer) {
+    yed_line *line;
+
+    yed_frames_remove_buffer(buffer);
+
+    if (buffer->name) {
+        tree_delete(ys->buffers, buffer->name);
+        free(buffer->name);
+    }
+
+    if (buffer->path) {
+        free(buffer->path);
+    }
+
+    bucket_array_traverse(buffer->lines, line) {
+        yed_free_line(line);
+    }
+
+    bucket_array_free(buffer->lines);
+
+    free(buffer);
+}
+
 void yed_append_to_line(yed_line *line, char c) {
     yed_line_append_char(line, c);
 }
@@ -309,7 +364,7 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
 }
 
 
-void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
+int yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     FILE        *f;
     int          fd, i, j, line_len, file_size, did_map, *idx_it;
     struct stat  fs;
@@ -320,7 +375,7 @@ void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
 
     f = fopen(path, "r");
     if (!f) {
-        ERR("unable to open file");
+        return 0;
     }
 
     fd = fileno(f);
@@ -427,6 +482,8 @@ void yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     fclose(f);
 
     yed_mark_dirty_frames(buff);
+
+    return 1;
 }
 
 void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
@@ -454,6 +511,8 @@ void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
         fwrite(line->chars.data, 1, array_len(line->chars), f);
         fprintf(f, "\n");
     }
+
+    buff->kind = BUFF_KIND_FILE;
 
     fclose(f);
 }

@@ -54,12 +54,15 @@ DEF_DEFAULT_COMMAND(cursor_next_paragraph);
 DEF_DEFAULT_COMMAND(cursor_buffer_begin);
 DEF_DEFAULT_COMMAND(cursor_buffer_end);
 DEF_DEFAULT_COMMAND(cursor_line);
-DEF_DEFAULT_COMMAND(buffer_new);
-DEF_DEFAULT_COMMAND(frame);
-DEF_DEFAULT_COMMAND(frames_list);
-DEF_DEFAULT_COMMAND(frame_set_buffer);
-DEF_DEFAULT_COMMAND(frame_new_file);
-DEF_DEFAULT_COMMAND(frame_split_new_file);
+DEF_DEFAULT_COMMAND(word_under_cursor);
+DEF_DEFAULT_COMMAND(buffer);
+DEF_DEFAULT_COMMAND(buffer_delete);
+DEF_DEFAULT_COMMAND(buffer_next);
+DEF_DEFAULT_COMMAND(buffer_name);
+DEF_DEFAULT_COMMAND(frame_new);
+DEF_DEFAULT_COMMAND(frame_delete);
+DEF_DEFAULT_COMMAND(frame_vsplit);
+DEF_DEFAULT_COMMAND(frame_hsplit);
 DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(delete_back);
@@ -78,5 +81,6 @@ DEF_DEFAULT_COMMAND(paste_yank_buffer);
 DEF_DEFAULT_COMMAND(find_in_buffer);
 DEF_DEFAULT_COMMAND(find_next_in_buffer);
 DEF_DEFAULT_COMMAND(find_prev_in_buffer);
+DEF_DEFAULT_COMMAND(man);
 
 #endif

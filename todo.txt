@@ -1,12 +1,11 @@
-* how to handle overlapping frames?
 * undo/redo
 * stylizing
     * ui colors
 * resizing
 * line numbers
 * things from vimrc
+    * status bar
     * remember last place in file
-    * make-check that works only in vimish normal mode
     * commenting stuff out
     * aligment
     * completion

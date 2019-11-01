@@ -47,8 +47,6 @@ int esc_sequence(char *seq) {
     return 0;
 }
 
-static int _yed_get_key_sequence(int len, int *keys);
-
 int yed_read_key_sequences(char first, int *input) {
     int  seq_key,
          len,
@@ -61,42 +59,47 @@ int yed_read_key_sequences(char first, int *input) {
     c   = first;
     len = 0;
 
-    do {
-        /* We have consumed a keystroke. */
-        input[len]    = c;
-        len          += 1;
+    if (ys->interactive_command) {
+        input[len] = c;
+        len        = 1;
+    } else {
+        do {
+            /* We have consumed a keystroke. */
+            input[len]    = c;
+            len          += 1;
 
-        keep_reading  = 0;
+            keep_reading  = 0;
 
-        /*
-         * Should we consume another? See if there's
-         * a key sequence defined that matches the keys
-         * we have so far.
-         */
-        array_traverse(ys->key_sequences, seq_it) {
-            /* Only if there's more in the sequence to read.. */
-            if (seq_it->len > len) {
-                found_a_partial_match = 1;
-                for (i = 0; i < len; i += 1) {
-                    if (seq_it->keys[i] != input[i]) {
-                        found_a_partial_match = 0;
+            /*
+             * Should we consume another? See if there's
+             * a key sequence defined that matches the keys
+             * we have so far.
+             */
+            array_traverse(ys->key_sequences, seq_it) {
+                /* Only if there's more in the sequence to read.. */
+                if (seq_it->len > len) {
+                    found_a_partial_match = 1;
+                    for (i = 0; i < len; i += 1) {
+                        if (seq_it->keys[i] != input[i]) {
+                            found_a_partial_match = 0;
+                            break;
+                        }
+                    }
+
+                    if (found_a_partial_match) {
+                        keep_reading = 1;
                         break;
                     }
                 }
-
-                if (found_a_partial_match) {
-                    keep_reading = 1;
-                    break;
-                }
             }
+        } while (keep_reading && read(0, &c, 1) && len < MAX_SEQ_LEN);
+
+        seq_key = yed_get_key_sequence(len, input);
+
+        if (seq_key != KEY_NULL) {
+            input[0] = seq_key;
+            return 1;
         }
-    } while (keep_reading && read(0, &c, 1) && len < MAX_SEQ_LEN);
-
-    seq_key = _yed_get_key_sequence(len, input);
-
-    if (seq_key != KEY_NULL) {
-        input[0] = seq_key;
-        return 1;
     }
 
     return len;
@@ -144,19 +147,19 @@ void yed_take_key(int key) {
 }
 
 static yed_key_binding default_key_bindings[] = {
-    { CTRL_F,      "command-prompt",    0 },
-    { ARROW_UP,    "cursor-up",         0 },
-    { ARROW_DOWN,  "cursor-down",       0 },
-    { ARROW_RIGHT, "cursor-right",      0 },
-    { ARROW_LEFT,  "cursor-left",       0 },
-    { BACKSPACE,   "delete-back",       0 },
-    { CTRL_C,      "yank-selection",    0 },
-    { CTRL_F,      "command-prompt",    0 },
-    { CTRL_L,      "frame-next",        0 },
-    { CTRL_D,      "delete-line",       0 },
-    { CTRL_S,      "select",            0 },
-    { CTRL_V,      "paste-yank-buffer", 0 },
-    { CTRL_W,      "write-buffer",      0 }
+    { CTRL_F,      0, "command-prompt"    },
+    { ARROW_UP,    0, "cursor-up"         },
+    { ARROW_DOWN,  0, "cursor-down"       },
+    { ARROW_RIGHT, 0, "cursor-right"      },
+    { ARROW_LEFT,  0, "cursor-left"       },
+    { BACKSPACE,   0, "delete-back"       },
+    { CTRL_C,      0, "yank-selection"    },
+    { CTRL_F,      0, "command-prompt"    },
+    { CTRL_L,      0, "frame-next"        },
+    { CTRL_D,      0, "delete-line"       },
+    { CTRL_S,      0, "select"            },
+    { CTRL_V,      0, "paste-yank-buffer" },
+    { CTRL_W,      0, "write-buffer"      }
 };
 
 void yed_set_default_key_binding(int key) {
@@ -210,6 +213,7 @@ void yed_unbind_key(int key) {
     if (key < REAL_KEY_MAX) {
         old_binding = ys->real_key_map[key];
         if (old_binding) {
+            free(old_binding->cmd);
             free(old_binding);
             ys->real_key_map[key] = NULL;
         }
@@ -243,10 +247,9 @@ yed_key_binding * yed_get_key_binding(int key) {
     return tree_it_val(it);
 }
 
-int yed_vadd_key_sequence(int len, va_list args) {
+int yed_add_key_sequence(int len, int *keys) {
     yed_key_sequence  seq;
-    int               key,
-                      i,
+    int               i,
                      *rel_seq_key;
 
     if (len < 2 || len > MAX_SEQ_LEN) {
@@ -256,8 +259,7 @@ int yed_vadd_key_sequence(int len, va_list args) {
     seq.len = len;
 
     for (i = 0; i < len; i += 1) {
-        key         = va_arg(args, int);
-        seq.keys[i] = key;
+        seq.keys[i] = keys[i];
     }
 
     if (array_len(ys->released_seq_keys)) {
@@ -274,18 +276,7 @@ int yed_vadd_key_sequence(int len, va_list args) {
     return seq.seq_key;
 }
 
-int yed_add_key_sequence(int len, ...) {
-    va_list args;
-    int     r;
-
-    va_start(args, len);
-    r = yed_vadd_key_sequence(len, args);
-    va_end(args);
-
-    return r;
-}
-
-static int _yed_get_key_sequence(int len, int *keys) {
+int yed_get_key_sequence(int len, int *keys) {
     yed_key_sequence *seq_it;
     int               i,
                       s,
@@ -318,24 +309,6 @@ static int _yed_get_key_sequence(int len, int *keys) {
     return seq_it->seq_key;
 }
 
-int yed_get_key_sequence(int len, ...) {
-    va_list args;
-    int     keys[MAX_SEQ_LEN],
-            i;
-
-    if (len < 2) {
-        return KEY_NULL;
-    }
-
-    va_start(args, len);
-    for (i = 0; i < len; i += 1) {
-        keys[i] = va_arg(args, int);
-    }
-    va_end(args);
-
-    return _yed_get_key_sequence(len, keys);
-}
-
 int yed_delete_key_sequence(int seq_key) {
     int               i,
                       found;
@@ -357,4 +330,46 @@ int yed_delete_key_sequence(int seq_key) {
     array_push(ys->released_seq_keys, seq_key);
 
     return 0;
+}
+
+int yed_vadd_key_sequence(int len, ...) {
+    va_list args;
+    int     r;
+
+    va_start(args, len);
+    r = yed_vvadd_key_sequence(len, args);
+    va_end(args);
+
+    return r;
+}
+
+int yed_vget_key_sequence(int len, ...) {
+    va_list args;
+    int     r;
+
+    va_start(args, len);
+    r = yed_vvget_key_sequence(len, args);
+    va_end(args);
+
+    return r;
+}
+
+int yed_vvadd_key_sequence(int len, va_list args) {
+    int i, keys[MAX_SEQ_LEN];
+
+    for (i = 0; i < len; i += 1) {
+        keys[i] = va_arg(args, int);
+    }
+
+    return yed_add_key_sequence(len, keys);
+}
+
+int yed_vvget_key_sequence(int len, va_list args) {
+    int i, keys[MAX_SEQ_LEN];
+
+    for (i = 0; i < len; i += 1) {
+        keys[i] = va_arg(args, int);
+    }
+
+    return yed_get_key_sequence(len, keys);
 }

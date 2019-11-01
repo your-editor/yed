@@ -38,6 +38,12 @@ static void do_indent(yed_frame *frame) {
                tabw;
     char      *c;
 
+    tabw = get_tabw();
+
+    if (tabw <= 0) {
+        return;
+    }
+
     prev_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
     if (!prev_line)    { return; }
 
@@ -46,8 +52,6 @@ static void do_indent(yed_frame *frame) {
     &&     *(c = array_item(prev_line->chars, indent_width)) == ' ') {
         indent_width += 1;
     }
-
-    tabw = get_tabw();
 
     if (array_len(prev_line->chars) > 0
     &&  yed_line_col_to_char(prev_line, array_len(prev_line->chars)) == '{') {
@@ -65,6 +69,12 @@ static void do_brace_backup(yed_frame *frame) {
     yed_line *line;
     int       i, brace_col, tabw;
 
+    tabw = get_tabw();
+
+    if (tabw <= 0) {
+        return;
+    }
+
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
     if (!line)    { return; }
 
@@ -80,8 +90,6 @@ static void do_brace_backup(yed_frame *frame) {
     }
 
     if (i != brace_col - 1)    { return; }
-
-    tabw = get_tabw();
 
     yed_move_cursor_within_frame(frame, -tabw, 0);
     for (i = 0; i < tabw; i += 1) {
@@ -110,7 +118,7 @@ void indent_c_post_delete_back_handler(yed_event *event) {
 
     tabw = get_tabw();
 
-    if (frame->cursor_col < tabw) {
+    if (tabw <= 0 || frame->cursor_col < tabw) {
         return;
     }
 

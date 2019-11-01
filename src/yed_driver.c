@@ -1,6 +1,7 @@
 #include "yed.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <unistd.h>
@@ -15,6 +16,11 @@ void call_yed_fini(void);
 int main(int argc, char **argv) {
     int                 status;
     struct yed_state_t *state;
+
+    if (argc > 1 && strcmp(argv[1], "-instrument") == 0) {
+        printf("Hit any key to continue once the instrument tool has been attached.\n");
+        getchar();
+    }
 
     if (load_yed_lib() != 0) {
         return 1;

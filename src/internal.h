@@ -30,14 +30,13 @@
 typedef struct yed_key_binding_t *yed_key_binding_ptr_t;
 use_tree(int, yed_key_binding_ptr_t);
 
+typedef char *yed_buffer_name_t;
+typedef struct yed_buffer_t *yed_buffer_ptr_t;
+use_tree(yed_buffer_name_t, yed_buffer_ptr_t);
+
 typedef char *yed_command_name_t;
 typedef void (*yed_command)(int, char**);
 use_tree(yed_command_name_t, yed_command);
-
-struct yed_frame_t;
-typedef struct yed_frame_t *yed_frame_ptr_t;
-typedef char *yed_frame_id_t;
-use_tree(yed_frame_id_t, yed_frame_ptr_t);
 
 typedef char *yed_plugin_name_t;
 struct yed_plugin_t;
@@ -63,6 +62,7 @@ use_tree(yed_var_name_t, yed_var_val_t);
 #include "plugin.h"
 #include "find.h"
 #include "var.h"
+#include "util.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
@@ -151,15 +151,18 @@ typedef struct yed_state_t {
     struct termios               sav_term;
     int                          term_cols,
                                  term_rows;
+    char                        * written_cells;
     int                          cur_x,
                                  cur_y,
                                  save_cur_x,
                                  save_cur_y;
-    array_t                      buff_list;
-    yed_buffer                   yank_buff;
-    tree(yed_frame_id_t,
-         yed_frame_ptr_t)        frames;
-    yed_frame                   *active_frame;
+    tree(yed_buffer_name_t,
+         yed_buffer_ptr_t)       buffers;
+    int                          unnamed_buff_counter;
+    yed_buffer                  *yank_buff;
+    array_t                      frames;
+    yed_frame                   *active_frame,
+                                *prev_active_frame;
     yed_command_name_t           interactive_command;
     char                        *cmd_prompt;
     char                        *current_search;
@@ -192,8 +195,6 @@ typedef struct yed_state_t {
 extern yed_state *ys;
 
 void yed_init_output_stream(void);
-
-void yed_add_new_buff(void);
 
 void clear_output_buff(void);
 int output_buff_len(void);

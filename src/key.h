@@ -45,6 +45,8 @@ enum KEY_ACTION {
     SEQ_START,
 };
 
+#define CTRL_KEY(c) ((c) & 0x9F)
+
 #define SEQ(x)      (SEQ_START + (x))
 #define MAX_SEQ_LEN (8)
 
@@ -57,8 +59,8 @@ void yed_take_key(int key);
 
 typedef struct yed_key_binding_t {
     int   key;
-    char *cmd;
     int   takes_key_as_arg;
+    char *cmd;
 } yed_key_binding;
 
 void yed_set_default_key_binding(int key);
@@ -73,9 +75,12 @@ typedef struct {
     int seq_key;
 } yed_key_sequence;
 
-int yed_vadd_key_sequence(int len, va_list args);
-int yed_add_key_sequence(int len, ...);
+int yed_add_key_sequence(int len, int *keys);
+int yed_get_key_sequence(int len, int *keys);
 int yed_delete_key_sequence(int seq_key);
-int yed_get_key_sequence(int len, ...);
+int yed_vadd_key_sequence(int len, ...);
+int yed_vget_key_sequence(int len, ...);
+int yed_vvadd_key_sequence(int len, va_list args);
+int yed_vvget_key_sequence(int len, va_list args);
 
 #endif
