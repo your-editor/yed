@@ -23,11 +23,7 @@ else
 fi
 
 # I hate getting spammed with error messages
-if [ "${CC}" == "clang" ]; then
-    ERR_LIM=" -fmax-errors=3"
-else
-    ERR_LIM=" -ferror-limit=3"
-fi
+ERR_LIM=" -fmax-errors=3"
 
 ${CC} --version ${ERR_LIM} 2>&1 > /dev/null
 
