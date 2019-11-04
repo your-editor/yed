@@ -51,7 +51,7 @@ int yed_term_enter(void);
 int yed_term_exit(void);
 
 int yed_term_get_dim(int *r, int *c);
-int yed_term_supports_truecolor(void);
+int yed_term_says_it_supports_truecolor(void);
 
 void yed_term_set_fg_rgb(int r, int g, int b);
 void yed_term_set_bg_rgb(int r, int g, int b);

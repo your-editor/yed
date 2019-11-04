@@ -29,7 +29,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.search_cursor.fg    = RGB_32(0, 0, 255);
     s.search_cursor.bg    = RGB_32(255, 150, 0);
 
-    s.code_comment.flags  = ATTR_RGB;
+    s.code_comment.flags  = ATTR_RGB | ATTR_BOLD;
     s.code_comment.fg     = RGB_32(72, 180, 235);
 
     s.code_keyword.flags  = ATTR_RGB | ATTR_BOLD;
@@ -80,7 +80,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.search_cursor.fg    = RGB_32(0, 0, 255);
     s.search_cursor.bg    = RGB_32(255, 150, 0);
 
-    s.code_comment.flags  = ATTR_RGB;
+    s.code_comment.flags  = ATTR_RGB | ATTR_BOLD;
     s.code_comment.fg     = RGB_32(72, 180, 235);
 
     s.code_keyword.flags  = ATTR_RGB | ATTR_BOLD;

@@ -11,6 +11,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "indent_c",
         "autotrim",
         "make_check",
+        "comment",
         "proj",
         "style_first",
         "style_elise",
@@ -31,6 +32,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     YEXE("vimish-bind", "insert",  "j", "j",              "vimish-exit-insert");
     YEXE("vimish-bind", "nav",     "spc", "m", "c",       "make-check");
+    YEXE("vimish-bind", "nav",     "spc", "c", "o",       "comment-toggle-line");
     YEXE("vimish-bind", "nav",     "spc", "r", "d",       "redraw");
     YEXE("vimish-bind", "nav",     "spc", "v", "s", "p",  "frame-vsplit");
     YEXE("vimish-bind", "nav",     "spc", "h", "s", "p",  "frame-hsplit");
@@ -41,7 +43,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "nav",     "L", "L",              "kammerdiener-fill-cursor-line");
     YEXE("vimish-bind", "nav",     "ctrl-y",              "build-and-reload");
 
-    if (yed_term_supports_truecolor()) {
+    if (yed_term_says_it_supports_truecolor()) {
         YEXE("style", "first-dark");
     } else {
         YEXE("style", "default");

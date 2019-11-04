@@ -57,7 +57,7 @@ int yed_term_get_dim(int *r, int *c) {
     }
 }
 
-int yed_term_supports_truecolor(void) {
+int yed_term_says_it_supports_truecolor(void) {
     char *colorterm;
 
     colorterm = getenv("COLORTERM");

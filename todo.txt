@@ -1,12 +1,9 @@
 * undo/redo
-* stylizing
-    * ui colors
 * resizing
 * line numbers
 * things from vimrc
     * status bar
     * remember last place in file
-    * commenting stuff out
     * aligment
     * completion
     * LaTeX compile/view

@@ -37,7 +37,7 @@ static array_t repeat_keys;
 static int repeating;
 static int till_pending; /* 0 = not pending, 1 = pending forward, 2 = pending backward */
 static int last_till_key;
-static int last_till_dir;
+static int last_till_dir; /* 1 = forward, 2 = backward */
 
 void vimish_unload(yed_plugin *self);
 void vimish_nav(int key, char* key_str);

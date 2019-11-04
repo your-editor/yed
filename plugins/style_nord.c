@@ -17,6 +17,9 @@
 #define nord14 RGB_32_hex(A3BE8C)
 #define nord15 RGB_32_hex(B48EAD)
 
+#define nord3_but_brighter  RGB_32_hex(6C768A)
+
+
 int yed_plugin_boot(yed_plugin *self) {
     yed_style s;
 
@@ -47,7 +50,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.selection.bg        = nord2;
 
     s.code_comment.flags  = ATTR_RGB;
-    s.code_comment.fg     = nord3;
+    s.code_comment.fg     = nord3_but_brighter;
 
     s.code_keyword.flags  = ATTR_RGB | ATTR_BOLD;
     s.code_keyword.fg     = nord9;
