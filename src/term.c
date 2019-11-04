@@ -57,6 +57,20 @@ int yed_term_get_dim(int *r, int *c) {
     }
 }
 
+int yed_term_supports_truecolor(void) {
+    char *colorterm;
+
+    colorterm = getenv("COLORTERM");
+    if (!colorterm) { return 0; }
+
+    if (strcmp(colorterm, "truecolor")
+    &&  strcmp(colorterm, "24bit")) {
+        return 0;
+    }
+
+    return 1;
+}
+
 void yed_term_set_fg_rgb(int r, int g, int b) {
     char buff[128];
 

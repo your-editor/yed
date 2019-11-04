@@ -15,6 +15,7 @@
 #include "find.c"
 #include "var.c"
 #include "util.c"
+#include "style.c"
 
 yed_state *ys;
 
@@ -93,6 +94,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys->yed_lib          = yed_lib;
 
     yed_init_vars();
+    yed_init_styles();
     yed_init_buffers();
     yed_init_frames();
 

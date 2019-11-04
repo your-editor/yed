@@ -47,19 +47,13 @@ void yed_search_line_handler(yed_event *event) {
             if (event->row == frame->cursor_line
             && (line_data - line_data_start) + 1 == frame->cursor_col) {
                 for (i = 0; i < search_len; i += 1) {
-                    attr         = array_item(event->line_attrs, (line_data - line_data_start) + i);
-                    attr->flags  = ATTR_RGB;
-                    attr->flags |= ATTR_BOLD;
-                    attr->bg     = RGB_32(255, 150, 0);
-                    attr->fg     = RGB_32(0, 0, 255);
+                    attr  = array_item(event->line_attrs, (line_data - line_data_start) + i);
+                    *attr = yed_active_style_get_search_cursor();
                 }
             } else {
                 for (i = 0; i < search_len; i += 1) {
-                    attr          = array_item(event->line_attrs, (line_data - line_data_start) + i);
-                    attr->flags  = ATTR_RGB;
-                    attr->flags |= ATTR_BOLD;
-                    attr->bg     = RGB_32(255, 255, 0);
-                    attr->fg     = RGB_32(0, 0, 255);
+                    attr  = array_item(event->line_attrs, (line_data - line_data_start) + i);
+                    *attr = yed_active_style_get_search();
                 }
             }
         }

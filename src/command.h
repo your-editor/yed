@@ -38,7 +38,7 @@ DEF_DEFAULT_COMMAND(redraw);
 DEF_DEFAULT_COMMAND(set);
 DEF_DEFAULT_COMMAND(get);
 DEF_DEFAULT_COMMAND(unset);
-DEF_DEFAULT_COMMAND(make_and_reload);
+DEF_DEFAULT_COMMAND(build_and_reload);
 DEF_DEFAULT_COMMAND(sh);
 DEF_DEFAULT_COMMAND(echo);
 DEF_DEFAULT_COMMAND(cursor_down);
@@ -82,5 +82,7 @@ DEF_DEFAULT_COMMAND(find_in_buffer);
 DEF_DEFAULT_COMMAND(find_next_in_buffer);
 DEF_DEFAULT_COMMAND(find_prev_in_buffer);
 DEF_DEFAULT_COMMAND(man);
+DEF_DEFAULT_COMMAND(style);
+DEF_DEFAULT_COMMAND(style_off);
 
 #endif

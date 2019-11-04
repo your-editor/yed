@@ -4,7 +4,7 @@ CFG_RELEASE=-O3
 CFG=$(CFG_DEBUG)
 # CFG=$(CFG_RELEASE)
 
-all: make_check autotrim indent_c syntax_c vimish init
+all: style_nord style_elise style_first make_check autotrim indent_c syntax_c vimish init
 
 init:
 	$(CC) init.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o init.so -L.. -lyed -I../src
@@ -23,6 +23,15 @@ autotrim:
 
 make_check:
 	$(CC) make_check.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o make_check.so -L.. -lyed -I../src
+
+style_first:
+	$(CC) style_first.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o style_first.so -L.. -lyed -I../src
+
+style_elise:
+	$(CC) style_elise.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o style_elise.so -L.. -lyed -I../src
+
+style_nord:
+	$(CC) style_nord.c $(CFG) -shared -fPIC -Wall -Werror -Wno-unused-function -o style_nord.so -L.. -lyed -I../src
 
 clean:
 	rm -rf *.so *.so.dSYM

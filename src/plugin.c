@@ -91,6 +91,7 @@ int yed_load_plugin(char *plug_name) {
     plug->added_bindings       = array_make(int);
     plug->added_key_sequences  = array_make(int);
     plug->added_event_handlers = array_make(yed_event_handler);
+    plug->added_styles         = array_make(char*);
 
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
@@ -99,6 +100,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_cmds);
         array_free(plug->added_key_sequences);
         array_free(plug->added_event_handlers);
+        array_free(plug->added_styles);
         free(plug);
         return YED_PLUG_NO_BOOT;
     }
@@ -112,6 +114,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_cmds);
         array_free(plug->added_key_sequences);
         array_free(plug->added_event_handlers);
+        array_free(plug->added_styles);
         free(plug);
         return YED_PLUG_BOOT_FAIL;
     }
@@ -124,7 +127,7 @@ int yed_load_plugin(char *plug_name) {
 static void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
             yed_command)          cmd_it;
-    char                        **cmd_name_it;
+    char                        **cmd_name_it, **style_name_it;
     int                          *key_it;
     yed_event_handler            *handler_it;
 
@@ -153,6 +156,11 @@ static void yed_plugin_uninstall_features(yed_plugin *plug) {
         yed_delete_event_handler(*handler_it);
     }
     array_free(plug->added_event_handlers);
+
+    array_traverse(plug->added_styles, style_name_it) {
+        yed_remove_style(*style_name_it);
+    }
+    array_free(plug->added_styles);
 }
 
 int yed_unload_plugin(char *plug_name) {
@@ -295,6 +303,14 @@ int yed_plugin_add_key_sequence(yed_plugin *plug, int len, int *keys) {
 void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler) {
     array_push(plug->added_event_handlers, handler);
     yed_add_event_handler(handler);
+}
+
+void yed_plugin_set_style(yed_plugin *plug, char *name, yed_style *style) {
+    char *name_dup;
+
+    name_dup = strdup(name);
+    yed_set_style(name, style);
+    array_push(plug->added_styles, name_dup);
 }
 
 void yed_add_plugin_dir(char *s) {

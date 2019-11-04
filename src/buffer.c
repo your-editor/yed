@@ -29,14 +29,6 @@ do {                                        \
     int fr, fg, fb;
     int br, bg, bb;
 
-    if (!attr.flags)    { return; }
-
-/*     if (attr.flags & ATTR_NORMAL) { */
-/*         append_to_output_buff(TERM_RESET); */
-/*         append_to_output_buff(TERM_CURSOR_HIDE); */
-/*         return; */
-/*     } */
-/*  */
     buff[0] = 0;
     buff_p  = buff;
 
@@ -50,50 +42,78 @@ do {                                        \
         BUFFCATN(buff_p, ";7", 2);
     }
 
-    if (!(attr.flags & ATTR_NORMAL)) {
+    if (attr.flags & ATTR_16) {
         if (attr.fg || attr.bg) {
             BUFFCATN(buff_p, ";", 1);
         }
 
-        if (attr.flags & ATTR_RGB) {
-            fr = RGB_32_r(attr.fg);
-            fg = RGB_32_g(attr.fg);
-            fb = RGB_32_b(attr.fg);
-            br = RGB_32_r(attr.bg);
-            bg = RGB_32_g(attr.bg);
-            bb = RGB_32_b(attr.bg);
+        if (attr.fg && attr.bg) {
+            BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+        } else if (attr.fg) {
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+        } else if (attr.bg) {
+            BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
+        }
+    } else if (attr.flags & ATTR_256) {
+        if (attr.fg || attr.bg) {
+            BUFFCATN(buff_p, ";", 1);
+        }
 
-            if (attr.fg && attr.bg) {
-                BUFFCATN(buff_p, "38;2;", 5);
-                BUFFCAT(buff_p, u8_to_s[fr]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[fg]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[fb]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCATN(buff_p, "48;2;", 5);
-                BUFFCAT(buff_p, u8_to_s[br]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[bg]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[bb]);
-            } else if (attr.fg) {
-                BUFFCATN(buff_p, "38;2;", 5);
-                BUFFCAT(buff_p, u8_to_s[fr]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[fg]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[fb]);
-            } else if (attr.bg) {
-                BUFFCATN(buff_p, "48;2;", 5);
-                BUFFCAT(buff_p, u8_to_s[br]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[bg]);
-                BUFFCATN(buff_p, ";", 1);
-                BUFFCAT(buff_p, u8_to_s[bb]);
-            }
-        } else {
-            BUFFCATN(buff_p, ";32", 3);
+        if (attr.fg && attr.bg) {
+            BUFFCATN(buff_p, "38;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCATN(buff_p, "48;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.bg]);
+        } else if (attr.fg) {
+            BUFFCATN(buff_p, "38;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+        } else if (attr.bg) {
+            BUFFCATN(buff_p, "48;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.bg]);
+        }
+    } else if (attr.flags & ATTR_RGB) {
+        if (attr.fg || attr.bg) {
+            BUFFCATN(buff_p, ";", 1);
+        }
+
+        fr = RGB_32_r(attr.fg);
+        fg = RGB_32_g(attr.fg);
+        fb = RGB_32_b(attr.fg);
+        br = RGB_32_r(attr.bg);
+        bg = RGB_32_g(attr.bg);
+        bb = RGB_32_b(attr.bg);
+
+        if (attr.fg && attr.bg) {
+            BUFFCATN(buff_p, "38;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[fr]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fb]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCATN(buff_p, "48;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[br]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bb]);
+        } else if (attr.fg) {
+            BUFFCATN(buff_p, "38;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[fr]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fb]);
+        } else if (attr.bg) {
+            BUFFCATN(buff_p, "48;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[br]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bb]);
         }
     }
 

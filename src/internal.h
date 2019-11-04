@@ -46,6 +46,11 @@ use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 typedef char *yed_var_name_t;
 typedef char *yed_var_val_t;
 use_tree(yed_var_name_t, yed_var_val_t);
+
+typedef char *yed_style_name_t;
+struct yed_style_t;
+typedef struct yed_style_t *yed_style_ptr_t;
+use_tree(yed_style_name_t, yed_style_ptr_t);
 #undef inline
 
 #include "array.h"
@@ -63,6 +68,7 @@ use_tree(yed_var_name_t, yed_var_val_t);
 #include "find.h"
 #include "var.h"
 #include "util.h"
+#include "style.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
@@ -190,6 +196,9 @@ typedef struct yed_state_t {
     array_t                      event_handlers[N_EVENTS];
     tree(yed_var_name_t,
          yed_var_val_t)          vars;
+    tree(yed_style_name_t,
+         yed_style_ptr_t)        styles;
+    yed_style_name_t             active_style;
 } yed_state;
 
 extern yed_state *ys;

@@ -115,10 +115,13 @@ void flush_output_buff(void) {
 }
 
 void yed_service_reload(void) {
-    tree_it(yed_command_name_t, yed_command)  cmd_it;
-    tree_it(yed_var_name_t, yed_var_val_t)    var_it;
-    char                                     *key, *val;
+    tree_it(yed_command_name_t, yed_command)    cmd_it;
+    tree_it(yed_var_name_t, yed_var_val_t)      var_it;
+    tree_it(yed_style_name_t, yed_style_ptr_t)  style_it;
+    char                                       *key, *val;
+    yed_style                                  *style;
 
+    tree_reset_fns(yed_style_name_t,   yed_style_ptr_t,       ys->styles,           strcmp);
     tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);
     tree_reset_fns(yed_buffer_name_t,  yed_buffer_ptr_t,      ys->buffers,          strcmp);
     tree_reset_fns(int,                yed_key_binding_ptr_t, ys->key_seq_map,      NULL);
@@ -141,6 +144,24 @@ void yed_service_reload(void) {
      * Reset the defaults.
      */
     yed_set_default_vars();
+
+    /*
+     * Clear out all of the old styles.
+     */
+    while (tree_len(ys->styles)) {
+        style_it = tree_begin(ys->styles);
+        key   = tree_it_key(style_it);
+        style = tree_it_val(style_it);
+        tree_delete(ys->styles, key);
+        free(key);
+        free(style);
+    }
+
+    ys->active_style = NULL;
+    /*
+     * Reset the defaults.
+     */
+    yed_set_default_styles();
 
     /*
      * Clear out all of the old commands.

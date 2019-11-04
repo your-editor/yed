@@ -1,0 +1,3 @@
+CC="gcc"
+debug="-g -O0 -DYED_DO_ASSERTIONS -DYED_DO_LOGGING -Wall -Werror -Wno-address-of-packed-member -Wno-unused-function"
+release="-O3"

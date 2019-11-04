@@ -109,12 +109,12 @@ void syntax_c_buff_mod_post_handler(yed_event *event) {
 void syntax_c_highlight(yed_event *event) {
     yed_frame *frame;
     yed_line  *line;
-    yed_attrs *attr;
+    yed_attrs *attr, com, key, pp, cal, num, con, cha, str;
     int        col, old_col, word_len, spaces, i, j, k, match, last_was_hash, last_was_minus, delim;
     char       c, *word,
               *kwds[][8] = {
                   { "do",       "if",       NULL,       NULL,       NULL,     NULL,     NULL,     NULL     }, /* 2 */
-                  { "int",      "for",      NULL,       NULL,       NULL,     NULL,     NULL,     NULL     }, /* 3 */
+                  { "int",      "for",      "asm",      NULL,       NULL,     NULL,     NULL,     NULL     }, /* 3 */
                   { "long",     "char",     "bool",     "void",     "enum",   "else",   "case",   "goto"   }, /* 4 */
                   { "const",    "short",    "float",    "while",    "break",  NULL,     NULL,     NULL     }, /* 5 */
                   { "static",   "size_t",   "double",   "struct",   "switch", "return", "sizeof", "inline" }, /* 6 */
@@ -134,6 +134,15 @@ void syntax_c_highlight(yed_event *event) {
     #define MIN_PPKWD_LEN (2)
     #define MAX_PPKWD_LEN (7)
 
+    com = yed_active_style_get_code_comment();
+    key = yed_active_style_get_code_keyword();
+    pp  = yed_active_style_get_code_preprocessor();
+    cal = yed_active_style_get_code_fn_call();
+    num = yed_active_style_get_code_number();
+    con = yed_active_style_get_code_constant();
+    cha = yed_active_style_get_code_character();
+    str = yed_active_style_get_code_string();
+
     frame = event->frame;
     line  = yed_buff_get_line(frame->buffer, event->row);
     col   = 1;
@@ -145,9 +154,9 @@ void syntax_c_highlight(yed_event *event) {
     if (lines_in_comment[event->row - frame->buffer_y_offset]) {
         for (k = 0 ; k < array_len(line->chars); k += 1) {
             attr         = array_item(event->line_attrs, k);
-            attr->flags  = ATTR_RGB;
-            attr->flags |= ATTR_BOLD;
-            attr->fg     = RGB_32(72, 180, 235);
+            attr->flags &= ~(ATTR_BOLD);
+            attr->flags |= com.flags;
+            attr->fg     = com.fg;
         }
         return;
     }
@@ -208,15 +217,14 @@ void syntax_c_highlight(yed_event *event) {
 
                     if (match) {
                         attr         = array_item(event->line_attrs, old_col - 2);
-                        attr->flags  = ATTR_RGB;
-                        attr->flags |= ATTR_BOLD;
-                        attr->fg     = RGB_32(64, 121, 140);
+                        attr->flags &= ~(ATTR_BOLD);
+                        attr->flags |= key.flags;
+                        attr->fg     = key.fg;
 
                         for (j = 0; j < word_len; j += 1) {
                             attr         = array_item(event->line_attrs, old_col + j - 1);
-                            attr->flags  = ATTR_RGB;
-                            attr->flags |= ATTR_BOLD;
-                            attr->fg     = RGB_32(64, 121, 140);
+                            attr->flags |= key.flags;
+                            attr->fg     = key.fg;
                         }
                         break;
                     }
@@ -232,9 +240,9 @@ void syntax_c_highlight(yed_event *event) {
                     if (match) {
                         for (j = 0; j < word_len; j += 1) {
                             attr         = array_item(event->line_attrs, old_col + j - 1);
-                            attr->flags  = ATTR_RGB;
-                            attr->flags |= ATTR_BOLD;
-                            attr->fg     = RGB_32(64, 121, 140);
+                            attr->flags &= ~(ATTR_BOLD);
+                            attr->flags |= key.flags;
+                            attr->fg     = key.fg;
                         }
                         break;
                     }
@@ -258,26 +266,42 @@ void syntax_c_highlight(yed_event *event) {
             if (match) {
                 if (last_was_minus) {
                     attr         = array_item(event->line_attrs, old_col - 2);
-                    attr->flags  = ATTR_RGB;
-                    attr->fg     = RGB_32(216, 30, 91);
+                    attr->flags &= ~(ATTR_BOLD);
+                    attr->flags |= num.flags;
+                    attr->fg     = num.fg;
                 }
                 for (i = 0; i < word_len; i += 1) {
                     attr         = array_item(event->line_attrs, old_col + i - 1);
-                    attr->flags  = ATTR_RGB;
-                    attr->fg     = RGB_32(216, 30, 91);
+                    attr->flags &= ~(ATTR_BOLD);
+                    attr->flags |= num.flags;
+                    attr->fg     = num.fg;
                 }
             }
         }
 
         /* NULL */
         if (!match) {
-            if (strncmp(word, "NULL", 4) == 0) {
+            if (word_len == 4 && strncmp(word, "NULL", 4) == 0) {
                 match = 1;
 
                 for (i = 0; i < 4; i += 1) {
                     attr         = array_item(event->line_attrs, old_col + i - 1);
-                    attr->flags  = ATTR_RGB;
-                    attr->fg     = RGB_32(252, 163, 17);
+                    attr->flags &= ~(ATTR_BOLD);
+                    attr->flags |= con.flags;
+                    attr->fg     = con.fg;
+                }
+            }
+        }
+
+        /* Function calls */
+        if (!match) {
+            if (old_col + word_len - 1 < array_len(line->chars)
+            &&  yed_line_col_to_char(line, old_col + word_len) == '(') {
+                for (i = 0; i < word_len; i += 1) {
+                    attr         = array_item(event->line_attrs, old_col + i - 1);
+                    attr->flags &= ~(ATTR_BOLD);
+                    attr->flags |= cal.flags;
+                    attr->fg     = cal.fg;
                 }
             }
         }
@@ -305,8 +329,9 @@ void syntax_c_highlight(yed_event *event) {
                     if (*(word + j) == '\'') {
                         for (k = i; k <= i + j; k += 1) {
                             attr         = array_item(event->line_attrs, k);
-                            attr->flags  = ATTR_RGB;
-                            attr->fg     = RGB_32(83, 170, 111);
+                            attr->flags &= ~(ATTR_BOLD);
+                            attr->flags |= cha.flags;
+                            attr->fg     = cha.fg;
                         }
 
                     }
@@ -343,8 +368,9 @@ void syntax_c_highlight(yed_event *event) {
             if (match) {
                 for (k = i; k <= i + j; k += 1) {
                     attr         = array_item(event->line_attrs, k);
-                    attr->flags  = ATTR_RGB;
-                    attr->fg     = RGB_32(83, 170, 111);
+                    attr->flags &= ~(ATTR_BOLD);
+                    attr->flags |= str.flags;
+                    attr->fg     = str.fg;
                 }
             }
 
@@ -356,9 +382,9 @@ void syntax_c_highlight(yed_event *event) {
         } else if (*word == '/' && *(word + 1) == '/') {
             for (k = i; k < array_len(line->chars); k += 1) {
                 attr         = array_item(event->line_attrs, k);
-                attr->flags  = ATTR_RGB;
-                attr->flags |= ATTR_BOLD;
-                attr->fg     = RGB_32(72, 180, 235);
+                attr->flags &= ~(ATTR_BOLD);
+                attr->flags |= com.flags;
+                attr->fg     = com.fg;
             }
             break;
 
@@ -382,9 +408,9 @@ void syntax_c_highlight(yed_event *event) {
             if (match) {
                 for (k = i; k <= i + j; k += 1) {
                     attr         = array_item(event->line_attrs, k);
-                    attr->flags  = ATTR_RGB;
-                    attr->flags |= ATTR_BOLD;
-                    attr->fg     = RGB_32(72, 180, 235);
+                    attr->flags &= ~(ATTR_BOLD);
+                    attr->flags |= com.flags;
+                    attr->fg     = com.fg;
                 }
             }
 
@@ -403,16 +429,16 @@ void syntax_c_highlight(yed_event *event) {
         if (delim < 0) {
             for (k = 0; k < (0 - delim + 1); k += 1) {
                 attr         = array_item(event->line_attrs, k);
-                attr->flags  = ATTR_RGB;
-                attr->flags |= ATTR_BOLD;
-                attr->fg     = RGB_32(72, 180, 235);
+                attr->flags &= ~(ATTR_BOLD);
+                attr->flags |= com.flags;
+                attr->fg     = com.fg;
             }
         } else if (delim > 0) {
             for (k = delim - 1; k < array_len(line->chars); k += 1) {
                 attr         = array_item(event->line_attrs, k);
-                attr->flags  = ATTR_RGB;
-                attr->flags |= ATTR_BOLD;
-                attr->fg     = RGB_32(72, 180, 235);
+                attr->flags &= ~(ATTR_BOLD);
+                attr->flags |= com.flags;
+                attr->fg     = com.fg;
             }
         }
     }

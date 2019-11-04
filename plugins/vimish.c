@@ -33,6 +33,11 @@ typedef struct {
 static yed_plugin *Self;
 static int mode;
 static array_t mode_bindings[N_MODES];
+static array_t repeat_keys;
+static int repeating;
+static int till_pending; /* 0 = not pending, 1 = pending forward, 2 = pending backward */
+static int last_till_key;
+static int last_till_dir;
 
 void vimish_unload(yed_plugin *self);
 void vimish_nav(int key, char* key_str);
@@ -57,6 +62,8 @@ int yed_plugin_boot(yed_plugin *self) {
     for (i = 0; i < N_MODES; i += 1) {
         mode_bindings[i] = array_make(vimish_key_binding);
     }
+
+    repeat_keys = array_make(int);
 
     yed_plugin_set_unload_fn(Self, vimish_unload);
 
@@ -89,6 +96,7 @@ void vimish_unload(yed_plugin *self) {
         }
         array_free(mode_bindings[i]);
     }
+    array_free(repeat_keys);
 }
 
 void bind_keys(void) {
@@ -139,6 +147,26 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
     yed_set_var("vimish-mode", mode_strs[new_mode]);
 }
 
+static void _vimish_take_key(int key, char *maybe_key_str) {
+    char *key_str, buff[32];
+
+    if (maybe_key_str) {
+        key_str = maybe_key_str;
+    } else {
+        sprintf(buff, "%d", key);
+        key_str = buff;
+    }
+
+    switch (mode) {
+        case MODE_NAV:    vimish_nav(key, key_str);    break;
+        case MODE_INSERT: vimish_insert(key, key_str); break;
+        case MODE_DELETE: vimish_delete(key, key_str); break;
+        case MODE_YANK:   vimish_yank(key, key_str);   break;
+        default:
+            yed_append_text_to_cmd_buff("[!] invalid mode (?)");
+    }
+}
+
 void vimish_take_key(int n_args, char **args) {
     int key;
 
@@ -150,14 +178,7 @@ void vimish_take_key(int n_args, char **args) {
 
     sscanf(args[0], "%d", &key);
 
-    switch (mode) {
-        case MODE_NAV:    vimish_nav(key, args[0]);    break;
-        case MODE_INSERT: vimish_insert(key, args[0]); break;
-        case MODE_DELETE: vimish_delete(key, args[0]); break;
-        case MODE_YANK:   vimish_yank(key, args[0]);   break;
-        default:
-            yed_append_text_to_cmd_buff("[!] invalid mode (?)");
-    }
+    _vimish_take_key(key, args[0]);
 }
 
 void vimish_bind(int n_args, char **args) {
@@ -274,7 +295,43 @@ void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd) {
     }
 }
 
+static void vimish_push_repeat_key(int key) {
+    if (repeating) {
+        return;
+    }
+
+    array_push(repeat_keys, key);
+}
+
+static void vimish_pop_repeat_key(void) {
+    if (repeating) {
+        return;
+    }
+
+    array_pop(repeat_keys);
+}
+
+static void vimish_repeat(void) {
+    int *key_it;
+
+    repeating = 1;
+    array_traverse(repeat_keys, key_it) {
+        _vimish_take_key(*key_it, NULL);
+    }
+    repeating = 0;
+}
+
+static void vimish_start_repeat(int key) {
+    if (repeating) {
+        return;
+    }
+
+    array_clear(repeat_keys);
+    array_push(repeat_keys, key);
+}
+
 void vimish_exit_insert(int n_args, char **args) {
+    vimish_push_repeat_key(CTRL_C);
     vimish_change_mode(MODE_NAV, 0, 0);
 }
 
@@ -298,7 +355,81 @@ static void fill_cmd_prompt(const char *cmd) {
     YEXE("command-prompt", key_str);
 }
 
+static void vimish_till_fw(int key) {
+    yed_frame *f;
+    yed_line  *line;
+    int        col;
+    char       c;
+
+    if (!ys->active_frame || !ys->active_frame->buffer)    { goto out; }
+
+    f = ys->active_frame;
+
+    line = yed_buff_get_line(f->buffer, f->cursor_line);
+
+    if (!line)    { goto out; }
+
+    for (col = f->cursor_col + 1; col <= array_len(line->chars); col += 1) {
+        c = yed_line_col_to_char(line, col);
+        if (c == key) {
+            yed_set_cursor_within_frame(f, col, f->cursor_line);
+            break;
+        }
+    }
+
+    last_till_key = key;
+    last_till_dir = 1;
+
+out:
+    till_pending = 0;
+}
+
+static void vimish_till_bw(int key) {
+    yed_frame *f;
+    yed_line  *line;
+    int        col;
+    char       c;
+
+    if (!ys->active_frame || !ys->active_frame->buffer)    { goto out; }
+
+    f = ys->active_frame;
+
+    line = yed_buff_get_line(f->buffer, f->cursor_line);
+
+    if (!line)    { goto out; }
+
+    for (col = f->cursor_col - 1; col >= 1; col -= 1) {
+        c = yed_line_col_to_char(line, col);
+        if (c == key) {
+            yed_set_cursor_within_frame(f, col, f->cursor_line);
+            break;
+        }
+    }
+
+    last_till_key = key;
+    last_till_dir = 2;
+
+out:
+    till_pending = 0;
+}
+
+static void vimish_repeat_till(void) {
+    if (last_till_dir == 1) {
+        vimish_till_fw(last_till_key);
+    } else if (last_till_dir == 2) {
+        vimish_till_bw(last_till_key);
+    }
+}
+
 int vimish_nav_common(int key, char *key_str) {
+    if (till_pending == 1) {
+        vimish_till_fw(key);
+        return 1;
+    } else if (till_pending == 2) {
+        vimish_till_bw(key);
+        return 1;
+    }
+
     switch (key) {
         case 'h':
         case ARROW_LEFT:
@@ -364,6 +495,18 @@ int vimish_nav_common(int key, char *key_str) {
             YEXE("find-prev-in-buffer");
             break;
 
+        case 't':
+            till_pending = 1;
+            break;
+
+        case 'T':
+            till_pending = 2;
+            break;
+
+        case ';':
+            vimish_repeat_till();
+            break;
+
         default:
             return 0;
     }
@@ -390,15 +533,13 @@ void vimish_nav(int key, char *key_str) {
             fill_cmd_prompt("sh");
             break;
 
-        case CTRL_Y:
-            YEXE("make-and-reload");
-            break;
-
         case 'd':
+            vimish_start_repeat(key);
             vimish_change_mode(MODE_DELETE, 0, 0);
             break;
 
         case 'D':
+            vimish_start_repeat(key);
             vimish_change_mode(MODE_DELETE, 1, 0);
             break;
 
@@ -411,17 +552,28 @@ void vimish_nav(int key, char *key_str) {
             break;
 
         case 'p':
+            vimish_start_repeat(key);
             YEXE("paste-yank-buffer");
             break;
 
         case 'a':
+            vimish_start_repeat(key);
             YEXE("cursor-right");
             goto enter_insert;
+
         case 'A':
+            vimish_start_repeat(key);
             YEXE("cursor-line-end");
+            goto enter_insert;
+
         case 'i':
+            vimish_start_repeat(key);
 enter_insert:
             vimish_change_mode(MODE_INSERT, 0, 0);
+            break;
+
+        case '.':
+            vimish_repeat();
             break;
 
         case ':':
@@ -435,6 +587,8 @@ enter_insert:
 }
 
 void vimish_insert(int key, char *key_str) {
+    vimish_push_repeat_key(key);
+
     switch (key) {
         case ARROW_LEFT:
             YEXE("cursor-left");
@@ -464,6 +618,7 @@ void vimish_insert(int key, char *key_str) {
             if (key == ENTER || key == TAB || !iscntrl(key)) {
                 YEXE("insert", key_str);
             } else {
+                vimish_pop_repeat_key();
                 yed_append_text_to_cmd_buff("[!] [INSERT] unhandled key ");
                 yed_append_int_to_cmd_buff(key);
             }
@@ -472,6 +627,8 @@ void vimish_insert(int key, char *key_str) {
 }
 
 void vimish_delete(int key, char *key_str) {
+    vimish_push_repeat_key(key);
+
     if (vimish_nav_common(key, key_str)) {
         return;
     }
@@ -491,6 +648,7 @@ void vimish_delete(int key, char *key_str) {
             break;
 
         default:
+            vimish_pop_repeat_key();
             yed_append_text_to_cmd_buff("[!] [DELETE] unhandled key ");
             yed_append_int_to_cmd_buff(key);
     }

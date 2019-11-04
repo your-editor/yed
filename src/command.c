@@ -70,7 +70,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("set",                   set);
     SET_DEFAULT_COMMAND("get",                   get);
     SET_DEFAULT_COMMAND("unset",                 unset);
-    SET_DEFAULT_COMMAND("make-and-reload",       make_and_reload);
+    SET_DEFAULT_COMMAND("build-and-reload",      build_and_reload);
     SET_DEFAULT_COMMAND("sh",                    sh);
     SET_DEFAULT_COMMAND("echo",                  echo);
     SET_DEFAULT_COMMAND("cursor-down",           cursor_down);
@@ -114,6 +114,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("find-next-in-buffer",   find_next_in_buffer);
     SET_DEFAULT_COMMAND("find-prev-in-buffer",   find_prev_in_buffer);
     SET_DEFAULT_COMMAND("man",                   man);
+    SET_DEFAULT_COMMAND("style",                 style);
+    SET_DEFAULT_COMMAND("style-off",             style_off);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -335,19 +337,19 @@ void yed_default_command_unset(int n_args, char **args) {
     }
 }
 
-void yed_default_command_make_and_reload(int n_args, char **args) {
+void yed_default_command_build_and_reload(int n_args, char **args) {
     int err;
 
     printf(TERM_STD_SCREEN);
     printf(TERM_CURSOR_HOME);
-    err = system("make 2>&1 | less");
+    err = system("./build.sh debug 2>&1 | less");
     printf(TERM_ALT_SCREEN);
 
     if (err == 0) {
         ys->status = YED_RELOAD;
         yed_append_text_to_cmd_buff("issued reload");
     } else {
-        yed_append_text_to_cmd_buff("'make' failed");
+        yed_append_text_to_cmd_buff("'./build.sh' failed");
     }
 }
 
@@ -2224,6 +2226,7 @@ void yed_default_command_man(int n_args, char **args) {
     err = system(cmd_buff);
 
     if (err) {
+        ys->redraw = 1; /* 'man' will poop on our screen if the command failed */
         yed_append_text_to_cmd_buff("[!] command '");
         yed_append_text_to_cmd_buff(err_buff);
         yed_append_text_to_cmd_buff("' failed");
@@ -2232,6 +2235,39 @@ void yed_default_command_man(int n_args, char **args) {
 
     YEXE("frame-new", "0.15", "0.15", "0.7", "0.7");
     YEXE("buffer", path_buff);
+}
+
+void yed_default_command_style(int n_args, char **args) {
+    if (n_args == 0) {
+        if (ys->active_style) {
+            yed_append_text_to_cmd_buff("'");
+            yed_append_text_to_cmd_buff(ys->active_style);
+            yed_append_text_to_cmd_buff("'");
+        } else {
+            yed_append_text_to_cmd_buff("[!] no style activated");
+        }
+    } else if (n_args == 1) {
+        if (!yed_activate_style(args[0])) {
+            yed_append_text_to_cmd_buff("no such style '");
+            yed_append_text_to_cmd_buff(args[0]);
+            yed_append_text_to_cmd_buff("'");
+        }
+    } else {
+        yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+}
+
+void yed_default_command_style_off(int n_args, char **args) {
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    ys->active_style = NULL;
+    ys->redraw       = 1;
 }
 
 int yed_execute_command(char *name, int n_args, char **args) {
