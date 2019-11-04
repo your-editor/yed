@@ -495,10 +495,12 @@ int vimish_nav_common(int key, char *key_str) {
             YEXE("find-prev-in-buffer");
             break;
 
+        case 'f':
         case 't':
             till_pending = 1;
             break;
 
+        case 'F':
         case 'T':
             till_pending = 2;
             break;

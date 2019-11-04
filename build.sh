@@ -23,7 +23,7 @@ else
 fi
 
 # I hate getting spammed with error messages
-ERR_LIM=" -fmax-errors=3"
+ERR_LIM=" -fmax-errors=3 -Wno-unused-command-line-argument"
 
 ${CC} --version ${ERR_LIM} 2>&1 > /dev/null
 
