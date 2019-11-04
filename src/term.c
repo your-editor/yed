@@ -1,5 +1,6 @@
 #include "internal.h"
 
+#define TERM_DEFAULT_READ_TIMEOUT (3)
 
 int yed_term_enter(void) {
     struct termios raw_term;
@@ -22,7 +23,7 @@ int yed_term_enter(void) {
     /* Return each byte, or zero for timeout. */
     raw_term.c_cc[VMIN] = 0;
     /* 300 ms timeout (unit is tens of second). */
-    raw_term.c_cc[VTIME] = 3;
+    raw_term.c_cc[VTIME] = TERM_DEFAULT_READ_TIMEOUT;
 
     tcsetattr(0, TCSAFLUSH, &raw_term);
 
@@ -33,6 +34,30 @@ int yed_term_enter(void) {
     printf(TERM_ALT_SCREEN);
 
     return 0;
+}
+
+void yed_term_timeout_on(void) {
+    struct termios raw_term;
+
+    tcgetattr(0, &raw_term);
+    raw_term.c_cc[VMIN] = 0;
+    tcsetattr(0, TCSAFLUSH, &raw_term);
+}
+
+void yed_term_timeout_off(void) {
+    struct termios raw_term;
+
+    tcgetattr(0, &raw_term);
+    raw_term.c_cc[VMIN] = 1;
+    tcsetattr(0, TCSAFLUSH, &raw_term);
+}
+
+void yed_term_set_timeout(int n_x_100_ms) {
+    struct termios raw_term;
+
+    tcgetattr(0, &raw_term);
+    raw_term.c_cc[VTIME] = n_x_100_ms;
+    tcsetattr(0, TCSAFLUSH, &raw_term);
 }
 
 int yed_term_exit(void) {

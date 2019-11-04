@@ -50,6 +50,7 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     FRAME_RESET_RECT(frame);
 
     frame->cursor_line     = 1;
+    frame->last_cursor_line= 1;
     frame->dirty_line      = frame->cursor_line;
     frame->cursor_col      = 1;
     frame->buffer_y_offset = 0;
@@ -543,6 +544,12 @@ void yed_frame_update(yed_frame *frame) {
     char      *cell_row;
     yed_event  update_event, buff_draw_event;
 
+    if (frame->last_cursor_line - frame->cursor_line > 1
+    ||  frame->last_cursor_line - frame->cursor_line < -1) {
+
+        frame->dirty = 1;
+    }
+
     update_event.kind     = EVENT_FRAME_PRE_UPDATE;
     update_event.frame    = frame;
     buff_draw_event.kind  = EVENT_FRAME_PRE_BUFF_DRAW;
@@ -576,6 +583,7 @@ void yed_frame_update(yed_frame *frame) {
     }
 
     frame->dirty = frame->dirty_line = 0;
+    frame->last_cursor_line = frame->cursor_line;
 }
 
 void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines, int buff_big_enough_to_scroll) {

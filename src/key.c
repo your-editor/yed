@@ -8,43 +8,65 @@ void yed_init_keys(void) {
     yed_set_default_key_bindings();
 }
 
-int esc_timout(char *seq) {
-    if (read(0, seq, 1)     == 0)    { return ESC; }
-    if (read(0, seq + 1, 1) == 0)    { return ESC; }
+int esc_timeout(int *input) {
+    char c;
 
-    return 0;
+    /* input[0] is ESC */
+
+    if (read(0, &c, 1) == 0) {
+        return 1;
+    }
+    input[1] = c;
+
+    if (read(0, &c, 1) == 0) {
+        return 2;
+    }
+    input[2] = c;
+
+    return 3;
 }
 
-int esc_sequence(char *seq) {
-    if (seq[0] == '[') { /* ESC [ sequences. */
-        if (seq[1] >= '0' && seq[1] <= '9') {
+int esc_sequence(int *input) {
+    char c;
+
+    /* the input length is 3 */
+    /* input[0] is ESC */
+
+    if (input[1] == '[') { /* ESC [ sequences. */
+        if (input[2] >= '0' && input[2] <= '9') {
             /* Extended escape, read additional byte. */
-            if (read(0, seq + 2, 1) == 0)    { return ESC; }
-            if (seq[2] == '~') {
-                switch (seq[1]) {
-                    case '3':    { return DEL_KEY;   }
-                    case '5':    { return PAGE_UP;   }
-                    case '6':    { return PAGE_DOWN; }
+            if (read(0, &c, 1) == 0) {
+                return 3;
+            }
+
+            if (c == '~') {
+                switch (input[2]) {
+                    case '3':    { input[0] = DEL_KEY;   break; }
+                    case '5':    { input[0] = PAGE_UP;   break; }
+                    case '6':    { input[0] = PAGE_DOWN; break; }
                 }
+                return 1;
             }
         } else {
-            switch (seq[1]) {
-                case 'A':    { return ARROW_UP;    }
-                case 'B':    { return ARROW_DOWN;  }
-                case 'C':    { return ARROW_RIGHT; }
-                case 'D':    { return ARROW_LEFT;  }
-                case 'H':    { return HOME_KEY;    }
-                case 'F':    { return END_KEY;     }
+            switch (input[2]) {
+                case 'A':    { input[0] = ARROW_UP;    break; }
+                case 'B':    { input[0] = ARROW_DOWN;  break; }
+                case 'C':    { input[0] = ARROW_RIGHT; break; }
+                case 'D':    { input[0] = ARROW_LEFT;  break; }
+                case 'H':    { input[0] = HOME_KEY;    break; }
+                case 'F':    { input[0] = END_KEY;     break; }
             }
+            return 1;
         }
-    } else if (seq[0] == 'O') { /* ESC O sequences. */
-        switch (seq[1]) {
-            case 'H':    { return HOME_KEY; }
-            case 'F':    { return END_KEY;  }
+    } else if (input[1] == 'O') { /* ESC O sequences. */
+        switch (input[2]) {
+            case 'H':    { input[0] = HOME_KEY; break; }
+            case 'F':    { input[0] = END_KEY;  break; }
         }
+        return 1;
     }
 
-    return 0;
+    return 3;
 }
 
 int yed_read_key_sequences(char first, int *input) {
@@ -107,16 +129,24 @@ int yed_read_key_sequences(char first, int *input) {
 
 int yed_read_keys(int *input) {
     int  nread;
-    char c,
-         esc_seq[3];
+    int  len;
+    char c;
 
     while ((nread = read(0, &c, 1)) == 0);
     if (nread == -1)    { return 0; }
 
     if (c == ESC) {
-        /* If this is just an ESC, we'll timeout here. */
-        if ((*input = esc_timout(esc_seq)))      { return 1; }
-        if ((*input = esc_sequence(esc_seq)))    { return 1; }
+        input[0] = c;
+
+        len = esc_timeout(input);
+
+        if (len == 3) {
+            return esc_sequence(input);
+        }
+
+        return len;
+/*         if ((*input = esc_timout(esc_seq)))      { return 1; } */
+/*         if ((*input = esc_sequence(esc_seq)))    { return 1; } */
     } else {
         return yed_read_key_sequences(c, input);
     }

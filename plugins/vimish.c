@@ -612,6 +612,7 @@ void vimish_insert(int key, char *key_str) {
             YEXE("delete-back");
             break;
 
+        case ESC:
         case CTRL_C:
             vimish_change_mode(MODE_NAV, 0, 1);
             break;
@@ -636,6 +637,7 @@ void vimish_delete(int key, char *key_str) {
     }
 
     switch (key) {
+        case ESC:
         case 'd':
             vimish_change_mode(MODE_NAV, 0, 0);
             break;
@@ -662,6 +664,7 @@ void vimish_yank(int key, char *key_str) {
     }
 
     switch (key) {
+        case ESC:
         case 'y':
             vimish_change_mode(MODE_NAV, 0, 0);
             break;
@@ -708,19 +711,8 @@ void vimish_man_word(int n_args, char **args) {
     free(word);
 }
 
-void enter_insert(void) {
-    /*
-    exit_insert_key = yed_plugin_vadd_key_sequence(Self, 2, 'j', 'j');
-    yed_plugin_bind_key(Self, exit_insert_key, "vimish-take-key", 1);
-    */
-}
-
-void exit_insert(void) {
-    /*
-    yed_unbind_key(exit_insert_key);
-    yed_delete_key_sequence(exit_insert_key);
-    */
-}
+void enter_insert(void) {}
+void exit_insert(void) {}
 
 void enter_delete(int by_line) {
     if (by_line) {

@@ -46,9 +46,14 @@
 #define TERM_CURSOR_MOVE_SEP ";"
 #define TERM_CURSOR_MOVE_END "H"
 
+#define TERM_DEFAULT_READ_TIMEOUT (3)
 
 int yed_term_enter(void);
 int yed_term_exit(void);
+
+void yed_term_timeout_on(void);
+void yed_term_timeout_off(void);
+void yed_term_set_timeout(int n_x_100_ms);
 
 int yed_term_get_dim(int *r, int *c);
 int yed_term_says_it_supports_truecolor(void);
