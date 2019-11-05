@@ -1036,7 +1036,9 @@ void yed_default_command_buffer(int n_args, char **args) {
         buffer = yed_create_buffer(args[0]);
         yed_append_text_to_cmd_buff(" (new buffer)");
         if (!yed_fill_buff_from_file(buffer, args[0])) {
-            buffer->path = strdup(args[0]);
+            buffer->path    = strdup(args[0]);
+            buffer->file.ft = yed_get_ft(args[0]);
+            buffer->kind    = BUFF_KIND_FILE;
             yed_append_text_to_cmd_buff(" (new file)");
         }
     }
