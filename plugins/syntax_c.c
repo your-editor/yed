@@ -138,6 +138,11 @@ void syntax_c_highlight(yed_event *event) {
     #define MIN_PPKWD_LEN (2)
     #define MAX_PPKWD_LEN (7)
 
+    frame = event->frame;
+    line  = yed_buff_get_line(frame->buffer, event->row);
+
+    if (!line->visual_width) { return; }
+
     com = yed_active_style_get_code_comment();
     key = yed_active_style_get_code_keyword();
     pp  = yed_active_style_get_code_preprocessor();
@@ -147,8 +152,6 @@ void syntax_c_highlight(yed_event *event) {
     cha = yed_active_style_get_code_character();
     str = yed_active_style_get_code_string();
 
-    frame = event->frame;
-    line  = yed_buff_get_line(frame->buffer, event->row);
     col   = 1;
 
     if (frame != last_frame) {

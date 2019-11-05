@@ -8,6 +8,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char *plugins[] = {
         "vimish",
         "syntax_c",
+        "syntax_sh",
         "indent_c",
         "autotrim",
         "make_check",
