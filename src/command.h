@@ -81,7 +81,6 @@ DEF_DEFAULT_COMMAND(paste_yank_buffer);
 DEF_DEFAULT_COMMAND(find_in_buffer);
 DEF_DEFAULT_COMMAND(find_next_in_buffer);
 DEF_DEFAULT_COMMAND(find_prev_in_buffer);
-DEF_DEFAULT_COMMAND(man);
 DEF_DEFAULT_COMMAND(style);
 DEF_DEFAULT_COMMAND(style_off);
 

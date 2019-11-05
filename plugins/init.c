@@ -11,6 +11,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "indent_c",
         "autotrim",
         "make_check",
+        "man",
         "comment",
         "proj",
         "style_first",
@@ -39,7 +40,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "nav",     "spc", "b", "o",       "buffer");
     YEXE("vimish-bind", "nav",     "spc", "b", "d",       "buffer-delete");
     YEXE("vimish-bind", "nav",     "ctrl-n",              "buffer-next");
-    YEXE("vimish-bind", "nav",     "M", "M",              "vimish-man-word");
+    YEXE("vimish-bind", "nav",     "M", "M",              "man-word");
     YEXE("vimish-bind", "nav",     "L", "L",              "kammerdiener-fill-cursor-line");
     YEXE("vimish-bind", "nav",     "ctrl-y",              "build-and-reload");
     YEXE("vimish-bind", "nav",     "ctrl-l",              "frame-next");

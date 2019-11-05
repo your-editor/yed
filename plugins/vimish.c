@@ -680,8 +680,8 @@ void vimish_quit(int n_args, char **args) {
 }
 
 void vimish_write_quit(int n_args, char **args) {
-    YEXE("write-buffer");
-    YEXE("quit");
+    YEXE("w");
+    YEXE("q");
 }
 
 void vimish_man_word(int n_args, char **args) {

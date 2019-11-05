@@ -113,7 +113,6 @@ do {                                                              \
     SET_DEFAULT_COMMAND("find-in-buffer",        find_in_buffer);
     SET_DEFAULT_COMMAND("find-next-in-buffer",   find_next_in_buffer);
     SET_DEFAULT_COMMAND("find-prev-in-buffer",   find_prev_in_buffer);
-    SET_DEFAULT_COMMAND("man",                   man);
     SET_DEFAULT_COMMAND("style",                 style);
     SET_DEFAULT_COMMAND("style-off",             style_off);
 }
@@ -2194,45 +2193,6 @@ void yed_default_command_find_prev_in_buffer(int n_args, char **args) {
     } else {
         yed_append_text_to_cmd_buff(ys->current_search);
     }
-}
-
-void yed_default_command_man(int n_args, char **args) {
-    char path_buff[128], cmd_buff[256], err_buff[256];
-    int  i, err;
-
-    path_buff[0] = 0;
-    cmd_buff[0]  = 0;
-    err_buff[0]  = 0;
-
-    strcat(cmd_buff, "bash -c 'man");
-    strcat(err_buff, "man");
-    strcat(path_buff, "/tmp/man");
-
-    for (i = 0; i < n_args; i += 1) {
-        strcat(cmd_buff, " ");
-        strcat(err_buff, " ");
-        strcat(path_buff, "_");
-        strcat(cmd_buff, args[i]);
-        strcat(path_buff, args[i]);
-        strcat(err_buff, args[i]);
-    }
-    strcat(path_buff, ".yed");
-    strcat(cmd_buff, " 2>&1 | col -bx > ");
-    strcat(cmd_buff, path_buff);
-    strcat(cmd_buff, " && test ${PIPESTATUS[0]} -eq 0'");
-
-    err = system(cmd_buff);
-
-    if (err) {
-        ys->redraw = 1; /* 'man' will poop on our screen if the command failed */
-        yed_append_text_to_cmd_buff("[!] command '");
-        yed_append_text_to_cmd_buff(err_buff);
-        yed_append_text_to_cmd_buff("' failed");
-        return;
-    }
-
-    YEXE("frame-new", "0.15", "0.15", "0.7", "0.7");
-    YEXE("buffer", path_buff);
 }
 
 void yed_default_command_style(int n_args, char **args) {
