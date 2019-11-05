@@ -72,3 +72,17 @@ char *yed_word_under_cursor(void) {
 
     return ret;
 }
+
+char * get_path_ext(char *path) {
+    char *ext;
+
+    ext = strrchr(path, '.');
+
+    if (!ext) {
+        /* no extension */
+    } else {
+        ext += 1;
+    }
+
+    return ext;
+}

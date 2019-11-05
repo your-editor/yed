@@ -668,7 +668,7 @@ void vimish_yank(int key, char *key_str) {
 }
 
 void vimish_write(int n_args, char **args) {
-    YEXE("write-buffer");
+    yed_execute_command("write-buffer", n_args, args);
 }
 
 void vimish_quit(int n_args, char **args) {

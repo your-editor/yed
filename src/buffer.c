@@ -384,7 +384,7 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
 }
 
 
-int yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
+int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
     FILE        *f;
     int          fd, i, j, line_len, file_size, did_map, *idx_it;
     struct stat  fs;
@@ -496,8 +496,9 @@ int yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
         }
     }
 
-    buff->path = strdup(path);
-    buff->kind = BUFF_KIND_FILE;
+    buff->path    = strdup(path);
+    buff->file.ft = yed_get_ft(path);
+    buff->kind    = BUFF_KIND_FILE;
 
     fclose(f);
 
@@ -506,7 +507,7 @@ int yed_fill_buff_from_file(yed_buffer *buff, const char *path) {
     return 1;
 }
 
-void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
+void yed_write_buff_to_file(yed_buffer *buff, char *path) {
     FILE      *f;
     yed_line  *line;
     yed_event  event;
@@ -532,6 +533,10 @@ void yed_write_buff_to_file(yed_buffer *buff, const char *path) {
         fprintf(f, "\n");
     }
 
+    if (!buff->path) {
+        buff->path    = strdup(path);
+        buff->file.ft = yed_get_ft(path);
+    }
     buff->kind = BUFF_KIND_FILE;
 
     fclose(f);

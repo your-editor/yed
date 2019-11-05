@@ -48,12 +48,4 @@ void yed_plugin_set_unload_fn(yed_plugin *plug, yed_plugin_unload_fn_t fn);
 
 void yed_add_plugin_dir(char *s);
 
-#define YEXE(cmd_name, ...)                                  \
-do {                                                         \
-    char *__YEXE_args[] = { __VA_ARGS__ };                   \
-    yed_execute_command((cmd_name),                          \
-                        sizeof(__YEXE_args) / sizeof(char*), \
-                        __YEXE_args);                        \
-} while (0)
-
 #endif

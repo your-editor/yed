@@ -3,4 +3,6 @@
 
 char * yed_word_under_cursor(void);
 
+char * get_path_ext(char *path);
+
 #endif

@@ -60,7 +60,7 @@ typedef struct {
 typedef struct yed_buffer_t {
     int             kind;
     int             flags;
-    yed_file       *file;
+    yed_file        file;
     char           *name;
     char           *path;
     bucket_array_t  lines;
@@ -94,8 +94,8 @@ void yed_buff_delete_line(yed_buffer *buff, int row);
 void yed_insert_into_line(yed_buffer *buff, int row, int col, char c);
 void yed_delete_from_line(yed_buffer *buff, int row, int col);
 
-int yed_fill_buff_from_file(yed_buffer *buff, const char *path);
-void yed_write_buff_to_file(yed_buffer *buff, const char *path);
+int yed_fill_buff_from_file(yed_buffer *buff, char *path);
+void yed_write_buff_to_file(yed_buffer *buff, char *path);
 
 int yed_is_in_range(yed_range *range, int row, int col);
 void yed_buff_delete_selection(yed_buffer *buff);

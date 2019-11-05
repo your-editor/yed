@@ -235,4 +235,12 @@ const char * u8_to_s[] = {
 "240", "241", "242", "243", "244", "245", "246", "247", "248", "249", "250", "251", "252", "253", "254", "255"
 };
 
+#define YEXE(cmd_name, ...)                                  \
+do {                                                         \
+    char *__YEXE_args[] = { __VA_ARGS__ };                   \
+    yed_execute_command((cmd_name),                          \
+                        sizeof(__YEXE_args) / sizeof(char*), \
+                        __YEXE_args);                        \
+} while (0)
+
 #endif

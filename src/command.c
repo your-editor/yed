@@ -1564,7 +1564,7 @@ void yed_default_command_delete_line(int n_args, char **args) {
 void yed_default_command_write_buffer(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
-    const char *path;
+    char       *path;
 
     if (!ys->active_frame) {
         yed_append_text_to_cmd_buff("[!] no active frame");

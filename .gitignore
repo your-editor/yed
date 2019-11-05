@@ -6,3 +6,4 @@ bprofile
 .DS_Store
 *.so
 *.dSYM*
+osx_install.sh
