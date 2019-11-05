@@ -341,7 +341,6 @@ void yed_default_command_build_and_reload(int n_args, char **args) {
     int err;
 
     printf(TERM_STD_SCREEN);
-    printf(TERM_CURSOR_HOME);
     err = system("./build.sh debug 2>&1 | less");
     printf(TERM_ALT_SCREEN);
 
@@ -369,7 +368,6 @@ void yed_default_command_sh(int n_args, char **args) {
     }
 
     printf(TERM_STD_SCREEN);
-    printf(TERM_CURSOR_HOME);
     err = system(buff);
     printf(TERM_ALT_SCREEN);
 

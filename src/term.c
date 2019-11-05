@@ -5,6 +5,8 @@
 int yed_term_enter(void) {
     struct termios raw_term;
 
+/*     printf("[yed] entering raw terminal mode\n"); */
+
     tcgetattr(0, &ys->sav_term);
     raw_term          = ys->sav_term;
 
@@ -28,8 +30,6 @@ int yed_term_enter(void) {
     tcsetattr(0, TCSAFLUSH, &raw_term);
 
     setvbuf(stdout, NULL, _IONBF, 0);
-
-    printf("[yed] entering raw terminal mode\n");
 
     printf(TERM_ALT_SCREEN);
 
@@ -61,11 +61,17 @@ void yed_term_set_timeout(int n_x_100_ms) {
 }
 
 int yed_term_exit(void) {
+    if (yed_term_has_exited) {
+        return 0;
+    }
+
     printf(TERM_STD_SCREEN);
 
     tcsetattr(0, TCSAFLUSH, &ys->sav_term);
 
-    printf("[yed] exited raw terminal mode\n");
+/*     printf("[yed] exited raw terminal mode\n"); */
+
+    yed_term_has_exited = 1;
 
     return 0;
 }

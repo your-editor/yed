@@ -159,11 +159,7 @@ void yed_fini(yed_state *state) {
 
     bytes = pretty_bytes(getPeakRSS());
 
-    printf(TERM_CURSOR_HIDE
-           TERM_CLEAR_SCREEN
-           TERM_CURSOR_HOME
-           TERM_CURSOR_SHOW
-           "Peak RSS: %s\nThanks for using yed!\n", bytes);
+    printf("Peak RSS: %s\nThanks for using yed!\n", bytes);
 
     free(bytes);
 }
