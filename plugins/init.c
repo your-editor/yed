@@ -42,6 +42,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "nav",     "M", "M",              "vimish-man-word");
     YEXE("vimish-bind", "nav",     "L", "L",              "kammerdiener-fill-cursor-line");
     YEXE("vimish-bind", "nav",     "ctrl-y",              "build-and-reload");
+    YEXE("vimish-bind", "nav",     "ctrl-l",              "frame-next");
     YEXE("vimish-bind", "nav",     ">",                   "indent-line");
     YEXE("vimish-bind", "nav",     "<",                   "unindent-line");
 

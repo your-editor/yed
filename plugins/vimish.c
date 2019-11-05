@@ -523,18 +523,6 @@ void vimish_nav(int key, char *key_str) {
     YEXE("select-off");
 
     switch (key) {
-        case CTRL_L:
-            YEXE("frame-next");
-            break;
-
-        case CTRL_P:
-            fill_cmd_prompt("plugin-load");
-            break;
-
-        case CTRL_S:
-            fill_cmd_prompt("sh");
-            break;
-
         case 'd':
             vimish_start_repeat(key);
             vimish_change_mode(MODE_DELETE, 0, 0);
