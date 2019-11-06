@@ -105,10 +105,11 @@ void yed_set_default_styles(void) {
 
     s.active.flags        = ATTR_16;
     s.active.fg           = ATTR_16_GREY;
+    s.active.bg           = ATTR_16_BLACK;
 
     s.inactive.flags      = ATTR_16;
-    s.inactive.fg         = ATTR_16_GREY;
-    s.inactive.bg         = ATTR_16_BLACK;
+    s.inactive.fg         = ATTR_16_BLACK;
+    s.inactive.bg         = ATTR_16_GREY;
 
     s.cursor_line         = s.active;
 
@@ -123,7 +124,7 @@ void yed_set_default_styles(void) {
     s.search_cursor.bg        = ATTR_16_MAGENTA;
 
     s.code_comment.flags = ATTR_16 | ATTR_16_LIGHT;
-    s.code_comment.fg    = ATTR_16_MAGENTA;
+    s.code_comment.fg    = ATTR_16_YELLOW;
 
     s.code_keyword.flags = ATTR_16;
     s.code_keyword.fg    = ATTR_16_RED;
@@ -131,7 +132,7 @@ void yed_set_default_styles(void) {
     s.code_preprocessor = s.code_keyword;
 
     s.code_fn_call.flags = ATTR_16 | ATTR_16_LIGHT;
-    s.code_fn_call.fg    = ATTR_16_WHITE;
+    s.code_fn_call.fg    = ATTR_16_MAGENTA;
 
     s.code_number.flags = ATTR_16 | ATTR_16_LIGHT;
     s.code_number.fg    = ATTR_16_BLUE;
