@@ -14,6 +14,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "make_check",
         "man",
         "comment",
+        "latex",
         "proj",
         "style_first",
         "style_elise",
@@ -31,10 +32,14 @@ int yed_plugin_boot(yed_plugin *self) {
     }
 
     YEXE("set", "tab-width", "4");
+    YEXE("set", "latex-comp-prg", "pdflatex -halt-on-error --interaction=nonstopmode");
+    YEXE("set", "latex-view-prg", "open -a Skim");
 
     YEXE("vimish-bind", "insert",  "j", "j",              "vimish-exit-insert");
     YEXE("vimish-bind", "nav",     "spc", "m", "c",       "make-check");
     YEXE("vimish-bind", "nav",     "spc", "c", "o",       "comment-toggle-line");
+    YEXE("vimish-bind", "nav",     "spc", "l", "c",       "latex-compile-current-file");
+    YEXE("vimish-bind", "nav",     "spc", "l", "v",       "latex-view-current-file");
     YEXE("vimish-bind", "nav",     "spc", "r", "d",       "redraw");
     YEXE("vimish-bind", "nav",     "spc", "v", "s", "p",  "frame-vsplit");
     YEXE("vimish-bind", "nav",     "spc", "h", "s", "p",  "frame-hsplit");

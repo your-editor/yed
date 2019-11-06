@@ -3,6 +3,7 @@
 
 char * yed_word_under_cursor(void);
 
-char * get_path_ext(char *path);
+char * get_path_ext(char *path);     /* Don't free result. */
+char * path_without_ext(char *path); /* DO free result. */
 
 #endif

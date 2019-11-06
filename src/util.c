@@ -86,3 +86,20 @@ char * get_path_ext(char *path) {
 
     return ext;
 }
+
+char * path_without_ext(char *path) {
+    char *ext;
+    char *cpy;
+    int   len;
+
+    cpy = strdup(path);
+    len = strlen(cpy);
+
+    ext = get_path_ext(cpy);
+
+    if (ext) {
+        cpy[len - strlen(ext) - 1] = 0;
+    }
+
+    return cpy;
+}
