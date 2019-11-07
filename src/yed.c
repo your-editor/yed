@@ -259,6 +259,8 @@ int yed_pump(void) {
 
     ys->redraw = 0;
 
+    append_to_output_buff(TERM_RESET);
+
     if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_CURSOR_SHOW);
@@ -266,9 +268,6 @@ int yed_pump(void) {
         write_cursor_loc_and_key(keys[0]);
         append_to_output_buff(TERM_CURSOR_SHOW);
     }
-
-    append_to_output_buff(TERM_RESET);
-
 
     if (ys->status == YED_RELOAD) {
         yed_unload_plugin_libs();
