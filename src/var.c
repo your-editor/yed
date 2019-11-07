@@ -6,6 +6,7 @@ void yed_init_vars(void) {
 
 void yed_set_default_vars(void) {
     yed_set_var("tab-width", "4");
+    /* indent-c-disable-bs is not set by default */
 }
 
 void yed_set_var(char *var, char *val) {
