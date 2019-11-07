@@ -245,8 +245,6 @@ int yed_pump(void) {
      */
     pthread_mutex_unlock(&ys->write_ready_mtx);
 
-
-
     append_to_output_buff(TERM_CURSOR_HIDE);
 
     n_keys = yed_read_keys(keys);
@@ -259,14 +257,18 @@ int yed_pump(void) {
 
     ys->redraw = 0;
 
-    append_to_output_buff(TERM_RESET);
 
     if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
+        append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
         write_cursor_loc_and_key(keys[0]);
+        append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
+    } else {
+        append_to_output_buff(TERM_CURSOR_HIDE);
+        append_to_output_buff(TERM_RESET);
     }
 
     if (ys->status == YED_RELOAD) {
