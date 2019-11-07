@@ -153,6 +153,18 @@ void yed_free_line(yed_line *line) {
     array_free(line->chars);
 }
 
+yed_line * yed_copy_line(yed_line *line) {
+    yed_line *new_line;
+
+    new_line  = malloc(sizeof(*new_line));
+    *new_line = yed_new_line();
+
+    new_line->visual_width = line->visual_width;
+    array_copy(new_line->chars, line->chars);
+
+    return new_line;
+}
+
 void yed_line_add_char(yed_line *line, char c, int idx) {
     array_insert(line->chars, idx, c); line->visual_width += 1;
 }
@@ -324,6 +336,23 @@ yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     }
 
     return bucket_array_item(buff->lines, idx);
+}
+
+void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line) {
+    int       idx;
+    yed_line *old_line;
+
+    idx = row - 1;
+
+    if (idx < 0 || idx >= bucket_array_len(buff->lines)) {
+        return;
+    }
+
+    old_line = bucket_array_item(buff->lines, idx);
+    yed_free_line(old_line);
+    old_line->visual_width = line->visual_width;
+    old_line->chars = array_make(char);
+    array_copy(old_line->chars, line->chars);
 }
 
 yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {

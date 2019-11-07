@@ -1,6 +1,8 @@
 #include "internal.h"
 
-void yed_init_search(void) { }
+void yed_init_search(void) {
+    ys->replace_markers = array_make(int);
+}
 
 void yed_search_line_handler(yed_event *event) {
     yed_frame  *frame;

@@ -487,6 +487,10 @@ int vimish_nav_common(int key, char *key_str) {
             YEXE("find-in-buffer");
             break;
 
+        case '?':
+            YEXE("replace-current-search");
+            break;
+
         case 'n':
             YEXE("find-next-in-buffer");
             break;

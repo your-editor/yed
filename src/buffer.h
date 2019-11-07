@@ -77,6 +77,8 @@ yed_line yed_new_line(void);
 yed_line yed_new_line_with_cap(int len);
 void yed_free_line(yed_line *line);
 
+yed_line * yed_copy_line(yed_line *line);
+
 yed_buffer yed_new_buff(void);
 yed_buffer *yed_create_buffer(char *name);
 void yed_free_buffer(yed_buffer *buffer);
@@ -89,6 +91,7 @@ char yed_line_col_to_char(yed_line *line, int col);
 void yed_line_clear(yed_line *line);
 
 yed_line * yed_buff_get_line(yed_buffer *buff, int row);
+void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line);
 yed_line * yed_buff_insert_line(yed_buffer *buff, int row);
 void yed_buff_delete_line(yed_buffer *buff, int row);
 void yed_insert_into_line(yed_buffer *buff, int row, int col, char c);
