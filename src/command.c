@@ -228,12 +228,19 @@ void yed_do_command(void) {
 }
 
 void yed_command_take_key(int key) {
-    tree_it(yed_command_name_t, yed_command) it;
+    tree_it(yed_command_name_t, yed_command)  it;
+    char                                     *c;
 
     if (key == CTRL_F || key == CTRL_C) {
         ys->interactive_command = NULL;
         yed_clear_cmd_buff();
     } else if (key == TAB) {
+        array_traverse(ys->cmd_buff, c) {
+            if (*c == ' ') {
+                return;
+            }
+        }
+
         array_zero_term(ys->cmd_buff);
         it = tree_gtr(ys->commands, array_data(ys->cmd_buff));
         if (tree_it_good(it)) {
