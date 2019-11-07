@@ -35,7 +35,7 @@ void syntax_sh_highlight(yed_event *event) {
     yed_frame *frame;
     yed_line  *line;
     yed_attrs *attr, com, key, cal, num, con, cha, str;
-    int        col, old_col, word_len, spaces, last_spaces, i, j, k, match, balance, expan_col, sq_string_on, dq_string_on, str_delim,
+    int        col, old_col, word_len, spaces, last_spaces, i, j, k, match, balance, expan_col, sq_string_on, dq_string_on, save_sq_string_on, save_dq_string_on, str_delim,
                last_was_minus, last_was_dollar, last_was_dollar_bracket, last_was_dollar_paren;
     char       c, *word,
               *kwds[][8] = {
@@ -257,10 +257,10 @@ void syntax_sh_highlight(yed_event *event) {
             }
         }
 
-        if (!match) {
-            sq_string_on = 0;
-            dq_string_on = 0;
+        sq_string_on            = 0;
+        dq_string_on            = 0;
 
+        if (!match) {
             if (last_was_dollar) {
                 attr         = array_item(event->line_attrs, old_col - 2);
                 attr->flags &= ~(ATTR_BOLD);
@@ -294,23 +294,36 @@ void syntax_sh_highlight(yed_event *event) {
                     str_delim = 0;
                     c         = yed_line_col_to_char(line, expan_col);
 
-                    if      (c == '(')  { balance  += 1; }
-                    else if (c == ')')  { balance  -= 1; }
-                    else if (c == '\"') {
+                    if (c == '(') {
+                        balance  += 1;
+                    } else if (c == ')') {
+                        dq_string_on = save_dq_string_on;
+                        sq_string_on = save_sq_string_on;
+                        balance  -= 1;
+                    } else if (c == '"') {
                         if (expan_col == 1 || yed_line_col_to_char(line, expan_col - 1) != '\\') {
                             str_delim = 1;
                         }
                     } else if (c == '\'') {
                         str_delim = 1;
+                    } else if (c == '$') {
+                        if (expan_col < array_len(line->chars)) {
+                            if (yed_line_col_to_char(line, expan_col + 1) == '(') {
+                                save_dq_string_on = dq_string_on;
+                                save_sq_string_on = sq_string_on;
+                                dq_string_on = 0;
+                                sq_string_on = 0;
+                            }
+                        }
                     }
 
                     if (str_delim) {
                         if (!dq_string_on && c == '\"') {
                             str_delim = 0;
-                            dq_string_on = 1;
+                            dq_string_on = !dq_string_on;
                         } else if (!sq_string_on && c == '\'') {
                             str_delim = 0;
-                            sq_string_on = 1;
+                            sq_string_on = !sq_string_on;
                         }
                     }
 
@@ -332,8 +345,8 @@ void syntax_sh_highlight(yed_event *event) {
                     }
 
                     if (str_delim) {
-                        if      (dq_string_on) { dq_string_on = 0; }
-                        else if (sq_string_on) { sq_string_on = 0; }
+                        if      (dq_string_on) { dq_string_on = !dq_string_on; }
+                        else if (sq_string_on) { sq_string_on = !dq_string_on; }
                     }
 
                     expan_col += 1;
@@ -358,7 +371,7 @@ void syntax_sh_highlight(yed_event *event) {
 
                     if      (c == '{')  { balance  += 1; }
                     else if (c == '}')  { balance  -= 1; }
-                    else if (c == '\"') {
+                    else if (c == '"')  {
                         if (expan_col == 1 || yed_line_col_to_char(line, expan_col - 1) != '\\') {
                             str_delim = 1;
                         }
@@ -367,7 +380,7 @@ void syntax_sh_highlight(yed_event *event) {
                     }
 
                     if (str_delim) {
-                        if (!dq_string_on && c == '\"') {
+                        if (!dq_string_on && c == '"') {
                             str_delim = 0;
                             dq_string_on = 1;
                         } else if (!sq_string_on && c == '\'') {
@@ -410,13 +423,15 @@ void syntax_sh_highlight(yed_event *event) {
                     c = yed_line_col_to_char(line, old_col + i);
                     if (c == '$') {
                         for (j = i; j < word_len; j += 1) {
+                            c = yed_line_col_to_char(line, old_col + j);
+                            if (c == '"')    { break; }
+
                             attr          = array_item(event->line_attrs, old_col + j - 1);
                             attr->flags  &= ~(ATTR_BOLD);
                             attr->flags  |= con.flags;
                             attr->fg      = con.fg;
                             col_filter[old_col + j] = 1;
                         }
-                        match = 1;
                         break;
                     }
                 }
@@ -425,18 +440,25 @@ void syntax_sh_highlight(yed_event *event) {
 
         last_was_dollar         = !spaces && ((word_len == 1 && (strncmp(word, "$", 1) == 0))
                                           ||  (strncmp(word + word_len - 1, "$", 1) == 0));
-        last_was_dollar_bracket = ((word_len == 2 && (strncmp(word, "${", 2) == 0))
-                                          ||  (strncmp(word + word_len - 2, "${", 2) == 0));
-        last_was_dollar_paren   = ((word_len == 2 && (strncmp(word, "$(", 2) == 0))
-                                          ||  (strncmp(word + word_len - 2, "$(", 2) == 0));
+        last_was_dollar_bracket = last_was_dollar_paren = 0;
+        for (i = 0; i < word_len - 1; i += 1) {
+            c = yed_line_col_to_char(line, old_col + i);
+            if (c == '$') {
+                c = yed_line_col_to_char(line, old_col + i + 1);
+                if (c == '{') {
+                    last_was_dollar_bracket = 1;
+                    spaces = word_len - i - 2;
+                    break;
+                } else if (c == '(') {
+                    last_was_dollar_paren   = 1;
+                    spaces = word_len - i - 2;
+                    break;
+                }
+            }
+        }
 
         last_spaces = spaces;
     }
-
-
-
-
-
 
     match = 0;
 
@@ -521,8 +543,7 @@ void syntax_sh_highlight(yed_event *event) {
     i = 0;
     while (i < array_len(line->chars)) {
         word = array_item(line->chars, i);
-
-        if (*word == '#') {
+        if (!col_filter[i + 1] && *word == '#') {
             for (k = i; k < array_len(line->chars); k += 1) {
                 attr         = array_item(event->line_attrs, k);
                 attr->flags &= ~(ATTR_BOLD);

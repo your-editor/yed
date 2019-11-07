@@ -865,7 +865,7 @@ again:
                 break;
             }
         }
-    } else {
+    } else if (!isspace(c)) {
         while (col <= line->visual_width) {
             col += 1;
             c    = yed_line_col_to_char(line, col);
