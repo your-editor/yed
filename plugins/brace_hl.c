@@ -116,10 +116,11 @@ void brace_hl_find_braces(yed_frame *frame) {
         if (line->visual_width == 0) { continue; }
 
         if (row == frame->cursor_line) {
-            c = yed_line_col_to_char(line, col);
-            if (c == '}') {
-                balance = 1;
+            if (col == 1) { continue; }
+            else if (col > 1) {
+                col -= 1;
             }
+            c = yed_line_col_to_char(line, col);
             start = col - 1;
         } else {
             start = array_len(line->chars) - 1;
@@ -144,6 +145,7 @@ void brace_hl_find_braces(yed_frame *frame) {
 done_back:
 
     row     = frame->cursor_line;
+    col     = frame->cursor_col;
     balance = 0;
 
     /* Scan forwards. */
@@ -154,9 +156,6 @@ done_back:
 
         if (row == frame->cursor_line) {
             c = yed_line_col_to_char(line, col);
-            if (c == '{') {
-                balance = -1;
-            }
             start = col - 1;
         } else {
             start = 0;
