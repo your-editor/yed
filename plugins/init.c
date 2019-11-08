@@ -54,7 +54,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "nav",     ">",                   "indent-line");
     YEXE("vimish-bind", "nav",     "<",                   "unindent-line");
 
-    if (yed_term_says_it_supports_truecolor()) {
+    if (0 && yed_term_says_it_supports_truecolor()) {
         YEXE("style", "first-dark");
     } else {
         YEXE("style", "default");

@@ -4,6 +4,7 @@
 #define FT_TXT     (1)
 #define FT_C       (2)
 #define FT_SH      (3)
+#define FT_LATEX   (4)
 
 typedef struct {
     int ft;

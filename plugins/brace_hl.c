@@ -37,7 +37,8 @@ void brace_hl_cursor_moved_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_C) {
+    ||  (frame->buffer->file.ft != FT_C
+      && frame->buffer->file.ft != FT_LATEX)) {
         return;
     }
 
@@ -62,7 +63,8 @@ void brace_hl_line_handler(yed_event *event) {
     ||  frame != ys->active_frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_C) {
+    ||  (frame->buffer->file.ft != FT_C
+      && frame->buffer->file.ft != FT_LATEX)) {
         return;
     }
 
@@ -79,7 +81,8 @@ void brace_hl_buff_mod_handler(yed_event *event) {
     ||  frame != ys->active_frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_C) {
+    ||  (frame->buffer->file.ft != FT_C
+      && frame->buffer->file.ft != FT_LATEX)) {
         return;
     }
 

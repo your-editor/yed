@@ -115,38 +115,38 @@ void yed_set_default_styles(void) {
 
     s.selection.flags     = ATTR_INVERSE;
 
-    s.search.flags     = ATTR_16 | ATTR_16_LIGHT;
-    s.search.fg        = ATTR_16_BLUE;
-    s.search.bg        = ATTR_16_YELLOW;
+    s.search.flags        = ATTR_16 | ATTR_16_LIGHT;
+    s.search.fg           = ATTR_16_BLUE;
+    s.search.bg           = ATTR_16_YELLOW;
 
-    s.search_cursor.flags     = ATTR_16 | ATTR_16_LIGHT;
-    s.search_cursor.fg        = ATTR_16_BLUE;
-    s.search_cursor.bg        = ATTR_16_MAGENTA;
+    s.search_cursor.flags = ATTR_16 | ATTR_16_LIGHT;
+    s.search_cursor.fg    = ATTR_16_BLUE;
+    s.search_cursor.bg    = ATTR_16_MAGENTA;
 
-    s.attention.flags = ATTR_16 | ATTR_16_LIGHT;
-    s.attention.fg    = ATTR_16_YELLOW;
+    s.attention.flags     = ATTR_16 | ATTR_16_LIGHT;
+    s.attention.fg        = ATTR_16_YELLOW;
 
-    s.code_comment.flags = ATTR_16 | ATTR_16_LIGHT;
-    s.code_comment.fg    = ATTR_16_YELLOW;
+    s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT;
+    s.code_comment.fg     = ATTR_16_YELLOW;
 
-    s.code_keyword.flags = ATTR_16;
-    s.code_keyword.fg    = ATTR_16_RED;
+    s.code_keyword.flags  = ATTR_16;
+    s.code_keyword.fg     = ATTR_16_RED;
 
-    s.code_preprocessor = s.code_keyword;
+    s.code_preprocessor   = s.code_keyword;
 
-    s.code_fn_call.flags = ATTR_16 | ATTR_16_LIGHT;
-    s.code_fn_call.fg    = ATTR_16_MAGENTA;
+    s.code_fn_call.flags  = ATTR_16 | ATTR_16_LIGHT;
+    s.code_fn_call.fg     = ATTR_16_MAGENTA;
 
-    s.code_number.flags = ATTR_16 | ATTR_16_LIGHT;
-    s.code_number.fg    = ATTR_16_BLUE;
+    s.code_number.flags   = ATTR_16 | ATTR_16_LIGHT;
+    s.code_number.fg      = ATTR_16_BLUE;
 
     s.code_constant.flags = ATTR_16;
     s.code_constant.fg    = ATTR_16_CYAN;
 
-    s.code_string.flags = ATTR_16;
-    s.code_string.fg    = ATTR_16_GREEN;
+    s.code_string.flags   = ATTR_16;
+    s.code_string.fg      = ATTR_16_GREEN;
 
-    s.code_character = s.code_string;
+    s.code_character      = s.code_string;
 
     yed_set_style("default", &s);
 
