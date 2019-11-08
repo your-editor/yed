@@ -574,6 +574,11 @@ enter_insert:
             vimish_change_mode(MODE_INSERT, 0, 0);
             break;
 
+        case DEL_KEY:
+            vimish_start_repeat(key);
+            YEXE("delete-forward");
+            break;
+
         case '.':
             vimish_repeat();
             break;
@@ -610,6 +615,10 @@ void vimish_insert(int key, char *key_str) {
 
         case BACKSPACE:
             YEXE("delete-back");
+            break;
+
+        case DEL_KEY:
+            YEXE("delete-forward");
             break;
 
         case ESC:

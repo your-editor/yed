@@ -68,6 +68,7 @@ DEF_DEFAULT_COMMAND(frame_hsplit);
 DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(delete_back);
+DEF_DEFAULT_COMMAND(delete_forward);
 DEF_DEFAULT_COMMAND(delete_line);
 DEF_DEFAULT_COMMAND(write_buffer);
 DEF_DEFAULT_COMMAND(plugin_load);

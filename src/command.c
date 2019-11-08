@@ -101,6 +101,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-next",             frame_next);
     SET_DEFAULT_COMMAND("insert",                 insert);
     SET_DEFAULT_COMMAND("delete-back",            delete_back);
+    SET_DEFAULT_COMMAND("delete-forward",         delete_forward);
     SET_DEFAULT_COMMAND("delete-line",            delete_line);
     SET_DEFAULT_COMMAND("write-buffer",           write_buffer);
     SET_DEFAULT_COMMAND("plugin-load",            plugin_load);
@@ -1591,6 +1592,61 @@ void yed_default_command_delete_back(int n_args, char **args) {
 
     event.kind  = EVENT_BUFFER_POST_DELETE_BACK;
     yed_trigger_event(&event);
+
+    event.kind = EVENT_BUFFER_POST_MOD;
+    yed_trigger_event(&event);
+}
+
+void yed_default_command_delete_forward(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *line;
+    yed_event  event;
+    int        row, col;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    if (frame->buffer->flags & BUFF_RD_ONLY) {
+        yed_append_text_to_cmd_buff("[!] buffer is read-only");
+        return;
+    }
+
+    row = frame->cursor_line;
+    col = frame->cursor_col;
+
+    line = yed_buff_get_line(frame->buffer, row);
+
+    if (line->visual_width == 0) {
+        return;
+    }
+
+    event.kind  = EVENT_BUFFER_PRE_MOD;
+    event.frame = frame;
+    event.row   = row;
+    event.col   = col;
+
+    yed_trigger_event(&event);
+
+    if (col == line->visual_width + 1) {
+        yed_move_cursor_within_frame(frame, -1, 0);
+        col = frame->cursor_col;
+    }
+    yed_delete_from_line(frame->buffer, row, col);
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
