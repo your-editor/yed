@@ -12,6 +12,7 @@ typedef char *yed_style_name_t;
     __SCOMP(selection)         \
     __SCOMP(search)            \
     __SCOMP(search_cursor)     \
+    __SCOMP(attention)         \
     __SCOMP(code_comment)      \
     __SCOMP(code_keyword)      \
     __SCOMP(code_preprocessor) \

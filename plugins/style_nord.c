@@ -49,6 +49,9 @@ int yed_plugin_boot(yed_plugin *self) {
     s.selection.fg        = nord5;
     s.selection.bg        = nord2;
 
+    s.attention.flags     = ATTR_RGB;
+    s.attention.fg        = nord11;
+
     s.code_comment.flags  = ATTR_RGB;
     s.code_comment.fg     = nord3_but_brighter;
 

@@ -123,6 +123,9 @@ void yed_set_default_styles(void) {
     s.search_cursor.fg        = ATTR_16_BLUE;
     s.search_cursor.bg        = ATTR_16_MAGENTA;
 
+    s.attention.flags = ATTR_16 | ATTR_16_LIGHT;
+    s.attention.fg    = ATTR_16_YELLOW;
+
     s.code_comment.flags = ATTR_16 | ATTR_16_LIGHT;
     s.code_comment.fg    = ATTR_16_YELLOW;
 

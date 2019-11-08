@@ -9,6 +9,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "vimish",
         "syntax_c",
         "syntax_sh",
+        "brace_hl",
         "indent_c",
         "autotrim",
         "make_check",

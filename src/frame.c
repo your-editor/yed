@@ -666,12 +666,18 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
 }
 
 void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
+    yed_event event;
     int       col, row;
 
     row = new_y - f->cursor_line;
     yed_move_cursor_within_frame(f, 0, row);
     col = new_x - f->cursor_col;
     yed_move_cursor_within_frame(f, col, 0);
+
+    event.kind  = EVENT_CURSOR_MOVED;
+    event.frame = f;
+
+    yed_trigger_event(&event);
 }
 
 void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
@@ -683,6 +689,7 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
               buff_big_enough_to_scroll,
               save_cursor_line;
     yed_line *line;
+    yed_event event;
 
     buff_n_lines              = bucket_array_len(f->buffer->lines);
     buff_big_enough_to_scroll = buff_n_lines > 2 * f->scroll_off;
@@ -736,6 +743,11 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
     if (row > 1 || row < -1) {
         f->dirty = 1;
     }
+
+    event.kind  = EVENT_CURSOR_MOVED;
+    event.frame = f;
+
+    yed_trigger_event(&event);
 
 }
 
