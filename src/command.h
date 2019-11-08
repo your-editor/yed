@@ -51,6 +51,8 @@ DEF_DEFAULT_COMMAND(cursor_prev_word);
 DEF_DEFAULT_COMMAND(cursor_next_word);
 DEF_DEFAULT_COMMAND(cursor_prev_paragraph);
 DEF_DEFAULT_COMMAND(cursor_next_paragraph);
+DEF_DEFAULT_COMMAND(cursor_page_up);
+DEF_DEFAULT_COMMAND(cursor_page_down);
 DEF_DEFAULT_COMMAND(cursor_buffer_begin);
 DEF_DEFAULT_COMMAND(cursor_buffer_end);
 DEF_DEFAULT_COMMAND(cursor_line);

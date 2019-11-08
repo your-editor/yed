@@ -81,8 +81,11 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-line-end",        cursor_line_end);
     SET_DEFAULT_COMMAND("cursor-prev-word",       cursor_prev_word);
     SET_DEFAULT_COMMAND("cursor-next-word",       cursor_next_word);
+    SET_DEFAULT_COMMAND("cursor-next-word",       cursor_next_word);
     SET_DEFAULT_COMMAND("cursor-prev-paragraph",  cursor_prev_paragraph);
     SET_DEFAULT_COMMAND("cursor-next-paragraph",  cursor_next_paragraph);
+    SET_DEFAULT_COMMAND("cursor-page-up",         cursor_page_up);
+    SET_DEFAULT_COMMAND("cursor-page-down",       cursor_page_down);
     SET_DEFAULT_COMMAND("cursor-buffer-begin",    cursor_buffer_begin);
     SET_DEFAULT_COMMAND("cursor-buffer-end",      cursor_buffer_end);
     SET_DEFAULT_COMMAND("cursor-line",            cursor_line);
@@ -1020,6 +1023,94 @@ void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
     i += 1;
 
     yed_move_cursor_within_frame(frame, 0, i);
+}
+
+void yed_default_command_cursor_page_up(int n_args, char **args) {
+    yed_frame  *frame;
+    int         top_line;
+    int         want_top_line;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
+    if (bucket_array_len(frame->buffer->lines) <= frame->height) {
+        return;
+    }
+
+    top_line      = frame->buffer_y_offset + 1;
+    want_top_line = top_line - frame->height;
+    if (want_top_line <= 0) {
+        want_top_line = 1;
+    }
+    while (top_line != want_top_line) {
+        yed_move_cursor_within_frame(frame, 0, -1);
+        top_line = frame->buffer_y_offset + 1;
+    }
+}
+
+void yed_default_command_cursor_page_down(int n_args, char **args) {
+    yed_frame  *frame;
+    int         top_line;
+    int         want_top_line;
+    int         max_top_line;
+
+    if (n_args > 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
+
+    if (bucket_array_len(frame->buffer->lines) <= frame->height) {
+        return;
+    }
+
+    top_line      = frame->buffer_y_offset + 1;
+    want_top_line = top_line + frame->height;
+    max_top_line  = bucket_array_len(frame->buffer->lines) - frame->height + 1;
+    if (want_top_line >= max_top_line) {
+        want_top_line = max_top_line;
+    }
+    while (top_line != want_top_line) {
+        yed_move_cursor_within_frame(frame, 0, 1);
+        top_line = frame->buffer_y_offset + 1;
+    }
 }
 
 void yed_default_command_buffer(int n_args, char **args) {

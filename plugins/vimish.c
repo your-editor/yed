@@ -451,6 +451,14 @@ int vimish_nav_common(int key, char *key_str) {
             YEXE("cursor-right");
             break;
 
+        case PAGE_UP:
+            YEXE("cursor-page-up");
+            break;
+
+        case PAGE_DOWN:
+            YEXE("cursor-page-down");
+            break;
+
         case 'w':
             YEXE("cursor-next-word");
             break;

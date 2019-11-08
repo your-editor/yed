@@ -182,6 +182,8 @@ static yed_key_binding default_key_bindings[] = {
     { ARROW_DOWN,  0, "cursor-down"       },
     { ARROW_RIGHT, 0, "cursor-right"      },
     { ARROW_LEFT,  0, "cursor-left"       },
+    { PAGE_UP,     0, "cursor-page-up"    },
+    { PAGE_DOWN,   0, "cursor-page-down"  },
     { BACKSPACE,   0, "delete-back"       },
     { CTRL_C,      0, "yank-selection"    },
     { CTRL_F,      0, "command-prompt"    },
