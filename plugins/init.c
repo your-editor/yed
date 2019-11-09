@@ -36,29 +36,25 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("set", "latex-comp-prg", "pdflatex -halt-on-error --interaction=nonstopmode");
     YEXE("set", "latex-view-prg", "open -a Skim");
 
-    YEXE("vimish-bind", "insert",  "j", "j",              "vimish-exit-insert");
-    YEXE("vimish-bind", "nav",     "spc", "m", "c",       "make-check");
-    YEXE("vimish-bind", "nav",     "spc", "c", "o",       "comment-toggle-line");
-    YEXE("vimish-bind", "nav",     "spc", "l", "c",       "latex-compile-current-file");
-    YEXE("vimish-bind", "nav",     "spc", "l", "v",       "latex-view-current-file");
-    YEXE("vimish-bind", "nav",     "spc", "r", "d",       "redraw");
-    YEXE("vimish-bind", "nav",     "spc", "v", "s", "p",  "frame-vsplit");
-    YEXE("vimish-bind", "nav",     "spc", "h", "s", "p",  "frame-hsplit");
-    YEXE("vimish-bind", "nav",     "spc", "b", "o",       "buffer");
-    YEXE("vimish-bind", "nav",     "spc", "b", "d",       "buffer-delete");
-    YEXE("vimish-bind", "nav",     "ctrl-n",              "buffer-next");
-    YEXE("vimish-bind", "nav",     "M", "M",              "man-word");
-    YEXE("vimish-bind", "nav",     "L", "L",              "kammerdiener-fill-cursor-line");
-    YEXE("vimish-bind", "nav",     "ctrl-y",              "build-and-reload");
-    YEXE("vimish-bind", "nav",     "ctrl-l",              "frame-next");
-    YEXE("vimish-bind", "nav",     ">",                   "indent-line");
-    YEXE("vimish-bind", "nav",     "<",                   "unindent-line");
+    YEXE("vimish-bind", "insert",     "j", "j",              "vimish-exit-insert");
+    YEXE("vimish-bind", "normal",     "spc", "m", "c",       "make-check");
+    YEXE("vimish-bind", "normal",     "spc", "c", "o",       "comment-toggle-line");
+    YEXE("vimish-bind", "normal",     "spc", "l", "c",       "latex-compile-current-file");
+    YEXE("vimish-bind", "normal",     "spc", "l", "v",       "latex-view-current-file");
+    YEXE("vimish-bind", "normal",     "spc", "r", "d",       "redraw");
+    YEXE("vimish-bind", "normal",     "spc", "v", "s", "p",  "frame-vsplit");
+    YEXE("vimish-bind", "normal",     "spc", "h", "s", "p",  "frame-hsplit");
+    YEXE("vimish-bind", "normal",     "spc", "b", "o",       "buffer");
+    YEXE("vimish-bind", "normal",     "spc", "b", "d",       "buffer-delete");
+    YEXE("vimish-bind", "normal",     "ctrl-n",              "buffer-next");
+    YEXE("vimish-bind", "normal",     "M", "M",              "man-word");
+    YEXE("vimish-bind", "normal",     "L", "L",              "kammerdiener-fill-cursor-line");
+    YEXE("vimish-bind", "normal",     "ctrl-y",              "build-and-reload");
+    YEXE("vimish-bind", "normal",     "ctrl-l",              "frame-next");
+    YEXE("vimish-bind", "normal",     ">",                   "indent-line");
+    YEXE("vimish-bind", "normal",     "<",                   "unindent-line");
 
-    if (0 && yed_term_says_it_supports_truecolor()) {
-        YEXE("style", "first-dark");
-    } else {
-        YEXE("style", "default");
-    }
+    YEXE("style", "first-light");
 
     return 0;
 }

@@ -10,14 +10,14 @@ void vimish_write_quit(int n_args, char **args);
 void vimish_man_word(int n_args, char **args);
 /* END COMMANDS */
 
-#define MODE_NAV    (0x0)
-#define MODE_INSERT (0x1)
-#define MODE_DELETE (0x2)
-#define MODE_YANK   (0x3)
-#define N_MODES     (0x4)
+#define MODE_NORMAL  (0x0)
+#define MODE_INSERT  (0x1)
+#define MODE_DELETE  (0x2)
+#define MODE_YANK    (0x3)
+#define N_MODES      (0x5)
 
 static char *mode_strs[] = {
-    "NAV",
+    "NORMAL",
     "INSERT",
     "DELETE",
     "YANK"
@@ -40,7 +40,7 @@ static int last_till_key;
 static int last_till_dir; /* 1 = forward, 2 = backward */
 
 void vimish_unload(yed_plugin *self);
-void vimish_nav(int key, char* key_str);
+void vimish_normal(int key, char* key_str);
 void vimish_insert(int key, char* key_str);
 void vimish_delete(int key, char* key_str);
 void vimish_yank(int key, char* key_str);
@@ -80,7 +80,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     bind_keys();
 
-    mode = MODE_NAV;
+    mode = MODE_NORMAL;
     yed_set_var("vimish-mode", mode_strs[mode]);
 
     return 0;
@@ -128,7 +128,7 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
     }
 
     switch (mode) {
-        case MODE_NAV:                         break;
+        case MODE_NORMAL:                      break;
         case MODE_INSERT: exit_insert();       break;
         case MODE_DELETE: exit_delete(cancel); break;
         case MODE_YANK:   exit_yank(cancel);   break;
@@ -137,7 +137,7 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
     mode = new_mode;
 
     switch (new_mode) {
-        case MODE_NAV:                           break;
+        case MODE_NORMAL:                        break;
         case MODE_INSERT: enter_insert();        break;
         case MODE_DELETE: enter_delete(by_line); break;
         case MODE_YANK:   enter_yank(by_line);   break;
@@ -158,7 +158,7 @@ static void _vimish_take_key(int key, char *maybe_key_str) {
     }
 
     switch (mode) {
-        case MODE_NAV:    vimish_nav(key, key_str);    break;
+        case MODE_NORMAL: vimish_normal(key, key_str); break;
         case MODE_INSERT: vimish_insert(key, key_str); break;
         case MODE_DELETE: vimish_delete(key, key_str); break;
         case MODE_YANK:   vimish_yank(key, key_str);   break;
@@ -193,7 +193,7 @@ void vimish_bind(int n_args, char **args) {
 
     mode_str = args[0];
 
-    if      (strcmp(mode_str, "nav")    == 0)    { b_mode = MODE_NAV;    }
+    if      (strcmp(mode_str, "normal") == 0)    { b_mode = MODE_NORMAL; }
     else if (strcmp(mode_str, "insert") == 0)    { b_mode = MODE_INSERT; }
     else if (strcmp(mode_str, "delete") == 0)    { b_mode = MODE_DELETE; }
     else if (strcmp(mode_str, "yank")   == 0)    { b_mode = MODE_YANK;   }
@@ -332,7 +332,7 @@ static void vimish_start_repeat(int key) {
 
 void vimish_exit_insert(int n_args, char **args) {
     vimish_push_repeat_key(CTRL_C);
-    vimish_change_mode(MODE_NAV, 0, 0);
+    vimish_change_mode(MODE_NORMAL, 0, 0);
 }
 
 static void fill_cmd_prompt(const char *cmd) {
@@ -527,7 +527,7 @@ int vimish_nav_common(int key, char *key_str) {
     return 1;
 }
 
-void vimish_nav(int key, char *key_str) {
+void vimish_normal(int key, char *key_str) {
     if (vimish_nav_common(key, key_str)) {
         return;
     }
@@ -588,7 +588,7 @@ enter_insert:
             break;
 
         default:
-            yed_append_text_to_cmd_buff("[!] [NAV] unhandled key ");
+            yed_append_text_to_cmd_buff("[!] [NORMAL] unhandled key ");
             yed_append_int_to_cmd_buff(key);
     }
 }
@@ -623,7 +623,7 @@ void vimish_insert(int key, char *key_str) {
 
         case ESC:
         case CTRL_C:
-            vimish_change_mode(MODE_NAV, 0, 1);
+            vimish_change_mode(MODE_NORMAL, 0, 1);
             break;
 
         default:
@@ -648,16 +648,16 @@ void vimish_delete(int key, char *key_str) {
     switch (key) {
         case ESC:
         case 'd':
-            vimish_change_mode(MODE_NAV, 0, 0);
+            vimish_change_mode(MODE_NORMAL, 0, 0);
             break;
 
         case 'c':
-            vimish_change_mode(MODE_NAV, 0, 0);
+            vimish_change_mode(MODE_NORMAL, 0, 0);
             vimish_change_mode(MODE_INSERT, 0, 0);
             break;
 
         case CTRL_C:
-            vimish_change_mode(MODE_NAV, 0, 1);
+            vimish_change_mode(MODE_NORMAL, 0, 1);
             break;
 
         default:
@@ -675,11 +675,11 @@ void vimish_yank(int key, char *key_str) {
     switch (key) {
         case ESC:
         case 'y':
-            vimish_change_mode(MODE_NAV, 0, 0);
+            vimish_change_mode(MODE_NORMAL, 0, 0);
             break;
 
         case CTRL_C:
-            vimish_change_mode(MODE_NAV, 0, 1);
+            vimish_change_mode(MODE_NORMAL, 0, 1);
             break;
 
         default:
