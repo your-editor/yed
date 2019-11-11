@@ -151,7 +151,7 @@ void latex_syntax_highlight(yed_event *event) {
                   { "do",       "if",       NULL,       NULL,       NULL,     NULL,     NULL,     NULL     }, /* 2 */
                   { "int",      "for",      "asm",      NULL,       NULL,     NULL,     NULL,     NULL     }, /* 3 */
                   { "long",     "char",     "bool",     "void",     "enum",   "else",   "case",   "goto"   }, /* 4 */
-                  { "const",    "short",    "float",    "while",    "break",  "union",     NULL,     NULL  }, /* 5 */
+                  { "const",    "short",    "float",    "while",    "break",  "union",  NULL,     NULL     }, /* 5 */
                   { "static",   "size_t",   "double",   "struct",   "switch", "return", "sizeof", "inline" }, /* 6 */
                   { "ssize_t",  "typedef",  "default",  "__asm__",  NULL,     NULL,     NULL,     NULL     }, /* 7 */
                   { "unsigned", "continue", "volatile", "restrict", NULL,     NULL,     NULL,     NULL     }  /* 8 */

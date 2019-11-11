@@ -532,25 +532,35 @@ void vimish_normal(int key, char *key_str) {
         return;
     }
 
-    YEXE("select-off");
-
     switch (key) {
         case 'd':
+            YEXE("select-off");
             vimish_start_repeat(key);
             vimish_change_mode(MODE_DELETE, 0, 0);
             break;
 
         case 'D':
+            YEXE("select-off");
             vimish_start_repeat(key);
             vimish_change_mode(MODE_DELETE, 1, 0);
             break;
 
         case 'y':
+            YEXE("select-off");
             vimish_change_mode(MODE_YANK, 0, 0);
             break;
 
         case 'Y':
+            YEXE("select-off");
             vimish_change_mode(MODE_YANK, 1, 0);
+            break;
+
+        case 'v':
+            YEXE("select");
+            break;
+
+        case 'V':
+            YEXE("select-lines");
             break;
 
         case 'p':
@@ -559,32 +569,41 @@ void vimish_normal(int key, char *key_str) {
             break;
 
         case 'a':
+            YEXE("select-off");
             vimish_start_repeat(key);
             YEXE("cursor-right");
             goto enter_insert;
 
         case 'A':
+            YEXE("select-off");
             vimish_start_repeat(key);
             YEXE("cursor-line-end");
             goto enter_insert;
 
         case 'i':
+            YEXE("select-off");
             vimish_start_repeat(key);
 enter_insert:
             vimish_change_mode(MODE_INSERT, 0, 0);
             break;
 
         case DEL_KEY:
+            YEXE("select-off");
             vimish_start_repeat(key);
             YEXE("delete-forward");
             break;
 
         case '.':
+            YEXE("select-off");
             vimish_repeat();
             break;
 
         case ':':
             YEXE("command-prompt");
+            break;
+
+        case CTRL_C:
+            YEXE("select-off");
             break;
 
         default:
