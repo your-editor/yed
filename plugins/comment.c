@@ -1,19 +1,22 @@
 #include "plugin.h"
 
-void comment_toggle_line(int n_args, char **args);
-void comment_line(yed_frame *frame, yed_line *line);
-void uncomment_line(yed_frame *frame, yed_line *line);
+void comment_toggle(int n_args, char **args);
+void comment_toggle_line(yed_frame *frame, yed_line *line, int row);
+void comment_line(yed_frame *frame, yed_line *line, int row);
+void uncomment_line(yed_frame *frame, yed_line *line, int row);
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_plugin_set_command(self, "comment-toggle-line", comment_toggle_line);
+    yed_plugin_set_command(self, "comment-toggle", comment_toggle);
     return 0;
 }
 
-void comment_toggle_line(int n_args, char **args) {
-    yed_frame *frame;
-    yed_line  *line;
-    int        line_len;
-    char      *c;
+void comment_toggle(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+    yed_line   *line;
+    int         save_col,
+                row,
+                r1, c1, r2, c2;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
@@ -33,9 +36,33 @@ void comment_toggle_line(int n_args, char **args) {
         return;
     }
 
-    line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    buff = frame->buffer;
 
-    if (!line)    { return; }
+    save_col = frame->cursor_col;
+    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+
+    if (buff->has_selection) {
+        yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
+
+        for (row = r1; row <= r2; row += 1) {
+            line = yed_buff_get_line(buff, row);
+            comment_toggle_line(frame, line, row);
+        }
+
+        frame->dirty = 1;
+
+        YEXE("select-off");
+    } else {
+        line = yed_buff_get_line(buff, frame->cursor_line);
+        comment_toggle_line(frame, line, frame->cursor_line);
+    }
+
+    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+}
+
+void comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
+    int   line_len;
+    char *c;
 
     line_len = array_len(line->chars);
 
@@ -48,42 +75,28 @@ void comment_toggle_line(int n_args, char **args) {
         if (*c == '/') { c = array_item(line->chars, line_len - 2);
         if (*c == '*') { c = array_item(line->chars, line_len - 3);
         if (*c == ' ') {
-            uncomment_line(frame, line);
+            uncomment_line(frame, line, row);
             return;
         }}}}}}
     }
 
-    comment_line(frame, line);
+    comment_line(frame, line, row);
 }
 
-void comment_line(yed_frame *frame, yed_line *line) {
-    int save_cursor_col;
-
-    save_cursor_col = frame->cursor_col;
-
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
-
-    yed_insert_into_line(frame->buffer, frame->cursor_line, 1, ' ');
-    yed_insert_into_line(frame->buffer, frame->cursor_line, 1, '*');
-    yed_insert_into_line(frame->buffer, frame->cursor_line, 1, '/');
+void comment_line(yed_frame *frame, yed_line *line, int row) {
+    yed_insert_into_line(frame->buffer, row, 1, ' ');
+    yed_insert_into_line(frame->buffer, row, 1, '*');
+    yed_insert_into_line(frame->buffer, row, 1, '/');
 
     yed_append_to_line(line, ' ');
     yed_append_to_line(line, '*');
     yed_append_to_line(line, '/');
-
-    yed_set_cursor_within_frame(frame, save_cursor_col, frame->cursor_line);
 }
 
-void uncomment_line(yed_frame *frame, yed_line *line) {
-    int save_cursor_col;
-
-    save_cursor_col = frame->cursor_col;
-
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
-
-    yed_delete_from_line(frame->buffer, frame->cursor_line, 1);
-    yed_delete_from_line(frame->buffer, frame->cursor_line, 1);
-    yed_delete_from_line(frame->buffer, frame->cursor_line, 1);
+void uncomment_line(yed_frame *frame, yed_line *line, int row) {
+    yed_delete_from_line(frame->buffer, row, 1);
+    yed_delete_from_line(frame->buffer, row, 1);
+    yed_delete_from_line(frame->buffer, row, 1);
 
     array_pop(line->chars);
     line->visual_width -= 1;
@@ -91,6 +104,4 @@ void uncomment_line(yed_frame *frame, yed_line *line) {
     line->visual_width -= 1;
     array_pop(line->chars);
     line->visual_width -= 1;
-
-    yed_set_cursor_within_frame(frame, save_cursor_col, frame->cursor_line);
 }

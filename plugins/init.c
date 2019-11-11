@@ -38,7 +38,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     YEXE("vimish-bind", "insert",     "j", "j",              "vimish-exit-insert");
     YEXE("vimish-bind", "normal",     "spc", "m", "c",       "make-check");
-    YEXE("vimish-bind", "normal",     "spc", "c", "o",       "comment-toggle-line");
+    YEXE("vimish-bind", "normal",     "spc", "c", "o",       "comment-toggle");
     YEXE("vimish-bind", "normal",     "spc", "l", "c",       "latex-compile-current-file");
     YEXE("vimish-bind", "normal",     "spc", "l", "v",       "latex-view-current-file");
     YEXE("vimish-bind", "normal",     "spc", "r", "d",       "redraw");
