@@ -3,8 +3,10 @@
 void indent_c_post_insert_handler(yed_event *event);
 void indent_c_post_delete_back_handler(yed_event *event);
 
-void indent_line(int n_args, char **args);
-void unindent_line(int n_args, char **args);
+void indent(int n_args, char **args);
+void unindent(int n_args, char **args);
+void indent_line(yed_frame *frame, yed_line *line, int row, int tabw);
+void unindent_line(yed_frame *frame, yed_line *line, int row, int tabw);
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler insert, delete_back;
@@ -17,8 +19,8 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_add_event_handler(self, insert);
     yed_plugin_add_event_handler(self, delete_back);
 
-    yed_plugin_set_command(self, "indent-line", indent_line);
-    yed_plugin_set_command(self, "unindent-line", unindent_line);
+    yed_plugin_set_command(self, "indent", indent);
+    yed_plugin_set_command(self, "unindent", unindent);
 
     return 0;
 }
@@ -157,16 +159,14 @@ void indent_c_post_delete_back_handler(yed_event *event) {
     }
 }
 
-void indent_line(int n_args, char **args) {
+void indent(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
     yed_line   *line;
     int         tabw,
-                col, save_cursor_col,
-                rem, add,
-                i;
-
-    tabw = get_tabw();
+                save_col,
+                r1, c1, r2, c2,
+                row;
 
     if (!ys->active_frame) {
         yed_append_text_to_cmd_buff("[!] no active frame ");
@@ -180,10 +180,77 @@ void indent_line(int n_args, char **args) {
         return;
     }
 
+    tabw = get_tabw();
     buff = frame->buffer;
-    line = yed_buff_get_line(buff, frame->cursor_line);
 
-    if (!line)    { return; }
+    save_col = frame->cursor_col;
+    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+
+    if (buff->has_selection) {
+        yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
+
+        for (row = r1; row <= r2; row += 1) {
+            line = yed_buff_get_line(buff, row);
+            indent_line(frame, line, row, tabw);
+        }
+
+        frame->dirty = 1;
+    } else {
+        line = yed_buff_get_line(buff, frame->cursor_line);
+        indent_line(frame, line, frame->cursor_line, tabw);
+    }
+
+    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+}
+
+void unindent(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+    yed_line   *line;
+    int         tabw,
+                save_col,
+                r1, c1, r2, c2,
+                row;
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    tabw = get_tabw();
+    buff = frame->buffer;
+
+    save_col = frame->cursor_col;
+    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+
+    if (buff->has_selection) {
+        yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
+
+        for (row = r1; row <= r2; row += 1) {
+            line = yed_buff_get_line(buff, row);
+            unindent_line(frame, line, row, tabw);
+        }
+
+        frame->dirty = 1;
+    } else {
+        line = yed_buff_get_line(buff, frame->cursor_line);
+        unindent_line(frame, line, frame->cursor_line, tabw);
+    }
+
+    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+}
+
+void indent_line(yed_frame *frame, yed_line *line, int row, int tabw) {
+    int col,
+        rem, add,
+        i;
 
     col = 1;
 
@@ -194,50 +261,22 @@ void indent_line(int n_args, char **args) {
         col += 1;
     }
 
-    rem             = (col - 1) % tabw;
-    add             = rem ? (tabw - rem) : tabw;
-    save_cursor_col = frame->cursor_col;
-
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    rem = (col - 1) % tabw;
+    add = rem ? (tabw - rem) : tabw;
 
     for (i = 0; i < add; i += 1) {
-        yed_insert_into_line(buff, frame->cursor_line, 1, ' ');
+        yed_insert_into_line(frame->buffer, row, 1, ' ');
     }
-
-    yed_set_cursor_within_frame(frame, save_cursor_col + add, frame->cursor_line);
 }
 
-void unindent_line(int n_args, char **args) {
-    yed_frame  *frame;
-    yed_buffer *buff;
-    yed_line   *line;
-    int         tabw,
-                col, save_cursor_col,
-                rem, sub,
-                i;
-
-    tabw = get_tabw();
-
-    if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame ");
-        return;
-    }
-
-    frame = ys->active_frame;
-
-    if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
-        return;
-    }
-
-    buff = frame->buffer;
-    line = yed_buff_get_line(buff, frame->cursor_line);
-
-    if (!line)    { return; }
+void unindent_line(yed_frame *frame, yed_line *line, int row, int tabw) {
+    int col,
+        rem, sub,
+        i;
 
     col = 1;
 
-    while (col <= line->visual_width) {
+     while (col <= line->visual_width) {
         if (yed_line_col_to_char(line, col) != ' ') {
             break;
         }
@@ -246,15 +285,10 @@ void unindent_line(int n_args, char **args) {
 
     if (col == 1)    { return; }
 
-    rem             = (col - 1) % tabw;
-    sub             = rem ? rem : tabw;
-    save_cursor_col = frame->cursor_col;
-
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    rem = (col - 1) % tabw;
+    sub = rem ? rem : tabw;
 
     for (i = 0; i < sub; i += 1) {
-        yed_delete_from_line(buff, frame->cursor_line, 1);
+        yed_delete_from_line(frame->buffer, row, 1);
     }
-
-    yed_set_cursor_within_frame(frame, save_cursor_col - sub, frame->cursor_line);
 }

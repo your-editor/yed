@@ -125,13 +125,13 @@ void syntax_c_highlight(yed_event *event) {
                   { "ssize_t",  "typedef",  "default",  "__asm__",  NULL,     NULL,     NULL,     NULL     }, /* 7 */
                   { "unsigned", "continue", "volatile", "restrict", NULL,     NULL,     NULL,     NULL     }  /* 8 */
               },
-             *pp_kwds[][3] = {
-                  { "if",      NULL,     NULL     }, /* 2 */
-                  { NULL,      NULL,     NULL     }, /* 3 */
-                  { "else",    NULL,     NULL     }, /* 4 */
-                  { "undef",   "endif",  "ifdef"  }, /* 5 */
-                  { "define",  "ifndef", "pragma" }, /* 6 */
-                  { "include", NULL,     NULL     }  /* 7 */
+             *pp_kwds[][4] = {
+                  { "if",      NULL,     NULL,     NULL    }, /* 2 */
+                  { NULL,      NULL,     NULL,     NULL    }, /* 3 */
+                  { "else",    NULL,     NULL,     NULL    }, /* 4 */
+                  { "undef",   "endif",  "ifdef",  "error" }, /* 5 */
+                  { "define",  "ifndef", "pragma", NULL    }, /* 6 */
+                  { "include", NULL,     NULL,     NULL    }  /* 7 */
              };
     #define MIN_KWD_LEN   (2)
     #define MAX_KWD_LEN   (8)

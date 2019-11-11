@@ -571,7 +571,7 @@ void yed_write_buff_to_file(yed_buffer *buff, char *path) {
     fclose(f);
 }
 
-static void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2) {
+void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2) {
     *r1 = MIN(range->anchor_row, range->cursor_row);
     *r2 = MAX(range->anchor_row, range->cursor_row);
 

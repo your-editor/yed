@@ -100,7 +100,9 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col);
 int yed_fill_buff_from_file(yed_buffer *buff, char *path);
 void yed_write_buff_to_file(yed_buffer *buff, char *path);
 
+void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2);
 int yed_is_in_range(yed_range *range, int row, int col);
 void yed_buff_delete_selection(yed_buffer *buff);
+
 
 #endif
