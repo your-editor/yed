@@ -16,6 +16,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "man",
         "comment",
         "latex",
+        "focus_frame",
         "proj",
         "style_first",
         "style_elise",
