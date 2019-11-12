@@ -54,4 +54,7 @@ void yed_frames_remove_buffer(yed_buffer *buff);
 void yed_mark_dirty_frames(yed_buffer *dirty_buff);
 void yed_mark_dirty_frames_line(yed_buffer *dirty_buff, int row);
 
+void frame_get_rect(yed_frame *frame, int *top, int *left, int *height, int *width);
+#define FRAME_RESET_RECT(f) frame_get_rect((f), &(f)->top, &(f)->left, &(f)->height, &(f)->width)
+
 #endif

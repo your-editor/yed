@@ -257,7 +257,6 @@ int yed_pump(void) {
 
     ys->redraw = 0;
 
-
     if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_RESET);

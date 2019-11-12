@@ -12,6 +12,7 @@
 #endif
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <signal.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -22,6 +23,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <libgen.h>
+
 
 
 #include "tree.h"

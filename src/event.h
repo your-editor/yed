@@ -16,6 +16,7 @@ typedef enum {
     EVENT_BUFFER_PRE_WRITE,
     EVENT_FRAME_ACTIVATED,
     EVENT_CURSOR_MOVED,
+    EVENT_TERMINAL_RESIZED,
 
     N_EVENTS,
 } yed_event_kind_t;

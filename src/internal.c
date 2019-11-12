@@ -180,6 +180,8 @@ void yed_service_reload(void) {
     yed_reload_default_event_handlers();
     yed_reload_plugins();
 
+    yed_register_sigwinch_handler();
+
     ys->small_message = "* reload serviced *";
 
     ys->redraw = 1;

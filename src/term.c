@@ -31,6 +31,8 @@ int yed_term_enter(void) {
 
     setvbuf(stdout, NULL, _IONBF, 0);
 
+    yed_register_sigwinch_handler();
+
     printf(TERM_ALT_SCREEN);
 
     return 0;
@@ -155,4 +157,75 @@ void yed_set_cursor(int col, int row) {
     append_to_output_buff(TERM_CURSOR_MOVE_SEP);
     append_int_to_output_buff(col);
     append_to_output_buff(TERM_CURSOR_MOVE_END);
+}
+
+void sigwinch_handler(int sig) {
+    if (pthread_mutex_trylock(&ys->write_mtx) == 0) {
+        if (yed_check_for_resize()) {
+            yed_handle_resize();
+        }
+        pthread_mutex_unlock(&ys->write_mtx);
+    }
+}
+
+void yed_register_sigwinch_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigwinch_handler;
+    if (sigaction(SIGWINCH, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGWINCH");
+    }
+}
+
+int yed_check_for_resize(void) {
+    int       save_rows, save_cols;
+    yed_event event;
+
+    save_rows = ys->term_rows;
+    save_cols = ys->term_cols;
+
+    yed_term_get_dim(&ys->term_rows, &ys->term_cols);
+
+    if (ys->term_rows != save_rows
+    ||  ys->term_cols != save_cols) {
+
+        event.kind = EVENT_TERMINAL_RESIZED;
+        yed_trigger_event(&event);
+
+        return 1;
+    }
+
+    return 0;
+}
+
+void yed_handle_resize(void) {
+    yed_frame **frame_it;
+    int save_row, save_col;
+    yed_frame *af;
+
+    free(ys->written_cells);
+    ys->written_cells = malloc(ys->term_rows * ys->term_cols);
+    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
+
+    af = ys->active_frame;
+    if (af) {
+        save_row = af->cursor_line;
+        save_col = af->cursor_col;
+        yed_set_cursor_far_within_frame(af, 1, 1);
+    }
+
+    array_traverse(ys->frames, frame_it) {
+        FRAME_RESET_RECT(*frame_it);
+    }
+
+    ys->redraw = 1;
+    append_to_output_buff(TERM_CLEAR_SCREEN);
+
+    if (af) {
+        yed_set_cursor_far_within_frame(af, save_col, save_row);
+    }
+
+    yed_update_frames();
 }

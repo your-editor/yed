@@ -25,14 +25,12 @@ yed_frame * yed_add_new_frame_full(void) {
     return frame;
 }
 
-static void frame_get_rect(yed_frame *frame, int *top, int *left, int *height, int *width) {
+void frame_get_rect(yed_frame *frame, int *top, int *left, int *height, int *width) {
     *top    = 1 + (int)(frame->top_f * (ys->term_rows));
     *left   = 1 + (int)(frame->left_f * ys->term_cols);
     *height = (int)(frame->height_f * (ys->term_rows - 1)); /* -1 for command/status line */
     *width  = (int)(frame->width_f * ys->term_cols);
 }
-
-#define FRAME_RESET_RECT(f) frame_get_rect((f), &(f)->top, &(f)->left, &(f)->height, &(f)->width)
 
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
     yed_frame *frame;
