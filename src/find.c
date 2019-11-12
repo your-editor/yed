@@ -1,7 +1,13 @@
 #include "internal.h"
 
 void yed_init_search(void) {
-    ys->replace_markers = array_make(int);
+    ys->replace_markers       = array_make(array_t);
+    ys->replace_save_lines    = array_make(yed_line*);
+    ys->replace_working_lines = array_make(yed_line*);
+}
+
+int search_can_move_cursor(void) {
+    return yed_get_var("enable-search-cursor-move") != NULL;
 }
 
 void yed_search_line_handler(yed_event *event) {
@@ -81,6 +87,9 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
     if (!frame->buffer)    { return 0; }
 
     buff       = frame->buffer;
+
+    if (buff->has_selection && !search_can_move_cursor()) { return 0; }
+
     search_len = strlen(ys->current_search);
 
     if (!search_len)    { return 0; }
@@ -160,6 +169,9 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
     if (!frame->buffer)    { return 0; }
 
     buff       = frame->buffer;
+
+    if (buff->has_selection && !search_can_move_cursor()) { return 0; }
+
     search_len = strlen(ys->current_search);
 
     if (!search_len)    { return 0; }

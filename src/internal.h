@@ -175,9 +175,10 @@ typedef struct yed_state_t {
     char                        *save_search;
     int                          search_save_row,
                                  search_save_col;
-    yed_line                    *replace_save_line;
-    yed_line                    *replace_working_line;
+    array_t                      replace_save_lines;
+    array_t                      replace_working_lines;
     array_t                      replace_markers;
+    int                          replace_count;
     array_t                      cmd_buff;
     int                          cmd_cursor_x;
     int                          status;

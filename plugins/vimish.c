@@ -80,7 +80,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     bind_keys();
 
-    mode = MODE_NORMAL;
+    vimish_change_mode(MODE_NORMAL, 0, 0);
     yed_set_var("vimish-mode", mode_strs[mode]);
 
     return 0;
@@ -137,7 +137,10 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
     mode = new_mode;
 
     switch (new_mode) {
-        case MODE_NORMAL:                        break;
+        case MODE_NORMAL: {
+            yed_unset_var("enable-search-cursor-move");
+            break;
+        }
         case MODE_INSERT: enter_insert();        break;
         case MODE_DELETE: enter_delete(by_line); break;
         case MODE_YANK:   enter_yank(by_line);   break;
@@ -743,6 +746,7 @@ void enter_insert(void) {}
 void exit_insert(void) {}
 
 void enter_delete(int by_line) {
+    yed_set_var("enable-search-cursor-move", "yes");
     if (by_line) {
         YEXE("select-lines");
     } else {
@@ -752,6 +756,7 @@ void enter_delete(int by_line) {
 }
 
 void enter_yank(int by_line) {
+    yed_set_var("enable-search-cursor-move", "yes");
     if (by_line) {
         YEXE("select-lines");
     } else {
