@@ -77,7 +77,8 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
     int         i,
                 r,
                 search_len,
-                data_len;
+                data_len,
+                junk_row, junk_col;
 
     if (!ys->current_search)    { return 0; }
     if (!ys->active_frame)      { return 0; }
@@ -88,7 +89,12 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
 
     buff       = frame->buffer;
 
-    if (buff->has_selection && !search_can_move_cursor()) { return 0; }
+    if (buff->has_selection && !search_can_move_cursor()) {
+        *row_out = row;
+        *col_out = col;
+        row_out  = &junk_row;
+        col_out  = &junk_col;
+    }
 
     search_len = strlen(ys->current_search);
 
@@ -159,7 +165,8 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
     int         i,
                 r,
                 search_len,
-                data_len;
+                data_len,
+                junk_row, junk_col;
 
     if (!ys->current_search)    { return 0; }
     if (!ys->active_frame)      { return 0; }
@@ -170,7 +177,12 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
 
     buff       = frame->buffer;
 
-    if (buff->has_selection && !search_can_move_cursor()) { return 0; }
+    if (buff->has_selection && !search_can_move_cursor()) {
+        *row_out = row;
+        *col_out = col;
+        row_out  = &junk_row;
+        col_out  = &junk_col;
+    }
 
     search_len = strlen(ys->current_search);
 
