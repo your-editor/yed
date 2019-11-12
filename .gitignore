@@ -7,3 +7,4 @@ bprofile
 *.so
 *.dSYM*
 osx_install.sh
+.yed

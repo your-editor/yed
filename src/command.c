@@ -70,7 +70,6 @@ do {                                                              \
     SET_DEFAULT_COMMAND("set",                    set);
     SET_DEFAULT_COMMAND("get",                    get);
     SET_DEFAULT_COMMAND("unset",                  unset);
-    SET_DEFAULT_COMMAND("build-and-reload",       build_and_reload);
     SET_DEFAULT_COMMAND("sh",                     sh);
     SET_DEFAULT_COMMAND("echo",                   echo);
     SET_DEFAULT_COMMAND("cursor-down",            cursor_down);
@@ -345,21 +344,6 @@ void yed_default_command_unset(int n_args, char **args) {
         yed_append_text_to_cmd_buff("'");
         yed_append_text_to_cmd_buff(args[0]);
         yed_append_text_to_cmd_buff("' was not set");
-    }
-}
-
-void yed_default_command_build_and_reload(int n_args, char **args) {
-    int err;
-
-    printf(TERM_STD_SCREEN);
-    err = system("./build.sh debug 2>&1 | less");
-    printf(TERM_ALT_SCREEN);
-
-    if (err == 0) {
-        ys->status = YED_RELOAD;
-        yed_append_text_to_cmd_buff("issued reload");
-    } else {
-        yed_append_text_to_cmd_buff("'./build.sh' failed");
     }
 }
 
