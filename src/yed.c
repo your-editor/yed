@@ -253,6 +253,12 @@ int yed_pump(void) {
         yed_take_key(keys[i]);
     }
 
+    if (ys->redraw) {
+        if (yed_check_for_resize()) {
+            yed_handle_resize();
+        }
+    }
+
     yed_update_frames();
 
     ys->redraw = 0;
