@@ -71,6 +71,7 @@ use_tree(yed_style_name_t, yed_style_ptr_t);
 #include "var.h"
 #include "util.h"
 #include "style.h"
+#include "subproc.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
@@ -217,6 +218,8 @@ void append_n_to_output_buff(char *s, int n);
 void append_to_output_buff(char *s);
 void append_int_to_output_buff(int i);
 void flush_output_buff(void);
+
+void yed_set_small_message(char *msg);
 
 void yed_service_reload(void);
 

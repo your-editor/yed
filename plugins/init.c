@@ -1,5 +1,6 @@
 #include "plugin.h"
 
+void get_env_info(void);
 void add_commands(yed_plugin *self);
 void kammerdiener_fill_cursor_line(int n_args, char **args);
 
@@ -7,24 +8,32 @@ int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
     char *plugins[] = {
         "vimish",
-        "syntax_c",
-        "syntax_sh",
-        "brace_hl",
-        "indent_c",
+        "syntax_c", "syntax_sh", "brace_hl",
+        "indent_c", "comment",
         "autotrim",
-        "make_check",
-        "man",
-        "comment",
-        "latex",
+        "make_check", "man", "latex",
         "focus_frame",
+        "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox",
         "proj",
-        "style_first",
-        "style_elise",
-        "style_nord"
     };
 
+
+    /* Set variables before loading plugins. */
+    get_env_info();
+
+    if (yed_term_says_it_supports_truecolor()) {
+        yed_set_var("truecolor", "yes");
+    }
+    yed_set_var("tab-width",      "4");
+    yed_set_var("latex-comp-prg", "pdflatex -halt-on-error --interaction=nonstopmode");
+    yed_set_var("latex-view-prg", "open -a Skim");
+
+
+    /* Add custom commands from this file. */
     add_commands(self);
 
+
+    /* Load all plugins. */
     YEXE("plugins-add-dir", "./.yed");
 
     n_plugins = sizeof(plugins) / sizeof(char*);
@@ -33,10 +42,8 @@ int yed_plugin_boot(yed_plugin *self) {
         YEXE("plugin-load", plugins[i]);
     }
 
-    YEXE("set", "tab-width", "4");
-    YEXE("set", "latex-comp-prg", "pdflatex -halt-on-error --interaction=nonstopmode");
-    YEXE("set", "latex-view-prg", "open -a Skim");
 
+    /* Keybindings */
     YEXE("vimish-bind", "insert",     "j", "j",              "vimish-exit-insert");
     YEXE("vimish-bind", "normal",     "spc", "m", "c",       "make-check");
     YEXE("vimish-bind", "normal",     "spc", "c", "o",       "comment-toggle");
@@ -54,9 +61,19 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",     ">",                   "indent");
     YEXE("vimish-bind", "normal",     "<",                   "unindent");
 
+
+    /* Colors */
     YEXE("style", "first-dark");
 
     return 0;
+}
+
+void get_env_info(void) {
+    char *term,
+         *user;
+
+    if ((term = getenv("TERM"))) { yed_set_var("term", term); }
+    if ((user = getenv("USER"))) { yed_set_var("user", user); }
 }
 
 static void fill_cmd_prompt(const char *cmd) {

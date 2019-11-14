@@ -8,7 +8,6 @@ void yed_init_vars(void) {
 void yed_set_default_vars(void) {
     yed_set_var("tab-width", "4");
     yed_set_var("enable-search-cursor-move", "yes");
-    yed_set_var("truecolor", "yes");
     yed_set_var("buffer-load-mode", "stream");
     /* indent-c-disable-bs is not set by default */
 }

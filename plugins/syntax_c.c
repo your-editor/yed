@@ -229,13 +229,13 @@ void syntax_c_highlight(yed_event *event) {
                     if (match) {
                         attr         = array_item(event->line_attrs, old_col - 2);
                         attr->flags &= ~(ATTR_BOLD);
-                        attr->flags |= key.flags;
-                        attr->fg     = key.fg;
+                        attr->flags |= pp.flags;
+                        attr->fg     = pp.fg;
 
                         for (j = 0; j < word_len; j += 1) {
                             attr         = array_item(event->line_attrs, old_col + j - 1);
-                            attr->flags |= key.flags;
-                            attr->fg     = key.fg;
+                            attr->flags |= pp.flags;
+                            attr->fg     = pp.fg;
                         }
                         break;
                     }

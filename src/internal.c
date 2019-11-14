@@ -114,11 +114,24 @@ void flush_output_buff(void) {
     array_clear(ys->output_buffer);
 }
 
+void yed_set_small_message(char *msg) {
+    if (ys->small_message) {
+        free(ys->small_message);
+    }
+
+    if (msg) {
+        ys->small_message = strdup(msg);
+    } else {
+        ys->small_message = NULL;
+    }
+}
+
 void yed_service_reload(void) {
     tree_it(yed_command_name_t, yed_command)    cmd_it;
     tree_it(yed_var_name_t, yed_var_val_t)      var_it;
     tree_it(yed_style_name_t, yed_style_ptr_t)  style_it;
-    char                                       *key, *val;
+    char                                       *key,
+                                               *val;
     yed_style                                  *style;
 
     tree_reset_fns(yed_style_name_t,   yed_style_ptr_t,       ys->styles,           strcmp);
@@ -132,18 +145,20 @@ void yed_service_reload(void) {
     /*
      * Clear out all of the old vars.
      */
-    while (tree_len(ys->vars)) {
-        var_it = tree_begin(ys->vars);
-        key = tree_it_key(var_it);
-        val = tree_it_val(var_it);
-        tree_delete(ys->vars, key);
-        free(key);
-        free(val);
-    }
+     (void)var_it;
+     (void)val;
+/*     while (tree_len(ys->vars)) { */
+/*         var_it = tree_begin(ys->vars); */
+/*         key = tree_it_key(var_it); */
+/*         val = tree_it_val(var_it); */
+/*         tree_delete(ys->vars, key); */
+/*         free(key); */
+/*         free(val); */
+/*     } */
     /*
      * Reset the defaults.
      */
-    yed_set_default_vars();
+/*     yed_set_default_vars(); */
 
     /*
      * Clear out all of the old styles.
@@ -182,7 +197,7 @@ void yed_service_reload(void) {
 
     yed_register_sigwinch_handler();
 
-    ys->small_message = "* reload serviced *";
+    yed_set_small_message("* reload serviced *");
 
     ys->redraw = 1;
     memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);

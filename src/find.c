@@ -56,12 +56,20 @@ void yed_search_line_handler(yed_event *event) {
             && (line_data - line_data_start) + 1 == frame->cursor_col) {
                 for (i = 0; i < search_len; i += 1) {
                     attr  = array_item(event->line_attrs, (line_data - line_data_start) + i);
-                    *attr = yed_active_style_get_search_cursor();
+                    if (ys->active_style) {
+                        *attr = yed_active_style_get_search_cursor();
+                    } else {
+                        attr->flags ^= ATTR_INVERSE;
+                    }
                 }
             } else {
                 for (i = 0; i < search_len; i += 1) {
                     attr  = array_item(event->line_attrs, (line_data - line_data_start) + i);
-                    *attr = yed_active_style_get_search();
+                    if (ys->active_style) {
+                        *attr = yed_active_style_get_search();
+                    } else {
+                        attr->flags ^= ATTR_INVERSE;
+                    }
                 }
             }
         }

@@ -302,7 +302,12 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
     if (frame->buffer->has_selection) {
         col      = 1;
-        tmp_attr = yed_active_style_get_selection();
+        if (ys->active_style) {
+            tmp_attr = yed_active_style_get_selection();
+        } else {
+            tmp_attr        = base_attr;
+            tmp_attr.flags |= ATTR_INVERSE;
+        }
 
         array_traverse(frame->line_attrs, attr_it) {
             if (yed_is_in_range(&frame->buffer->selection, row, col)) {

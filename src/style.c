@@ -82,14 +82,16 @@ yed_style * yed_get_active_style(void) {
     return yed_get_style(ys->active_style);
 }
 
-#define __SCOMP(comp)                         \
-yed_attrs yed_active_style_get_##comp(void) { \
-    yed_style *style;                         \
-                                              \
-    style = yed_get_active_style();           \
-    if (!style) { return ZERO_ATTR; }         \
-                                              \
-    return style->comp;                       \
+#define __SCOMP(comp)                           \
+yed_attrs yed_active_style_get_##comp(void) {   \
+    yed_style *style;                           \
+                                                \
+    style = yed_get_active_style();             \
+    if (!style) {                               \
+        return ZERO_ATTR;                       \
+    }                                           \
+                                                \
+    return style->comp;                         \
 }
 
 __STYLE_COMPONENTS

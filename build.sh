@@ -51,4 +51,11 @@ wait
 echo "Installing plugins.."
 ./install.sh
 
+if [ "$(basename $(pwd))" == "yed" ] && [ -d ".yed" ]; then
+    ./osx_install.sh
+    pushd ".yed"
+    make
+    popd
+fi
+
 echo "Done."

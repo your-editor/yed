@@ -16,6 +16,7 @@
 #include "var.c"
 #include "util.c"
 #include "style.c"
+#include "subproc.c"
 
 yed_state *ys;
 

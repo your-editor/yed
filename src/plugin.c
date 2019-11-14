@@ -27,18 +27,18 @@ void yed_init_plugins(void) {
             case YED_PLUG_NOT_FOUND:
                 goto not_found;
             case YED_PLUG_SUCCESS:
-                ys->small_message = "loaded init";
+                yed_set_small_message("loaded init");
                 break;
             case YED_PLUG_NO_BOOT:
-                ys->small_message = "!! init missing 'yed_plugin_boot' !!";
+                yed_set_small_message("!! init missing 'yed_plugin_boot' !!");
                 break;
             case YED_PLUG_BOOT_FAIL:
-                ys->small_message = "!! init 'yed_plugin_boot' failed !!";
+                yed_set_small_message("!! init 'yed_plugin_boot' failed !!");
                 break;
         }
     } else {
 not_found:
-        ys->small_message = "no init plugin found";
+        yed_set_small_message("no init plugin found");
     }
 }
 

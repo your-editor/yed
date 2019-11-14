@@ -186,6 +186,9 @@ do {                                        \
             BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
         }
     } else if (attr.flags & ATTR_256) {
+        LIMIT(attr.fg, 0, 255);
+        LIMIT(attr.bg, 0, 255);
+
         if (attr.fg || attr.bg) {
             BUFFCATN(buff_p, ";", 1);
         }
@@ -701,12 +704,13 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
         line.chars.capacity  = line_cap;
         line.visual_width    = line_len;
 
-        if (*(char*)array_last(line.chars) == '\n') {
+        while (array_len(line.chars)
+        &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
             array_pop(line.chars);
             line.visual_width -= 1;
         }
 
-        for (i = 0; i < line_len; i += 1) {
+        for (i = 0; i < array_len(line.chars); i += 1) {
             c = line_data[i];
             if (c == '\r')    { array_push(return_indices, i); }
         }
