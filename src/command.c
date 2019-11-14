@@ -181,7 +181,7 @@ void yed_draw_command_line() {
 void yed_start_command_prompt(void) {
     ys->interactive_command = "command-prompt";
     ys->cmd_prompt          = ": ";
-    ys->small_message       = "";
+    yed_set_small_message(NULL);
     yed_clear_cmd_buff();
 }
 
@@ -2214,7 +2214,7 @@ void yed_find_in_buffer_take_key(int key) {
 void yed_start_find_in_buffer(void) {
     ys->interactive_command = "find-in-buffer";
     ys->cmd_prompt          = "(find-in-buffer) ";
-    ys->small_message       = "";
+    yed_set_small_message(NULL);
     ys->search_save_row     = ys->active_frame->cursor_line;
     ys->search_save_col     = ys->active_frame->cursor_col;
     yed_clear_cmd_buff();
@@ -2479,7 +2479,7 @@ void replace_add_line(yed_buffer *buff, int row, int len) {
     array_push(ys->replace_save_lines, save_line);
 
     while (1) {
-        for (i = 1; i <= array_len(line->chars); i += 1) {
+        for (i = 1; i + len - 1 <= array_len(line->chars); i += 1) {
             if (strncmp(array_data(line->chars) + i - 1,
                         ys->current_search, len) == 0) {
 
@@ -2510,7 +2510,7 @@ void yed_start_replace_current_search(void) {
 
     ys->interactive_command  = "replace-current-search";
     ys->cmd_prompt           = "(replace-current-search) ";
-    ys->small_message        = "";
+    yed_set_small_message(NULL);
     ys->search_save_row      = ys->active_frame->cursor_line;
     ys->search_save_col      = ys->active_frame->cursor_col;
     ys->current_search       = ys->save_search;
