@@ -1,11 +1,9 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
-/* #include "internal.h" */
-
 #define ARRAY_DEFAULT_CAP (16)
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     void *data;
     int   elem_size;
     int   used;

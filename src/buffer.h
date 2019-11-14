@@ -28,6 +28,8 @@
 #define RGB_32_b(rgb)   ((rgb) & 0xFF)
 #define RGB_32_hex(x)   (0x##x)
 
+int rgb_to_256(unsigned rgb);
+
 typedef struct {
     uint32_t flags;
     uint32_t fg;
@@ -36,7 +38,7 @@ typedef struct {
 
 #define ZERO_ATTR    ((yed_attrs){ 0, 0, 0 })
 
-typedef struct yed_line_t {
+typedef struct __attribute__((packed)) yed_line_t {
     array_t chars;
     int     visual_width;
 } yed_line;
@@ -98,6 +100,8 @@ void yed_insert_into_line(yed_buffer *buff, int row, int col, char c);
 void yed_delete_from_line(yed_buffer *buff, int row, int col);
 
 int yed_fill_buff_from_file(yed_buffer *buff, char *path);
+int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f);
+int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f);
 void yed_write_buff_to_file(yed_buffer *buff, char *path);
 
 void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2);
