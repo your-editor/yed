@@ -47,6 +47,9 @@ int yed_plugin_boot(yed_plugin *self) {
     s.code_number.flags   = ATTR_256;
     s.code_number.fg      = 141;
 
+    s.code_constant.flags = ATTR_256;
+    s.code_constant.fg    = 81;
+
     s.code_string.flags   = ATTR_256;
     s.code_string.fg      = 186;
 

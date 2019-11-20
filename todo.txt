@@ -1,9 +1,8 @@
-* undo/redo
 * line numbers
 * things from vimrc
     * status bar
     * remember last place in file
-    * aligment
+    * alignment
     * completion
 * some kind of version checker for plugins so that
   plugins compiled with an older version of yed

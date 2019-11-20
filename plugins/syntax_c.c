@@ -30,6 +30,8 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_add_event_handler(self, buff_mod_pre);
     yed_plugin_add_event_handler(self, buff_mod_post);
 
+    ys->redraw = 1;
+
     return 0;
 }
 

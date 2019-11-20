@@ -19,6 +19,7 @@ enum KEY_ACTION {
     CTRL_O    = 15,   /* Ctrl+o    */
     CTRL_P    = 16,   /* Ctrl+p    */
     CTRL_Q    = 17,   /* Ctrl-q    */
+    CTRL_R    = 18,   /* Ctrl-r    */
     CTRL_S    = 19,   /* Ctrl-s    */
     CTRL_U    = 21,   /* Ctrl-u    */
     CTRL_V    = 22,   /* Ctrl-v    */

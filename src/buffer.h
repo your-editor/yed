@@ -60,14 +60,15 @@ typedef struct {
 #define BUFF_YANK_LINES (0x4)
 
 typedef struct yed_buffer_t {
-    int             kind;
-    int             flags;
-    yed_file        file;
-    char           *name;
-    char           *path;
-    bucket_array_t  lines;
-    int             has_selection;
-    yed_range       selection;
+    int               kind;
+    int               flags;
+    yed_file          file;
+    char             *name;
+    char             *path;
+    bucket_array_t    lines;
+    int               has_selection;
+    yed_range         selection;
+    yed_undo_history  undo_history;
 } yed_buffer;
 
 void yed_init_buffers(void);
@@ -84,20 +85,39 @@ yed_line * yed_copy_line(yed_line *line);
 yed_buffer yed_new_buff(void);
 yed_buffer *yed_create_buffer(char *name);
 void yed_free_buffer(yed_buffer *buffer);
-void yed_append_to_line(yed_line *line, char c);
-void yed_append_to_buff(yed_buffer *buff, char c);
 
 int yed_line_col_to_idx(yed_line *line, int col);
 char yed_line_col_to_char(yed_line *line, int col);
-
-void yed_line_clear(yed_line *line);
-
 yed_line * yed_buff_get_line(yed_buffer *buff, int row);
+
+
+void yed_append_to_line_no_undo(yed_buffer *buff, int row, char c);
+void yed_pop_from_line_no_undo(yed_buffer *buff, int row);
+void yed_line_clear_no_undo(yed_buffer *buff, int row);
+int yed_buffer_add_line_no_undo(yed_buffer *buff);
+void yed_buff_set_line_no_undo(yed_buffer *buff, int row, yed_line *line);
+yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row);
+void yed_buff_delete_line_no_undo(yed_buffer *buff, int row);
+void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, char c);
+void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col);
+/*
+ * The following functions are the interface by which everything
+ * else should modify buffers.
+ * This is meant to preserve undo/redo behavior.
+ */
+void yed_append_to_line(yed_buffer *buff, int row, char c);
+void yed_pop_from_line(yed_buffer *buff, int row);
+void yed_line_clear(yed_buffer *buff, int row);
+int yed_buffer_add_line(yed_buffer *buff);
 void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line);
 yed_line * yed_buff_insert_line(yed_buffer *buff, int row);
 void yed_buff_delete_line(yed_buffer *buff, int row);
 void yed_insert_into_line(yed_buffer *buff, int row, int col, char c);
 void yed_delete_from_line(yed_buffer *buff, int row, int col);
+
+
+int yed_buff_n_lines(yed_buffer *buff);
+
 
 int yed_fill_buff_from_file(yed_buffer *buff, char *path);
 int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f);

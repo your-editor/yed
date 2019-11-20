@@ -13,6 +13,8 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_add_event_handler(self, line);
 
+    ys->redraw = 1;
+
     return 0;
 }
 

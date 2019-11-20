@@ -87,5 +87,7 @@ DEF_DEFAULT_COMMAND(find_prev_in_buffer);
 DEF_DEFAULT_COMMAND(replace_current_search);
 DEF_DEFAULT_COMMAND(style);
 DEF_DEFAULT_COMMAND(style_off);
+DEF_DEFAULT_COMMAND(undo);
+DEF_DEFAULT_COMMAND(redo);
 
 #endif

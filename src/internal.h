@@ -61,6 +61,7 @@ use_tree(yed_style_name_t, yed_style_ptr_t);
 #include "term.h"
 #include "key.h"
 #include "fs.h"
+#include "undo.h"
 #include "buffer.h"
 #include "frame.h"
 #include "command.h"

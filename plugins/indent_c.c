@@ -183,6 +183,8 @@ void indent(int n_args, char **args) {
     tabw = get_tabw();
     buff = frame->buffer;
 
+    yed_start_undo_record(frame, buff);
+
     save_col = frame->cursor_col;
     yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
 
@@ -201,6 +203,8 @@ void indent(int n_args, char **args) {
     }
 
     yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+
+    yed_end_undo_record(frame, buff);
 }
 
 void unindent(int n_args, char **args) {
@@ -227,6 +231,8 @@ void unindent(int n_args, char **args) {
     tabw = get_tabw();
     buff = frame->buffer;
 
+    yed_start_undo_record(frame, buff);
+
     save_col = frame->cursor_col;
     yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
 
@@ -245,6 +251,8 @@ void unindent(int n_args, char **args) {
     }
 
     yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+
+    yed_end_undo_record(frame, buff);
 }
 
 void indent_line(yed_frame *frame, yed_line *line, int row, int tabw) {

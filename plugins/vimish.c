@@ -114,6 +114,8 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
         yed_unbind_key(b->key);
         if (b->len > 1) {
             yed_delete_key_sequence(b->key);
+        } else if (b->key < REAL_KEY_MAX) {
+            yed_plugin_bind_key(Self, b->key, "vimish-take-key", 1);
         }
     }
 
@@ -594,6 +596,14 @@ enter_insert:
             YEXE("select-off");
             vimish_start_repeat(key);
             YEXE("delete-forward");
+            break;
+
+        case 'u':
+            YEXE("undo");
+            break;
+
+        case CTRL_R:
+            YEXE("redo");
             break;
 
         case '.':

@@ -2,8 +2,8 @@
 
 void comment_toggle(int n_args, char **args);
 void comment_toggle_line(yed_frame *frame, yed_line *line, int row);
-void comment_line(yed_frame *frame, yed_line *line, int row);
-void uncomment_line(yed_frame *frame, yed_line *line, int row);
+void comment_line(yed_frame *frame, int row);
+void uncomment_line(yed_frame *frame, int row);
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "comment-toggle", comment_toggle);
@@ -38,6 +38,8 @@ void comment_toggle(int n_args, char **args) {
 
     buff = frame->buffer;
 
+    yed_start_undo_record(frame, buff);
+
     save_col = frame->cursor_col;
     yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
 
@@ -58,6 +60,8 @@ void comment_toggle(int n_args, char **args) {
     }
 
     yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+
+    yed_end_undo_record(frame, buff);
 }
 
 void comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
@@ -75,33 +79,30 @@ void comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
         if (*c == '/') { c = array_item(line->chars, line_len - 2);
         if (*c == '*') { c = array_item(line->chars, line_len - 3);
         if (*c == ' ') {
-            uncomment_line(frame, line, row);
+            uncomment_line(frame, row);
             return;
         }}}}}}
     }
 
-    comment_line(frame, line, row);
+    comment_line(frame, row);
 }
 
-void comment_line(yed_frame *frame, yed_line *line, int row) {
+void comment_line(yed_frame *frame, int row) {
     yed_insert_into_line(frame->buffer, row, 1, ' ');
     yed_insert_into_line(frame->buffer, row, 1, '*');
     yed_insert_into_line(frame->buffer, row, 1, '/');
 
-    yed_append_to_line(line, ' ');
-    yed_append_to_line(line, '*');
-    yed_append_to_line(line, '/');
+    yed_append_to_line(frame->buffer, row, ' ');
+    yed_append_to_line(frame->buffer, row, '*');
+    yed_append_to_line(frame->buffer, row, '/');
 }
 
-void uncomment_line(yed_frame *frame, yed_line *line, int row) {
+void uncomment_line(yed_frame *frame, int row) {
     yed_delete_from_line(frame->buffer, row, 1);
     yed_delete_from_line(frame->buffer, row, 1);
     yed_delete_from_line(frame->buffer, row, 1);
 
-    array_pop(line->chars);
-    line->visual_width -= 1;
-    array_pop(line->chars);
-    line->visual_width -= 1;
-    array_pop(line->chars);
-    line->visual_width -= 1;
+    yed_pop_from_line(frame->buffer, row);
+    yed_pop_from_line(frame->buffer, row);
+    yed_pop_from_line(frame->buffer, row);
 }

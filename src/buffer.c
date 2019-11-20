@@ -315,19 +315,6 @@ void yed_line_pop_char(yed_line *line) {
     yed_line_delete_char(line, array_len(line->chars) - 1);
 }
 
-yed_line * yed_buffer_add_line(yed_buffer *buff) {
-    yed_line new_line,
-             *line;
-
-    new_line = yed_new_line();
-
-    line = bucket_array_push(buff->lines, new_line);
-
-    yed_mark_dirty_frames(buff);
-
-    return line;
-}
-
 yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
@@ -335,6 +322,7 @@ yed_buffer yed_new_buff(void) {
     buff.path          = NULL;
     buff.has_selection = 0;
     buff.flags         = 0;
+    buff.undo_history  = yed_new_undo_history();
 
     yed_buffer_add_line(&buff);
 
@@ -381,28 +369,285 @@ void yed_free_buffer(yed_buffer *buffer) {
 
     bucket_array_free(buffer->lines);
 
+    yed_free_undo_history(&buffer->undo_history);
+
     free(buffer);
 }
 
-void yed_append_to_line(yed_line *line, char c) {
+
+
+
+
+
+
+void yed_append_to_line_no_undo(yed_buffer *buff, int row, char c) {
+    yed_line *line;
+
+    line = yed_buff_get_line(buff, row);
     yed_line_append_char(line, c);
 }
 
-void yed_append_to_new_buff(yed_buffer *buff, char c) {
+void yed_pop_from_line_no_undo(yed_buffer *buff, int row) {
     yed_line *line;
 
-    if (c == '\r') {
-        return;
-    }
-
-    if (c == '\n') {
-        yed_buffer_add_line(buff);
-    } else {
-        line = bucket_array_last(buff->lines);
-
-        yed_append_to_line(line, c);
-    }
+    line = yed_buff_get_line(buff, row);
+    yed_line_pop_char(line);
 }
+
+void yed_line_clear_no_undo(yed_buffer *buff, int row) {
+    yed_line *line;
+
+    line = yed_buff_get_line(buff, row);
+    array_clear(line->chars);
+    line->visual_width = 0;
+}
+
+int yed_buffer_add_line_no_undo(yed_buffer *buff) {
+    yed_line new_line;
+
+    new_line = yed_new_line();
+
+    bucket_array_push(buff->lines, new_line);
+
+    yed_mark_dirty_frames(buff);
+
+    return yed_buff_n_lines(buff);
+}
+
+void yed_buff_set_line_no_undo(yed_buffer *buff, int row, yed_line *line) {
+    yed_line *old_line;
+
+    old_line = yed_buff_get_line(buff, row);
+
+    yed_free_line(old_line);
+    old_line->visual_width = line->visual_width;
+    old_line->chars        = array_make(char);
+    array_copy(old_line->chars, line->chars);
+}
+
+yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row) {
+    int      idx;
+    yed_line new_line, *line;
+
+    idx = row - 1;
+
+    if (idx < 0 || idx > bucket_array_len(buff->lines)) {
+        return NULL;
+    }
+
+    new_line = yed_new_line();
+    line     = bucket_array_insert(buff->lines, idx, new_line);
+
+    yed_mark_dirty_frames(buff);
+
+    return line;
+}
+
+void yed_buff_delete_line_no_undo(yed_buffer *buff, int row) {
+    int       idx;
+    yed_line *line;
+
+    idx = row - 1;
+
+    LIMIT(idx, 0, bucket_array_len(buff->lines));
+
+    line = yed_buff_get_line(buff, row);
+    yed_free_line(line);
+    bucket_array_delete(buff->lines, idx);
+
+    yed_mark_dirty_frames(buff);
+}
+
+void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, char c) {
+    int       idx;
+    yed_line *line;
+
+    line = yed_buff_get_line(buff, row);
+
+    idx = yed_line_col_to_idx(line, col);
+    yed_line_add_char(line, c, idx);
+
+    yed_mark_dirty_frames_line(buff, row);
+}
+
+void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col) {
+    int       idx;
+    yed_line *line;
+
+    line = yed_buff_get_line(buff, row);
+
+    idx = yed_line_col_to_idx(line, col);
+    yed_line_delete_char(line, idx);
+
+    yed_mark_dirty_frames_line(buff, row);
+}
+
+/*
+ * The following functions are the interface by which everything
+ * else should modify buffers.
+ * This is meant to preserve undo/redo behavior.
+ */
+
+void yed_append_to_line(yed_buffer *buff, int row, char c) {
+    yed_undo_action uact;
+
+    uact.kind = UNDO_CHAR_PUSH;
+    uact.row  = row;
+    uact.c    = c;
+
+    yed_push_undo_action(buff, &uact);
+
+    yed_append_to_line_no_undo(buff, row, c);
+}
+
+void yed_pop_from_line(yed_buffer *buff, int row) {
+    yed_undo_action  uact;
+    yed_line        *line;
+
+    line = yed_buff_get_line(buff, row);
+
+    uact.kind = UNDO_CHAR_POP;
+    uact.row  = row;
+    uact.c    = yed_line_col_to_char(line, line->visual_width);
+
+    yed_push_undo_action(buff, &uact);
+
+    yed_pop_from_line_no_undo(buff, row);
+}
+
+void yed_line_clear(yed_buffer *buff, int row) {
+    yed_line        *line;
+    yed_undo_action  uact;
+    int              i;
+
+    line = yed_buff_get_line(buff, row);
+
+    uact.kind = UNDO_CHAR_POP;
+    uact.row  = row;
+    for (i = line->visual_width; i >= 1; i -= 1) {
+        uact.c = yed_line_col_to_char(line, i);
+        yed_push_undo_action(buff, &uact);
+    }
+
+    yed_line_clear_no_undo(buff, row);
+}
+
+int yed_buffer_add_line(yed_buffer *buff) {
+    int             row;
+    yed_undo_action uact;
+
+    row = yed_buffer_add_line_no_undo(buff);
+
+    uact.kind = UNDO_LINE_ADD;
+    uact.row  = row;
+    yed_push_undo_action(buff, &uact);
+
+    return row;
+}
+
+void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line) {
+    yed_line        *old_line;
+    yed_undo_action  uact;
+    int              i;
+
+    old_line = yed_buff_get_line(buff, row);
+
+    uact.kind = UNDO_CHAR_POP;
+    uact.row  = row;
+    for (i = old_line->visual_width; i >= 1; i -= 1) {
+        uact.c = yed_line_col_to_char(old_line, i);
+        yed_push_undo_action(buff, &uact);
+    }
+
+    uact.kind = UNDO_CHAR_PUSH;
+    uact.row  = row;
+    for (i = 1; i <= line->visual_width; i += 1) {
+        uact.c = yed_line_col_to_char(line, i);
+        yed_push_undo_action(buff, &uact);
+    }
+
+    yed_buff_set_line_no_undo(buff, row, line);
+}
+
+yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
+    yed_line        *line;
+    yed_undo_action  uact;
+
+    line = yed_buff_insert_line_no_undo(buff, row);
+
+    if (line) {
+        uact.kind = UNDO_LINE_ADD;
+        uact.row  = row;
+        yed_push_undo_action(buff, &uact);
+    }
+
+    return line;
+}
+
+void yed_buff_delete_line(yed_buffer *buff, int row) {
+    yed_undo_action  uact;
+    yed_line        *line;
+    int              i;
+
+    line = yed_buff_get_line(buff, row);
+
+    uact.kind = UNDO_CHAR_POP;
+    uact.row  = row;
+    for (i = line->visual_width; i >= 1; i -= 1) {
+        uact.c = yed_line_col_to_char(line, i);
+        yed_push_undo_action(buff, &uact);
+    }
+
+    uact.kind = UNDO_LINE_DEL;
+    uact.row  = row;
+    yed_push_undo_action(buff, &uact);
+
+    yed_buff_delete_line_no_undo(buff, row);
+}
+
+void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
+    yed_undo_action uact;
+
+    uact.kind = UNDO_CHAR_ADD;
+    uact.row  = row;
+    uact.col  = col;
+    uact.c    = c;
+
+    yed_push_undo_action(buff, &uact);
+
+    yed_insert_into_line_no_undo(buff, row, col, c);
+}
+
+void yed_delete_from_line(yed_buffer *buff, int row, int col) {
+    yed_line        *line;
+    yed_undo_action  uact;
+
+    line = yed_buff_get_line(buff, row);
+
+    uact.kind = UNDO_CHAR_DEL;
+    uact.row  = row;
+    uact.col  = col;
+    uact.c    = yed_line_col_to_char(line, col);
+
+    yed_push_undo_action(buff, &uact);
+
+    yed_delete_from_line_no_undo(buff, row, col);
+}
+
+
+
+
+
+
+
+
+int yed_buff_n_lines(yed_buffer *buff) {
+    return bucket_array_len(buff->lines);
+}
+
+
+
+
 
 int yed_line_col_to_idx(yed_line *line, int col) {
     if (col > array_len(line->chars) + 1) {
@@ -453,11 +698,6 @@ char yed_line_col_to_char(yed_line *line, int col) {
     return *(char*)array_item(line->chars, idx);
 }
 
-void yed_line_clear(yed_line *line) {
-    array_clear(line->chars);
-    line->visual_width = 0;
-}
-
 yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     int idx;
 
@@ -470,79 +710,6 @@ yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     return bucket_array_item(buff->lines, idx);
 }
 
-void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line) {
-    int       idx;
-    yed_line *old_line;
-
-    idx = row - 1;
-
-    if (idx < 0 || idx >= bucket_array_len(buff->lines)) {
-        return;
-    }
-
-    old_line = bucket_array_item(buff->lines, idx);
-    yed_free_line(old_line);
-    old_line->visual_width = line->visual_width;
-    old_line->chars = array_make(char);
-    array_copy(old_line->chars, line->chars);
-}
-
-yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
-    int      idx;
-    yed_line new_line, *line;
-
-    idx = row - 1;
-
-    if (idx < 0 || idx > bucket_array_len(buff->lines)) {
-        return NULL;
-    }
-
-    new_line = yed_new_line();
-    line     = bucket_array_insert(buff->lines, idx, new_line);
-
-    yed_mark_dirty_frames(buff);
-
-    return line;
-}
-
-void yed_buff_delete_line(yed_buffer *buff, int row) {
-    int       idx;
-    yed_line *line;
-
-    idx = row - 1;
-
-    LIMIT(idx, 0, bucket_array_len(buff->lines));
-
-    line = yed_buff_get_line(buff, row);
-    yed_free_line(line);
-    bucket_array_delete(buff->lines, idx);
-
-    yed_mark_dirty_frames(buff);
-}
-
-void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
-    int       idx;
-    yed_line *line;
-
-    line = yed_buff_get_line(buff, row);
-
-    idx = yed_line_col_to_idx(line, col);
-    yed_line_add_char(line, c, idx);
-
-    yed_mark_dirty_frames_line(buff, row);
-}
-
-void yed_delete_from_line(yed_buffer *buff, int row, int col) {
-    int       idx;
-    yed_line *line;
-
-    line = yed_buff_get_line(buff, row);
-
-    idx = yed_line_col_to_idx(line, col);
-    yed_line_delete_char(line, idx);
-
-    yed_mark_dirty_frames_line(buff, row);
-}
 
 
 int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
@@ -856,7 +1023,7 @@ void yed_buff_delete_selection(yed_buffer *buff) {
         ASSERT(line1, "didn't get line1 in yed_buff_delete_selection()");
         n = line1->visual_width - c1 + 1;
         for (i = 0; i < n; i += 1) {
-            yed_line_pop_char(line1);
+            yed_pop_from_line(buff, r1);
         }
         for (i = r1 + 1; i < r2; i += 1) {
             yed_buff_delete_line(buff, r1 + 1);
@@ -866,7 +1033,7 @@ void yed_buff_delete_selection(yed_buffer *buff) {
         n = line2->visual_width - c2 + 1;
         for (i = 0; i < n; i += 1) {
             c = yed_line_col_to_char(line2, c2 + i);
-            yed_line_append_char(line1, c);
+            yed_append_to_line(buff, r1, c);
         }
         for (i = c2 - 1; i < n; i += 1) {
             yed_delete_from_line(buff, r1 + 1, 1);

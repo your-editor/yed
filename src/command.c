@@ -119,6 +119,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("replace-current-search", replace_current_search);
     SET_DEFAULT_COMMAND("style",                  style);
     SET_DEFAULT_COMMAND("style-off",              style_off);
+    SET_DEFAULT_COMMAND("undo",                   undo);
+    SET_DEFAULT_COMMAND("redo",                   redo);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -1421,6 +1423,8 @@ void yed_default_command_insert(int n_args, char **args) {
     event.kind = EVENT_BUFFER_PRE_MOD;
     yed_trigger_event(&event);
 
+    yed_start_undo_record(frame, frame->buffer);
+
     if (key == ENTER) {
         /*
          * Must get 'line' _after_ we've added 'new_line' because
@@ -1430,19 +1434,14 @@ void yed_default_command_insert(int n_args, char **args) {
         new_line = yed_buff_insert_line(frame->buffer, frame->cursor_line + 1);
         line     = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-        if (col == 1) {
-            new_line->chars        = line->chars;
-            line->chars            = array_make(char);
-            new_line->visual_width = line->visual_width;
-            line->visual_width     = 0;
-        } else {
-            len = 0;
-            idx = yed_line_col_to_idx(line, col);
-            array_traverse_from(line->chars, c, idx) {
-                yed_line_append_char(new_line, *c);
-                len += 1;
-            }
-            for (; len > 0; len -= 1)    { yed_line_pop_char(line); }
+        len = 0;
+        idx = yed_line_col_to_idx(line, col);
+        array_traverse_from(line->chars, c, idx) {
+            yed_append_to_line(frame->buffer, frame->cursor_line + 1, *c);
+            len += 1;
+        }
+        for (; len > 0; len -= 1) {
+            yed_pop_from_line(frame->buffer, frame->cursor_line);
         }
 
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
@@ -1463,6 +1462,8 @@ void yed_default_command_insert(int n_args, char **args) {
             yed_move_cursor_within_frame(frame, 1, 0);
         }
     }
+
+    yed_end_undo_record(frame, frame->buffer);
 
     event.row  = frame->cursor_line;
     event.col  = frame->cursor_col;
@@ -1516,12 +1517,14 @@ void yed_default_command_delete_back(int n_args, char **args) {
     event.kind  = EVENT_BUFFER_PRE_DELETE_BACK;
     yed_trigger_event(&event);
 
+    yed_start_undo_record(frame, frame->buffer);
+
     if (frame->buffer->has_selection) {
         r1 = c1 = r2 = c2 = 0;
         yed_range_sorted_points(&frame->buffer->selection, &r1, &c1, &r2, &c2);
         frame->buffer->selection.locked = 1;
         if (frame->buffer->selection.kind == RANGE_LINE) {
-            r1 = MIN(r1, bucket_array_len(frame->buffer->lines) - (r2 - r1) - 1);
+            r1 = MIN(r1, yed_buff_n_lines(frame->buffer) - (r2 - r1) - 1);
             yed_set_cursor_far_within_frame(frame, 1, r1);
         } else {
             yed_set_cursor_far_within_frame(frame, c1, r1);
@@ -1537,15 +1540,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
                 prev_line_len = previous_line->visual_width;
 
-                if (prev_line_len == 0) {
-                    previous_line->chars        = line->chars;
-                    line->chars                 = array_make(char);
-                    previous_line->visual_width = line->visual_width;
-                    line->visual_width          = 0;
-                } else {
-                    array_traverse(line->chars, c) {
-                        yed_line_append_char(previous_line, *c);
-                    }
+                array_traverse(line->chars, c) {
+                    yed_append_to_line(frame->buffer, frame->cursor_line - 1, *c);
                 }
 
                 /*
@@ -1558,7 +1554,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
                  * up if there is a buffer_y_offset and there's content
                  * to pull up.
                  */
-                buff_n_lines = bucket_array_len(frame->buffer->lines);
+                buff_n_lines = yed_buff_n_lines(frame->buffer);
                 if (frame->buffer_y_offset >= buff_n_lines - frame->height) {
                     yed_frame_reset_cursor(frame);
                 }
@@ -1573,6 +1569,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
             yed_move_cursor_within_frame(frame, -1, 0);
         }
     }
+
+    yed_end_undo_record(frame, frame->buffer);
 
     event.kind  = EVENT_BUFFER_POST_DELETE_BACK;
     yed_trigger_event(&event);
@@ -1626,11 +1624,15 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     yed_trigger_event(&event);
 
+    yed_start_undo_record(frame, frame->buffer);
+
     if (col == line->visual_width + 1) {
         yed_move_cursor_within_frame(frame, -1, 0);
         col = frame->cursor_col;
     }
     yed_delete_from_line(frame->buffer, row, col);
+
+    yed_end_undo_record(frame, frame->buffer);
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
@@ -1638,7 +1640,6 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
 void yed_default_command_delete_line(int n_args, char **args) {
     yed_frame *frame;
-    yed_line  *line;
     yed_event  event;
     int        row,
                n_lines;
@@ -1675,6 +1676,8 @@ void yed_default_command_delete_line(int n_args, char **args) {
 
     yed_trigger_event(&event);
 
+    yed_start_undo_record(frame, frame->buffer);
+
     if (n_lines > 1) {
         if (row == n_lines) {
             yed_move_cursor_within_frame(frame, 0, -1);
@@ -1683,9 +1686,8 @@ void yed_default_command_delete_line(int n_args, char **args) {
     } else {
         ASSERT(row == 1, "only one line, but not on line one");
 
-        line = yed_buff_get_line(frame->buffer, row);
         yed_set_cursor_within_frame(frame, 1, 1);
-        yed_line_clear(line);
+        yed_line_clear(frame->buffer, row);
     }
 
     /*
@@ -1697,6 +1699,8 @@ void yed_default_command_delete_line(int n_args, char **args) {
     if (frame->buffer_y_offset >= n_lines - frame->height) {
         yed_frame_reset_cursor(frame);
     }
+
+    yed_end_undo_record(frame, frame->buffer);
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
@@ -1950,11 +1954,10 @@ void yed_default_command_select_off(int n_args, char **args) {
 void yed_default_command_yank_selection(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
-    yed_line   *line_it,
-               *new_line;
+    yed_line   *line_it;
     yed_range  *sel;
     int         preserve_selection;
-    int         row, col, r1, c1, r2, c2;
+    int         row, col, yrow, r1, c1, r2, c2;
 
     if (n_args > 1) {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
@@ -2003,44 +2006,44 @@ void yed_default_command_yank_selection(int n_args, char **args) {
 
     /* Copy the selection into the yank buffer. */
     sel = &buff->selection;
-    r1 = c1 = r2 = c2 = 0;
+    r1  = c1 = r2 = c2 = 0;
     yed_range_sorted_points(sel, &r1, &c1, &r2, &c2);
     if (sel->kind == RANGE_LINE) {
         ys->yank_buff->flags |= BUFF_YANK_LINES;
         for (row = r1; row <= r2; row += 1) {
-            new_line = yed_buffer_add_line(ys->yank_buff);
-            line_it  = yed_buff_get_line(buff, row);
+            yrow    = yed_buffer_add_line(ys->yank_buff);
+            line_it = yed_buff_get_line(buff, row);
             for (col = 1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(new_line,
+                yed_append_to_line(ys->yank_buff, yrow,
                     yed_line_col_to_char(line_it, col));
             }
         }
     } else {
         ys->yank_buff->flags &= ~(BUFF_YANK_LINES);
-        new_line = yed_buffer_add_line(ys->yank_buff);
-        line_it  = yed_buff_get_line(buff, r1);
+        yrow    = yed_buffer_add_line(ys->yank_buff);
+        line_it = yed_buff_get_line(buff, r1);
         if (r1 == r2) {
             for (col = c1; col < c2; col += 1) {
-                yed_append_to_line(new_line,
+                yed_append_to_line(ys->yank_buff, yrow,
                     yed_line_col_to_char(line_it, col));
             }
         } else {
             for (col = c1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(new_line,
+                yed_append_to_line(ys->yank_buff, yrow,
                     yed_line_col_to_char(line_it, col));
             }
             for (row = r1 + 1; row <= r2 - 1; row += 1) {
-                new_line = yed_buffer_add_line(ys->yank_buff);
-                line_it  = yed_buff_get_line(buff, row);
+                yrow    = yed_buffer_add_line(ys->yank_buff);
+                line_it = yed_buff_get_line(buff, row);
                 for (col = 1; col <= line_it->visual_width; col += 1) {
-                    yed_append_to_line(new_line,
+                    yed_append_to_line(ys->yank_buff, yrow,
                         yed_line_col_to_char(line_it, col));
                 }
             }
-            new_line = yed_buffer_add_line(ys->yank_buff);
-            line_it  = yed_buff_get_line(buff, r2);
+            yrow    = yed_buffer_add_line(ys->yank_buff);
+            line_it = yed_buff_get_line(buff, r2);
             for (col = 1; col < c2; col += 1) {
-                yed_append_to_line(new_line,
+                yed_append_to_line(ys->yank_buff, yrow,
                     yed_line_col_to_char(line_it, col));
             }
         }
@@ -2057,11 +2060,10 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
     yed_line   *line_it,
-               *new_line,
                *first_line,
                *last_line;
     yed_event   event;
-    int         yank_buff_n_lines, row, col;
+    int         yank_buff_n_lines, first_row, last_row, new_row, row, col;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
@@ -2098,16 +2100,19 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
 
     yed_trigger_event(&event);
 
-    yank_buff_n_lines = bucket_array_len(ys->yank_buff->lines);
+    yed_start_undo_record(frame, frame->buffer);
+
+    yank_buff_n_lines = yed_buff_n_lines(ys->yank_buff);
 
     ASSERT(yank_buff_n_lines, "yank buffer has no lines");
 
     if (ys->yank_buff->flags & BUFF_YANK_LINES) {
         for (row = 1; row <= yank_buff_n_lines; row += 1) {
-            line_it  = yed_buff_get_line(ys->yank_buff, row);
-            new_line = yed_buff_insert_line(buff, frame->cursor_line + row);
+            line_it = yed_buff_get_line(ys->yank_buff, row);
+            new_row = frame->cursor_line + row;
+            yed_buff_insert_line(buff, new_row);
             for (col = 1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(new_line,
+                yed_append_to_line(buff, new_row,
                     yed_line_col_to_char(line_it, col));
             }
         }
@@ -2122,25 +2127,28 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                     yed_line_col_to_char(line_it, col));
             }
         } else {
-            first_line = yed_buff_get_line(buff, frame->cursor_line);
-            last_line  = yed_buff_insert_line(buff, frame->cursor_line + 1);
+            first_row  = frame->cursor_line;
+            last_row   = frame->cursor_line + 1;
+            first_line = yed_buff_get_line(buff, first_row);
+            last_line  = yed_buff_get_line(buff, last_row);
             for (col = frame->cursor_col; col <= first_line->visual_width; col += 1) {
-                yed_append_to_line(last_line,
+                yed_append_to_line(buff, last_row,
                     yed_line_col_to_char(first_line, col));
             }
             for (col = first_line->visual_width; col >= frame->cursor_col; col -= 1) {
-                yed_line_pop_char(first_line);
+                yed_pop_from_line(buff, first_row);
             }
             line_it  = yed_buff_get_line(ys->yank_buff, 1);
             for (col = 1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(first_line,
+                yed_append_to_line(buff, first_row,
                     yed_line_col_to_char(line_it, col));
             }
             for (row = 2; row <= yank_buff_n_lines - 1; row += 1) {
-                line_it  = yed_buff_get_line(ys->yank_buff, row);
-                new_line = yed_buff_insert_line(buff, frame->cursor_line + row - 1);
+                line_it = yed_buff_get_line(ys->yank_buff, row);
+                new_row = frame->cursor_line + row - 1;
+                yed_buff_insert_line(buff, new_row);
                 for (col = 1; col <= line_it->visual_width; col += 1) {
-                    yed_append_to_line(new_line,
+                    yed_append_to_line(buff, new_row,
                         yed_line_col_to_char(line_it, col));
                 }
             }
@@ -2153,6 +2161,8 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             }
         }
     }
+
+    yed_end_undo_record(frame, frame->buffer);
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
@@ -2428,10 +2438,12 @@ void yed_replace_current_search_take_key(int key) {
         yed_clear_cmd_buff();
         replace_abort();
         replace_free();
+        yed_cancel_undo_record(ys->active_frame, ys->active_frame->buffer);
     } else if (key == ENTER) {
         yed_replace_current_search_update();
 
         replace_free();
+        yed_end_undo_record(ys->active_frame, ys->active_frame->buffer);
 
         ys->interactive_command = NULL;
         cpy = strdup(array_data(ys->cmd_buff));
@@ -2519,6 +2531,8 @@ void yed_start_replace_current_search(void) {
     buff = ys->active_frame->buffer;
     len  = strlen(ys->current_search);
 
+    yed_start_undo_record(ys->active_frame, buff);
+
     yed_set_cursor_within_frame(ys->active_frame, 1, ys->active_frame->cursor_line);
 
     if (buff->has_selection) {
@@ -2591,7 +2605,7 @@ void yed_default_command_style(int n_args, char **args) {
 
 void yed_default_command_style_off(int n_args, char **args) {
     if (n_args != 0) {
-        yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
         return;
     }
@@ -2599,6 +2613,65 @@ void yed_default_command_style_off(int n_args, char **args) {
     ys->active_style = NULL;
     ys->redraw       = 1;
 }
+
+void yed_default_command_undo(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buffer;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    buffer = frame->buffer;
+
+    if (!yed_undo(frame, buffer)) {
+        yed_append_text_to_cmd_buff("[!] nothing to undo");
+    }
+}
+
+void yed_default_command_redo(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buffer;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    buffer = frame->buffer;
+
+    if (!yed_redo(frame, buffer)) {
+        yed_append_text_to_cmd_buff("[!] nothing to redo");
+    }
+}
+
 
 int yed_execute_command(char *name, int n_args, char **args) {
     tree_it(yed_command_name_t, yed_command)  it;

@@ -17,6 +17,7 @@
 #include "util.c"
 #include "style.c"
 #include "subproc.c"
+#include "undo.c"
 
 yed_state *ys;
 
