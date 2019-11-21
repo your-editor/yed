@@ -14,7 +14,7 @@ yed_undo_history yed_new_undo_history(void) {
     uh.undo = array_make(yed_undo_record);
     uh.redo = array_make(yed_undo_record);
 
-    uh.current_record = NULL;
+    uh.current_record    = NULL;
 
     return uh;
 }
@@ -69,9 +69,9 @@ void yed_force_end_undo_record(yed_undo_history *history) {
      * eventually there will be stuff that needs
      * to be freed and such.
      */
-     array_clear(history->redo);
+    array_clear(history->redo);
 
-     history->current_record = NULL;
+    history->current_record = NULL;
 }
 
 void yed_start_undo_record(yed_frame *frame, yed_buffer *buffer) {
@@ -124,7 +124,7 @@ void yed_end_undo_record(yed_frame *frame, yed_buffer *buffer) {
      */
     array_clear(history->redo);
 
-    history->current_record = NULL;
+    history->current_record    = NULL;
 }
 
 void yed_cancel_undo_record(yed_frame *frame, yed_buffer *buffer) {
@@ -142,6 +142,49 @@ void yed_cancel_undo_record(yed_frame *frame, yed_buffer *buffer) {
     array_pop(history->undo);
 
     history->current_record = NULL;
+}
+
+int yed_get_undo_num_records(struct yed_buffer_t *buffer) {
+    yed_undo_history *history;
+
+    if (buffer->kind == BUFF_KIND_YANK)    { return -1; }
+
+    history = &buffer->undo_history;
+
+    return array_len(history->undo);
+}
+
+void yed_merge_undo_records(struct yed_buffer_t *buffer) {
+    yed_undo_history *history;
+    yed_undo_record  *last_record,
+                     *new_last_record;
+    yed_undo_action  *action;
+
+    if (buffer->kind == BUFF_KIND_YANK)    { return; }
+
+    history = &buffer->undo_history;
+
+    if (array_len(history->undo) < 2)    { return; }
+
+    last_record     = array_last(history->undo);
+    new_last_record = array_item(history->undo, array_len(history->undo) - 2);
+
+    array_traverse(last_record->actions, action) {
+        array_push(new_last_record->actions, *action);
+    }
+
+    new_last_record->end_cursor_row = last_record->end_cursor_row;
+    new_last_record->end_cursor_col = last_record->end_cursor_col;
+
+    yed_free_undo_record(last_record);
+    array_pop(history->undo);
+
+    new_last_record = array_last(history->undo);
+
+    if (history->current_record) {
+        ASSERT(history->current_record == last_record, "undo history messed up");
+        history->current_record = new_last_record;
+    }
 }
 
 int yed_push_undo_action(yed_buffer *buffer, yed_undo_action *action) {

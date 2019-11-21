@@ -38,6 +38,7 @@ static int repeating;
 static int till_pending; /* 0 = not pending, 1 = pending forward, 2 = pending backward */
 static int last_till_key;
 static int last_till_dir; /* 1 = forward, 2 = backward */
+static int num_undo_records_before_insert;
 
 void vimish_unload(yed_plugin *self);
 void vimish_normal(int key, char* key_str);
@@ -752,8 +753,38 @@ void vimish_man_word(int n_args, char **args) {
     free(word);
 }
 
-void enter_insert(void) {}
-void exit_insert(void) {}
+void enter_insert(void) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+
+    frame = ys->active_frame;
+
+    if (frame) {
+        buff = frame->buffer;
+
+        if (buff) {
+            num_undo_records_before_insert = yed_get_undo_num_records(buff);
+        }
+    }
+}
+
+void exit_insert(void) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+
+    frame = ys->active_frame;
+
+    if (frame) {
+        buff = frame->buffer;
+
+        if (buff) {
+
+            while (yed_get_undo_num_records(buff) > num_undo_records_before_insert + 1) {
+                yed_merge_undo_records(buff);
+            }
+        }
+    }
+}
 
 void enter_delete(int by_line) {
     yed_set_var("enable-search-cursor-move", "yes");

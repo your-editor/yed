@@ -43,6 +43,8 @@ int yed_num_undo_records(struct yed_buffer_t *buffer);
 void yed_start_undo_record(struct yed_frame_t *frame, struct yed_buffer_t *buffer);
 void yed_end_undo_record(struct yed_frame_t *frame, struct yed_buffer_t *buffer);
 void yed_cancel_undo_record(struct yed_frame_t *frame, struct yed_buffer_t *buffer);
+int yed_get_undo_num_records(struct yed_buffer_t *buffer);
+void yed_merge_undo_records(struct yed_buffer_t *buffer);
 int yed_push_undo_action(struct yed_buffer_t *buffer, yed_undo_action *action);
 int yed_undo(struct yed_frame_t *frame, struct yed_buffer_t *buffer);
 int yed_redo(struct yed_frame_t *frame, struct yed_buffer_t *buffer);
