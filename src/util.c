@@ -103,3 +103,24 @@ char * path_without_ext(char *path) {
 
     return cpy;
 }
+
+char *exe_path(char *prg) {
+    char  cmd_buff[256];
+    char *path;
+
+    cmd_buff[0] = 0;
+
+    strcat(cmd_buff, "which ");
+    strcat(cmd_buff, prg);
+
+    path = yed_run_subproc(cmd_buff);
+
+    if (path) {
+        if (strlen(path) == 0) {
+            free(path);
+            return NULL;
+        }
+    }
+
+    return path;
+}

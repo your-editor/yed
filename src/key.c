@@ -158,7 +158,11 @@ void yed_take_key(int key) {
     yed_key_binding *binding;
     char             key_str_buff[32];
     char            *key_str;
+    yed_event        event;
 
+    event.kind = EVENT_KEY_PRESSED;
+    event.key  = key;
+    yed_trigger_event(&event);
 
     binding = yed_get_key_binding(key);
 

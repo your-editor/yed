@@ -48,12 +48,11 @@ void man(int n_args, char **args) {
     strcat(path_buff, ".yed");
     strcat(cmd_buff, " 2>&1 | col -bx > ");
     strcat(cmd_buff, path_buff);
-    strcat(cmd_buff, " && test ${PIPESTATUS[0]} -eq 0'");
+    strcat(cmd_buff, " && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
 
     err = system(cmd_buff);
 
     if (err) {
-        ys->redraw = 1; /* 'man' will poop on our screen if the command failed */
         yed_append_text_to_cmd_buff("[!] command '");
         yed_append_text_to_cmd_buff(err_buff);
         yed_append_text_to_cmd_buff("' failed");

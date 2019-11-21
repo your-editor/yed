@@ -2084,12 +2084,12 @@ void yed_default_command_yank_selection(int n_args, char **args) {
 
     /*
      * Clear out what's in the yank buffer.
-     * We should make a cleaner way to do this in buffer.c
+     * yed_buff_clear() leaves a line in the buffer,
+     * so we need to delete that too.
      */
-    bucket_array_traverse(ys->yank_buff->lines, line_it) {
-        yed_free_line(line_it);
-    }
-    bucket_array_clear(ys->yank_buff->lines);
+    yed_buff_clear_no_undo(ys->yank_buff);
+    yed_buff_delete_line(ys->yank_buff, 1);
+
 
     /* Copy the selection into the yank buffer. */
     sel = &buff->selection;

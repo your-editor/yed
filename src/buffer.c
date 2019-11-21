@@ -318,11 +318,13 @@ void yed_line_pop_char(yed_line *line) {
 yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
-    buff.lines         = bucket_array_make(1024, yed_line);
-    buff.path          = NULL;
-    buff.has_selection = 0;
-    buff.flags         = 0;
-    buff.undo_history  = yed_new_undo_history();
+    buff.lines              = bucket_array_make(1024, yed_line);
+    buff.get_line_cache     = NULL;
+    buff.get_line_cache_row = 0;
+    buff.path               = NULL;
+    buff.has_selection      = 0;
+    buff.flags              = 0;
+    buff.undo_history       = yed_new_undo_history();
 
     yed_buffer_add_line_no_undo(&buff);
 
@@ -347,6 +349,18 @@ yed_buffer *yed_create_buffer(char *name) {
     tree_insert(ys->buffers, strdup(name), buff);
 
     return buff;
+}
+
+yed_buffer * yed_get_buffer(char *name) {
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+
+    it = tree_lookup(ys->buffers, name);
+
+    if (!tree_it_good(it)) {
+        return NULL;
+    }
+
+    return tree_it_val(it);
 }
 
 void yed_free_buffer(yed_buffer *buffer) {
@@ -410,6 +424,8 @@ int yed_buffer_add_line_no_undo(yed_buffer *buff) {
     bucket_array_push(buff->lines, new_line);
 
     yed_mark_dirty_frames(buff);
+    buff->get_line_cache     = NULL;
+    buff->get_line_cache_row = 0;
 
     return yed_buff_n_lines(buff);
 }
@@ -439,6 +455,8 @@ yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row) {
     line     = bucket_array_insert(buff->lines, idx, new_line);
 
     yed_mark_dirty_frames(buff);
+    buff->get_line_cache     = NULL;
+    buff->get_line_cache_row = 0;
 
     return line;
 }
@@ -456,6 +474,8 @@ void yed_buff_delete_line_no_undo(yed_buffer *buff, int row) {
     bucket_array_delete(buff->lines, idx);
 
     yed_mark_dirty_frames(buff);
+    buff->get_line_cache     = NULL;
+    buff->get_line_cache_row = 0;
 }
 
 void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, char c) {
@@ -480,6 +500,21 @@ void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col) {
     yed_line_delete_char(line, idx);
 
     yed_mark_dirty_frames_line(buff, row);
+}
+
+void yed_buff_clear_no_undo(yed_buffer *buff) {
+    yed_line *line;
+
+    bucket_array_traverse(buff->lines, line) {
+        yed_free_line(line);
+    }
+    bucket_array_clear(buff->lines);
+
+    yed_buffer_add_line_no_undo(buff);
+
+    yed_mark_dirty_frames(buff);
+    buff->get_line_cache     = NULL;
+    buff->get_line_cache_row = 0;
 }
 
 /*
@@ -634,6 +669,33 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
     yed_delete_from_line_no_undo(buff, row, col);
 }
 
+void yed_buff_clear(yed_buffer *buff) {
+    int              row, col;
+    yed_line        *line;
+    yed_undo_action  uact;
+
+    for (row = bucket_array_len(buff->lines); row >= 1; row -= 1) {
+        line = yed_buff_get_line(buff, row);
+
+        uact.kind = UNDO_CHAR_POP;
+        uact.row  = row;
+        for (col = line->visual_width; col >= 1; col -= 1) {
+            uact.c = yed_line_col_to_char(line, col);
+            yed_push_undo_action(buff, &uact);
+        }
+
+        uact.kind = UNDO_LINE_DEL;
+        uact.row  = row;
+        yed_push_undo_action(buff, &uact);
+    }
+
+    uact.kind = UNDO_LINE_ADD;
+    uact.row  = 1;
+    yed_push_undo_action(buff, &uact);
+
+    yed_buff_clear_no_undo(buff);
+}
+
 
 
 
@@ -699,7 +761,12 @@ char yed_line_col_to_char(yed_line *line, int col) {
 }
 
 yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
-    int idx;
+    int       idx;
+    yed_line *line;
+
+    if (row == buff->get_line_cache_row) {
+        return buff->get_line_cache;
+    }
 
     idx = row - 1;
 
@@ -707,7 +774,12 @@ yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
         return NULL;
     }
 
-    return bucket_array_item(buff->lines, idx);
+    line = bucket_array_item(buff->lines, idx);
+
+    buff->get_line_cache     = line;
+    buff->get_line_cache_row = row;
+
+    return line;
 }
 
 
@@ -721,6 +793,8 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
     if (!f) {
         return 0;
     }
+
+    yed_buff_clear_no_undo(buff);
 
     if ((mode = yed_get_var("buffer-load-mode"))
     && (strcmp(mode, "map") == 0)) {

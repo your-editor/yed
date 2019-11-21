@@ -66,6 +66,8 @@ typedef struct yed_buffer_t {
     char             *name;
     char             *path;
     bucket_array_t    lines;
+    yed_line         *get_line_cache;
+    int               get_line_cache_row;
     int               has_selection;
     yed_range         selection;
     yed_undo_history  undo_history;
@@ -83,7 +85,8 @@ void yed_free_line(yed_line *line);
 yed_line * yed_copy_line(yed_line *line);
 
 yed_buffer yed_new_buff(void);
-yed_buffer *yed_create_buffer(char *name);
+yed_buffer * yed_create_buffer(char *name);
+yed_buffer * yed_get_buffer(char *name);
 void yed_free_buffer(yed_buffer *buffer);
 
 int yed_line_col_to_idx(yed_line *line, int col);
@@ -100,6 +103,7 @@ yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row);
 void yed_buff_delete_line_no_undo(yed_buffer *buff, int row);
 void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, char c);
 void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col);
+void yed_buff_clear_no_undo(yed_buffer *buff);
 /*
  * The following functions are the interface by which everything
  * else should modify buffers.
@@ -114,6 +118,7 @@ yed_line * yed_buff_insert_line(yed_buffer *buff, int row);
 void yed_buff_delete_line(yed_buffer *buff, int row);
 void yed_insert_into_line(yed_buffer *buff, int row, int col, char c);
 void yed_delete_from_line(yed_buffer *buff, int row, int col);
+void yed_buff_clear(yed_buffer *buff);
 
 
 int yed_buff_n_lines(yed_buffer *buff);

@@ -20,7 +20,8 @@ char * yed_run_subproc(char *cmd) {
         array_push(out, c);
     }
 
-    if (*(char*)array_last(out) == '\n') {
+    if (array_len(out)
+    &&  *(char*)array_last(out) == '\n') {
         array_pop(out);
     }
 

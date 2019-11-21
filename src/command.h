@@ -17,6 +17,9 @@ void yed_unset_command(char *name);
 void yed_set_default_command(char *name, yed_command command);
 void yed_set_default_commands(void);
 
+void yed_clear_cmd_buff(void);
+void yed_cmd_buff_push(char c);
+void yed_cmd_buff_pop(void);
 void yed_append_text_to_cmd_buff(char *s);
 void yed_append_non_text_to_cmd_buff(char *s);
 void yed_append_int_to_cmd_buff(int i);

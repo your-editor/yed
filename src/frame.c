@@ -126,8 +126,12 @@ void yed_delete_frame(yed_frame *frame) {
 
     if (ys->active_frame == frame) {
         ys->active_frame = NULL;
-        yed_activate_frame(new_active_frame);
+        if (new_active_frame) {
+            yed_activate_frame(new_active_frame);
+        }
     }
+
+    ys->redraw = ys->redraw_cls = 1;
 
     array_free(frame->line_attrs);
 
@@ -223,8 +227,8 @@ void yed_activate_frame(yed_frame *frame) {
         yed_set_cursor_far_within_frame(frame, 1, 1);
     }
     yed_frame_reset_cursor(frame);
-    ys->active_frame->dirty      = 1;
-    ys->redraw = ys->redraw_cls  = 1;
+    ys->active_frame->dirty = 1;
+    ys->redraw              = 1;
 
     yed_trigger_event(&event);
 }

@@ -3,6 +3,7 @@
 void get_env_info(void);
 void add_commands(yed_plugin *self);
 void kammerdiener_fill_cursor_line(int n_args, char **args);
+int has_rg(void);
 
 int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
@@ -11,7 +12,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "syntax_c", "syntax_sh", "brace_hl",
         "indent_c", "comment",
         "autotrim",
-        "make_check", "man", "latex",
+        "grep", "make_check", "man", "latex",
         "focus_frame",
         "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox", "style_skyfall",
         "proj",
@@ -27,6 +28,11 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_set_var("tab-width",      "4");
     yed_set_var("latex-comp-prg", "pdflatex -halt-on-error --interaction=nonstopmode");
     yed_set_var("latex-view-prg", "open -a Skim");
+    if (has_rg()) {
+        yed_set_var("grep-prg",   "rg --vimgrep");
+    } else {
+        yed_set_var("grep-prg",   "grep --exclude-dir={.git,text} -RHnIs -E");
+    }
 
 
     /* Add custom commands from this file. */
@@ -62,6 +68,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",     "ctrl-h",              "frame-prev");
     YEXE("vimish-bind", "normal",     ">",                   "indent");
     YEXE("vimish-bind", "normal",     "<",                   "unindent");
+    YEXE("vimish-bind", "normal",     "spc", "g",            "grep");
 
 
     /* Colors */
@@ -104,4 +111,17 @@ void add_commands(yed_plugin *self) {
 
 void kammerdiener_fill_cursor_line(int n_args, char **args) {
     fill_cmd_prompt("cursor-line");
+}
+
+int has_rg(void) {
+    char *rg_path;
+
+    rg_path = exe_path("rg");
+
+    if (rg_path) {
+        free(rg_path);
+        return 1;
+    }
+
+    return 0;
 }
