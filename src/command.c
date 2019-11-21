@@ -92,12 +92,14 @@ do {                                                              \
     SET_DEFAULT_COMMAND("buffer",                 buffer);
     SET_DEFAULT_COMMAND("buffer-delete",          buffer_delete);
     SET_DEFAULT_COMMAND("buffer-next",            buffer_next);
+    SET_DEFAULT_COMMAND("buffer-prev",            buffer_prev);
     SET_DEFAULT_COMMAND("buffer-name",            buffer_name);
     SET_DEFAULT_COMMAND("frame-new",              frame_new);
     SET_DEFAULT_COMMAND("frame-delete",           frame_delete);
     SET_DEFAULT_COMMAND("frame-vsplit",           frame_vsplit);
     SET_DEFAULT_COMMAND("frame-hsplit",           frame_hsplit);
     SET_DEFAULT_COMMAND("frame-next",             frame_next);
+    SET_DEFAULT_COMMAND("frame-prev",             frame_prev);
     SET_DEFAULT_COMMAND("insert",                 insert);
     SET_DEFAULT_COMMAND("delete-back",            delete_back);
     SET_DEFAULT_COMMAND("delete-forward",         delete_forward);
@@ -1219,6 +1221,51 @@ void yed_default_command_buffer_next(int n_args, char **args) {
     yed_append_text_to_cmd_buff("'");
 }
 
+void yed_default_command_buffer_prev(int n_args, char **args) {
+    yed_buffer                                   *buffer;
+    yed_frame                                    *frame;
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        if (!tree_len(ys->buffers)) {
+            yed_append_text_to_cmd_buff("[!] no buffers");
+            return;
+        }
+        it = tree_begin(ys->buffers);
+    } else {
+        buffer = frame->buffer;
+
+        it = tree_lookup(ys->buffers, buffer->name);
+        tree_it_prev(it);
+
+        if (!tree_it_good(it)) {
+            it = tree_last(ys->buffers);
+        }
+    }
+
+    buffer = tree_it_val(it);
+
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
+    ys->active_frame->buffer = buffer;
+    ys->active_frame->dirty  = 1;
+
+    yed_append_text_to_cmd_buff("'");
+    yed_append_text_to_cmd_buff(buffer->name);
+    yed_append_text_to_cmd_buff("'");
+}
+
 void yed_default_command_buffer_name(int n_args, char **args) {
     yed_buffer *buffer;
     yed_frame  *frame;
@@ -1368,6 +1415,46 @@ void yed_default_command_frame_next(int n_args, char **args) {
                 take_next = 1;
             }
         }
+    }
+
+    yed_activate_frame(frame);
+}
+
+void yed_default_command_frame_prev(int n_args, char **args) {
+    yed_frame *cur_frame, *frame, **frame_it;
+    int        i, cur_frame_idx;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    if (array_len(ys->frames) == 1) {
+        yed_append_text_to_cmd_buff("[!] no previous frame");
+        return;
+    }
+
+    frame     = NULL;
+    cur_frame = ys->active_frame;
+
+    if (cur_frame == *(yed_frame**)array_item(ys->frames, 0)) {
+        frame = *(yed_frame**)array_last(ys->frames);
+    } else {
+        i = cur_frame_idx = 0;
+        array_traverse(ys->frames, frame_it) {
+            if (*frame_it == cur_frame) {
+                cur_frame_idx = i;
+                break;
+            }
+            i += 1;
+        }
+        frame = *(yed_frame**)array_item(ys->frames, cur_frame_idx - 1);
     }
 
     yed_activate_frame(frame);
