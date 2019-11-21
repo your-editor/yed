@@ -324,7 +324,7 @@ yed_buffer yed_new_buff(void) {
     buff.flags         = 0;
     buff.undo_history  = yed_new_undo_history();
 
-    yed_buffer_add_line(&buff);
+    yed_buffer_add_line_no_undo(&buff);
 
     return buff;
 }

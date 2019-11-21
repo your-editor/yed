@@ -14,6 +14,8 @@ yed_undo_history yed_new_undo_history(void) {
     uh.undo = array_make(yed_undo_record);
     uh.redo = array_make(yed_undo_record);
 
+    uh.current_record = NULL;
+
     return uh;
 }
 
@@ -51,26 +53,66 @@ int yed_num_undo_records(yed_buffer *buffer) {
     return array_len(buffer->undo_history.undo);
 }
 
+void yed_force_end_undo_record(yed_undo_history *history) {
+    yed_undo_record *record;
+
+    record = history->current_record;
+
+    ASSERT(record, "no current undo record");
+
+    record->end_cursor_row = record->start_cursor_row;
+    record->end_cursor_col = record->start_cursor_col;
+
+    /*
+     * We must clear the redo history here.
+     * For now, we'll just clear the array, but
+     * eventually there will be stuff that needs
+     * to be freed and such.
+     */
+     array_clear(history->redo);
+
+     history->current_record = NULL;
+}
+
 void yed_start_undo_record(yed_frame *frame, yed_buffer *buffer) {
     yed_undo_history *history;
     yed_undo_record   record;
 
+    if (buffer->kind == BUFF_KIND_YANK)    { return; }
+
     history = &buffer->undo_history;
+
+    if (history->current_record) {
+        /*
+         * The current record has been interrupted.
+         * Possibly, someone forgot to end their undo record.
+         * What we'll do is force the current one to end here.
+         * This will clump all of the actions together whether they
+         * were meant to be or not, but it will help us re-sync the
+         * undo history.
+         */
+
+        yed_force_end_undo_record(history);
+    }
 
     record                  = yed_new_undo_record();
     record.start_cursor_row = frame->cursor_line;
     record.start_cursor_col = frame->cursor_col;
 
-    array_push(history->undo, record);
+    history->current_record = array_push(history->undo, record);
 }
 
 void yed_end_undo_record(yed_frame *frame, yed_buffer *buffer) {
     yed_undo_history *history;
     yed_undo_record  *record;
 
-    history = &buffer->undo_history;
+    if (buffer->kind == BUFF_KIND_YANK)    { return; }
 
-    record                 = array_last(history->undo);
+    history = &buffer->undo_history;
+    record  = history->current_record;
+
+    ASSERT(record, "no current undo record");
+
     record->end_cursor_row = frame->cursor_line;
     record->end_cursor_col = frame->cursor_col;
 
@@ -80,27 +122,38 @@ void yed_end_undo_record(yed_frame *frame, yed_buffer *buffer) {
      * eventually there will be stuff that needs
      * to be freed and such.
      */
-     array_clear(history->redo);
+    array_clear(history->redo);
+
+    history->current_record = NULL;
 }
 
 void yed_cancel_undo_record(yed_frame *frame, yed_buffer *buffer) {
     yed_undo_history *history;
     yed_undo_record  *record;
 
+    if (buffer->kind == BUFF_KIND_YANK)    { return; }
+
     history = &buffer->undo_history;
-    record = array_last(history->undo);
+    record  = history->current_record;
+
+    ASSERT(record, "no current undo record");
+
     yed_free_undo_record(record);
     array_pop(history->undo);
+
+    history->current_record = NULL;
 }
 
 int yed_push_undo_action(yed_buffer *buffer, yed_undo_action *action) {
     yed_undo_history *history;
     yed_undo_record  *record;
 
+    if (buffer->kind == BUFF_KIND_YANK)    { return 0; }
+
     history = &buffer->undo_history;
     record  = array_last(history->undo);
 
-    if (!record)    { return 0; }
+    ASSERT(record, "no current undo record");
 
     array_push(record->actions, *action);
 
@@ -174,6 +227,8 @@ int yed_undo(yed_frame *frame, yed_buffer *buffer) {
     yed_undo_record  *record;
     yed_undo_action  *action;
 
+    if (buffer->kind == BUFF_KIND_YANK)    { return 0; }
+
     history = &buffer->undo_history;
     record  = array_last(history->undo);
 
@@ -197,6 +252,8 @@ int yed_redo(yed_frame *frame, yed_buffer *buffer) {
     yed_undo_history *history;
     yed_undo_record  *record;
     yed_undo_action  *action;
+
+    if (buffer->kind == BUFF_KIND_YANK)    { return 0; }
 
     history = &buffer->undo_history;
     record  = array_last(history->redo);

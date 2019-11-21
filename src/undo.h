@@ -28,8 +28,9 @@ typedef struct {
 } yed_undo_record;
 
 typedef struct {
-    array_t undo;
-    array_t redo;
+    array_t          undo;
+    array_t          redo;
+    yed_undo_record *current_record;
 } yed_undo_history;
 
 
