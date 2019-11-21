@@ -65,8 +65,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
 
     /* Colors */
-/*     YEXE("style", "first-dark"); */
-    YEXE("style", "skyfall");
+    YEXE("style", "first-dark");
 
     return 0;
 }
