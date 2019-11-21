@@ -259,13 +259,15 @@ int yed_pump(void) {
         if (yed_check_for_resize()) {
             yed_handle_resize();
         }
-        append_to_output_buff(TERM_CLEAR_SCREEN);
-        yed_draw_command_line();
+        if (ys->redraw_cls) {
+            append_to_output_buff(TERM_CLEAR_SCREEN);
+            yed_draw_command_line();
+        }
     }
 
     yed_update_frames();
 
-    ys->redraw = 0;
+    ys->redraw = ys->redraw_cls = 0;
 
     if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);

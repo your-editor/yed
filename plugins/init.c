@@ -13,7 +13,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "autotrim",
         "make_check", "man", "latex",
         "focus_frame",
-        "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox",
+        "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox", "style_skyfall",
         "proj",
     };
 
@@ -65,7 +65,8 @@ int yed_plugin_boot(yed_plugin *self) {
 
 
     /* Colors */
-    YEXE("style", "first-dark");
+/*     YEXE("style", "first-dark"); */
+    YEXE("style", "skyfall");
 
     return 0;
 }

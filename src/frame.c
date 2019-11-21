@@ -224,7 +224,7 @@ void yed_activate_frame(yed_frame *frame) {
     }
     yed_frame_reset_cursor(frame);
     ys->active_frame->dirty      = 1;
-    ys->redraw = 1;
+    ys->redraw = ys->redraw_cls  = 1;
 
     yed_trigger_event(&event);
 }

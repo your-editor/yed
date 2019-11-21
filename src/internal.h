@@ -187,6 +187,7 @@ typedef struct yed_state_t {
     int                          cmd_cursor_x;
     int                          status;
     int                          redraw;
+    int                          redraw_cls;
     tree(yed_command_name_t,
          yed_command)            commands;
     tree(yed_command_name_t,
