@@ -259,6 +259,8 @@ int yed_pump(void) {
         if (yed_check_for_resize()) {
             yed_handle_resize();
         }
+        append_to_output_buff(TERM_CLEAR_SCREEN);
+        yed_draw_command_line();
     }
 
     yed_update_frames();
