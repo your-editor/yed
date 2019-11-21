@@ -2147,8 +2147,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
     yed_line   *line_it,
-               *first_line,
-               *last_line;
+               *first_line;
     yed_event   event;
     int         yank_buff_n_lines, first_row, last_row, new_row, row, col;
 
@@ -2217,7 +2216,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             first_row  = frame->cursor_line;
             last_row   = frame->cursor_line + 1;
             first_line = yed_buff_get_line(buff, first_row);
-            last_line  = yed_buff_get_line(buff, last_row);
+            yed_buff_insert_line(buff, last_row);
             for (col = frame->cursor_col; col <= first_line->visual_width; col += 1) {
                 yed_append_to_line(buff, last_row,
                     yed_line_col_to_char(first_line, col));
