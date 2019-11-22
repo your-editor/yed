@@ -39,7 +39,7 @@ int yed_unload_plugins(void);
 int yed_reload_plugins(void);
 
 void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command cmd);
-void yed_plugin_bind_key(yed_plugin *plug, int key, char *command_name, int takes_key_as_arg);
+void yed_plugin_bind_key(yed_plugin *plug, int key, char *command_name, int n_args, char **args);
 int yed_plugin_add_key_sequence(yed_plugin *plug, int len, int *keys);
 int yed_plugin_vadd_key_sequence(yed_plugin *plug, int len, ...);
 void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler);

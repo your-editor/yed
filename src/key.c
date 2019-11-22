@@ -9,6 +9,7 @@ void yed_init_keys(void) {
 }
 
 int esc_timeout(int *input) {
+    int  seq_key;
     char c;
 
     /* input[0] is ESC */
@@ -18,10 +19,24 @@ int esc_timeout(int *input) {
     }
     input[1] = c;
 
+    seq_key = yed_get_key_sequence(2, input);
+
+    if (seq_key != KEY_NULL) {
+        input[0] = seq_key;
+        return 1;
+    }
+
     if (read(0, &c, 1) == 0) {
         return 2;
     }
     input[2] = c;
+
+    seq_key = yed_get_key_sequence(3, input);
+
+    if (seq_key != KEY_NULL) {
+        input[0] = seq_key;
+        return 1;
+    }
 
     return 3;
 }
@@ -145,8 +160,6 @@ int yed_read_keys(int *input) {
         }
 
         return len;
-/*         if ((*input = esc_timout(esc_seq)))      { return 1; } */
-/*         if ((*input = esc_sequence(esc_seq)))    { return 1; } */
     } else {
         return yed_read_key_sequences(c, input);
     }
@@ -172,7 +185,7 @@ void yed_take_key(int key) {
     if (ys->interactive_command) {
         yed_execute_command(ys->interactive_command, 1, &key_str);
     } else if (binding) {
-        yed_execute_command(binding->cmd, binding->takes_key_as_arg, &key_str);
+        yed_execute_command(binding->cmd, binding->n_args, binding->args);
     } else if (key < REAL_KEY_MAX
       &&      (key == ENTER || key == TAB || !iscntrl(key))) {
         yed_execute_command("insert", 1, &key_str);
@@ -181,22 +194,22 @@ void yed_take_key(int key) {
 }
 
 static yed_key_binding default_key_bindings[] = {
-    { CTRL_F,      0, "command-prompt"    },
-    { ARROW_UP,    0, "cursor-up"         },
-    { ARROW_DOWN,  0, "cursor-down"       },
-    { ARROW_RIGHT, 0, "cursor-right"      },
-    { ARROW_LEFT,  0, "cursor-left"       },
-    { PAGE_UP,     0, "cursor-page-up"    },
-    { PAGE_DOWN,   0, "cursor-page-down"  },
-    { BACKSPACE,   0, "delete-back"       },
-    { DEL_KEY,     0, "delete-forward"    },
-    { CTRL_C,      0, "yank-selection"    },
-    { CTRL_F,      0, "command-prompt"    },
-    { CTRL_L,      0, "frame-next"        },
-    { CTRL_D,      0, "delete-line"       },
-    { CTRL_S,      0, "select"            },
-    { CTRL_V,      0, "paste-yank-buffer" },
-    { CTRL_W,      0, "write-buffer"      }
+    { CTRL_F,      "command-prompt",    0, NULL },
+    { ARROW_UP,    "cursor-up",         0, NULL },
+    { ARROW_DOWN,  "cursor-down",       0, NULL },
+    { ARROW_RIGHT, "cursor-right",      0, NULL },
+    { ARROW_LEFT,  "cursor-left",       0, NULL },
+    { PAGE_UP,     "cursor-page-up",    0, NULL },
+    { PAGE_DOWN,   "cursor-page-down",  0, NULL },
+    { BACKSPACE,   "delete-back",       0, NULL },
+    { DEL_KEY,     "delete-forward",    0, NULL },
+    { CTRL_C,      "yank-selection",    0, NULL },
+    { CTRL_F,      "command-prompt",    0, NULL },
+    { CTRL_L,      "frame-next",        0, NULL },
+    { CTRL_D,      "delete-line",       0, NULL },
+    { CTRL_S,      "select",            0, NULL },
+    { CTRL_V,      "paste-yank-buffer", 0, NULL },
+    { CTRL_W,      "write-buffer",      0, NULL }
 };
 
 void yed_set_default_key_binding(int key) {
@@ -223,13 +236,22 @@ void yed_set_default_key_bindings(void) {
 }
 
 void yed_bind_key(yed_key_binding binding) {
-    yed_key_binding *b;
+    yed_key_binding  *b;
+    char            **args;
+    int               i;
 
     if (binding.key == KEY_NULL)    { return; }
 
     yed_unbind_key(binding.key);
 
-    binding.cmd = strdup(binding.cmd);
+    binding.cmd  = strdup(binding.cmd);
+    if (binding.n_args) {
+        args         = binding.args;
+        binding.args = malloc(sizeof(char*) * binding.n_args);
+        for (i = 0; i < binding.n_args; i += 1) {
+            binding.args[i] = strdup(args[i]);
+        }
+    }
 
     b  = malloc(sizeof(*b));
     *b = binding;
@@ -244,6 +266,7 @@ void yed_bind_key(yed_key_binding binding) {
 void yed_unbind_key(int key) {
     tree_it(int, yed_key_binding_ptr_t)  it;
     yed_key_binding                     *old_binding;
+    int                                  i;
 
     if (key == KEY_NULL)    { return; }
 
@@ -251,6 +274,12 @@ void yed_unbind_key(int key) {
         old_binding = ys->real_key_map[key];
         if (old_binding) {
             free(old_binding->cmd);
+            if (old_binding->n_args) {
+                for (i = 0; i < old_binding->n_args; i += 1) {
+                    free(old_binding->args[i]);
+                }
+                free(old_binding->args);
+            }
             free(old_binding);
             ys->real_key_map[key] = NULL;
         }
@@ -261,6 +290,12 @@ void yed_unbind_key(int key) {
             old_binding = tree_it_val(it);
             tree_delete(ys->key_seq_map, tree_it_key(it));
             free(old_binding->cmd);
+            if (old_binding->n_args) {
+                for (i = 0; i < old_binding->n_args; i += 1) {
+                    free(old_binding->args[i]);
+                }
+                free(old_binding->args);
+            }
             free(old_binding);
         }
     }

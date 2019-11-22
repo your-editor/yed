@@ -254,4 +254,21 @@ do {                                                         \
                         __YEXE_args);                        \
 } while (0)
 
+#define YBIND(key, cmd, ...)                          \
+do {                                                  \
+    char *__YEXE_args[] = { __VA_ARGS__ };            \
+    yed_bind_key((key), (cmd),                        \
+                 sizeof(__YEXE_args) / sizeof(char*), \
+                 __YEXE_args);                        \
+} while (0)
+
+#define YPBIND(plugin, key, cmd, ...)                 \
+do {                                                  \
+    char *__YEXE_args[] = { __VA_ARGS__ };            \
+    yed_plugin_bind_key((plugin), (key), (cmd),       \
+                 sizeof(__YEXE_args) / sizeof(char*), \
+                 __YEXE_args);                        \
+} while (0)
+
+
 #endif

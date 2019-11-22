@@ -9,24 +9,33 @@
 enum KEY_ACTION {
     KEY_NULL  = 0,    /* NULL      */
     CTRL_A    = 1,    /* Ctrl-a    */
+    CTRL_B    = 2,    /* Ctrl-b    */
     CTRL_C    = 3,    /* Ctrl-c    */
     CTRL_D    = 4,    /* Ctrl-d    */
+    CTRL_E    = 5,    /* Ctrl-e    */
     CTRL_F    = 6,    /* Ctrl-f    */
+    CTRL_G    = 7,    /* Ctrl-g    */
     CTRL_H    = 8,    /* Ctrl-h    */
     TAB       = 9,    /* Tab       */
-    CTRL_L    = 12,   /* Ctrl+l    */
+    CTRL_J    = 10,   /* Ctrl-j    */
+    CTRL_K    = 11,   /* Ctrl-k    */
+    CTRL_L    = 12,   /* Ctrl-l    */
     ENTER     = 13,   /* Enter     */
-    CTRL_O    = 15,   /* Ctrl+o    */
-    CTRL_P    = 16,   /* Ctrl+p    */
+    CTRL_N    = 14,   /* Ctrl-n    */
+    CTRL_O    = 15,   /* Ctrl-o    */
+    CTRL_P    = 16,   /* Ctrl-p    */
     CTRL_Q    = 17,   /* Ctrl-q    */
     CTRL_R    = 18,   /* Ctrl-r    */
     CTRL_S    = 19,   /* Ctrl-s    */
+    CTRL_T    = 20,   /* Ctrl-t    */
     CTRL_U    = 21,   /* Ctrl-u    */
     CTRL_V    = 22,   /* Ctrl-v    */
     CTRL_W    = 23,   /* Ctrl-w    */
     CTRL_X    = 24,   /* Ctrl-x    */
     CTRL_Y    = 25,   /* Ctrl-y    */
+    CTRL_Z    = 26,   /* Ctrl-z    */
     ESC       = 27,   /* Escape    */
+    CTRL_FS   = 31,   /* Ctrl-/    */
     BACKSPACE = 127,  /* Backspace */
 
     /* The following are just soft codes, not really reported by the
@@ -59,9 +68,10 @@ int yed_read_keys(int *input);
 void yed_take_key(int key);
 
 typedef struct yed_key_binding_t {
-    int   key;
-    int   takes_key_as_arg;
-    char *cmd;
+    int    key;
+    char  *cmd;
+    int    n_args;
+    char **args;
 } yed_key_binding;
 
 void yed_set_default_key_binding(int key);

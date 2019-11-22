@@ -264,12 +264,13 @@ void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
     array_push(plug->added_cmds, name_dup);
 }
 
-void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int takes_key_as_arg) {
+void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int n_args, char **args) {
     yed_key_binding binding;
 
-    binding.key              = key;
-    binding.cmd              = cmd_name;
-    binding.takes_key_as_arg = takes_key_as_arg;
+    binding.key    = key;
+    binding.cmd    = cmd_name;
+    binding.n_args = n_args;
+    binding.args   = args;
 
     yed_bind_key(binding);
     array_push(plug->added_bindings, key);
