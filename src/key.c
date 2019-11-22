@@ -56,7 +56,9 @@ int esc_sequence(int *input) {
 
             if (c == '~') {
                 switch (input[2]) {
+                    case '1':    { input[0] = HOME_KEY;  break; }
                     case '3':    { input[0] = DEL_KEY;   break; }
+                    case '4':    { input[0] = END_KEY;   break; }
                     case '5':    { input[0] = PAGE_UP;   break; }
                     case '6':    { input[0] = PAGE_DOWN; break; }
                 }
@@ -199,6 +201,8 @@ static yed_key_binding default_key_bindings[] = {
     { ARROW_DOWN,  "cursor-down",       0, NULL },
     { ARROW_RIGHT, "cursor-right",      0, NULL },
     { ARROW_LEFT,  "cursor-left",       0, NULL },
+    { HOME_KEY,    "cursor-line-begin", 0, NULL },
+    { END_KEY,     "cursor-line-end",   0, NULL },
     { PAGE_UP,     "cursor-page-up",    0, NULL },
     { PAGE_DOWN,   "cursor-page-down",  0, NULL },
     { BACKSPACE,   "delete-back",       0, NULL },
