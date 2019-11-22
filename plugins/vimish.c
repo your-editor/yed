@@ -507,10 +507,12 @@ int vimish_nav_common(int key, char *key_str) {
             break;
 
         case '0':
+        case HOME_KEY:
             YEXE("cursor-line-begin");
             break;
 
         case '$':
+        case END_KEY:
             YEXE("cursor-line-end");
             break;
 
