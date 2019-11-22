@@ -1,13 +1,12 @@
 #include "plugin.h"
 
 void get_env_info(void);
-void add_commands(yed_plugin *self);
-void kammerdiener_fill_cursor_line(int n_args, char **args);
 int has_rg(void);
 
 int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
     char *plugins[] = {
+/*         "meta_keys", */
         "vimish",
         "syntax_c", "syntax_sh", "brace_hl",
         "indent_c", "comment",
@@ -35,10 +34,6 @@ int yed_plugin_boot(yed_plugin *self) {
     }
 
 
-    /* Add custom commands from this file. */
-    add_commands(self);
-
-
     /* Load all plugins. */
     YEXE("plugins-add-dir", "./.yed");
 
@@ -50,26 +45,25 @@ int yed_plugin_boot(yed_plugin *self) {
 
 
     /* Keybindings */
-    YEXE("vimish-bind", "insert",     "j", "j",              "vimish-exit-insert");
-    YEXE("vimish-bind", "normal",     "spc", "m", "c",       "make-check");
-    YEXE("vimish-bind", "normal",     "spc", "c", "o",       "comment-toggle");
-    YEXE("vimish-bind", "normal",     "spc", "l", "c",       "latex-compile-current-file");
-    YEXE("vimish-bind", "normal",     "spc", "l", "v",       "latex-view-current-file");
-    YEXE("vimish-bind", "normal",     "spc", "r", "d",       "redraw");
-    YEXE("vimish-bind", "normal",     "spc", "v", "s", "p",  "frame-vsplit");
-    YEXE("vimish-bind", "normal",     "spc", "h", "s", "p",  "frame-hsplit");
-    YEXE("vimish-bind", "normal",     "spc", "b", "o",       "buffer");
-    YEXE("vimish-bind", "normal",     "spc", "b", "d",       "buffer-delete");
-    YEXE("vimish-bind", "normal",     "ctrl-n",              "buffer-next");
-    YEXE("vimish-bind", "normal",     "ctrl-p",              "buffer-prev");
-    YEXE("vimish-bind", "normal",     "M", "M",              "man-word");
-    YEXE("vimish-bind", "normal",     "L", "L",              "kammerdiener-fill-cursor-line");
-    YEXE("vimish-bind", "normal",     "ctrl-l",              "frame-next");
-    YEXE("vimish-bind", "normal",     "ctrl-h",              "frame-prev");
-    YEXE("vimish-bind", "normal",     ">",                   "indent");
-    YEXE("vimish-bind", "normal",     "<",                   "unindent");
-    YEXE("vimish-bind", "normal",     "spc", "g",            "grep");
-
+    YEXE("vimish-bind", "insert",    "j", "j",                "CMD",    "vimish-exit-insert");
+    YEXE("vimish-bind", "normal",    "spc", "m", "c",         "CMD",    "make-check");
+    YEXE("vimish-bind", "normal",    "spc", "c", "o",         "CMD",    "comment-toggle");
+    YEXE("vimish-bind", "normal",    "spc", "l", "c",         "CMD",    "latex-compile-current-file");
+    YEXE("vimish-bind", "normal",    "spc", "l", "v",         "CMD",    "latex-view-current-file");
+    YEXE("vimish-bind", "normal",    "spc", "r", "d",         "CMD",    "redraw");
+    YEXE("vimish-bind", "normal",    "spc", "v", "s", "p",    "CMD",    "frame-vsplit");
+    YEXE("vimish-bind", "normal",    "spc", "h", "s", "p",    "CMD",    "frame-hsplit");
+    YEXE("vimish-bind", "normal",    "spc", "b", "o",         "CMD",    "buffer");
+    YEXE("vimish-bind", "normal",    "spc", "b", "d",         "CMD",    "buffer-delete");
+    YEXE("vimish-bind", "normal",    "ctrl-n",                "CMD",    "buffer-next");
+    YEXE("vimish-bind", "normal",    "ctrl-p",                "CMD",    "buffer-prev");
+    YEXE("vimish-bind", "normal",    "M", "M",                "CMD",    "man-word");
+    YEXE("vimish-bind", "normal",    "L", "L",                "CMD",    "fill-command-prompt", "cursor-line");
+    YEXE("vimish-bind", "normal",    "ctrl-l",                "CMD",    "frame-next");
+    YEXE("vimish-bind", "normal",    "ctrl-h",                "CMD",    "frame-prev");
+    YEXE("vimish-bind", "normal",    ">",                     "CMD",    "indent");
+    YEXE("vimish-bind", "normal",    "<",                     "CMD",    "unindent");
+    YEXE("vimish-bind", "normal",    "spc", "g",              "CMD",    "grep");
 
     /* Colors */
     YEXE("style", "first-dark");
@@ -83,34 +77,6 @@ void get_env_info(void) {
 
     if ((term = getenv("TERM"))) { yed_set_var("term", term); }
     if ((user = getenv("USER"))) { yed_set_var("user", user); }
-}
-
-static void fill_cmd_prompt(const char *cmd) {
-    int   len, i, key;
-    char  key_str_buff[32];
-    char *key_str;
-
-    len = strlen(cmd);
-
-    YEXE("command-prompt");
-
-    for (i = 0; i < len; i += 1) {
-        key = cmd[i];
-        sprintf(key_str_buff, "%d", key);
-        key_str = key_str_buff;
-        YEXE("command-prompt", key_str);
-    }
-
-    key_str = "32"; /* space */
-    YEXE("command-prompt", key_str);
-}
-
-void add_commands(yed_plugin *self) {
-    yed_plugin_set_command(self, "kammerdiener-fill-cursor-line", kammerdiener_fill_cursor_line);
-}
-
-void kammerdiener_fill_cursor_line(int n_args, char **args) {
-    fill_cmd_prompt("cursor-line");
 }
 
 int has_rg(void) {

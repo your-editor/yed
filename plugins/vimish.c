@@ -24,10 +24,12 @@ static char *mode_strs[] = {
 };
 
 typedef struct {
-    int   len;
-    int   keys[MAX_SEQ_LEN];
-    char *cmd;
-    int   key;
+    int    len;
+    int    keys[MAX_SEQ_LEN];
+    char  *cmd;
+    int    key;
+    int    n_args;
+    char **args;
 } vimish_key_binding;
 
 static yed_plugin *Self;
@@ -53,7 +55,7 @@ void enter_delete(int by_line);
 void exit_delete(int cancel);
 void enter_yank(int by_line);
 void exit_yank(int cancel);
-void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd);
+void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_args, char **args);
 
 int yed_plugin_boot(yed_plugin *self) {
     int i;
@@ -101,14 +103,17 @@ void vimish_unload(yed_plugin *self) {
 }
 
 void bind_keys(void) {
-    int key;
+    int  key;
+    char key_str[32];
 
     for (key = 1; key < REAL_KEY_MAX; key += 1) {
-        yed_plugin_bind_key(Self, key, "vimish-take-key", 1);
+        sprintf(key_str, "%d", key);
+        YPBIND(Self, key, "vimish-take-key", key_str);
     }
 }
 
 void vimish_change_mode(int new_mode, int by_line, int cancel) {
+    char                key_str[32];
     vimish_key_binding *b;
 
     array_traverse(mode_bindings[mode], b) {
@@ -116,7 +121,8 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
         if (b->len > 1) {
             yed_delete_key_sequence(b->key);
         } else if (b->key < REAL_KEY_MAX) {
-            yed_plugin_bind_key(Self, b->key, "vimish-take-key", 1);
+            sprintf(key_str, "%d", b->key);
+            YPBIND(Self, b->key, "vimish-take-key", key_str);
         }
     }
 
@@ -127,7 +133,7 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
             b->key = b->keys[0];
         }
 
-        yed_plugin_bind_key(Self, b->key, b->cmd, 0);
+        yed_plugin_bind_key(Self, b->key, b->cmd, b->n_args, b->args);
     }
 
     switch (mode) {
@@ -189,7 +195,7 @@ void vimish_take_key(int n_args, char **args) {
 
 void vimish_bind(int n_args, char **args) {
     char *mode_str, *key_str, *cmd;
-    int   b_mode, i, n_keys, key_i, keys[MAX_SEQ_LEN];
+    int   b_mode, i, cmd_delim, n_keys, key_i, keys[MAX_SEQ_LEN], n_cmd_args;
     char  key_c;
 
     if (n_args < 1) {
@@ -211,16 +217,29 @@ void vimish_bind(int n_args, char **args) {
     }
 
     if (n_args < 2) {
-        yed_append_text_to_cmd_buff("[!] missing 'keys' as second through penultimate arguments");
+        yed_append_text_to_cmd_buff("[!] missing 'keys' as second argument until 'CMD'");
         return;
     }
 
-    if (n_args < 3) {
-        yed_append_text_to_cmd_buff("[!] missing 'cmd' as last argument");
+    cmd_delim = -1;
+    for (i = 1; i < n_args; i += 1) {
+        if (strcmp(args[i], "CMD") == 0) {
+            cmd_delim = i;
+            break;
+        }
+    }
+
+    if (cmd_delim == -1) {
+        yed_append_text_to_cmd_buff("[!] missing 'CMD'");
         return;
     }
 
-    n_keys = n_args - 2;
+    if (cmd_delim == n_args - 1) {
+        yed_append_text_to_cmd_buff("[!] missing command name as argument after 'CMD'");
+        return;
+    }
+
+    n_keys = cmd_delim - 1;
     for (i = 0; i < n_keys; i += 1) {
         key_str = args[i + 1];
         key_c   = key_i = -1;
@@ -238,7 +257,11 @@ void vimish_bind(int n_args, char **args) {
         } else if (strcmp(key_str, "bsp") == 0) {
             key_i = BACKSPACE;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
-            key_i = CTRL_KEY(key_c);
+            if (key_c == '/') {
+                key_i = CTRL_FS;
+            } else {
+                key_i = CTRL_KEY(key_c);
+            }
         }
 
         if (key_i == -1) {
@@ -251,7 +274,7 @@ void vimish_bind(int n_args, char **args) {
         keys[i] = key_i;
     }
 
-    cmd = args[n_args - 1];
+    cmd = args[cmd_delim + 1];
 
     if (!yed_get_command(cmd)) {
         yed_append_text_to_cmd_buff("[!] no command named '");
@@ -260,10 +283,11 @@ void vimish_bind(int n_args, char **args) {
         return;
     }
 
-    vimish_make_binding(b_mode, n_keys, keys, cmd);
+    n_cmd_args = n_args - (cmd_delim + 2);
+    vimish_make_binding(b_mode, n_keys, keys, cmd, n_cmd_args, args + cmd_delim + 2);
 }
 
-void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd) {
+void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_args, char **args) {
     int                 i;
     vimish_key_binding  binding,
                        *b;
@@ -278,6 +302,15 @@ void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd) {
     }
     binding.cmd = strdup(cmd);
     binding.key = KEY_NULL;
+    binding.n_args = n_args;
+    if (n_args) {
+        binding.args = malloc(sizeof(char*) * n_args);
+        for (i = 0; i < n_args; i += 1) {
+            binding.args[i] = strdup(args[i]);
+        }
+    } else {
+        binding.args = NULL;
+    }
 
     array_push(mode_bindings[b_mode], binding);
 
@@ -296,7 +329,7 @@ void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd) {
                 b->key = b->keys[0];
             }
 
-            yed_plugin_bind_key(Self, b->key, b->cmd, 0);
+            yed_plugin_bind_key(Self, b->key, b->cmd, b->n_args, b->args);
         }
     }
 }

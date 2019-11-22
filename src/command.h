@@ -35,6 +35,7 @@ void yed_add_command(char *name, yed_command cmd);
     void yed_default_command_##name(int, char**)
 
 DEF_DEFAULT_COMMAND(command_prompt);
+DEF_DEFAULT_COMMAND(fill_command_prompt);
 DEF_DEFAULT_COMMAND(quit);
 DEF_DEFAULT_COMMAND(reload);
 DEF_DEFAULT_COMMAND(redraw);

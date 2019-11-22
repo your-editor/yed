@@ -64,6 +64,7 @@ do {                                                              \
 } while (0)
 
     SET_DEFAULT_COMMAND("command-prompt",         command_prompt);
+    SET_DEFAULT_COMMAND("fill-command-prompt",    fill_command_prompt);
     SET_DEFAULT_COMMAND("quit",                   quit);
     SET_DEFAULT_COMMAND("reload",                 reload);
     SET_DEFAULT_COMMAND("redraw",                 redraw);
@@ -276,6 +277,23 @@ void yed_default_command_command_prompt(int n_args, char **args) {
     } else {
         sscanf(args[0], "%d", &key);
         yed_command_take_key(key);
+    }
+}
+
+void yed_default_command_fill_command_prompt(int n_args, char **args) {
+    int    i, j, len, key;
+    char   key_str[32];
+
+    YEXE("command-prompt");
+
+    for (i = 0; i < n_args; i += 1) {
+        len = strlen(args[i]);
+        for (j = 0; j < len; j += 1) {
+            key = args[i][j];
+            sprintf(key_str, "%d", key);
+            YEXE("command-prompt", key_str);
+        }
+        YEXE("command-prompt", "32"); /* 32 = space */
     }
 }
 
