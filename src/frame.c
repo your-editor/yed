@@ -25,11 +25,39 @@ yed_frame * yed_add_new_frame_full(void) {
     return frame;
 }
 
-void frame_get_rect(yed_frame *frame, int *top, int *left, int *height, int *width) {
-    *top    = 1 + (int)(frame->top_f * (ys->term_rows));
-    *left   = 1 + (int)(frame->left_f * ys->term_cols);
-    *height = (int)(frame->height_f * (ys->term_rows - 1)); /* -1 for command/status line */
-    *width  = (int)(frame->width_f * ys->term_cols);
+void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
+                                      int *btop, int *bleft, int *bheight, int *bwidth) {
+    int fix_h, fix_w;
+
+    fix_h = fix_w = 0;
+
+    *top  = 1 + (int)(frame->top_f * (ys->term_rows));
+    *btop = *top;
+    if (*top > 1) {
+        *top += 1;
+        fix_h = 1;
+    }
+
+    *left  = 1 + (int)(frame->left_f * ys->term_cols);
+    *bleft = *left;
+    if (*left > 1) {
+        *left += 1;
+        fix_w  = 1;
+    }
+
+    *bheight  = (int)(frame->height_f * (ys->term_rows - 1)); /* -1 for command/status line */
+    *height   = *bheight;
+    if (*btop + *bheight - 1 - fix_h < (ys->term_rows - 1)) {
+        *height -= 1;
+    }
+    *height -= fix_h;
+
+    *bwidth  = (int)(frame->width_f * ys->term_cols);
+    *width   = *bwidth;
+    if (*bleft + *bwidth - 1 < (ys->term_cols)) {
+        *width -= 1;
+    }
+    *width -= fix_w;
 }
 
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
@@ -232,10 +260,13 @@ void yed_activate_frame(yed_frame *frame) {
 
     yed_trigger_event(&event);
 }
-
 #define FRAME_CELL(f, y_off, x_off)                                 \
     (ys->written_cells + (((f)->top + (y_off) - 1) * ys->term_cols) \
-                             + (f)->left + (x_off) - 1)
+                            + (f)->left + (x_off) - 1)
+
+#define FRAME_BCELL(f, y_off, x_off)                                 \
+    (ys->written_cells + (((f)->btop + (y_off) - 1) * ys->term_cols) \
+                            + (f)->bleft + (x_off) - 1)
 
 void yed_clear_frame(yed_frame *frame) {
     int i, n, x, y, run_len, run_start_n;
@@ -546,6 +577,108 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     frame->dirty  = 1;
 }
 
+void yed_frame_draw_border(yed_frame *frame) {
+    yed_attrs  attr;
+    char      *cell, *t, *b, *l, *r, *tl, *tr, *bl, *br;
+    int        i, fix_w, fix_h;
+
+    if (frame == ys->active_frame) {
+        attr = yed_active_style_get_active();
+    } else {
+        attr = yed_active_style_get_inactive();
+    }
+    yed_set_attr(attr);
+
+
+    t  = "─";
+    b  = "─";
+    l  = "│";
+    r  = "│";
+    tl = "┌";
+    tr = "┐";
+    bl = "└";
+    br = "┘";
+
+/*     t  = "▀"; */
+/*     b  = "▄"; */
+/*     l  = "▌"; */
+/*     r  = "▐"; */
+/*     tl = "▛"; */
+/*     tr = "▜ "; */
+/*     bl = "▙"; */
+/*     br = "▟"; */
+
+    fix_w = fix_h = 0;
+
+    /* top */
+    if (frame->top > 1) {
+        for (i = 0; i < frame->bwidth; i += 1) {
+            cell = FRAME_BCELL(frame, 0, i);
+
+            if (!*cell) {
+                yed_set_cursor(frame->bleft + i, frame->btop);
+                if (i == 0) {
+                    append_to_output_buff(tl);
+                } else if (i == frame->bwidth - 1) {
+                    append_to_output_buff(tr);
+                } else {
+                    append_to_output_buff(t);
+                }
+                *cell = 1;
+            }
+        }
+        fix_h = 1;
+    }
+
+    /* bottom */
+    if (frame->btop + frame->bheight - 1 < (ys->term_rows - 1)) {
+        for (i = 0; i < frame->bwidth; i += 1) {
+            cell = FRAME_BCELL(frame, frame->bheight - 1, i);
+
+            if (!*cell) {
+                yed_set_cursor(frame->bleft + i, frame->btop + frame->bheight - 1);
+                if (i == 0) {
+                    append_to_output_buff(bl);
+                } else if (i == frame->bwidth - 1) {
+                    append_to_output_buff(br);
+                } else {
+                    append_to_output_buff(b);
+                }
+                *cell = 1;
+            }
+        }
+    }
+
+    /* left */
+    if (frame->left > 1) {
+        for (i = 0; i < frame->bheight; i += 1) {
+            cell = FRAME_BCELL(frame, i, 0);
+
+            if (!*cell) {
+                yed_set_cursor(frame->bleft, frame->btop + i);
+                append_to_output_buff(l);
+                *cell = 1;
+            }
+        }
+        fix_w = 1;
+    }
+
+    /* right */
+    if (frame->bleft + frame->bwidth - 1 < (ys->term_cols)) {
+        for (i = 0; i < frame->bheight; i += 1) {
+            cell = FRAME_BCELL(frame, i, frame->bwidth - 1);
+
+            if (!*cell) {
+                yed_set_cursor(frame->bleft + frame->bwidth - 1, frame->btop + i);
+                append_to_output_buff(r);
+                *cell = 1;
+            }
+        }
+    }
+
+    append_to_output_buff(TERM_RESET);
+}
+
 void yed_frame_update(yed_frame *frame) {
     int        i;
     char      *cell_row;
@@ -564,6 +697,11 @@ void yed_frame_update(yed_frame *frame) {
 
 
     yed_trigger_event(&update_event);
+
+    if (ys->redraw) {
+        FRAME_RESET_RECT(frame);
+        yed_frame_draw_border(frame);
+    }
 
     if (frame->buffer) {
         if (frame->dirty || ys->redraw) {
@@ -584,9 +722,9 @@ void yed_frame_update(yed_frame *frame) {
         }
     }
 
-    for (i = 0; i < frame->height; i += 1) {
-        cell_row = FRAME_CELL(frame, i, 0);
-        memset(cell_row, 1, frame->width);
+    for (i = 0; i < frame->bheight; i += 1) {
+        cell_row = FRAME_BCELL(frame, i, 0);
+        memset(cell_row, 1, frame->bwidth);
     }
 
     frame->dirty = frame->dirty_line = 0;

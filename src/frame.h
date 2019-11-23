@@ -14,6 +14,7 @@ typedef struct yed_frame_t {
                         left,
                         height,
                         width;
+    int                 btop, bleft, bheight, bwidth;
     int                 cursor_line,
                         cursor_col,
                         last_cursor_line,
@@ -54,7 +55,10 @@ void yed_frames_remove_buffer(yed_buffer *buff);
 void yed_mark_dirty_frames(yed_buffer *dirty_buff);
 void yed_mark_dirty_frames_line(yed_buffer *dirty_buff, int row);
 
-void frame_get_rect(yed_frame *frame, int *top, int *left, int *height, int *width);
-#define FRAME_RESET_RECT(f) frame_get_rect((f), &(f)->top, &(f)->left, &(f)->height, &(f)->width)
+void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
+                                      int *btop, int *bleft, int *bheight, int *bwidth);
+
+#define FRAME_RESET_RECT(f) frame_get_rect((f), &(f)->top,  &(f)->left,  &(f)->height,  &(f)->width,\
+                                                &(f)->btop, &(f)->bleft, &(f)->bheight, &(f)->bwidth)
 
 #endif
