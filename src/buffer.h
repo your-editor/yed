@@ -71,6 +71,8 @@ typedef struct yed_buffer_t {
     int               has_selection;
     yed_range         selection;
     yed_undo_history  undo_history;
+    int               last_cursor_row,
+                      last_cursor_col;
 } yed_buffer;
 
 void yed_init_buffers(void);
@@ -133,5 +135,7 @@ void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c
 int yed_is_in_range(yed_range *range, int row, int col);
 void yed_buff_delete_selection(yed_buffer *buff);
 
+
+int yed_buff_is_visible(yed_buffer *buff);
 
 #endif

@@ -1150,9 +1150,7 @@ void yed_default_command_buffer(int n_args, char **args) {
     }
 
     if (ys->active_frame) {
-        yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
-        ys->active_frame->buffer = buffer;
-        ys->active_frame->dirty  = 1;
+        yed_frame_set_buff(ys->active_frame, buffer);
     }
 }
 
@@ -1230,9 +1228,7 @@ void yed_default_command_buffer_next(int n_args, char **args) {
 
     buffer = tree_it_val(it);
 
-    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
-    ys->active_frame->buffer = buffer;
-    ys->active_frame->dirty  = 1;
+    yed_frame_set_buff(ys->active_frame, buffer);
 
     yed_append_text_to_cmd_buff("'");
     yed_append_text_to_cmd_buff(buffer->name);
@@ -1275,9 +1271,7 @@ void yed_default_command_buffer_prev(int n_args, char **args) {
 
     buffer = tree_it_val(it);
 
-    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
-    ys->active_frame->buffer = buffer;
-    ys->active_frame->dirty  = 1;
+    yed_frame_set_buff(ys->active_frame, buffer);
 
     yed_append_text_to_cmd_buff("'");
     yed_append_text_to_cmd_buff(buffer->name);

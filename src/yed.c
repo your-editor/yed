@@ -184,16 +184,22 @@ static void write_small_message(void) {
     yed_set_cursor(sav_x, sav_y);
 }
 
-static void write_cursor_loc_and_key(int key) {
+static void write_buff_cursor_loc_and_key(int key) {
     int sav_x, sav_y;
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
 
     if (ys->active_frame) {
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows);
-        append_n_to_output_buff("                    ", 20);
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows);
+        if (ys->active_frame->buffer) {
+        }
+        yed_set_cursor(ys->term_cols - 40, ys->term_rows);
+        append_n_to_output_buff("                                        ", 40);
+        yed_set_cursor(ys->term_cols - 40, ys->term_rows);
+        if (ys->active_frame->buffer) {
+            append_to_output_buff(ys->active_frame->buffer->name);
+            append_to_output_buff(" :: ");
+        }
         append_int_to_output_buff(ys->active_frame->cursor_line);
         append_to_output_buff(" :: ");
         append_int_to_output_buff(ys->active_frame->cursor_col);
@@ -274,7 +280,7 @@ int yed_pump(void) {
         append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
-        write_cursor_loc_and_key(keys[0]);
+        write_buff_cursor_loc_and_key(keys[0]);
         append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {

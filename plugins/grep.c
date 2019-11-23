@@ -49,7 +49,7 @@ void grep(int n_args, char **args) {
 }
 
 void grep_cleanup(void) {
-    frame->buffer = NULL;
+    yed_frame_set_buff(frame, NULL);
     yed_free_buffer(buff);
     yed_delete_frame(frame);
 

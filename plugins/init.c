@@ -53,7 +53,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",    "spc", "r", "d",         "CMD",    "redraw");
     YEXE("vimish-bind", "normal",    "spc", "v", "s", "p",    "CMD",    "frame-vsplit");
     YEXE("vimish-bind", "normal",    "spc", "h", "s", "p",    "CMD",    "frame-hsplit");
-    YEXE("vimish-bind", "normal",    "spc", "b", "o",         "CMD",    "buffer");
+    YEXE("vimish-bind", "normal",    "spc", "b", "o",         "CMD",    "fill-command-prompt", "buffer");
     YEXE("vimish-bind", "normal",    "spc", "b", "d",         "CMD",    "buffer-delete");
     YEXE("vimish-bind", "normal",    "ctrl-n",                "CMD",    "buffer-next");
     YEXE("vimish-bind", "normal",    "ctrl-p",                "CMD",    "buffer-prev");

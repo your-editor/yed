@@ -573,8 +573,23 @@ void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
 }
 
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
+    yed_buffer *old_buff;
+
+    old_buff      = frame->buffer;
     frame->buffer = buff;
     frame->dirty  = 1;
+
+    if (old_buff) {
+        if (!yed_buff_is_visible(old_buff)) {
+            old_buff->last_cursor_row = frame->cursor_line;
+            old_buff->last_cursor_col = frame->cursor_col;
+        }
+    }
+
+    if (buff) {
+        yed_set_cursor_far_within_frame(frame, 1, 1);
+        yed_set_cursor_within_frame(frame, buff->last_cursor_col, buff->last_cursor_row);
+    }
 }
 
 void yed_frame_draw_border(yed_frame *frame) {

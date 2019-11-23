@@ -325,6 +325,8 @@ yed_buffer yed_new_buff(void) {
     buff.has_selection      = 0;
     buff.flags              = 0;
     buff.undo_history       = yed_new_undo_history();
+    buff.last_cursor_row    = 1;
+    buff.last_cursor_col    = 1;
 
     yed_buffer_add_line_no_undo(&buff);
 
@@ -1120,4 +1122,20 @@ void yed_buff_delete_selection(yed_buffer *buff) {
     }
 
     buff->has_selection = 0;
+}
+
+int yed_buff_is_visible(yed_buffer *buff) {
+    yed_frame **frame_it;
+    int         visible;
+
+    visible = 0;
+
+    array_traverse(ys->frames, frame_it) {
+        if ((*frame_it)->buffer == buff) {
+            visible = 1;
+            break;
+        }
+    }
+
+    return visible;
 }
