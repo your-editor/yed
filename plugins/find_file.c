@@ -156,11 +156,11 @@ empty:
 
 void find_file_select(void) {
     yed_line *line;
-    char     *path;
+    char     *_path, *path;
 
     line = yed_buff_get_line(buff, frame->cursor_line);
     array_zero_term(line->chars);
-    path = array_data(line->chars);
+    _path = path = strdup(array_data(line->chars));
 
     if (strlen(path) >= 2) {
         if (*path == '.' && *(path + 1) == '/') {
@@ -175,6 +175,8 @@ void find_file_select(void) {
     }
 
     YEXE("buffer", path);
+
+    free(_path);
 }
 
 void find_file_key_pressed_handler(yed_event *event) {
