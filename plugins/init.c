@@ -68,8 +68,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",    "spc", "f",              "CMD",    "find-file");
 
     /* Colors */
-/*     YEXE("style", "first-dark"); */
-    YEXE("style", "papercolor");
+    YEXE("style", "first-dark");
 
     return 0;
 }
