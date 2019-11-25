@@ -221,7 +221,7 @@ void yed_handle_resize(void) {
     }
 
     ys->redraw = 1;
-    append_to_output_buff(TERM_CLEAR_SCREEN);
+    yed_clear_screen();
 
     if (af) {
         yed_set_cursor_far_within_frame(af, save_col, save_row);

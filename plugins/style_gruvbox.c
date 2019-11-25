@@ -59,7 +59,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = base08;
 
-    s.command_line        = s.inactive;
+    s.command_line        = s.active;
 
     s.status_line.flags   = attr_kind | ATTR_BOLD;
     s.status_line.fg      = s.active.fg;

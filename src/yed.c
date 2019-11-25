@@ -198,8 +198,14 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
 
     write_status_bar(0);
+    yed_draw_command_line();
 
     ys->redraw = 1;
+    /*
+     * setting the style will ask us to clear the screen,
+     * but we don't really need to here.
+     */
+    ys->redraw_cls = 0;
 
     pthread_mutex_unlock(&ys->write_ready_mtx);
 
@@ -297,7 +303,7 @@ int yed_pump(void) {
             yed_handle_resize();
         }
         if (ys->redraw_cls) {
-            append_to_output_buff(TERM_CLEAR_SCREEN);
+            yed_clear_screen();
             yed_draw_command_line();
             write_status_bar(keys[0]);
         }

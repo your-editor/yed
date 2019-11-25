@@ -39,7 +39,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = MAYBE_CONVERT(RGB_32(255, 0, 0));
 
-    s.command_line        = s.inactive;
+    s.command_line        = s.active;
 
     s.status_line.flags   = attr_kind | ATTR_BOLD;
     s.status_line.fg      = MAYBE_CONVERT(RGB_32(246, 241, 209));
@@ -99,7 +99,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = MAYBE_CONVERT(RGB_32(255, 0, 0));
 
-    s.command_line        = s.inactive;
+    s.command_line        = s.active;
 
     s.status_line.flags   = attr_kind | ATTR_BOLD;
     s.status_line.fg      = MAYBE_CONVERT(RGB_32(246, 241, 209));

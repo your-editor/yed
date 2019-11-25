@@ -240,6 +240,8 @@ void yed_service_reload(void) {
     yed_draw_command_line();
     write_status_bar(0);
 
+    ys->redraw = ys->redraw_cls = 0;
+
     if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_CURSOR_SHOW);
