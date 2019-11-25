@@ -61,6 +61,12 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = color0F;
 
+    s.command_line        = s.inactive;
+
+    s.status_line.flags   = attr_kind | ATTR_BOLD;
+    s.status_line.fg      = s.active.fg;
+    s.status_line.bg      = color02;
+
     s.code_comment.flags  = attr_kind | ATTR_BOLD;
     s.code_comment.fg     = color03;
 

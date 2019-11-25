@@ -33,6 +33,12 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = ATTR_256;
     s.attention.fg        = 197;
 
+    s.command_line        = s.inactive;
+
+    s.status_line.flags   = ATTR_256;
+    s.status_line.fg      = s.active.fg;
+    s.status_line.bg      = 234;
+
     s.code_comment.flags  = ATTR_256;
     s.code_comment.fg     = 242;
 

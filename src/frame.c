@@ -45,9 +45,9 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
         fix_w  = 1;
     }
 
-    *bheight  = (int)(frame->height_f * (ys->term_rows - 1)); /* -1 for command/status line */
+    *bheight  = (int)(frame->height_f * (ys->term_rows - 2)); /* -2 for command + status line */
     *height   = *bheight;
-    if (*btop + *bheight - 1 - fix_h < (ys->term_rows - 1)) {
+    if (*btop + *bheight - fix_h < (ys->term_rows - 2)) {
         *height -= 1;
     }
     *height -= fix_h;
@@ -219,7 +219,7 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
     new_height_i = orig_height - frame->height;
 
     new_top_f     = (float)new_top_i    / (float)(ys->term_rows);
-    new_height_f  = (float)new_height_i / (float)(ys->term_rows - 1);
+    new_height_f  = (float)new_height_i / (float)(ys->term_rows - 2); /* -2 for command + status line */
 
     new_frame = yed_add_new_frame(new_top_f,
                                   frame->left_f,
@@ -415,7 +415,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
                 append_n_to_output_buff(run_start, run_len);
             }
 
-            run_start   = c;
+            run_start   = c + 1;
             run_len     = -1;
             run_start_n = n + 1;
         } else if (*c == '\t') {
@@ -646,7 +646,7 @@ void yed_frame_draw_border(yed_frame *frame) {
     }
 
     /* bottom */
-    if (frame->btop + frame->bheight - 1 < (ys->term_rows - 1)) {
+    if (frame->btop + frame->bheight - 1 < (ys->term_rows - 2)) {
         for (i = 0; i < frame->bwidth; i += 1) {
             cell = FRAME_BCELL(frame, frame->bheight - 1, i);
 

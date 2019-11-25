@@ -78,7 +78,7 @@ static void write_welcome(void) {
     oct_width   = strlen(oct[0]);
 
     for (i = 0; i < n_oct_lines; i += 1) {
-        if (l + i == ys->term_rows) {
+        if (l + i == ys->term_rows - 1) {
             break;
         }
         yed_set_cursor((ys->term_cols / 2) - (oct_width / 2), l + i);
@@ -140,6 +140,40 @@ static void restart_writer(void) {
     pthread_create(&ys->writer_id, NULL, writer, NULL);
 }
 
+static void write_buff_cursor_loc_and_key(int key) {
+    int sav_x, sav_y;
+    char *path;
+
+    sav_x = ys->cur_x;
+    sav_y = ys->cur_y;
+
+    yed_set_cursor(1, ys->term_rows - 1);
+    yed_set_attr(yed_active_style_get_status_line());
+    append_to_output_buff(TERM_CLEAR_LINE);
+
+    if (ys->active_frame) {
+        if (ys->active_frame->buffer) {
+            yed_set_cursor(1, ys->term_rows - 1);
+            path     = ys->active_frame->buffer->name;
+            append_to_output_buff(path);
+        }
+        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
+        append_n_to_output_buff("                    ", 20);
+        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
+        append_int_to_output_buff(ys->active_frame->cursor_line);
+        append_to_output_buff(" :: ");
+        append_int_to_output_buff(ys->active_frame->cursor_col);
+    }
+
+    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
+    append_n_to_output_buff("     ", 5);
+    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
+    append_int_to_output_buff(key);
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
+    yed_set_cursor(sav_x, sav_y);
+}
+
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     int i;
 
@@ -197,6 +231,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         write_welcome();
     }
 
+    write_buff_cursor_loc_and_key(0);
+
     ys->redraw = 1;
 
     pthread_mutex_unlock(&ys->write_ready_mtx);
@@ -232,40 +268,11 @@ static void write_small_message(void) {
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
     yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows);
+    yed_set_attr(yed_active_style_get_command_line());
     append_to_output_buff(ys->small_message);
 
-    yed_set_cursor(sav_x, sav_y);
-}
-
-static void write_buff_cursor_loc_and_key(int key) {
-    int sav_x, sav_y, path_len;
-    char *path;
-
-    sav_x = ys->cur_x;
-    sav_y = ys->cur_y;
-
-    if (ys->active_frame) {
-        yed_set_cursor(ys->term_cols - 40, ys->term_rows);
-        append_n_to_output_buff("                                        ", 40);
-        yed_set_cursor(ys->term_cols - 40, ys->term_rows);
-        if (ys->active_frame->buffer) {
-            path     = ys->active_frame->buffer->name;
-            path_len = strlen(path);
-            if (path_len > 25) {
-                path += path_len - 25;
-            }
-            append_to_output_buff(path);
-            append_to_output_buff(" :: ");
-        }
-        append_int_to_output_buff(ys->active_frame->cursor_line);
-        append_to_output_buff(" :: ");
-        append_int_to_output_buff(ys->active_frame->cursor_col);
-    }
-
-    yed_set_cursor(ys->term_cols - 5, ys->term_rows);
-    append_n_to_output_buff("     ", 5);
-    yed_set_cursor(ys->term_cols - 5, ys->term_rows);
-    append_int_to_output_buff(key);
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
     yed_set_cursor(sav_x, sav_y);
 }
 
@@ -282,6 +289,7 @@ int yed_pump(void) {
     /* Not sure why this is necessary, but... */
     if (!ys->interactive_command && ys->active_frame) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
+        append_to_output_buff(TERM_CURSOR_SHOW);
     }
 
     ys->status = YED_NORMAL;

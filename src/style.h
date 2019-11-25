@@ -13,6 +13,8 @@ typedef char *yed_style_name_t;
     __SCOMP(search)            \
     __SCOMP(search_cursor)     \
     __SCOMP(attention)         \
+    __SCOMP(status_line)       \
+    __SCOMP(command_line)      \
     __SCOMP(code_comment)      \
     __SCOMP(code_keyword)      \
     __SCOMP(code_preprocessor) \

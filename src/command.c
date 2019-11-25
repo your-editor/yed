@@ -174,6 +174,7 @@ void yed_cmd_buff_pop(void) {
 
 void yed_draw_command_line() {
     yed_set_cursor(1, ys->term_rows);
+    yed_set_attr(yed_active_style_get_command_line());
     append_to_output_buff(TERM_CLEAR_LINE);
     if (ys->interactive_command) {
         if (ys->cmd_prompt) {
@@ -181,6 +182,8 @@ void yed_draw_command_line() {
         }
     }
     append_n_to_output_buff(array_data(ys->cmd_buff), array_len(ys->cmd_buff));
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
 }
 
 void yed_start_command_prompt(void) {
