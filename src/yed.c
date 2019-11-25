@@ -185,19 +185,23 @@ static void write_small_message(void) {
 }
 
 static void write_buff_cursor_loc_and_key(int key) {
-    int sav_x, sav_y;
+    int sav_x, sav_y, path_len;
+    char *path;
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
 
     if (ys->active_frame) {
-        if (ys->active_frame->buffer) {
-        }
         yed_set_cursor(ys->term_cols - 40, ys->term_rows);
         append_n_to_output_buff("                                        ", 40);
         yed_set_cursor(ys->term_cols - 40, ys->term_rows);
         if (ys->active_frame->buffer) {
-            append_to_output_buff(ys->active_frame->buffer->name);
+            path     = ys->active_frame->buffer->name;
+            path_len = strlen(path);
+            if (path_len > 25) {
+                path += path_len - 25;
+            }
+            append_to_output_buff(path);
             append_to_output_buff(" :: ");
         }
         append_int_to_output_buff(ys->active_frame->cursor_line);

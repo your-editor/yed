@@ -1,7 +1,6 @@
 * line numbers
 * things from vimrc
     * status bar
-    * remember last place in file
     * alignment
     * completion
 * some kind of version checker for plugins so that
