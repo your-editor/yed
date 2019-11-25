@@ -35,7 +35,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.command_line        = s.inactive;
 
-    s.status_line.flags   = ATTR_256;
+    s.status_line.flags   = ATTR_256 | ATTR_BOLD;
     s.status_line.fg      = s.active.fg;
     s.status_line.bg      = 234;
 

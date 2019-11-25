@@ -11,7 +11,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "syntax_c", "syntax_sh", "brace_hl",
         "indent_c", "comment",
         "autotrim",
-        "grep", "make_check", "man", "latex",
+        "grep", "find_file", "make_check", "man", "latex",
         "focus_frame",
         "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox", "style_skyfall",
         "proj",
@@ -64,6 +64,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",    ">",                     "CMD",    "indent");
     YEXE("vimish-bind", "normal",    "<",                     "CMD",    "unindent");
     YEXE("vimish-bind", "normal",    "spc", "g",              "CMD",    "grep");
+    YEXE("vimish-bind", "normal",    "spc", "f",              "CMD",    "find-file");
 
     /* Colors */
     YEXE("style", "first-dark");

@@ -101,6 +101,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-hsplit",           frame_hsplit);
     SET_DEFAULT_COMMAND("frame-next",             frame_next);
     SET_DEFAULT_COMMAND("frame-prev",             frame_prev);
+    SET_DEFAULT_COMMAND("frame-move",             frame_move);
+    SET_DEFAULT_COMMAND("frame-resize",           frame_resize);
     SET_DEFAULT_COMMAND("insert",                 insert);
     SET_DEFAULT_COMMAND("delete-back",            delete_back);
     SET_DEFAULT_COMMAND("delete-forward",         delete_forward);
@@ -310,7 +312,7 @@ void yed_default_command_reload(int n_args, char **args) {
 }
 
 void yed_default_command_redraw(int n_args, char **args) {
-    ys->redraw = 1;
+    ys->redraw = ys->redraw_cls = 1;
 }
 
 void yed_default_command_set(int n_args, char **args) {
@@ -1192,6 +1194,12 @@ void yed_default_command_buffer_delete(int n_args, char **args) {
         return;
     }
 
+    if (buffer->kind == BUFF_KIND_YANK) {
+        yed_append_text_to_cmd_buff("[!] can't delete the yank buffer");
+        return;
+    }
+
+
     yed_free_buffer(buffer);
 }
 
@@ -1473,6 +1481,188 @@ void yed_default_command_frame_prev(int n_args, char **args) {
     }
 
     yed_activate_frame(frame);
+}
+
+void frame_move_take_key(int key) {
+    yed_frame *f;
+    int        save;
+    float      unit_x, unit_y;
+
+    f      = ys->active_frame;
+    unit_x = 1.0 / (float)ys->term_cols;
+    unit_y = 1.0 / (float)ys->term_rows;
+
+    if (key == CTRL_C || key == ENTER) {
+        ys->interactive_command = NULL;
+        yed_clear_cmd_buff();
+        yed_frame_reset_cursor(f);
+        yed_frame_hard_reset_cursor_x(f);
+    } else if (key == ARROW_UP) {
+        if (f->btop > 1) {
+            save = f->btop;
+            do {
+                f->top_f -= unit_y;
+                FRAME_RESET_RECT(f);
+            } while (f->btop == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    } else if (key == ARROW_DOWN) {
+        if ((f->btop + 1) + f->bheight < ys->term_rows) {
+            save = f->btop;
+            do {
+                f->top_f += unit_y;
+                FRAME_RESET_RECT(f);
+            } while (f->btop == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    } else if (key == ARROW_LEFT) {
+        if (f->bleft > 1) {
+            save = f->bleft;
+            do {
+                f->left_f -= unit_x;
+                FRAME_RESET_RECT(f);
+            } while (f->bleft == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    } else if (key == ARROW_RIGHT) {
+        if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
+            save = f->bleft;
+            do {
+                f->left_f += unit_x;
+                FRAME_RESET_RECT(f);
+            } while (f->bleft == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    }
+}
+
+void start_frame_move(void) {
+    ys->interactive_command = "frame-move";
+    ys->cmd_prompt          =
+        "(frame-move) Use arrows to move frame. ENTER to stop.";
+    yed_set_small_message(NULL);
+    yed_clear_cmd_buff();
+}
+
+void yed_default_command_frame_move(int n_args, char **args) {
+    yed_frame *frame;
+    int        key;
+
+    if (n_args > 1) {
+        yed_append_text_to_cmd_buff("[!] expected zero or one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!ys->interactive_command) {
+        if (frame->v_link || frame->h_link) {
+            yed_append_text_to_cmd_buff("[!] frame is linked to another -- can't move");
+            return;
+        }
+
+        start_frame_move();
+    } else {
+        sscanf(args[0], "%d", &key);
+        frame_move_take_key(key);
+    }
+}
+
+void frame_resize_take_key(int key) {
+    yed_frame *f;
+    int        save;
+    float      unit_x, unit_y;
+
+    f      = ys->active_frame;
+    unit_x = 1.0 / (float)ys->term_cols;
+    unit_y = 1.0 / (float)ys->term_rows;
+
+    if (key == CTRL_C || key == ENTER) {
+        ys->interactive_command = NULL;
+        yed_clear_cmd_buff();
+        yed_frame_reset_cursor(f);
+        yed_frame_hard_reset_cursor_x(f);
+    } else if (key == ARROW_UP) {
+        if (f->height > 1) {
+            save = f->bheight;
+            do {
+                f->height_f -= unit_y;
+                FRAME_RESET_RECT(f);
+            } while (f->bheight == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    } else if (key == ARROW_DOWN) {
+        if ((f->btop + 1) + f->bheight < ys->term_rows) {
+            save = f->bheight;
+            do {
+                f->height_f += unit_y;
+                FRAME_RESET_RECT(f);
+            } while (f->bheight == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    } else if (key == ARROW_LEFT) {
+        if (f->width > 1) {
+            save = f->bwidth;
+            do {
+                f->width_f -= unit_x;
+                FRAME_RESET_RECT(f);
+            } while (f->bwidth == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    } else if (key == ARROW_RIGHT) {
+        if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
+            save = f->bwidth;
+            do {
+                f->width_f += unit_x;
+                FRAME_RESET_RECT(f);
+            } while (f->bwidth == save);
+            ys->redraw = ys->redraw_cls = 1;
+        }
+    }
+}
+
+void start_frame_resize(void) {
+    ys->interactive_command = "frame-resize";
+    ys->cmd_prompt          =
+        "(frame-resize) Use arrows to reize frame. ENTER to stop.";
+    yed_set_small_message(NULL);
+    yed_clear_cmd_buff();
+}
+
+void yed_default_command_frame_resize(int n_args, char **args) {
+    yed_frame *frame;
+    int        key;
+
+    if (n_args > 1) {
+        yed_append_text_to_cmd_buff("[!] expected zero or one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!ys->interactive_command) {
+        if (frame->v_link || frame->h_link) {
+            yed_append_text_to_cmd_buff("[!] frame is linked to another -- can't resize");
+            return;
+        }
+
+        start_frame_resize();
+    } else {
+        sscanf(args[0], "%d", &key);
+        frame_resize_take_key(key);
+    }
 }
 
 void yed_default_command_insert(int n_args, char **args) {

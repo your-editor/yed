@@ -93,16 +93,16 @@ void grep_take_key(int key) {
 }
 
 void grep_make_buffer(void) {
-    buff = yed_get_buffer("*greplist");
+    buff = yed_get_buffer("*grep-list");
 
     if (!buff) {
-        buff = yed_create_buffer("*greplist");
+        buff = yed_create_buffer("*grep-list");
         buff->flags |= BUFF_RD_ONLY;
     } else {
         yed_buff_clear_no_undo(buff);
     }
 
-    ASSERT(buff, "did not create '*greplist' buffer");
+    ASSERT(buff, "did not create '*grep-list' buffer");
 }
 
 void grep_make_frame(void) {
@@ -113,7 +113,7 @@ void grep_make_frame(void) {
 
 void grep_update_buff(void) {
     yed_buff_clear_no_undo(buff);
-    yed_fill_buff_from_file(buff, "/tmp/greplist.yed");
+    yed_fill_buff_from_file(buff, "/tmp/grep-list.yed");
 }
 
 void grep_run(void) {
@@ -132,7 +132,7 @@ void grep_run(void) {
     strcat(cmd_buff, prg);
     strcat(cmd_buff, " \"");
     strcat(cmd_buff, pattern);
-    strcat(cmd_buff, "\" . 2>/dev/null > /tmp/greplist.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+    strcat(cmd_buff, "\" . 2>/dev/null > /tmp/grep-list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
 
     err = system(cmd_buff);
 
@@ -198,7 +198,7 @@ void grep_key_pressed_handler(yed_event *event) {
     ||  !eframe                                      /* no frame */
     ||  eframe != frame                              /* not our frame */
     ||  !eframe->buffer                              /* no buffer */
-    ||  strcmp(eframe->buffer->name, "*greplist")) { /* not our buffer */
+    ||  strcmp(eframe->buffer->name, "*grep-list")) { /* not our buffer */
         return;
     }
 

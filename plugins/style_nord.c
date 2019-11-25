@@ -60,7 +60,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.command_line        = s.inactive;
 
-    s.status_line.flags   = attr_kind;
+    s.status_line.flags   = attr_kind | ATTR_BOLD;
     s.status_line.fg      = s.active.fg;
     s.status_line.bg      = nord3;
 

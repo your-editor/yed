@@ -140,40 +140,6 @@ static void restart_writer(void) {
     pthread_create(&ys->writer_id, NULL, writer, NULL);
 }
 
-static void write_buff_cursor_loc_and_key(int key) {
-    int sav_x, sav_y;
-    char *path;
-
-    sav_x = ys->cur_x;
-    sav_y = ys->cur_y;
-
-    yed_set_cursor(1, ys->term_rows - 1);
-    yed_set_attr(yed_active_style_get_status_line());
-    append_to_output_buff(TERM_CLEAR_LINE);
-
-    if (ys->active_frame) {
-        if (ys->active_frame->buffer) {
-            yed_set_cursor(1, ys->term_rows - 1);
-            path     = ys->active_frame->buffer->name;
-            append_to_output_buff(path);
-        }
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
-        append_n_to_output_buff("                    ", 20);
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
-        append_int_to_output_buff(ys->active_frame->cursor_line);
-        append_to_output_buff(" :: ");
-        append_int_to_output_buff(ys->active_frame->cursor_col);
-    }
-
-    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
-    append_n_to_output_buff("     ", 5);
-    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
-    append_int_to_output_buff(key);
-    append_to_output_buff(TERM_RESET);
-    append_to_output_buff(TERM_CURSOR_HIDE);
-    yed_set_cursor(sav_x, sav_y);
-}
-
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     int i;
 
@@ -231,7 +197,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         write_welcome();
     }
 
-    write_buff_cursor_loc_and_key(0);
+    write_status_bar(0);
 
     ys->redraw = 1;
 
@@ -333,6 +299,7 @@ int yed_pump(void) {
         if (ys->redraw_cls) {
             append_to_output_buff(TERM_CLEAR_SCREEN);
             yed_draw_command_line();
+            write_status_bar(keys[0]);
         }
     }
 
@@ -345,7 +312,7 @@ int yed_pump(void) {
         append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
-        write_buff_cursor_loc_and_key(keys[0]);
+        write_status_bar(keys[0]);
         append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {

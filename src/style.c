@@ -69,7 +69,7 @@ int yed_activate_style(char *name) {
     }
 
     ys->active_style = style->_name;
-    ys->redraw       = 1;
+    ys->redraw       = ys->redraw_cls = 1;
 
     return 1;
 }

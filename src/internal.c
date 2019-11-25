@@ -126,6 +126,40 @@ void yed_set_small_message(char *msg) {
     }
 }
 
+static void write_status_bar(int key) {
+    int sav_x, sav_y;
+    char *path;
+
+    sav_x = ys->cur_x;
+    sav_y = ys->cur_y;
+
+    yed_set_cursor(1, ys->term_rows - 1);
+    yed_set_attr(yed_active_style_get_status_line());
+    append_to_output_buff(TERM_CLEAR_LINE);
+
+    if (ys->active_frame) {
+        if (ys->active_frame->buffer) {
+            yed_set_cursor(1, ys->term_rows - 1);
+            path     = ys->active_frame->buffer->name;
+            append_to_output_buff(path);
+        }
+        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
+        append_n_to_output_buff("                    ", 20);
+        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
+        append_int_to_output_buff(ys->active_frame->cursor_line);
+        append_to_output_buff(" :: ");
+        append_int_to_output_buff(ys->active_frame->cursor_col);
+    }
+
+    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
+    append_n_to_output_buff("     ", 5);
+    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
+    append_int_to_output_buff(key);
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
+    yed_set_cursor(sav_x, sav_y);
+}
+
 void yed_service_reload(void) {
     tree_it(yed_command_name_t, yed_command)    cmd_it;
     tree_it(yed_var_name_t, yed_var_val_t)      var_it;
@@ -199,9 +233,12 @@ void yed_service_reload(void) {
 
     yed_set_small_message("* reload serviced *");
 
-    ys->redraw = 1;
+    ys->redraw = ys->redraw_cls = 1;
     memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
     yed_update_frames();
+
+    yed_draw_command_line();
+    write_status_bar(0);
 
     if (ys->interactive_command) {
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
