@@ -30,8 +30,6 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_set_var("latex-view-prg", "open -a Skim");
     if (has_rg()) {
         yed_set_var("grep-prg",   "rg --vimgrep");
-    } else {
-        yed_set_var("grep-prg",   "grep --exclude-dir={.git,text} -RHnIs -E");
     }
 
 
