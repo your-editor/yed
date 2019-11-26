@@ -148,8 +148,10 @@ void yed_append_to_cmd_buff(char *s) {
 }
 
 void yed_append_text_to_cmd_buff(char *s) {
-    yed_append_to_cmd_buff(s);
-    ys->cmd_cursor_x += strlen(s);
+    if (s) {
+        yed_append_to_cmd_buff(s);
+        ys->cmd_cursor_x += strlen(s);
+    }
 }
 
 void yed_append_non_text_to_cmd_buff(char *s) {
@@ -2157,8 +2159,12 @@ void yed_default_command_plugin_load(int n_args, char **args) {
 
         switch (err) {
             case YED_PLUG_NOT_FOUND:
-                yed_append_text_to_cmd_buff("could not find plugin -- ");
-                yed_append_text_to_cmd_buff(dlerror());
+                if (dlerror()) {
+                    yed_append_text_to_cmd_buff("could not find plugin -- ");
+                    yed_append_text_to_cmd_buff(dlerror());
+                } else {
+                    yed_append_text_to_cmd_buff("could not find plugin");
+                }
                 break;
             case YED_PLUG_NO_BOOT:
                 yed_append_text_to_cmd_buff("could not find symbol 'yed_plugin_boot'");

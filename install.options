@@ -1,0 +1,8 @@
+if [ -d "/usr/lib64" ]; then
+    lib_dir="/usr/lib64"
+else
+    lib_dir="/usr/lib"
+fi
+bin_dir="/usr/bin"
+inc_dir="/usr/include/yed"
+plug_dir="${HOME}/.yed"

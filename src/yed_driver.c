@@ -17,19 +17,15 @@ int main(int argc, char **argv) {
     int                 status;
     struct yed_state_t *state;
 
-    if (argc > 1 && strcmp(argv[1], "-instrument") == 0) {
-        printf("Hit any key to continue once the instrument tool has been attached.\n");
-        getchar();
-    }
-
     if (load_yed_lib() != 0) {
         return 1;
     }
 
     state = yed_lib._init(&yed_lib, argc, argv);
-    atexit(call_yed_fini);
 
     if (!state)    { return 1; }
+
+    atexit(call_yed_fini);
 
     while (1) {
         status = yed_lib._pump();

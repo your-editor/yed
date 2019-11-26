@@ -132,6 +132,13 @@ uint64_t next_power_of_2(uint64_t x);
 #define TiB(x) ((x) * 1024ULL * GiB(1ULL))
 char *pretty_bytes(uint64_t n_bytes);
 
+typedef struct {
+    array_t  files;
+    char     instrument;
+    char     no_init;
+    char    *init;
+} options_t;
+
 typedef struct yed_state_t {
     yed_lib_t                   *yed_lib;
     array_t                      output_buffer;
@@ -191,6 +198,7 @@ typedef struct yed_state_t {
     tree(yed_style_name_t,
          yed_style_ptr_t)        styles;
     yed_style_name_t             active_style;
+    options_t                    options;
 } yed_state;
 
 extern yed_state *ys;

@@ -141,13 +141,67 @@ static void restart_writer(void) {
     pthread_create(&ys->writer_id, NULL, writer, NULL);
 }
 
-yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
+static void print_usage(void) {
+    char *usage =
+"usage: yed [options] [file...]\n"
+"\n"
+"options:\n"
+"\n"
+"--no-init\n"
+"    Do not load an init plugin.\n"
+"-i, --init=<path>\n"
+"    Load this init plugin instead of finding one automatically.\n"
+"--instrument\n"
+"    Pause the editor at startup to allow an external tool to attach to it.\n"
+"\n"
+;
+    fprintf(stderr, "%s", usage);
+}
+
+static int parse_options(int argc, char **argv) {
     int i;
+
+    ys->options.files = array_make(char*);
+
+    for (i = 1; i < argc; i += 1) {
+        if (strcmp(argv[i], "--instrument") == 0) {
+            ys->options.instrument = 1;
+        } else if (strcmp(argv[i], "--no-init") == 0) {
+            ys->options.no_init = 1;
+        } else if (strcmp(argv[i], "-i") == 0) {
+            if (i == argc - 1)    { return 0; }
+            ys->options.init = argv[i + 1];
+            i += 1;
+        } else if (strncmp(argv[i], "--init=", 7) == 0) {
+            ys->options.init = argv[i] + 7;
+        } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
+            return 0;
+        } else {
+            array_push(ys->options.files, argv[i]);
+        }
+    }
+
+    return 1;
+}
+
+yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
+    int    has_frames;
+    char **file_it;
 
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
-    ys->yed_lib          = yed_lib;
+    ys->yed_lib = yed_lib;
+
+    if (!parse_options(argc, argv)) {
+        print_usage();
+        return NULL;
+    }
+
+    if (ys->options.instrument) {
+        printf("Hit any key to continue once the instrument tool has been attached.\n");
+        getchar();
+    }
 
     yed_init_vars();
     yed_init_styles();
@@ -175,20 +229,23 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_search();
     yed_init_plugins();
 
-    (void)i;
-    if (argc > 1) {
+    has_frames = 0;
+    array_traverse(ys->options.files, file_it) {
+        YEXE("buffer", *file_it);
+    }
+
+    if (array_len(ys->options.files) >= 1) {
         YEXE("frame-new");
-        YEXE("buffer", argv[1]);
+        YEXE("buffer", *(char**)array_item(ys->options.files, 0));
+        has_frames = 1;
+    }
+    if (array_len(ys->options.files) > 1) {
+        YEXE("frame-vsplit");
+        YEXE("buffer", *(char**)array_item(ys->options.files, 1));
+        YEXE("frame-prev");
+    }
 
-        for (i = 2; i < argc; i += 1) {
-            YEXE("frame-vsplit");
-            YEXE("buffer", argv[i]);
-        }
-
-        if (argc > 2) {
-            YEXE("frame-next");
-        }
-
+    if (has_frames) {
         yed_update_frames();
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {

@@ -1,26 +1,13 @@
 #include "internal.h"
 
-void yed_init_plugins(void) {
-    char     buff[256];
-    char    *home,
-            *yed_dir;
-    int      err;
+void load_init(char *path) {
+    int err;
 
-    ys->plugin_dirs = array_make(char*);
-    ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
+    if (!path)    { goto not_found; }
 
-    home = getenv("HOME");
+    yed_add_plugin_dir(path);
 
-    if (!home)    { goto not_found; }
-
-    buff[0] = 0;
-    strcat(buff, home);
-    strcat(buff, "/.yed");
-    yed_dir = buff;
-
-    yed_add_plugin_dir(yed_dir);
-
-    if (access(buff, F_OK) != -1) {
+    if (access(path, F_OK) != -1) {
         err = yed_load_plugin("init");
 
         switch (err) {
@@ -38,7 +25,37 @@ void yed_init_plugins(void) {
         }
     } else {
 not_found:
-        yed_set_small_message("no init plugin found");
+        yed_set_small_message("init plugin not found");
+    }
+}
+
+void load_default_init(void) {
+    char     buff[256];
+    char    *home,
+            *yed_dir;
+
+    home = getenv("HOME");
+
+    if (!home) {
+        load_init(NULL);
+    }
+
+    buff[0] = 0;
+    strcat(buff, home);
+    strcat(buff, "/.yed");
+    yed_dir = buff;
+
+    load_init(buff);
+}
+
+void yed_init_plugins(void) {
+    ys->plugin_dirs = array_make(char*);
+    ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
+
+    if (ys->options.init) {
+        load_init(ys->options.init);
+    } else if (!ys->options.no_init) {
+        load_default_init();
     }
 }
 

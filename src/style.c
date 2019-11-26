@@ -128,6 +128,13 @@ void yed_set_default_styles(void) {
     s.attention.flags     = ATTR_16 | ATTR_16_LIGHT;
     s.attention.fg        = ATTR_16_YELLOW;
 
+    s.command_line        = s.active;
+
+    s.status_line.flags   = ATTR_16 | ATTR_BOLD | ATTR_16_LIGHT;
+    s.status_line.fg      = ATTR_16_WHITE;
+    s.status_line.bg      = ATTR_16_MAGENTA;
+
+
     s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT;
     s.code_comment.fg     = ATTR_16_YELLOW;
 

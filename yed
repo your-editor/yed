@@ -7,4 +7,4 @@ if [ "$(uname)" == "Darwin" ]; then
     export DYLD_LIBRARY_PATH="$DIR:$DYLD_LIBRARY_PATH"
 fi
 
-$DIR/_yed $@
+$DIR/_yed -i ${DIR}/plugins $@
