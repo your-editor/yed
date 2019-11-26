@@ -112,6 +112,7 @@ char *exe_path(char *prg) {
 
     strcat(cmd_buff, "which ");
     strcat(cmd_buff, prg);
+    strcat(cmd_buff, " 2>/dev/null");
 
     path = yed_run_subproc(cmd_buff);
 
