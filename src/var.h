@@ -3,9 +3,6 @@
 
 #include "internal.h"
 
-typedef char *yed_var_name_t;
-typedef char *yed_var_val_t;
-
 void yed_init_vars(void);
 
 void yed_set_default_vars(void);

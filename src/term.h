@@ -48,8 +48,6 @@
 
 #define TERM_DEFAULT_READ_TIMEOUT (3)
 
-static int yed_term_has_exited;
-
 int yed_term_enter(void);
 int yed_term_exit(void);
 

@@ -3,8 +3,6 @@
 
 #include "internal.h"
 
-typedef char *yed_style_name_t;
-
 #define __STYLE_COMPONENTS     \
     __SCOMP(active)            \
     __SCOMP(inactive)          \

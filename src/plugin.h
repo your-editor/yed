@@ -8,9 +8,7 @@
 #define YED_PLUG_NO_BOOT   (0x2)
 #define YED_PLUG_BOOT_FAIL (0x3)
 
-typedef char *yed_plugin_name_t;
 typedef void *yed_plugin_handle_t;
-struct yed_plugin_t;
 typedef int (*yed_plugin_boot_t)(struct yed_plugin_t*);
 typedef void (*yed_plugin_unload_fn_t)(struct yed_plugin_t*);
 

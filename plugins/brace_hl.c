@@ -13,14 +13,12 @@ static int end_row;
 static int end_col;
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler cursor_moved, line, buff_mod;
+    yed_event_handler cursor_moved, line;
 
     cursor_moved.kind  = EVENT_CURSOR_MOVED;
     cursor_moved.fn    = brace_hl_cursor_moved_handler;
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = brace_hl_line_handler;
-    buff_mod.kind      = EVENT_BUFFER_POST_MOD;
-    buff_mod.fn        = brace_hl_buff_mod_handler;
 
     yed_plugin_add_event_handler(self, cursor_moved);
     yed_plugin_add_event_handler(self, line);

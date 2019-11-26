@@ -25,33 +25,15 @@
 #include <libgen.h>
 
 
+#include "typedefs.h"
 
 #include "tree.h"
-
 #define inline
-typedef struct yed_key_binding_t *yed_key_binding_ptr_t;
 use_tree(int, yed_key_binding_ptr_t);
-
-typedef char *yed_buffer_name_t;
-typedef struct yed_buffer_t *yed_buffer_ptr_t;
 use_tree(yed_buffer_name_t, yed_buffer_ptr_t);
-
-typedef char *yed_command_name_t;
-typedef void (*yed_command)(int, char**);
 use_tree(yed_command_name_t, yed_command);
-
-typedef char *yed_plugin_name_t;
-struct yed_plugin_t;
-typedef struct yed_plugin_t *yed_plugin_ptr_t;
 use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
-
-typedef char *yed_var_name_t;
-typedef char *yed_var_val_t;
 use_tree(yed_var_name_t, yed_var_val_t);
-
-typedef char *yed_style_name_t;
-struct yed_style_t;
-typedef struct yed_style_t *yed_style_ptr_t;
 use_tree(yed_style_name_t, yed_style_ptr_t);
 #undef inline
 

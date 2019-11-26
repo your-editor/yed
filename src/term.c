@@ -1,5 +1,7 @@
 #include "internal.h"
 
+static int yed_term_has_exited;
+
 #define TERM_DEFAULT_READ_TIMEOUT (3)
 
 int yed_term_enter(void) {

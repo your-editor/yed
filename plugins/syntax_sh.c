@@ -517,8 +517,8 @@ void syntax_sh_highlight(yed_event *event) {
 
                     attr         = array_item(event->line_attrs, k);
                     attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= str.flags;
-                    attr->fg     = str.fg;
+                    attr->flags |= cha.flags;
+                    attr->fg     = cha.fg;
                 }
             }
 

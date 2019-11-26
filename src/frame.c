@@ -595,7 +595,7 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
 void yed_frame_draw_border(yed_frame *frame) {
     yed_attrs  attr;
     char      *cell, *t, *b, *l, *r, *tl, *tr, *bl, *br;
-    int        i, fix_w, fix_h;
+    int        i;
 
     if (frame == ys->active_frame) {
         attr = yed_active_style_get_active();
@@ -623,8 +623,6 @@ void yed_frame_draw_border(yed_frame *frame) {
 /*     bl = "▙"; */
 /*     br = "▟"; */
 
-    fix_w = fix_h = 0;
-
     /* top */
     if (frame->top > 1) {
         for (i = 0; i < frame->bwidth; i += 1) {
@@ -642,7 +640,6 @@ void yed_frame_draw_border(yed_frame *frame) {
                 *cell = 1;
             }
         }
-        fix_h = 1;
     }
 
     /* bottom */
@@ -675,7 +672,6 @@ void yed_frame_draw_border(yed_frame *frame) {
                 *cell = 1;
             }
         }
-        fix_w = 1;
     }
 
     /* right */

@@ -5,9 +5,6 @@
 
 #define YED_CMD_PROMPT ": "
 
-typedef char *yed_command_name_t;
-typedef void (*yed_command)(int, char**);
-
 void yed_init_commands(void);
 
 yed_command yed_get_command(char *name);

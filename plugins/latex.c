@@ -190,6 +190,12 @@ void latex_syntax_highlight(yed_event *event) {
     cha = yed_active_style_get_code_character();
     str = yed_active_style_get_code_string();
 
+    (void)cha;
+    (void)con;
+    (void)num;
+    (void)pp;
+    (void)key;
+
     /*
      * Highlight math environments.
      */

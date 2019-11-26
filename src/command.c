@@ -1766,8 +1766,7 @@ void yed_default_command_frame_resize(int n_args, char **args) {
 
 void yed_default_command_insert(int n_args, char **args) {
     yed_frame *frame;
-    yed_line  *line,
-              *new_line;
+    yed_line  *line;
     yed_event  event;
     int        key,
                col, idx,
@@ -1818,12 +1817,12 @@ void yed_default_command_insert(int n_args, char **args) {
 
     if (key == ENTER) {
         /*
-         * Must get 'line' _after_ we've added 'new_line' because
+         * Must get 'line' _after_ we've added the new line because
          * the array might have expanded and so the reference to
          * 'line' could be invalid if we had acquired it before.
          */
-        new_line = yed_buff_insert_line(frame->buffer, frame->cursor_line + 1);
-        line     = yed_buff_get_line(frame->buffer, frame->cursor_line);
+        yed_buff_insert_line(frame->buffer, frame->cursor_line + 1);
+        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
         len = 0;
         idx = yed_line_col_to_idx(line, col);
