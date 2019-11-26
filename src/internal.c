@@ -135,7 +135,7 @@ static void write_status_bar(int key) {
 
     yed_set_cursor(1, ys->term_rows - 1);
     yed_set_attr(yed_active_style_get_status_line());
-    append_to_output_buff(TERM_CLEAR_LINE);
+    append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
 
     if (ys->active_frame) {
         if (ys->active_frame->buffer) {
