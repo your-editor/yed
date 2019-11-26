@@ -240,12 +240,24 @@ void yed_do_command(void) {
     free(cmd_cpy);
 }
 
+static int    command_prompt_compl_idx       = -1;
+static int    command_prompt_compl_num_items = 0;
+static char **command_prompt_compl_items     = NULL;
+static char  *command_prompt_compl_start     = NULL;
+
 void yed_command_take_key(int key) {
-    tree_it(yed_command_name_t, yed_command)  it;
-    char                                     *c;
+    char *c, *new;
+    int   free_new;
 
     if (key == CTRL_F || key == CTRL_C) {
         ys->interactive_command = NULL;
+        if (command_prompt_compl_items) {
+            free(command_prompt_compl_items);
+            command_prompt_compl_items = NULL;
+            if (command_prompt_compl_start) {
+                free(command_prompt_compl_start);
+            }
+        }
         yed_clear_cmd_buff();
     } else if (key == TAB) {
         array_traverse(ys->cmd_buff, c) {
@@ -255,13 +267,91 @@ void yed_command_take_key(int key) {
         }
 
         array_zero_term(ys->cmd_buff);
-        it = tree_gtr(ys->commands, array_data(ys->cmd_buff));
-        if (tree_it_good(it)) {
-            yed_clear_cmd_buff();
-            yed_append_text_to_cmd_buff((char*)tree_it_key(it));
+
+        free_new = 0;
+
+        if (!command_prompt_compl_items) {
+            command_prompt_compl_start = strdup(array_data(ys->cmd_buff));
+
+            command_prompt_compl_num_items =
+                yed_get_completion(COMPL_CMD,
+                                   command_prompt_compl_start,
+                                   &command_prompt_compl_items,
+                                   NULL);
+
+            if (command_prompt_compl_num_items) {
+                command_prompt_compl_idx = 0;
+                new = command_prompt_compl_items[command_prompt_compl_idx];
+            } else {
+                new      = command_prompt_compl_start;
+                free_new = 1;
+            }
+        } else if (command_prompt_compl_idx == command_prompt_compl_num_items - 1) {
+            free(command_prompt_compl_items);
+            command_prompt_compl_items = NULL;
+            new                        = command_prompt_compl_start;
+            free_new                   = 1;
+        } else {
+            command_prompt_compl_idx += 1;
+            new                       = command_prompt_compl_items[command_prompt_compl_idx];
         }
+
+        yed_clear_cmd_buff();
+        yed_append_text_to_cmd_buff(new);
+
+        if (free_new)    { free(new); }
+    } else if (key == SHIFT_TAB) {
+        array_traverse(ys->cmd_buff, c) {
+            if (*c == ' ') {
+                return;
+            }
+        }
+
+        free_new = 0;
+
+        if (!command_prompt_compl_items) {
+            command_prompt_compl_start = strdup(array_data(ys->cmd_buff));
+
+            command_prompt_compl_num_items =
+                yed_get_completion(COMPL_CMD,
+                                   command_prompt_compl_start,
+                                   &command_prompt_compl_items,
+                                   NULL);
+
+            if (command_prompt_compl_num_items) {
+                command_prompt_compl_idx = command_prompt_compl_num_items - 1;
+                new = command_prompt_compl_items[command_prompt_compl_idx];
+            } else {
+                new      = command_prompt_compl_start;
+                free_new = 1;
+            }
+        } else {
+            if (command_prompt_compl_idx == 0) {
+                free(command_prompt_compl_items);
+                command_prompt_compl_items = NULL;
+                new                        = command_prompt_compl_start;
+                free_new                   = 1;
+            } else {
+                command_prompt_compl_idx -= 1;
+                new                       = command_prompt_compl_items[command_prompt_compl_idx];
+            }
+        }
+
+        yed_clear_cmd_buff();
+        yed_append_text_to_cmd_buff(new);
+
+        if (free_new)    { free(new); }
+
     } else if (key == ENTER) {
         ys->interactive_command = NULL;
+        if (command_prompt_compl_items) {
+            free(command_prompt_compl_items);
+            command_prompt_compl_items = NULL;
+
+            if (command_prompt_compl_start) {
+                free(command_prompt_compl_start);
+            }
+        }
         yed_do_command();
     } else {
         if (key == BACKSPACE) {
@@ -270,6 +360,15 @@ void yed_command_take_key(int key) {
             }
         } else if (!iscntrl(key)) {
             yed_cmd_buff_push(key);
+        }
+
+        if (command_prompt_compl_items) {
+            free(command_prompt_compl_items);
+            command_prompt_compl_items = NULL;
+
+            if (command_prompt_compl_start) {
+                free(command_prompt_compl_start);
+            }
         }
     }
 }

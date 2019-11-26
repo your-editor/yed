@@ -72,6 +72,7 @@ int esc_sequence(int *input) {
                 case 'D':    { input[0] = ARROW_LEFT;  break; }
                 case 'H':    { input[0] = HOME_KEY;    break; }
                 case 'F':    { input[0] = END_KEY;     break; }
+                case 'Z':    { input[0] = SHIFT_TAB;   break; }
             }
             return 1;
         }

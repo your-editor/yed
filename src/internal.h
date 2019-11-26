@@ -73,6 +73,7 @@ use_tree(yed_style_name_t, yed_style_ptr_t);
 #include "util.h"
 #include "style.h"
 #include "subproc.h"
+#include "complete.h"
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))

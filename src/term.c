@@ -228,4 +228,6 @@ void yed_handle_resize(void) {
     }
 
     yed_update_frames();
+    yed_draw_command_line();
+    write_status_bar(0);
 }

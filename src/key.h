@@ -49,6 +49,7 @@ enum KEY_ACTION {
     END_KEY,
     PAGE_UP,
     PAGE_DOWN,
+    SHIFT_TAB,
 
     REAL_KEY_MAX,
 

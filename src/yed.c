@@ -5,6 +5,7 @@
 #include "bucket_array.c"
 #include "term.c"
 #include "key.c"
+#include "undo.c"
 #include "buffer.c"
 #include "fs.c"
 #include "frame.c"
@@ -17,7 +18,7 @@
 #include "util.c"
 #include "style.c"
 #include "subproc.c"
-#include "undo.c"
+#include "complete.c"
 
 yed_state *ys;
 
