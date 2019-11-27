@@ -74,7 +74,7 @@ void yed_force_end_undo_record(yed_undo_history *history) {
     history->current_record = NULL;
 }
 
-void yed_start_undo_record(yed_frame *frame, yed_buffer *buffer) {
+void yed_start_undo_record_at_home(yed_buffer *buffer) {
     yed_undo_history *history;
     yed_undo_record   record;
 
@@ -96,10 +96,47 @@ void yed_start_undo_record(yed_frame *frame, yed_buffer *buffer) {
     }
 
     record                  = yed_new_undo_record();
+    record.start_cursor_row = 1;
+    record.start_cursor_col = 1;
+
+    history->current_record = array_push(history->undo, record);
+}
+
+void yed_start_undo_record(yed_frame *frame, yed_buffer *buffer) {
+    yed_undo_history *history;
+    yed_undo_record   record;
+    int               merge;
+
+    if (buffer->kind == BUFF_KIND_YANK)    { return; }
+
+    history = &buffer->undo_history;
+    merge   = 0;
+
+    if (history->current_record) {
+        /*
+         * The current record has been interrupted.
+         * Possibly, someone forgot to end their undo record.
+         * What we'll do is force the current one to end here.
+         * This will clump all of the actions together whether they
+         * were meant to be or not, but it will help us re-sync the
+         * undo history.
+         */
+
+         /*
+          * UPDATE: Seems like the best thing to do is to merge them.
+          */
+
+        yed_force_end_undo_record(history);
+        merge = 1;
+    }
+
+    record                  = yed_new_undo_record();
     record.start_cursor_row = frame->cursor_line;
     record.start_cursor_col = frame->cursor_col;
 
     history->current_record = array_push(history->undo, record);
+
+    if (merge)    { yed_merge_undo_records(buffer); }
 }
 
 void yed_end_undo_record(yed_frame *frame, yed_buffer *buffer) {
@@ -196,7 +233,10 @@ int yed_push_undo_action(yed_buffer *buffer, yed_undo_action *action) {
     history = &buffer->undo_history;
     record  = array_last(history->undo);
 
-    ASSERT(record, "no current undo record");
+    if (!record) {
+        yed_start_undo_record_at_home(buffer);
+        record = array_last(history->undo);
+    }
 
     array_push(record->actions, *action);
 
