@@ -9,12 +9,14 @@ void grep_make_buffer(void);
 void grep_run(void);
 void grep_update_buff(void);
 void grep_select(void);
+void grep_set_prompt(char *p, char *attr);
 
 void grep_key_pressed_handler(yed_event *event);
 
 static char       *prg;
 static yed_frame  *frame;
 static yed_buffer *buff;
+static char        prompt_buff[256];
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
@@ -26,7 +28,7 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "grep", grep);
 
     if (!yed_get_var("grep-prg")) {
-        yed_set_var("grep-prg", "grep --exclude-dir={.git} -RHnIs");
+        yed_set_var("grep-prg", "grep --exclude-dir={.git} -RHnIs \"%\" .");
     }
 
     return 0;
@@ -59,7 +61,7 @@ void grep_cleanup(void) {
 
 void grep_start(void) {
     ys->interactive_command = "grep";
-    ys->cmd_prompt          = "(grep) ";
+    grep_set_prompt("(grep) ", NULL);
     yed_set_small_message(NULL);
     grep_make_frame();
     grep_make_buffer();
@@ -87,7 +89,6 @@ void grep_take_key(int key) {
             yed_cmd_buff_push(key);
         }
 
-        array_zero_term(ys->cmd_buff);
         grep_run();
     }
 }
@@ -113,32 +114,71 @@ void grep_make_frame(void) {
 
 void grep_update_buff(void) {
     yed_buff_clear_no_undo(buff);
-    yed_fill_buff_from_file(buff, "/tmp/grep-list.yed");
+    yed_fill_buff_from_file(buff, "/tmp/grep_list.yed");
 }
 
 void grep_run(void) {
-    char  cmd_buff[256];
-    char *pattern;
-    int   err;
+    char       cmd_buff[512], *cmd_p, c, last;
+    yed_attrs  attr_cmd, attr_attn;
+    char       attr_buff[128];
+    char      *pattern;
+    int        i, len, err;
 
-    ys->cmd_prompt = "(grep) ";
+    grep_set_prompt("(grep) ", NULL);
+
+    array_zero_term(ys->cmd_buff);
 
     cmd_buff[0] = 0;
-    pattern = array_data(ys->cmd_buff);
+    pattern     = array_data(ys->cmd_buff);
 
     if (strlen(pattern) == 0)     { goto empty; }
 
     strcat(cmd_buff, "bash -c '");
-    strcat(cmd_buff, prg);
-    strcat(cmd_buff, " \"");
-    strcat(cmd_buff, pattern);
-    strcat(cmd_buff, "\" . 2>/dev/null > /tmp/grep-list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+
+    last  = 0;
+    len   = strlen(prg);
+    i     = 0;
+    cmd_p = cmd_buff + strlen(cmd_buff);
+
+    while (i < len) {
+        c = prg[i];
+
+        if (c == '\\') {
+            /* handled later */
+        } else if (c == '%') {
+            if (last == '\\') {
+                *(cmd_p++) = '%';
+            } else {
+                *cmd_p = 0;
+                strcat(cmd_buff, pattern);
+                cmd_p += strlen(pattern);
+            }
+        } else {
+            if (last == '\\') {
+                *(cmd_p++) = '\\';
+            }
+            *(cmd_p++) = c;
+        }
+
+        last  = c;
+        i    += 1;
+    }
+    if (last == '\\') {
+        *(cmd_p++) = '\\';
+    }
+    *cmd_p = 0;
+
+    strcat(cmd_buff, " 2>/dev/null > /tmp/grep_list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
 
     err = system(cmd_buff);
 
     if (err) {
-        /* This is a little bit dirty. */
-        ys->cmd_prompt = "(grep) "TERM_RED;
+        attr_cmd    = yed_active_style_get_command_line();
+        attr_attn   = yed_active_style_get_attention();
+        attr_cmd.fg = attr_attn.fg;
+        yed_get_attr_str(attr_cmd, attr_buff);
+
+        grep_set_prompt("(grep) ", attr_buff);
 empty:
         yed_buff_clear_no_undo(buff);
     } else {
@@ -203,4 +243,16 @@ void grep_key_pressed_handler(yed_event *event) {
     }
 
     grep_select();
+}
+
+void grep_set_prompt(char *p, char *attr) {
+    prompt_buff[0] = 0;
+
+    strcat(prompt_buff, p);
+
+    if (attr) {
+        strcat(prompt_buff, attr);
+    }
+
+    ys->cmd_prompt = prompt_buff;
 }

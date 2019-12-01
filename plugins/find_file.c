@@ -9,12 +9,14 @@ void find_file_make_buffer(void);
 void find_file_run(void);
 void find_file_update_buff(void);
 void find_file_select(void);
+void find_file_set_prompt(char *p, char *attr);
 
 void find_file_key_pressed_handler(yed_event *event);
 
 static char       *prg;
 static yed_frame  *frame;
 static yed_buffer *buff;
+static char        prompt_buff[256];
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
@@ -26,7 +28,8 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "find-file", find_file);
 
     if (!yed_get_var("find-file-prg")) {
-        yed_set_var("find-file-prg", "find . -path ./.git -prune -o -type f -name");
+        yed_set_var("find-file-prg",
+                    "find . -path ./.git -prune -o -type f -name \"*%*\" -print");
     }
 
     return 0;
@@ -59,7 +62,7 @@ void find_file_cleanup(void) {
 
 void find_file_start(void) {
     ys->interactive_command = "find-file";
-    ys->cmd_prompt          = "(find-file) ";
+    find_file_set_prompt("(find-file) ", NULL);
     yed_set_small_message(NULL);
     find_file_make_frame();
     find_file_make_buffer();
@@ -101,7 +104,7 @@ void find_file_take_key(int key) {
 }
 
 void find_file_make_buffer(void) {
-    buff = yed_get_buffer("*find_filelist");
+    buff = yed_get_buffer("*find-file-list");
 
     if (!buff) {
         buff = yed_create_buffer("*find-file-list");
@@ -125,28 +128,64 @@ void find_file_update_buff(void) {
 }
 
 void find_file_run(void) {
-    char  cmd_buff[256];
-    char *pattern;
-    int   err;
+    char       cmd_buff[512], *cmd_p, c, last;
+    yed_attrs  attr_cmd, attr_attn;
+    char       attr_buff[128];
+    char      *pattern;
+    int        i, len, err;
 
-    ys->cmd_prompt = "(find-file) ";
+    find_file_set_prompt("(find-file) ", NULL);
 
     cmd_buff[0] = 0;
-    pattern = array_data(ys->cmd_buff);
+    pattern     = array_data(ys->cmd_buff);
 
     if (strlen(pattern) == 0)     { goto empty; }
 
     strcat(cmd_buff, "bash -c '");
-    strcat(cmd_buff, prg);
-    strcat(cmd_buff, " \"*");
-    strcat(cmd_buff, pattern);
-    strcat(cmd_buff, "*\" -print 2>/dev/null > /tmp/find_file_list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+
+    last  = 0;
+    len   = strlen(prg);
+    i     = 0;
+    cmd_p = cmd_buff + strlen(cmd_buff);
+
+    while (i < len) {
+        c = prg[i];
+        if (c == '\\') {
+            /* handled later */
+        } else if (c == '%') {
+            if (last == '\\') {
+                *(cmd_p++) = '%';
+            } else {
+                *cmd_p = 0;
+                strcat(cmd_buff, pattern);
+                cmd_p += strlen(pattern);
+            }
+        } else {
+            if (last == '\\') {
+                *(cmd_p++) = '\\';
+            }
+            *(cmd_p++) = c;
+        }
+
+        last  = c;
+        i    += 1;
+    }
+    if (last == '\\') {
+        *(cmd_p++) = '\\';
+    }
+    *cmd_p = 0;
+
+    strcat(cmd_buff, " 2>/dev/null > /tmp/find_file_list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
 
     err = system(cmd_buff);
 
     if (err) {
-        /* This is a little bit dirty. */
-        ys->cmd_prompt = "(find-file) "TERM_RED;
+        attr_cmd    = yed_active_style_get_command_line();
+        attr_attn   = yed_active_style_get_attention();
+        attr_cmd.fg = attr_attn.fg;
+        yed_get_attr_str(attr_cmd, attr_buff);
+
+        find_file_set_prompt("(find-file) ", attr_buff);
 empty:
         yed_buff_clear_no_undo(buff);
     } else {
@@ -194,4 +233,16 @@ void find_file_key_pressed_handler(yed_event *event) {
     }
 
     find_file_select();
+}
+
+void find_file_set_prompt(char *p, char *attr) {
+    prompt_buff[0] = 0;
+
+    strcat(prompt_buff, p);
+
+    if (attr) {
+        strcat(prompt_buff, attr);
+    }
+
+    ys->cmd_prompt = prompt_buff;
 }

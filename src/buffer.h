@@ -77,6 +77,7 @@ typedef struct yed_buffer_t {
 
 void yed_init_buffers(void);
 
+void yed_get_attr_str(yed_attrs attr, char *buff_p);
 void yed_set_attr(yed_attrs attr);
 int  yed_attrs_eq(yed_attrs attr1, yed_attrs attr2);
 

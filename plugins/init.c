@@ -1,7 +1,7 @@
 #include "plugin.h"
 
 void get_env_info(void);
-int has_rg(void);
+int has(char *prg);
 
 int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
@@ -23,15 +23,17 @@ int yed_plugin_boot(yed_plugin *self) {
     get_env_info();
 
     if (yed_term_says_it_supports_truecolor()) {
-        yed_set_var("truecolor", "yes");
+        yed_set_var("truecolor",     "yes");
     }
-    yed_set_var("tab-width",      "4");
-    yed_set_var("latex-comp-prg", "pdflatex -halt-on-error --interaction=nonstopmode");
-    yed_set_var("latex-view-prg", "open -a Skim");
-    if (has_rg()) {
-        yed_set_var("grep-prg",   "rg --vimgrep");
+    yed_set_var("tab-width",         "4");
+    yed_set_var("latex-comp-prg",    "pdflatex -halt-on-error --interaction=nonstopmode");
+    yed_set_var("latex-view-prg",    "open -a Skim");
+    if (has("rg")) {
+        yed_set_var("grep-prg",      "rg --vimgrep \"%\"");
     }
-
+    if (has("fzf")) {
+        yed_set_var("find-file-prg", "fzf --filter=\"%\"");
+    }
 
     /* Load all plugins. */
     YEXE("plugins-add-dir", "./.yed");
@@ -66,7 +68,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",    "spc", "f",              "CMD",    "find-file");
 
     /* Colors */
-    YEXE("style", "first-dark");
+    YEXE("style", "gruvbox");
 
     return 0;
 }
@@ -79,13 +81,13 @@ void get_env_info(void) {
     if ((user = getenv("USER"))) { yed_set_var("user", user); }
 }
 
-int has_rg(void) {
-    char *rg_path;
+int has(char *prg) {
+    char *path;
 
-    rg_path = exe_path("rg");
+    path = exe_path(prg);
 
-    if (rg_path) {
-        free(rg_path);
+    if (path) {
+        free(path);
         return 1;
     }
 

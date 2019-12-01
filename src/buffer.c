@@ -96,7 +96,7 @@ void yed_init_buffers(void) {
     ys->yank_buff = yank_buff;
 }
 
-void yed_set_attr(yed_attrs attr) {
+
 
 #define BUFFCATN(buff_p, str, n) \
 do { memcpy((buff_p), (str), (n)); (buff_p) += (n); } while (0)
@@ -109,12 +109,14 @@ do {                                        \
     (buff_p) += __BUFFCAT_len;              \
 } while (0)
 
-    char buff[128], *buff_p;
+
+
+
+void yed_get_attr_str(yed_attrs attr, char *buff_p) {
     int fr, fg, fb;
     int br, bg, bb;
 
-    buff[0] = 0;
-    buff_p  = buff;
+    *buff_p = 0;
 
     BUFFCATN(buff_p, "\e[0", 3);
 
@@ -206,6 +208,12 @@ do {                                        \
 
     BUFFCATN(buff_p, "m", 1);
     *buff_p = 0;
+}
+
+void yed_set_attr(yed_attrs attr) {
+    char buff[128];
+
+    yed_get_attr_str(attr, buff);
 
     append_to_output_buff(buff);
 }

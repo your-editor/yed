@@ -72,6 +72,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("get",                    get);
     SET_DEFAULT_COMMAND("unset",                  unset);
     SET_DEFAULT_COMMAND("sh",                     sh);
+    SET_DEFAULT_COMMAND("less",                   less);
     SET_DEFAULT_COMMAND("echo",                   echo);
     SET_DEFAULT_COMMAND("cursor-down",            cursor_down);
     SET_DEFAULT_COMMAND("cursor-up",              cursor_up);
@@ -490,6 +491,39 @@ void yed_default_command_sh(int n_args, char **args) {
         strcat(buff, args[i]);
         lazy_space = " ";
     }
+
+    printf(TERM_STD_SCREEN);
+    err = system(buff);
+    printf(TERM_ALT_SCREEN);
+
+    yed_append_text_to_cmd_buff("'");
+    yed_append_text_to_cmd_buff(buff);
+    yed_append_text_to_cmd_buff("'");
+
+    if (err != 0) {
+        yed_append_text_to_cmd_buff(" exited with non-zero status ");
+        yed_append_int_to_cmd_buff(err);
+    }
+
+    ys->redraw = 1;
+}
+
+void yed_default_command_less(int n_args, char **args) {
+    char buff[1024];
+    const char *lazy_space;
+    int i;
+    int err;
+
+    buff[0] = 0;
+
+    lazy_space = "";
+    for (i = 0; i < n_args; i += 1) {
+        strcat(buff, lazy_space);
+        strcat(buff, args[i]);
+        lazy_space = " ";
+    }
+
+    strcat(buff, " | less");
 
     printf(TERM_STD_SCREEN);
     err = system(buff);
@@ -3072,6 +3106,8 @@ void yed_default_command_redo(int n_args, char **args) {
 int yed_execute_command(char *name, int n_args, char **args) {
     tree_it(yed_command_name_t, yed_command)  it;
     yed_command                               cmd;
+    yed_attrs                                 cmd_attr, attn_attr;
+    char                                      attr_buff[128];
 
     if (!ys->interactive_command) {
         yed_clear_cmd_buff();
@@ -3080,7 +3116,11 @@ int yed_execute_command(char *name, int n_args, char **args) {
     it = tree_lookup(ys->commands, name);
 
     if (!tree_it_good(it)) {
-        yed_append_non_text_to_cmd_buff(TERM_RED);
+        cmd_attr    = yed_active_style_get_command_line();
+        attn_attr   = yed_active_style_get_attention();
+        cmd_attr.fg = attn_attr.fg;
+        yed_get_attr_str(cmd_attr, attr_buff);
+        yed_append_non_text_to_cmd_buff(attr_buff);
         yed_append_text_to_cmd_buff("unknown command '");
         yed_append_text_to_cmd_buff(name);
         yed_append_text_to_cmd_buff("'");
