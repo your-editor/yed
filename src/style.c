@@ -113,6 +113,10 @@ void yed_set_default_styles(void) {
     s.inactive.fg         = ATTR_16_BLACK;
     s.inactive.bg         = ATTR_16_GREY;
 
+    s.active_border       = s.active;
+
+    s.inactive_border     = s.inactive;
+
     s.cursor_line         = s.active;
 
     s.selection.flags     = ATTR_INVERSE;

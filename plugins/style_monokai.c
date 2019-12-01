@@ -13,6 +13,11 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.fg         = 231;
     s.inactive.bg         = 232;
 
+    s.active_border       = s.active;
+    s.active_border.fg    = 148;
+
+    s.inactive_border     = s.inactive;
+
     s.cursor_line.flags   = ATTR_256;
     s.cursor_line.fg      = 15;
     s.cursor_line.bg      = 233;

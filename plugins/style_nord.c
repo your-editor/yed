@@ -39,6 +39,11 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.fg         = nord4;
     s.inactive.bg         = nord1;
 
+    s.active_border       = s.active;
+    s.active_border.fg    = nord9;
+
+    s.inactive_border     = s.inactive;
+
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = nord6;
     s.cursor_line.bg      = nord2;

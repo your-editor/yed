@@ -20,6 +20,11 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.fg         = MAYBE_CONVERT(RGB_32(246, 241, 209));
     s.inactive.bg         = 0;
 
+    s.active_border       = s.active;
+
+    s.inactive_border     = s.inactive;
+    s.inactive_border.fg  = MAYBE_CONVERT(RGB_32(64, 121, 140));
+
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = MAYBE_CONVERT(RGB_32(246, 241, 209));
     s.cursor_line.bg      = MAYBE_CONVERT(RGB_32(11, 32, 39));
@@ -79,6 +84,11 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.flags      = attr_kind;
     s.inactive.fg         = MAYBE_CONVERT(RGB_32(11, 32, 39));
     s.inactive.bg         = MAYBE_CONVERT(RGB_32(226, 221, 189));
+
+    s.active_border       = s.active;
+    s.active_border.fg    = MAYBE_CONVERT(RGB_32(216, 30, 91));
+
+    s.inactive_border     = s.inactive;
 
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = MAYBE_CONVERT(RGB_32(11, 32, 39));

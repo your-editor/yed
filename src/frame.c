@@ -598,9 +598,9 @@ void yed_frame_draw_border(yed_frame *frame) {
     int        i;
 
     if (frame == ys->active_frame) {
-        attr = yed_active_style_get_active();
+        attr = yed_active_style_get_active_border();
     } else {
-        attr = yed_active_style_get_inactive();
+        attr = yed_active_style_get_inactive_border();
     }
     yed_set_attr(attr);
 

@@ -52,6 +52,11 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.fg         = color07;
     s.inactive.bg         = color00_but_darker;
 
+    s.active_border       = s.active;
+    s.active_border.fg    = color10;
+
+    s.inactive_border     = s.inactive;
+
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = s.active.fg;
     s.cursor_line.bg      = cursorline;
