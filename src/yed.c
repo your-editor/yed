@@ -150,9 +150,11 @@ static void print_usage(void) {
 "--no-init\n"
 "    Do not load an init plugin.\n"
 "-i, --init=<path>\n"
-"    Load this init plugin instead of finding one automatically.\n"
+"    Load the init plugin from this path instead of finding one automatically.\n"
 "--instrument\n"
 "    Pause the editor at startup to allow an external tool to attach to it.\n"
+"--help\n"
+"    Show this information.\n"
 "\n"
 ;
     fprintf(stderr, "%s", usage);
@@ -174,6 +176,8 @@ static int parse_options(int argc, char **argv) {
             i += 1;
         } else if (strncmp(argv[i], "--init=", 7) == 0) {
             ys->options.init = argv[i] + 7;
+        } else if (strcmp(argv[i], "--help") == 0) {
+            ys->options.help = 1;
         } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
             return 0;
         } else {
@@ -193,7 +197,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     ys->yed_lib = yed_lib;
 
-    if (!parse_options(argc, argv)) {
+    if (!parse_options(argc, argv)
+    ||  ys->options.help) {
         print_usage();
         return NULL;
     }

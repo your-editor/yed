@@ -125,6 +125,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("replace-current-search", replace_current_search);
     SET_DEFAULT_COMMAND("style",                  style);
     SET_DEFAULT_COMMAND("style-off",              style_off);
+    SET_DEFAULT_COMMAND("styles-list",            styles_list);
     SET_DEFAULT_COMMAND("undo",                   undo);
     SET_DEFAULT_COMMAND("redo",                   redo);
 }
@@ -1635,39 +1636,43 @@ void frame_move_take_key(int key) {
         yed_frame_hard_reset_cursor_x(f);
     } else if (key == ARROW_UP) {
         if (f->btop > 1) {
+            yed_undraw_frame(f);
             save = f->btop;
             do {
                 f->top_f -= unit_y;
                 FRAME_RESET_RECT(f);
             } while (f->btop == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     } else if (key == ARROW_DOWN) {
         if ((f->btop + 1) + f->bheight < ys->term_rows) {
+            yed_undraw_frame(f);
             save = f->btop;
             do {
                 f->top_f += unit_y;
                 FRAME_RESET_RECT(f);
             } while (f->btop == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     } else if (key == ARROW_LEFT) {
         if (f->bleft > 1) {
+            yed_undraw_frame(f);
             save = f->bleft;
             do {
                 f->left_f -= unit_x;
                 FRAME_RESET_RECT(f);
             } while (f->bleft == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     } else if (key == ARROW_RIGHT) {
         if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
+            yed_undraw_frame(f);
             save = f->bleft;
             do {
                 f->left_f += unit_x;
                 FRAME_RESET_RECT(f);
             } while (f->bleft == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     }
 }
@@ -1726,39 +1731,43 @@ void frame_resize_take_key(int key) {
         yed_frame_hard_reset_cursor_x(f);
     } else if (key == ARROW_UP) {
         if (f->height > 1) {
+            yed_undraw_frame(f);
             save = f->bheight;
             do {
                 f->height_f -= unit_y;
                 FRAME_RESET_RECT(f);
             } while (f->bheight == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     } else if (key == ARROW_DOWN) {
         if ((f->btop + 1) + f->bheight < ys->term_rows) {
+            yed_undraw_frame(f);
             save = f->bheight;
             do {
                 f->height_f += unit_y;
                 FRAME_RESET_RECT(f);
             } while (f->bheight == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     } else if (key == ARROW_LEFT) {
         if (f->width > 1) {
+            yed_undraw_frame(f);
             save = f->bwidth;
             do {
                 f->width_f -= unit_x;
                 FRAME_RESET_RECT(f);
             } while (f->bwidth == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     } else if (key == ARROW_RIGHT) {
         if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
+            yed_undraw_frame(f);
             save = f->bwidth;
             do {
                 f->width_f += unit_x;
                 FRAME_RESET_RECT(f);
             } while (f->bwidth == save);
-            ys->redraw = ys->redraw_cls = 1;
+            ys->redraw = 1;
         }
     }
 }
@@ -3042,6 +3051,27 @@ void yed_default_command_style_off(int n_args, char **args) {
 
     ys->active_style = NULL;
     ys->redraw       = 1;
+}
+
+void yed_default_command_styles_list(int n_args, char **args) {
+    const char *comma;
+    tree_it(yed_style_name_t, yed_style_ptr_t) it;
+
+    if (n_args != 0) {
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+
+    comma = "";
+
+    tree_traverse(ys->styles, it) {
+        yed_append_text_to_cmd_buff((char*)comma);
+        yed_append_text_to_cmd_buff("'");
+        yed_append_text_to_cmd_buff((char*)tree_it_key(it));
+        yed_append_text_to_cmd_buff("'");
+        comma = ", ";
+    }
 }
 
 void yed_default_command_undo(int n_args, char **args) {

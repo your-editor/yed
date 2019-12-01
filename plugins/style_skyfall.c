@@ -3,9 +3,11 @@
 #define MAYBE_CONVERT(rgb) (tc ? (rgb) : rgb_to_256(rgb))
 
 #define colorfg (MAYBE_CONVERT(RGB_32_hex(a2a4b0)))
-#define colorbg (MAYBE_CONVERT(RGB_32_hex(292929)))
+#define colorbg (MAYBE_CONVERT(RGB_32_hex(191919)))
 #define colorbg_but_lighter\
-                (MAYBE_CONVERT(RGB_32_hex(494949)))
+                (MAYBE_CONVERT(RGB_32_hex(292929)))
+#define colorbg_but_lighter_but_lighter\
+                (MAYBE_CONVERT(RGB_32_hex(393939)))
 #define color00 (MAYBE_CONVERT(RGB_32_hex(32323d)))
 #define color01 (MAYBE_CONVERT(RGB_32_hex(f48fb1)))
 #define color02 (MAYBE_CONVERT(RGB_32_hex(1d9c80)))
@@ -48,7 +50,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = color0F;
-    s.cursor_line.bg      = color07;
+    s.cursor_line.bg      = colorbg_but_lighter_but_lighter;
 
     s.search.flags        = attr_kind | ATTR_INVERSE;
     s.search.fg           = color0F;

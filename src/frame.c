@@ -159,7 +159,8 @@ void yed_delete_frame(yed_frame *frame) {
         }
     }
 
-    ys->redraw = ys->redraw_cls = 1;
+    yed_undraw_frame(frame);
+    ys->redraw = 1;
 
     array_free(frame->line_attrs);
 
@@ -304,6 +305,43 @@ void yed_clear_frame(yed_frame *frame) {
         }
 
         yed_set_cursor(frame->left + run_start_n, frame->top + i);
+        append_n_to_output_buff(ys->_4096_spaces, run_len);
+    }
+
+    append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
+
+    yed_set_cursor(x, y);
+}
+
+void yed_undraw_frame(yed_frame *frame) {
+    int   i, n, x, y, run_len, run_start_n;
+    char *cell;
+
+    x = ys->cur_x;
+    y = ys->cur_y;
+
+    append_to_output_buff(TERM_RESET);
+
+    for (i = 0; i < frame->bheight; i += 1) {
+        yed_set_cursor(frame->bleft, frame->btop + i);
+
+        run_len     = 0;
+        run_start_n = 0;
+        for (n = 0; n < frame->bwidth; n += 1) {
+            cell = FRAME_CELL(frame, i, n);
+
+            if (*cell) {
+                yed_set_cursor(frame->bleft + run_start_n, frame->btop + i);
+                append_n_to_output_buff(ys->_4096_spaces, run_len);
+                run_len     = -1;
+                run_start_n = n + 1;
+            }
+
+            run_len += 1;
+        }
+
+        yed_set_cursor(frame->bleft + run_start_n, frame->btop + i);
         append_n_to_output_buff(ys->_4096_spaces, run_len);
     }
 
@@ -630,9 +668,9 @@ void yed_frame_draw_border(yed_frame *frame) {
 
             if (!*cell) {
                 yed_set_cursor(frame->bleft + i, frame->btop);
-                if (i == 0) {
+                if (i == 0 && frame->bleft > 1) {
                     append_to_output_buff(tl);
-                } else if (i == frame->bwidth - 1) {
+                } else if (i == frame->bwidth - 1 && frame->bleft + frame->bwidth - 1 < ys->term_cols) {
                     append_to_output_buff(tr);
                 } else {
                     append_to_output_buff(t);
@@ -649,9 +687,9 @@ void yed_frame_draw_border(yed_frame *frame) {
 
             if (!*cell) {
                 yed_set_cursor(frame->bleft + i, frame->btop + frame->bheight - 1);
-                if (i == 0) {
+                if (i == 0 && frame->bleft > 1) {
                     append_to_output_buff(bl);
-                } else if (i == frame->bwidth - 1) {
+                } else if (i == frame->bwidth - 1 && frame->bleft + frame->bwidth - 1 < ys->term_cols) {
                     append_to_output_buff(br);
                 } else {
                     append_to_output_buff(b);

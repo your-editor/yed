@@ -137,6 +137,7 @@ typedef struct {
     char     instrument;
     char     no_init;
     char    *init;
+    char     help;
 } options_t;
 
 typedef struct yed_state_t {
