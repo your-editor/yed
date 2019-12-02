@@ -62,14 +62,19 @@ yed_style * yed_get_style(char *name) {
 int yed_activate_style(char *name) {
     yed_style *style;
 
-    style = yed_get_style(name);
+    if (name) {
+        style = yed_get_style(name);
 
-    if (!style) {
-        return 0;
+        if (!style) {
+            return 0;
+        }
+
+        ys->active_style = style->_name;
+    } else {
+        ys->active_style = NULL;
     }
 
-    ys->active_style = style->_name;
-    ys->redraw       = ys->redraw_cls = 1;
+    ys->redraw = ys->redraw_cls = 1;
 
     return 1;
 }

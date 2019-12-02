@@ -94,6 +94,12 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
 void yed_delete_frame(yed_frame *frame) {
     int        i, save_cursor_row, save_cursor_col;
     yed_frame *new_active_frame, **frame_it;
+    yed_event  event;
+
+    event.kind  = EVENT_FRAME_PRE_DELETE;
+    event.frame = frame;
+
+    yed_trigger_event(&event);
 
     if (frame == ys->prev_active_frame) {
         ys->prev_active_frame = NULL;
@@ -810,7 +816,12 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
                 f->cur_y = new_y;
             }
         } else {
-            f->cur_y = new_y;
+            if (new_y > bot - 1 || new_y < f->top) {
+                f->buffer_y_offset += dir;
+                f->dirty            = 1;
+            } else {
+                f->cur_y = new_y;
+            }
         }
     }
 

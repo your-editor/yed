@@ -12,6 +12,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "indent_c", "comment",
         "autotrim",
         "grep", "find_file", "make_check", "man", "latex",
+        "style_picker",
         "focus_frame",
         "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox",
         "style_skyfall", "style_papercolor",
