@@ -10,12 +10,12 @@ int yed_plugin_boot(yed_plugin *self) {
         "vimish",
         "syntax_c", "syntax_sh", "brace_hl",
         "indent_c", "comment",
-        "autotrim",
+        "autotrim", "completer",
         "grep", "find_file", "make_check", "man", "latex",
         "style_picker",
         "focus_frame",
         "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox",
-        "style_skyfall", "style_papercolor",
+        "style_skyfall", "style_papercolor", "style_casey",
         "proj",
     };
 
@@ -69,7 +69,7 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",    "spc", "f",              "CMD",    "find-file");
 
     /* Colors */
-    YEXE("style", "gruvbox");
+    YEXE("style", "casey");
 
     return 0;
 }

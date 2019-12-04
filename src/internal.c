@@ -161,12 +161,12 @@ static void write_status_bar(int key) {
 }
 
 void yed_service_reload(void) {
-    tree_it(yed_command_name_t, yed_command)    cmd_it;
-    tree_it(yed_var_name_t, yed_var_val_t)      var_it;
-    tree_it(yed_style_name_t, yed_style_ptr_t)  style_it;
-    char                                       *key,
-                                               *val;
-    yed_style                                  *style;
+    tree_it(yed_command_name_t, yed_command)      cmd_it;
+    tree_it(yed_var_name_t, yed_var_val_t)        var_it;
+    tree_it(yed_style_name_t, yed_style_ptr_t)    style_it;
+    char                                         *key,
+                                                 *val;
+    yed_style                                    *style;
 
     tree_reset_fns(yed_style_name_t,   yed_style_ptr_t,       ys->styles,           strcmp);
     tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);

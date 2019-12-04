@@ -45,7 +45,7 @@ void load_default_init(void) {
     strcat(buff, "/.yed");
     yed_dir = buff;
 
-    load_init(buff);
+    load_init(yed_dir);
 }
 
 void yed_init_plugins(void) {

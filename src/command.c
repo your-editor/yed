@@ -1856,6 +1856,10 @@ void yed_default_command_insert(int n_args, char **args) {
 
     yed_trigger_event(&event);
 
+    if (event.cancel) {
+        return;
+    }
+
     event.kind = EVENT_BUFFER_PRE_MOD;
     yed_trigger_event(&event);
 

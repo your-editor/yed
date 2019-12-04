@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <libgen.h>
 
+typedef struct { } empty_t;
 
 #include "typedefs.h"
 
@@ -35,6 +36,7 @@ use_tree(yed_command_name_t, yed_command);
 use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 use_tree(yed_var_name_t, yed_var_val_t);
 use_tree(yed_style_name_t, yed_style_ptr_t);
+use_tree(str_t, empty_t);
 #undef inline
 
 #include "array.h"

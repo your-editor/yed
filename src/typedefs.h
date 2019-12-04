@@ -6,6 +6,7 @@ struct yed_buffer_t;
 struct yed_plugin_t;
 struct yed_style_t;
 
+typedef char *str_t;
 typedef struct yed_key_binding_t *yed_key_binding_ptr_t;
 typedef char *yed_buffer_name_t;
 typedef struct yed_buffer_t *yed_buffer_ptr_t;

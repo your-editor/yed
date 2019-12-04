@@ -30,6 +30,7 @@ typedef struct {
     int               row, col;
     array_t           line_attrs;
     int               key;
+    int               cancel;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

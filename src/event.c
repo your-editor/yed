@@ -45,9 +45,15 @@ void yed_delete_event_handler(yed_event_handler handler) {
 void yed_trigger_event(yed_event *event) {
     yed_event_handler *handler_it;
 
+    event->cancel = 0;
+
     array_traverse(ys->event_handlers[event->kind], handler_it) {
         ASSERT(handler_it->kind == event->kind, "event/handler kind mismatch");
 
         handler_it->fn(event);
+
+        if (event->cancel) {
+            break;
+        }
     }
 }

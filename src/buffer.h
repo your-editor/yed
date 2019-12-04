@@ -60,19 +60,19 @@ typedef struct {
 #define BUFF_YANK_LINES (0x4)
 
 typedef struct yed_buffer_t {
-    int               kind;
-    int               flags;
-    yed_file          file;
-    char             *name;
-    char             *path;
-    bucket_array_t    lines;
-    yed_line         *get_line_cache;
-    int               get_line_cache_row;
-    int               has_selection;
-    yed_range         selection;
-    yed_undo_history  undo_history;
-    int               last_cursor_row,
-                      last_cursor_col;
+    int                   kind;
+    int                   flags;
+    yed_file              file;
+    char                 *name;
+    char                 *path;
+    bucket_array_t        lines;
+    yed_line             *get_line_cache;
+    int                   get_line_cache_row;
+    int                   has_selection;
+    yed_range             selection;
+    yed_undo_history      undo_history;
+    int                   last_cursor_row,
+                          last_cursor_col;
 } yed_buffer;
 
 void yed_init_buffers(void);

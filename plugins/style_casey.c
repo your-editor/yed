@@ -27,11 +27,11 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.active.flags        = attr_kind;
     s.active.fg           = color_fg;
-    s.active.bg           = color_bg;
+    s.active.bg           = color_bg_1;
 
     s.inactive.flags      = attr_kind;
     s.inactive.fg         = color_fg;
-    s.inactive.bg         = color_bg_1;
+    s.inactive.bg         = color_bg;
 
     s.active_border       = s.active;
     s.active_border.fg    = color_white;

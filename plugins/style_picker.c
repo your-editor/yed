@@ -85,7 +85,6 @@ void style_picker_cleanup_no_frame_del(void) {
 
 void style_picker_make_buffer(void) {
     tree_it(yed_style_name_t, yed_style_ptr_t)  it;
-    yed_line                                   *line;
     int                                         i, row;
     char                                       *style;
 
@@ -102,7 +101,6 @@ void style_picker_make_buffer(void) {
 
     tree_traverse(ys->styles, it) {
         row   = yed_buff_n_lines(buff);
-        line  = yed_buff_get_line(buff, row);
         style = tree_it_key(it);
         for (i = 0; i < strlen(style); i += 1) {
             yed_append_to_line_no_undo(buff, row, style[i]);
