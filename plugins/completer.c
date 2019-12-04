@@ -55,13 +55,14 @@ void completer(int n_args, char **args) {
             yed_append_int_to_cmd_buff(compl_num_items);
             yed_append_text_to_cmd_buff(" words with same prefix");
         }
+
+        /* Cleanup */
+        for (i = 0; i < compl_num_items; i += 1) {
+            free(compl_items[i]);
+        }
+        free(compl_items);
     }
 
-    /* Cleanup */
-    for (i = 0; i < compl_num_items; i += 1) {
-        free(compl_items[i]);
-    }
-    free(compl_items);
     free(word);
 }
 
