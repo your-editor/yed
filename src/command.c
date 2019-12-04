@@ -195,7 +195,6 @@ void yed_draw_command_line() {
 
 void yed_start_command_prompt(void) {
     ys->interactive_command = "command-prompt";
-    ys->cmd_prompt          = ": ";
     yed_set_small_message(NULL);
     yed_clear_cmd_buff();
 }
@@ -3167,6 +3166,7 @@ int yed_execute_command(char *name, int n_args, char **args) {
     cmd = tree_it_val(it);
 
     if (!ys->interactive_command) {
+        ys->cmd_prompt = YED_CMD_PROMPT;
         yed_append_text_to_cmd_buff("(");
         yed_append_text_to_cmd_buff(name);
         yed_append_text_to_cmd_buff(") ");
