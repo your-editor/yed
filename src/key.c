@@ -1,9 +1,9 @@
 #include "internal.h"
 
 void yed_init_keys(void) {
-    ys->key_seq_map       = tree_make(int, yed_key_binding_ptr_t);
-    ys->key_sequences     = array_make(yed_key_sequence);
-    ys->released_seq_keys = array_make(int);
+    ys->vkey_binding_map        = tree_make(int, yed_key_binding_ptr_t);
+    ys->key_sequences      = array_make(yed_key_sequence);
+    ys->released_virt_keys = array_make(int);
 
     yed_set_default_key_bindings();
 }
@@ -272,7 +272,7 @@ void yed_bind_key(yed_key_binding binding) {
     if (binding.key < REAL_KEY_MAX) {
         ys->real_key_map[binding.key] = b;
     } else {
-        tree_insert(ys->key_seq_map, binding.key, b);
+        tree_insert(ys->vkey_binding_map, binding.key, b);
     }
 }
 
@@ -297,11 +297,11 @@ void yed_unbind_key(int key) {
             ys->real_key_map[key] = NULL;
         }
     } else {
-        it = tree_lookup(ys->key_seq_map, key);
+        it = tree_lookup(ys->vkey_binding_map, key);
 
         if (tree_it_good(it)) {
             old_binding = tree_it_val(it);
-            tree_delete(ys->key_seq_map, tree_it_key(it));
+            tree_delete(ys->vkey_binding_map, tree_it_key(it));
             free(old_binding->cmd);
             if (old_binding->n_args) {
                 for (i = 0; i < old_binding->n_args; i += 1) {
@@ -323,7 +323,7 @@ yed_key_binding * yed_get_key_binding(int key) {
         return ys->real_key_map[key];
     }
 
-    it = tree_lookup(ys->key_seq_map, key);
+    it = tree_lookup(ys->vkey_binding_map, key);
 
     if (!tree_it_good(it)) {
         return NULL;
@@ -332,10 +332,55 @@ yed_key_binding * yed_get_key_binding(int key) {
     return tree_it_val(it);
 }
 
+int yed_is_key(int key) {
+    yed_key_sequence *seq;
+
+    if (key < REAL_KEY_MAX) {
+        return 1;
+    }
+
+    array_traverse(ys->key_sequences, seq) {
+        if (seq->seq_key == key) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int yed_acquire_virt_key(void) {
+    int key;
+
+    if (array_len(ys->released_virt_keys)) {
+        key = *(int*)array_last(ys->released_virt_keys);
+        array_pop(ys->released_virt_keys);
+    } else {
+        key                   = VIRT_KEY(ys->virt_key_counter);
+        ys->virt_key_counter += 1;
+    }
+
+    return key;
+}
+
+void yed_release_virt_key(int key) {
+    int *it;
+
+    /*
+     * Check if it's already been released.
+     * Don't want duplicates.
+     */
+    array_traverse(ys->released_virt_keys, it) {
+        if (*it == key)    { return; }
+    }
+
+    yed_unbind_key(key);
+
+    array_push(ys->released_virt_keys, key);
+}
+
 int yed_add_key_sequence(int len, int *keys) {
     yed_key_sequence  seq;
-    int               i,
-                     *rel_seq_key;
+    int               i;
 
     if (len < 2 || len > MAX_SEQ_LEN) {
         return KEY_NULL;
@@ -347,14 +392,7 @@ int yed_add_key_sequence(int len, int *keys) {
         seq.keys[i] = keys[i];
     }
 
-    if (array_len(ys->released_seq_keys)) {
-        rel_seq_key = array_last(ys->released_seq_keys);
-        seq.seq_key = *rel_seq_key;
-        array_pop(ys->released_seq_keys);
-    } else {
-        seq.seq_key          = SEQ(ys->seq_key_counter);
-        ys->seq_key_counter += 1;
-    }
+    seq.seq_key = yed_acquire_virt_key();
 
     array_push(ys->key_sequences, seq);
 
@@ -412,7 +450,7 @@ int yed_delete_key_sequence(int seq_key) {
     if (!found)    { return 1; }
 
     array_delete(ys->key_sequences, i);
-    array_push(ys->released_seq_keys, seq_key);
+    yed_release_virt_key(seq_key);
 
     return 0;
 }

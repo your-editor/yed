@@ -7,6 +7,7 @@ int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
     char *plugins[] = {
 /*         "meta_keys", */
+        "wait_keys",
         "vimish",
         "syntax_c", "syntax_sh", "brace_hl",
         "indent_c", "comment",

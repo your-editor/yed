@@ -21,6 +21,7 @@ typedef struct yed_plugin_t {
     yed_plugin_unload_fn_t unload;
     array_t                added_cmds;
     array_t                added_bindings;
+    array_t                acquired_keys;
     array_t                added_key_sequences;
     array_t                added_event_handlers;
     array_t                added_styles;
@@ -37,6 +38,7 @@ int yed_unload_plugins(void);
 int yed_reload_plugins(void);
 
 void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command cmd);
+int yed_plugin_acquire_virt_key(yed_plugin *plug);
 void yed_plugin_bind_key(yed_plugin *plug, int key, char *command_name, int n_args, char **args);
 int yed_plugin_add_key_sequence(yed_plugin *plug, int len, int *keys);
 int yed_plugin_vadd_key_sequence(yed_plugin *plug, int len, ...);

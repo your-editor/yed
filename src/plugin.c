@@ -105,6 +105,7 @@ int yed_load_plugin(char *plug_name) {
 
     plug->path                 = strdup(buff);
     plug->added_cmds           = array_make(char*);
+    plug->acquired_keys        = array_make(int);
     plug->added_bindings       = array_make(int);
     plug->added_key_sequences  = array_make(int);
     plug->added_event_handlers = array_make(yed_event_handler);
@@ -114,6 +115,7 @@ int yed_load_plugin(char *plug_name) {
     if (!plug->boot) {
         dlclose(plug->handle);
         array_free(plug->added_bindings);
+        array_free(plug->acquired_keys);
         array_free(plug->added_cmds);
         array_free(plug->added_key_sequences);
         array_free(plug->added_event_handlers);
@@ -128,6 +130,7 @@ int yed_load_plugin(char *plug_name) {
     if (err) {
         dlclose(plug->handle);
         array_free(plug->added_bindings);
+        array_free(plug->acquired_keys);
         array_free(plug->added_cmds);
         array_free(plug->added_key_sequences);
         array_free(plug->added_event_handlers);
@@ -158,6 +161,11 @@ static void yed_plugin_uninstall_features(yed_plugin *plug) {
         }
     }
     array_free(plug->added_cmds);
+
+    array_traverse(plug->acquired_keys, key_it) {
+        yed_release_virt_key(*key_it);
+    }
+    array_free(plug->acquired_keys);
 
     array_traverse(plug->added_bindings, key_it) {
         yed_set_default_key_binding(*key_it);
@@ -279,6 +287,16 @@ void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
     name_dup = strdup(name);
     tree_insert(ys->commands, strdup(name), command);
     array_push(plug->added_cmds, name_dup);
+}
+
+int yed_plugin_acquire_virt_key(yed_plugin *plug) {
+    int key;
+
+    key = yed_acquire_virt_key();
+
+    array_push(plug->acquired_keys, key);
+
+    return key;
 }
 
 void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int n_args, char **args) {

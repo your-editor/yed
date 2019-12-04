@@ -289,8 +289,7 @@ void vimish_bind(int n_args, char **args) {
 
 void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_args, char **args) {
     int                 i;
-    vimish_key_binding  binding,
-                       *b;
+    vimish_key_binding  binding, *b;
 
     if (n_keys <= 0) {
         return;

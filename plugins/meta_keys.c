@@ -15,7 +15,7 @@ int yed_plugin_boot(yed_plugin *self) {
         if (key == '[' || key == 'O')    { continue; }
 
 
-        keys[1] = key;
+        keys[1]  = key;
         virt_key = yed_plugin_add_key_sequence(self, 2, keys);
         sprintf(vkey_buff, "%d", virt_key);
         sprintf(var_buff, "meta-keys-M%d", key);

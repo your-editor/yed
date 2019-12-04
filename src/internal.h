@@ -191,10 +191,10 @@ typedef struct yed_state_t {
     array_t                      plugin_dirs;
     yed_key_binding             *real_key_map[REAL_KEY_MAX];
     tree(int,
-         yed_key_binding_ptr_t)  key_seq_map;
+         yed_key_binding_ptr_t)  vkey_binding_map;
     array_t                      key_sequences;
-    int                          seq_key_counter;
-    array_t                      released_seq_keys;
+    int                          virt_key_counter;
+    array_t                      released_virt_keys;
     array_t                      event_handlers[N_EVENTS];
     tree(yed_var_name_t,
          yed_var_val_t)          vars;
@@ -249,20 +249,25 @@ do {                                                         \
                         __YEXE_args);                        \
 } while (0)
 
-#define YBIND(key, cmd, ...)                          \
-do {                                                  \
-    char *__YEXE_args[] = { __VA_ARGS__ };            \
-    yed_bind_key((key), (cmd),                        \
-                 sizeof(__YEXE_args) / sizeof(char*), \
-                 __YEXE_args);                        \
+#define YBIND(__key, __cmd, ...)                                   \
+do {                                                               \
+    char *__YBIND_args[] = { __VA_ARGS__ };                        \
+    yed_key_binding __YBIND_binding;                               \
+                                                                   \
+    __YBIND_binding.key    = (__key);                              \
+    __YBIND_binding.cmd    = (__cmd);                              \
+    __YBIND_binding.n_args = sizeof(__YBIND_args) / sizeof(char*); \
+    __YBIND_binding.args   = __YBIND_args;                         \
+                                                                   \
+    yed_bind_key(__YBIND_binding);                                 \
 } while (0)
 
-#define YPBIND(plugin, key, cmd, ...)                 \
-do {                                                  \
-    char *__YEXE_args[] = { __VA_ARGS__ };            \
-    yed_plugin_bind_key((plugin), (key), (cmd),       \
-                 sizeof(__YEXE_args) / sizeof(char*), \
-                 __YEXE_args);                        \
+#define YPBIND(plugin, key, cmd, ...)                   \
+do {                                                    \
+    char *__YPBIND_args[] = { __VA_ARGS__ };            \
+    yed_plugin_bind_key((plugin), (key), (cmd),         \
+                 sizeof(__YPBIND_args) / sizeof(char*), \
+                 __YPBIND_args);                        \
 } while (0)
 
 

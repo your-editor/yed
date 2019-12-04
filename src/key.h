@@ -53,12 +53,13 @@ enum KEY_ACTION {
 
     REAL_KEY_MAX,
 
-    SEQ_START,
+    VIRT_KEY_START,
 };
 
 #define CTRL_KEY(c) ((c) & 0x9F)
 
-#define SEQ(x)      (SEQ_START + (x))
+#define VIRT_KEY(x)      (VIRT_KEY_START + (x))
+
 #define MAX_SEQ_LEN (8)
 
 #define IS_ARROW(k)   ((k) >= ARROW_LEFT && (k) <= ARROW_DOWN)
@@ -88,6 +89,10 @@ typedef struct {
     int keys[MAX_SEQ_LEN];
     int seq_key;
 } yed_key_sequence;
+
+int yed_is_key(int key);
+int yed_acquire_virt_key(void);
+void yed_release_virt_key(int key);
 
 int yed_add_key_sequence(int len, int *keys);
 int yed_get_key_sequence(int len, int *keys);

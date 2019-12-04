@@ -171,7 +171,7 @@ void yed_service_reload(void) {
     tree_reset_fns(yed_style_name_t,   yed_style_ptr_t,       ys->styles,           strcmp);
     tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);
     tree_reset_fns(yed_buffer_name_t,  yed_buffer_ptr_t,      ys->buffers,          strcmp);
-    tree_reset_fns(int,                yed_key_binding_ptr_t, ys->key_seq_map,      NULL);
+    tree_reset_fns(int,                yed_key_binding_ptr_t, ys->vkey_binding_map, NULL);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
     tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
