@@ -196,6 +196,14 @@ void yed_take_key(int key) {
 
 }
 
+void yed_feed_keys(int n, int *keys) {
+    int i;
+
+    for (i = 0; i < n; i += 1) {
+        yed_take_key(keys[i]);
+    }
+}
+
 static yed_key_binding default_key_bindings[] = {
     { CTRL_F,      "command-prompt",    0, NULL },
     { ARROW_UP,    "cursor-up",         0, NULL },

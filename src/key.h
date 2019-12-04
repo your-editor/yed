@@ -68,6 +68,8 @@ void yed_init_keys(void);
 int yed_read_keys(int *input);
 void yed_take_key(int key);
 
+void yed_feed_keys(int n, int *keys);
+
 typedef struct yed_key_binding_t {
     int    key;
     char  *cmd;
