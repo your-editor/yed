@@ -124,11 +124,15 @@ void indent_c_post_delete_back_handler(yed_event *event) {
     char *indent_c_disable_bs;
 
     indent_c_disable_bs = yed_get_var("indent-c-disable-bs");
-    if(indent_c_disable_bs) {
-      return;
+    if (indent_c_disable_bs) {
+        return;
     }
 
     frame = event->frame;
+
+    if (frame->buffer->has_selection) {
+        return;
+    }
 
     tabw = get_tabw();
 
