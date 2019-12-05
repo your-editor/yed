@@ -9,7 +9,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char *plugins[] = {
 /*         "meta_keys", */
 /*         "wait_keys", */
-/*         "vimish", */
+        "vimish",
         "lang/c", "lang/sh", "lang/bjou", "lang/latex",
         "brace_hl",
         "indent_c", "comment",
@@ -72,11 +72,6 @@ int yed_plugin_boot(yed_plugin *self) {
 
     /* Colors */
     YEXE("style", "casey");
-
-    YED_MENU_FRAME_MAKE("FOOZLE", "Is one foozle worth 2 barzles?",
-                        "* yes", "* no", "* I don't know");
-
-    YED_MENU_FRAME_MAKE("BARZLE", "This is a message.");
 
     return 0;
 }
