@@ -302,7 +302,7 @@ void latex_syntax_highlight(yed_event *event) {
      * Highlight comments.
      */
     i = 0;
-    while (i < array_len(line->chars) - 1) {
+    while (i < array_len(line->chars)) {
         word = array_item(line->chars, i);
 
         if (*word == '%') {
