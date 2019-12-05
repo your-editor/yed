@@ -163,7 +163,7 @@ int yed_read_keys(int *input) {
         }
 
         return len;
-    } else {
+    } else if (c >= 0) {
         return yed_read_key_sequences(c, input);
     }
 

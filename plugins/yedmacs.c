@@ -10,6 +10,12 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void bind_keys(yed_plugin *self) {
+    int key;
+
+    /* Clear any existing bindings. */
+    for (key = 1; key < REAL_KEY_MAX; key += 1) {
+        yed_unbind_key(key);
+    }
 
 #define BIND(key, cmd) yed_plugin_bind_key(self, (key), (cmd), 0, NULL)
 
@@ -28,7 +34,7 @@ void bind_keys(yed_plugin *self) {
     BIND(meta_key('<'), "cursor-buffer-begin");
     BIND(meta_key('>'), "cursor-buffer-end");
 
-    BIND(CTRL_S,        "find-next-in-buffer");
+    BIND(CTRL_S,        "find-in-buffer");
     BIND(CTRL_R,        "find-prev-in-buffer");
 
     BIND(CTRL_K,        "delete-line");
