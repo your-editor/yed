@@ -15,5 +15,11 @@ rm -rf ${inc_dir}/yed/*
 cp src/*.h ${inc_dir}/yed
 echo "Installed headers:     ${inc_dir}/yed"
 mkdir -p ${plug_dir}
-cp plugins/*.so ${plug_dir}
+
+for plug in $(find plugins -name "*.so" | grep -v "dSYM"); do
+    the_plug=""
+    dst_dir="${plug_dir}/$(dirname "${plug#plugins/}")"
+    mkdir -p ${dst_dir}
+    cp ${plug} ${dst_dir}
+done
 echo "Installed plugins:     ${plug_dir}"

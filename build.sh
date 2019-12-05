@@ -40,9 +40,9 @@ echo "Compiling the driver.."
 ${CC} src/yed_driver.c ${DRIVER_C_FLAGS} ${cfg} -o _yed &
 
 # Compile all the plugins.
-for plug in plugins/*.c; do
+for plug in $(find plugins -name "*.c"); do
     echo "Compiling ${plug}.."
-    ${CC} ${plug} ${PLUGIN_C_FLAGS} ${cfg} -o plugins/"$(basename -s".c" ${plug})".so &
+    ${CC} ${plug} ${PLUGIN_C_FLAGS} ${cfg} -o "$(dirname ${plug})"/"$(basename -s".c" ${plug})".so &
 done
 
 wait

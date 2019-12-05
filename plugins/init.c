@@ -9,14 +9,15 @@ int yed_plugin_boot(yed_plugin *self) {
 /*         "meta_keys", */
 /*         "wait_keys", */
         "vimish",
-        "syntax_c", "syntax_sh", "syntax_bjou", "brace_hl",
+        "lang/c", "lang/sh", "lang/bjou", "lang/latex",
+        "brace_hl",
         "indent_c", "comment",
         "autotrim", "completer",
-        "grep", "find_file", "make_check", "man", "latex",
+        "grep", "find_file", "man",
         "style_picker",
         "focus_frame",
-        "style_first", "style_elise", "style_nord", "style_monokai", "style_gruvbox",
-        "style_skyfall", "style_papercolor", "style_casey",
+        "styles/first", "styles/elise", "styles/nord", "styles/monokai", "styles/gruvbox",
+        "styles/skyfall", "styles/papercolor", "styles/casey",
         "proj",
     };
 
@@ -49,7 +50,6 @@ int yed_plugin_boot(yed_plugin *self) {
 
     /* Keybindings */
     YEXE("vimish-bind", "insert",    "j", "j",                "CMD",    "vimish-exit-insert");
-    YEXE("vimish-bind", "normal",    "spc", "m", "c",         "CMD",    "make-check");
     YEXE("vimish-bind", "normal",    "spc", "c", "o",         "CMD",    "comment-toggle");
     YEXE("vimish-bind", "normal",    "spc", "l", "c",         "CMD",    "latex-compile-current-file");
     YEXE("vimish-bind", "normal",    "spc", "l", "v",         "CMD",    "latex-view-current-file");
