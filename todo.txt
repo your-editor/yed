@@ -1,11 +1,11 @@
 * line numbers
 * things from vimrc
-    * status bar
     * alignment
-    * completion
 * some kind of version checker for plugins so that
   plugins compiled with an older version of yed
   don't cause crashes
     * we can tie this in with a system that can
       designate a version as "breaking" older
       versions
+* greedy key sequences reading instead of eager
+* compose key sequences
