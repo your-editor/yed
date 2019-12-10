@@ -10,8 +10,8 @@ int yed_plugin_boot(yed_plugin *self) {
 /*         "meta_keys", */
 /*         "wait_keys", */
         "vimish",
+        "brace_hl", "tag_hl",
         "lang/c", "lang/sh", "lang/bjou", "lang/latex",
-        "brace_hl",
         "indent_c", "comment",
         "autotrim", "completer",
         "grep", "find_file", "man",
