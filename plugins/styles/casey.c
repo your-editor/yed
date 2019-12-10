@@ -78,7 +78,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.code_number.flags  = attr_kind;
     s.code_number.fg     = color_num;
 
-    s.code_constant      = s.code_number;
+    s.code_constant      = s.code_preprocessor;
     s.code_string        = s.code_number;
     s.code_character     = s.code_number;
 
