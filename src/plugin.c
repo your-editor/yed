@@ -52,10 +52,12 @@ void yed_init_plugins(void) {
     ys->plugin_dirs = array_make(char*);
     ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
 
-    if (ys->options.init) {
-        load_init(ys->options.init);
-    } else if (!ys->options.no_init) {
-        load_default_init();
+    if (!ys->options.no_init) {
+        if (ys->options.init) {
+            load_init(ys->options.init);
+        } else {
+            load_default_init();
+        }
     }
 }
 
