@@ -17,6 +17,7 @@ static char       *prg;
 static yed_frame  *frame;
 static yed_buffer *buff;
 static char        prompt_buff[256];
+static char       *save_current_search;
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
@@ -57,11 +58,14 @@ void grep_cleanup(void) {
 
     frame = NULL;
     buff  = NULL;
+
+    ys->save_search = save_current_search;
 }
 
 void grep_start(void) {
     ys->interactive_command = "grep";
     grep_set_prompt("(grep) ", NULL);
+    save_current_search = ys->current_search;
     yed_set_small_message(NULL);
     grep_make_frame();
     grep_make_buffer();
@@ -77,6 +81,8 @@ void grep_take_key(int key) {
         grep_cleanup();
     } else if (key == ENTER) {
         ys->interactive_command = NULL;
+        ys->current_search      = NULL;
+        frame->dirty            = 1;
         yed_clear_cmd_buff();
     } else if (key == TAB) {
         grep_run();
@@ -128,8 +134,10 @@ void grep_run(void) {
 
     array_zero_term(ys->cmd_buff);
 
-    cmd_buff[0] = 0;
-    pattern     = array_data(ys->cmd_buff);
+
+    cmd_buff[0]        = 0;
+    pattern            = array_data(ys->cmd_buff);
+    ys->current_search = pattern;
 
     if (strlen(pattern) == 0)     { goto empty; }
 
@@ -233,12 +241,12 @@ void grep_key_pressed_handler(yed_event *event) {
 
     eframe = ys->active_frame;
 
-    if (event->key != ENTER                          /* not the key we want */
-    ||  ys->interactive_command                      /* still typing */
-    ||  !eframe                                      /* no frame */
-    ||  eframe != frame                              /* not our frame */
-    ||  !eframe->buffer                              /* no buffer */
-    ||  strcmp(eframe->buffer->name, "*grep-list")) { /* not our buffer */
+    if (event->key != ENTER                           /* not the key we want */
+    ||  ys->interactive_command                       /* still typing        */
+    ||  !eframe                                       /* no frame            */
+    ||  eframe != frame                               /* not our frame       */
+    ||  !eframe->buffer                               /* no buffer           */
+    ||  strcmp(eframe->buffer->name, "*grep-list")) { /* not our buffer      */
         return;
     }
 
