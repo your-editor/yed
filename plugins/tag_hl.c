@@ -21,7 +21,6 @@ void tag_hl_line_handler(yed_event *event) {
     frame = event->frame;
 
     if (!frame
-    ||  frame != ys->active_frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE) {
         return;
