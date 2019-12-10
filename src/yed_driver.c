@@ -6,16 +6,15 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-yed_lib_t yed_lib;
-struct yed_state_t *state;
+static yed_lib_t yed_lib;
+static struct yed_state_t *state;
 
 int load_yed_lib(void);
 void call_yed_fini(void);
 
 
 int main(int argc, char **argv) {
-    int                 status;
-    struct yed_state_t *state;
+    int status;
 
     if (load_yed_lib() != 0) {
         return 1;
