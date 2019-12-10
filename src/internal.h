@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #if defined(__linux__)
@@ -50,6 +51,7 @@ use_tree(str_t, empty_t);
 #include "frame.h"
 #include "command.h"
 #include "getRSS.h"
+#include "measure_time.h"
 #include "event.h"
 #include "plugin.h"
 #include "find.h"
@@ -202,6 +204,7 @@ typedef struct yed_state_t {
          yed_style_ptr_t)        styles;
     yed_style_name_t             active_style;
     options_t                    options;
+    unsigned long long           start_time_ms;
 } yed_state;
 
 extern yed_state *ys;

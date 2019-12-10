@@ -18,7 +18,8 @@ int yed_plugin_boot(yed_plugin *self) {
         "style_picker",
         "focus_frame",
         "styles/first", "styles/elise", "styles/nord", "styles/monokai", "styles/gruvbox",
-        "styles/skyfall", "styles/papercolor", "styles/casey",
+        "styles/skyfall", "styles/papercolor",
+        "styles/casey",
         "proj",
     };
 
@@ -84,6 +85,13 @@ void get_env_info(void) {
     if ((user = getenv("USER"))) { yed_set_var("user", user); }
 }
 
+/*
+ * @bad @performance
+ * Amazingly, this is actually the bottleneck for startup time.
+ * We're pretty fast about everything else.
+ * But it would be nice to have a faster method to get this
+ * information.
+ */
 int has(char *prg) {
     char *path;
 

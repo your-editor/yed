@@ -11,6 +11,7 @@
 #include "frame.c"
 #include "command.c"
 #include "getRSS.c"
+#include "measure_time.c"
 #include "event.c"
 #include "plugin.c"
 #include "find.c"
@@ -188,9 +189,17 @@ static int parse_options(int argc, char **argv) {
     return 1;
 }
 
+void yed_tool_attach(void) {
+    printf("Hit any key to continue once the instrument tool has been attached.\n");
+    getchar();
+}
+
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
-    int    has_frames;
-    char **file_it;
+    int                 has_frames;
+    char              **file_it;
+    unsigned long long  start_time;
+
+    start_time = measure_time_now_ms();
 
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
@@ -204,8 +213,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
 
     if (ys->options.instrument) {
-        printf("Hit any key to continue once the instrument tool has been attached.\n");
-        getchar();
+        yed_tool_attach();
     }
 
     yed_init_vars();
@@ -233,6 +241,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_events();
     yed_init_search();
     yed_init_plugins();
+
+    ys->start_time_ms = measure_time_now_ms() - start_time;
 
     has_frames = 0;
     array_traverse(ys->options.files, file_it) {
@@ -277,6 +287,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
 void yed_fini(yed_state *state) {
     char *bytes;
+    unsigned long long startup_time;
+
+    startup_time = state->start_time_ms;
 
     printf(TERM_RESET);
     yed_term_exit();
@@ -285,7 +298,7 @@ void yed_fini(yed_state *state) {
 
     bytes = pretty_bytes(getPeakRSS());
 
-    printf("Peak RSS: %s\nThanks for using yed!\n", bytes);
+    printf("Startup time: %llums\nPeak RSS:     %s\nThanks for using yed!\n", startup_time, bytes);
 
     free(bytes);
 }
