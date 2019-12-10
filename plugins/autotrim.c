@@ -57,5 +57,5 @@ void autotrim_pre_write_handler(yed_event *event) {
      * in order to get to older buffer states.
      */
 
-/*     yed_merge_undo_records(event->buffer); */
+    yed_merge_undo_records(event->buffer);
 }
