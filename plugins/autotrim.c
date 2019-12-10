@@ -16,24 +16,46 @@ int yed_plugin_boot(yed_plugin *self) {
 void autotrim_pre_write_handler(yed_event *event) {
     yed_frame *f;
     yed_line  *line;
-    int        cursor_col;
+    int        row, cursor_col;
 
     f = NULL;
+
     if (ys->active_frame && ys->active_frame->buffer == event->buffer) {
         f = ys->active_frame;
+    }
+
+    yed_start_undo_record(f, event->buffer);
+
+    if (f) {
         cursor_col = ys->active_frame->cursor_col;
         yed_set_cursor_within_frame(ys->active_frame, 1, ys->active_frame->cursor_line);
     }
 
-    bucket_array_traverse(event->buffer->lines, line) {
+    for (row = 1; row <= yed_buff_n_lines(event->buffer); row += 1) {
+        line = yed_buff_get_line(event->buffer, row);
         while (array_len(line->chars)
         &&     *(char*)array_last(line->chars) == ' ') {
-            array_pop(line->chars);
-            line->visual_width -= 1;
+            yed_pop_from_line(event->buffer, row);
         }
     }
 
     if (f) {
-        yed_set_cursor_within_frame(ys->active_frame, cursor_col, ys->active_frame->cursor_line);
+        yed_set_cursor_within_frame(f, cursor_col, f->cursor_line);
     }
+
+    yed_end_undo_record(f, event->buffer);
+
+    /*
+     * *ATTENTION*
+     *
+     * We will merge these changes with the previous record in the
+     * undo history.
+     *
+     * The effect of this is that the changes in the buffer will be
+     * appropriately reflected in the undo history without adding
+     * unnecessary undo records that the user will have to go through
+     * in order to get to older buffer states.
+     */
+
+/*     yed_merge_undo_records(event->buffer); */
 }
