@@ -2139,6 +2139,8 @@ void yed_default_command_delete_line(int n_args, char **args) {
         yed_frame_reset_cursor(frame);
     }
 
+    yed_frame_hard_reset_cursor_x(frame);
+
     yed_end_undo_record(frame, frame->buffer);
 
     event.kind = EVENT_BUFFER_POST_MOD;
