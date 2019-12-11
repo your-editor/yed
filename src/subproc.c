@@ -27,5 +27,7 @@ char * yed_run_subproc(char *cmd) {
 
     array_zero_term(out);
 
+    pclose(stream);
+
     return array_data(out);
 }
