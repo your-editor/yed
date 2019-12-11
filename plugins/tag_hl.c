@@ -84,16 +84,12 @@ void tag_hl_hl_tags(yed_event *event) {
         }
 
         if (last_was_at) {
-            attr         = array_item(event->line_attrs, old_col - 2);
-            attr->flags &= ~(ATTR_BOLD);
-            attr->flags |= atn.flags;
-            attr->fg     = atn.fg;
+            attr = array_item(event->line_attrs, old_col - 2);
+            yed_combine_attrs(attr, &atn);
 
             for (i = 0; i < word_len; i += 1) {
-                attr         = array_item(event->line_attrs, old_col + i - 1);
-                attr->flags &= ~(ATTR_BOLD);
-                attr->flags |= atn.flags;
-                attr->fg     = atn.fg;
+                attr = array_item(event->line_attrs, old_col + i - 1);
+                yed_combine_attrs(attr, &atn);
             }
         }
 

@@ -14,7 +14,7 @@ void yed_search_line_handler(yed_event *event) {
     yed_frame  *frame;
     yed_buffer *buff;
     yed_line   *line;
-    yed_attrs  *attr;
+    yed_attrs  *attr, search, search_cursor;
     char       *line_data,
                *line_data_start,
                *line_data_end;
@@ -50,14 +50,17 @@ void yed_search_line_handler(yed_event *event) {
     line_data     = line_data_start = array_data(line->chars);
     line_data_end = line_data + data_len;
 
+    search        = yed_active_style_get_search();
+    search_cursor = yed_active_style_get_search_cursor();
+
     for (; line_data != line_data_end; line_data += 1) {
         if (strncmp(ys->current_search, line_data, search_len) == 0) {
             if (event->row == frame->cursor_line
             && (line_data - line_data_start) + 1 == frame->cursor_col) {
                 for (i = 0; i < search_len; i += 1) {
-                    attr  = array_item(event->line_attrs, (line_data - line_data_start) + i);
+                    attr = array_item(event->line_attrs, (line_data - line_data_start) + i);
                     if (ys->active_style) {
-                        *attr = yed_active_style_get_search_cursor();
+                        yed_combine_attrs(attr, &search_cursor);
                     } else {
                         attr->flags ^= ATTR_INVERSE;
                     }
@@ -66,7 +69,7 @@ void yed_search_line_handler(yed_event *event) {
                 for (i = 0; i < search_len; i += 1) {
                     attr  = array_item(event->line_attrs, (line_data - line_data_start) + i);
                     if (ys->active_style) {
-                        *attr = yed_active_style_get_search();
+                        yed_combine_attrs(attr, &search);
                     } else {
                         attr->flags ^= ATTR_INVERSE;
                     }

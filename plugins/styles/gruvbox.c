@@ -64,6 +64,9 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = base08;
 
+    s.associate.flags     = attr_kind | ATTR_BOLD;
+    s.associate.bg        = base00_but_lighter;
+
     s.command_line        = s.active;
 
     s.status_line.flags   = attr_kind | ATTR_BOLD;

@@ -380,7 +380,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     }
 
     if (frame->buffer->has_selection) {
-        col      = 1;
+        col = 1;
         if (ys->active_style) {
             tmp_attr = yed_active_style_get_selection();
         } else {
@@ -390,14 +390,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
         array_traverse(frame->line_attrs, attr_it) {
             if (yed_is_in_range(&frame->buffer->selection, row, col)) {
-                if (tmp_attr.flags & ATTR_INVERSE
-                &&  tmp_attr.fg == 0
-                &&  tmp_attr.bg == 0) {
-
-                    attr_it->flags |= ATTR_INVERSE;
-                } else {
-                    *attr_it = tmp_attr;
-                }
+                yed_combine_attrs(attr_it, &tmp_attr);
             }
             col += 1;
         }

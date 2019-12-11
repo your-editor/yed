@@ -195,17 +195,13 @@ void brace_hl_hl_braces(yed_event *event) {
     }
 
     if (beg_row == event->row) {
-        atn   = yed_active_style_get_attention();
-        attr  = array_item(event->frame->line_attrs, beg_col - 1);
-        attr->flags &= ~(ATTR_BOLD);
-        attr->flags |= atn.flags;
-        attr->fg     = atn.fg;
+        atn  = yed_active_style_get_attention();
+        attr = array_item(event->frame->line_attrs, beg_col - 1);
+        yed_combine_attrs(attr, &atn);
     }
     if (end_row == event->row) {
-        atn   = yed_active_style_get_attention();
-        attr  = array_item(event->frame->line_attrs, end_col - 1);
-        attr->flags &= ~(ATTR_BOLD);
-        attr->flags |= atn.flags;
-        attr->fg     = atn.fg;
+        atn  = yed_active_style_get_attention();
+        attr = array_item(event->frame->line_attrs, end_col - 1);
+        yed_combine_attrs(attr, &atn);
     }
 }

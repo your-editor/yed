@@ -13,6 +13,7 @@
     __SCOMP(search)            \
     __SCOMP(search_cursor)     \
     __SCOMP(attention)         \
+    __SCOMP(associate)         \
     __SCOMP(status_line)       \
     __SCOMP(command_line)      \
     __SCOMP(code_comment)      \

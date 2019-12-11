@@ -63,6 +63,9 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind;
     s.attention.fg        = nord11;
 
+    s.associate.flags     = attr_kind;
+    s.associate.fg        = nord12;
+
     s.command_line        = s.inactive;
 
     s.status_line.flags   = attr_kind | ATTR_BOLD;

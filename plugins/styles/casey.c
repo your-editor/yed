@@ -9,6 +9,7 @@
 #define color_fg      MAYBE_CONVERT(RGB_32(170, 170, 160))
 #define color_search  MAYBE_CONVERT(RGB_32(73, 212, 92))
 #define color_attent  MAYBE_CONVERT(RGB_32(244, 91, 83))
+#define color_assoc   MAYBE_CONVERT(RGB_32(40, 40, 53))
 #define color_comment MAYBE_CONVERT(RGB_32(80, 80, 80))
 #define color_keyword MAYBE_CONVERT(RGB_32(185, 150, 84))
 #define color_pp      MAYBE_CONVERT(RGB_32(70, 120, 130))
@@ -56,6 +57,9 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = color_attent;
+
+    s.associate.flags     = attr_kind;
+    s.associate.bg        = color_assoc;
 
     s.command_line        = s.active;
 

@@ -166,10 +166,8 @@ void syntax_c_highlight(yed_event *event) {
 
     if (lines_in_comment[event->row - frame->buffer_y_offset]) {
         for (k = 0 ; k < array_len(line->chars); k += 1) {
-            attr         = array_item(event->line_attrs, k);
-            attr->flags &= ~(ATTR_BOLD);
-            attr->flags |= com.flags;
-            attr->fg     = com.fg;
+            attr = array_item(event->line_attrs, k);
+            yed_combine_attrs(attr, &com);
         }
         return;
     }
@@ -229,15 +227,12 @@ void syntax_c_highlight(yed_event *event) {
                     match = (strncmp(word, pp_kwds[word_len - MIN_PPKWD_LEN][i], word_len) == 0);
 
                     if (match) {
-                        attr         = array_item(event->line_attrs, old_col - 2);
-                        attr->flags &= ~(ATTR_BOLD);
-                        attr->flags |= pp.flags;
-                        attr->fg     = pp.fg;
+                        attr = array_item(event->line_attrs, old_col - 2);
+                        yed_combine_attrs(attr, &pp);
 
                         for (j = 0; j < word_len; j += 1) {
-                            attr         = array_item(event->line_attrs, old_col + j - 1);
-                            attr->flags |= pp.flags;
-                            attr->fg     = pp.fg;
+                            attr = array_item(event->line_attrs, old_col + j - 1);
+                            yed_combine_attrs(attr, &pp);
                         }
                         break;
                     }
@@ -252,10 +247,8 @@ void syntax_c_highlight(yed_event *event) {
 
                     if (match) {
                         for (j = 0; j < word_len; j += 1) {
-                            attr         = array_item(event->line_attrs, old_col + j - 1);
-                            attr->flags &= ~(ATTR_BOLD);
-                            attr->flags |= key.flags;
-                            attr->fg     = key.fg;
+                            attr = array_item(event->line_attrs, old_col + j - 1);
+                            yed_combine_attrs(attr, &key);
                         }
                         break;
                     }
@@ -278,16 +271,12 @@ void syntax_c_highlight(yed_event *event) {
 
             if (match) {
                 if (last_was_minus) {
-                    attr         = array_item(event->line_attrs, old_col - 2);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= num.flags;
-                    attr->fg     = num.fg;
+                    attr = array_item(event->line_attrs, old_col - 2);
+                    yed_combine_attrs(attr, &num);
                 }
                 for (i = 0; i < word_len; i += 1) {
-                    attr         = array_item(event->line_attrs, old_col + i - 1);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= num.flags;
-                    attr->fg     = num.fg;
+                    attr = array_item(event->line_attrs, old_col + i - 1);
+                    yed_combine_attrs(attr, &num);
                 }
             }
         }
@@ -298,10 +287,8 @@ void syntax_c_highlight(yed_event *event) {
                 match = 1;
 
                 for (i = 0; i < 4; i += 1) {
-                    attr         = array_item(event->line_attrs, old_col + i - 1);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= con.flags;
-                    attr->fg     = con.fg;
+                    attr = array_item(event->line_attrs, old_col + i - 1);
+                    yed_combine_attrs(attr, &con);
                 }
             }
         }
@@ -311,10 +298,8 @@ void syntax_c_highlight(yed_event *event) {
             if (old_col + word_len - 1 < array_len(line->chars)
             &&  yed_line_col_to_char(line, old_col + word_len) == '(') {
                 for (i = 0; i < word_len; i += 1) {
-                    attr         = array_item(event->line_attrs, old_col + i - 1);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= cal.flags;
-                    attr->fg     = cal.fg;
+                    attr = array_item(event->line_attrs, old_col + i - 1);
+                    yed_combine_attrs(attr, &cal);
                 }
             }
         }
@@ -341,10 +326,8 @@ void syntax_c_highlight(yed_event *event) {
                 if (i + j < array_len(line->chars)) {
                     if (*(word + j) == '\'') {
                         for (k = i; k <= i + j; k += 1) {
-                            attr         = array_item(event->line_attrs, k);
-                            attr->flags &= ~(ATTR_BOLD);
-                            attr->flags |= cha.flags;
-                            attr->fg     = cha.fg;
+                            attr = array_item(event->line_attrs, k);
+                            yed_combine_attrs(attr, &cha);
                         }
 
                     }
@@ -380,10 +363,8 @@ void syntax_c_highlight(yed_event *event) {
 
             if (match) {
                 for (k = i; k <= i + j; k += 1) {
-                    attr         = array_item(event->line_attrs, k);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= str.flags;
-                    attr->fg     = str.fg;
+                    attr = array_item(event->line_attrs, k);
+                    yed_combine_attrs(attr, &str);
                 }
             }
 
@@ -394,10 +375,8 @@ void syntax_c_highlight(yed_event *event) {
          */
         } else if (*word == '/' && *(word + 1) == '/') {
             for (k = i; k < array_len(line->chars); k += 1) {
-                attr         = array_item(event->line_attrs, k);
-                attr->flags &= ~(ATTR_BOLD);
-                attr->flags |= com.flags;
-                attr->fg     = com.fg;
+                attr = array_item(event->line_attrs, k);
+                yed_combine_attrs(attr, &com);
             }
             break;
 
@@ -420,10 +399,8 @@ void syntax_c_highlight(yed_event *event) {
 
             if (match) {
                 for (k = i; k <= i + j; k += 1) {
-                    attr         = array_item(event->line_attrs, k);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= com.flags;
-                    attr->fg     = com.fg;
+                    attr = array_item(event->line_attrs, k);
+                    yed_combine_attrs(attr, &com);
                 }
             }
 
@@ -441,17 +418,13 @@ void syntax_c_highlight(yed_event *event) {
     if (delim) {
         if (delim < 0) {
             for (k = 0; k < (0 - delim + 1); k += 1) {
-                attr         = array_item(event->line_attrs, k);
-                attr->flags &= ~(ATTR_BOLD);
-                attr->flags |= com.flags;
-                attr->fg     = com.fg;
+                attr = array_item(event->line_attrs, k);
+                yed_combine_attrs(attr, &com);
             }
         } else if (delim > 0) {
             for (k = delim - 1; k < array_len(line->chars); k += 1) {
-                attr         = array_item(event->line_attrs, k);
-                attr->flags &= ~(ATTR_BOLD);
-                attr->flags |= com.flags;
-                attr->fg     = com.fg;
+                attr = array_item(event->line_attrs, k);
+                yed_combine_attrs(attr, &com);
             }
         }
     }

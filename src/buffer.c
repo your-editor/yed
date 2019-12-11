@@ -84,6 +84,18 @@ int rgb_to_256(unsigned rgb) {
     return 16 + (36 * ri) + (6 * gi) + (bi);
 }
 
+void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
+    if (!dst || !src)    { return; }
+
+    dst->flags |= src->flags;
+    if (src->fg) {
+        dst->fg = src->fg;
+    }
+    if (src->bg) {
+        dst->bg = src->bg;
+    }
+}
+
 void yed_init_buffers(void) {
     yed_buffer *yank_buff;
 

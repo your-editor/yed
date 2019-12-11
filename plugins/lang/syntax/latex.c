@@ -109,10 +109,8 @@ void latex_syntax_highlight(yed_event *event) {
 
             if (match) {
                 for (k = i; k <= i + j; k += 1) {
-                    attr         = array_item(event->line_attrs, k);
-                    attr->flags &= ~(ATTR_BOLD);
-                    attr->flags |= str.flags;
-                    attr->fg     = str.fg;
+                    attr = array_item(event->line_attrs, k);
+                    yed_combine_attrs(attr, &str);
                 }
             }
 
@@ -169,16 +167,12 @@ void latex_syntax_highlight(yed_event *event) {
         }
 
         if (last_was_backslash) {
-            attr         = array_item(event->line_attrs, old_col - 2);
-            attr->flags &= ~(ATTR_BOLD);
-            attr->flags |= cal.flags;
-            attr->fg     = cal.fg;
+            attr = array_item(event->line_attrs, old_col - 2);
+            yed_combine_attrs(attr, &cal);
 
             for (i = 0; i < word_len; i += 1) {
-                attr         = array_item(event->line_attrs, old_col + i - 1);
-                attr->flags &= ~(ATTR_BOLD);
-                attr->flags |= cal.flags;
-                attr->fg     = cal.fg;
+                attr = array_item(event->line_attrs, old_col + i - 1);
+                yed_combine_attrs(attr, &cal);
             }
         }
 
@@ -196,10 +190,8 @@ void latex_syntax_highlight(yed_event *event) {
 
         if (*word == '%') {
             for (k = i; k < array_len(line->chars); k += 1) {
-                attr         = array_item(event->line_attrs, k);
-                attr->flags &= ~(ATTR_BOLD);
-                attr->flags |= com.flags;
-                attr->fg     = com.fg;
+                attr = array_item(event->line_attrs, k);
+                yed_combine_attrs(attr, &com);
             }
             break;
 

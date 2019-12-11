@@ -80,6 +80,7 @@ void yed_init_buffers(void);
 void yed_get_attr_str(yed_attrs attr, char *buff_p);
 void yed_set_attr(yed_attrs attr);
 int  yed_attrs_eq(yed_attrs attr1, yed_attrs attr2);
+void yed_combine_attrs(yed_attrs *dst, yed_attrs *src);
 
 yed_line yed_new_line(void);
 yed_line yed_new_line_with_cap(int len);
