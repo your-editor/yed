@@ -7,7 +7,6 @@ void vimish_exit_insert(int n_args, char **args);
 void vimish_write(int n_args, char **args);
 void vimish_quit(int n_args, char **args);
 void vimish_write_quit(int n_args, char **args);
-void vimish_man_word(int n_args, char **args);
 /* END COMMANDS */
 
 #define MODE_NORMAL  (0x0)
@@ -15,6 +14,8 @@ void vimish_man_word(int n_args, char **args);
 #define MODE_DELETE  (0x2)
 #define MODE_YANK    (0x3)
 #define N_MODES      (0x5)
+
+static int restore_cursor_line;
 
 static char *mode_strs[] = {
     "NORMAL",
@@ -79,7 +80,6 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(Self, "Q",                  vimish_quit);
     yed_plugin_set_command(Self, "wq",                 vimish_write_quit);
     yed_plugin_set_command(Self, "Wq",                 vimish_write_quit);
-    yed_plugin_set_command(Self, "vimish-man-word",    vimish_man_word);
 
     bind_keys();
 
@@ -772,21 +772,6 @@ void vimish_write_quit(int n_args, char **args) {
     YEXE("q");
 }
 
-void vimish_man_word(int n_args, char **args) {
-    char *word;
-
-    word = yed_word_under_cursor();
-
-    if (!word) {
-        yed_append_text_to_cmd_buff("[!] cursor is not on a word");
-        return;
-    }
-
-    YEXE("man", word);
-
-    free(word);
-}
-
 void enter_insert(void) {
     yed_frame  *frame;
     yed_buffer *buff;
@@ -799,6 +784,12 @@ void enter_insert(void) {
         if (buff) {
             num_undo_records_before_insert = yed_get_undo_num_records(buff);
         }
+    }
+
+    if (yed_get_var("vimish-insert-no-cursor-line")
+    &&  yed_get_var("cursor-line")) {
+        restore_cursor_line = 1;
+        yed_unset_var("cursor-line");
     }
 }
 
@@ -817,6 +808,12 @@ void exit_insert(void) {
                 yed_merge_undo_records(buff);
             }
         }
+    }
+
+    if (restore_cursor_line
+    &&  yed_get_var("vimish-insert-no-cursor-line")) {
+        yed_set_var("cursor-line", "yes");
+        restore_cursor_line = 0;
     }
 }
 

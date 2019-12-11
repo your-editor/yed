@@ -40,6 +40,10 @@ int yed_plugin_boot(yed_plugin *self) {
         yed_set_var("find-file-prg", "fzf --filter=\"%\"");
     }
 
+    /* I like the cursor line. But it's not default. */
+    yed_set_var("cursor-line", "yes");
+    yed_set_var("vimish-insert-no-cursor-line", "yes");
+
     /* Load all plugins. */
     YEXE("plugins-add-dir", "./.yed");
 
