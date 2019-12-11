@@ -9,3 +9,6 @@
       versions
 * greedy key sequences reading instead of eager
 * compose key sequences
+* catch SIGTERM -- exit gracefully (don't leave the terminal messed up)
+* async behavior by making yed_read_keys() non-blocking
+    * catch SIGINT in read to execute queued tasks?
