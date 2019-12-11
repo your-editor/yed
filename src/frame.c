@@ -365,7 +365,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
     if (frame == ys->active_frame
     &&  frame->cursor_line == row
-    &&  !frame->buffer->has_selection) {
+    &&  !frame->buffer->has_selection
+    &&  yed_get_var("cursor-line")) {
 
         base_attr = yed_active_style_get_cursor_line();
     } else if (frame == ys->active_frame) {
