@@ -12,3 +12,5 @@
 * catch SIGTERM -- exit gracefully (don't leave the terminal messed up)
 * async behavior by making yed_read_keys() non-blocking
     * catch SIGINT in read to execute queued tasks?
+* there's a bug in syntax highlighters that's causing the `last_was_...`
+  things to not be highlighted if there's a single preceding space
