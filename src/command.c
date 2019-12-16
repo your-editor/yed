@@ -72,6 +72,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("get",                    get);
     SET_DEFAULT_COMMAND("unset",                  unset);
     SET_DEFAULT_COMMAND("sh",                     sh);
+    SET_DEFAULT_COMMAND("buff-sh",                buff_sh);
     SET_DEFAULT_COMMAND("less",                   less);
     SET_DEFAULT_COMMAND("echo",                   echo);
     SET_DEFAULT_COMMAND("cursor-down",            cursor_down);
@@ -506,6 +507,48 @@ void yed_default_command_sh(int n_args, char **args) {
     }
 
     ys->redraw = 1;
+}
+
+void yed_default_command_buff_sh(int n_args, char **args) {
+    char buff[1024], err_buff[1024];
+    const char *lazy_space;
+    int i;
+    int err;
+    yed_buffer *existing_buff;
+
+    buff[0]     = 0;
+    err_buff[0] = 0;
+
+    strcat(buff, "bash -c '(");
+
+    lazy_space = "";
+    for (i = 0; i < n_args; i += 1) {
+        strcat(buff, lazy_space);
+        strcat(buff, args[i]);
+        lazy_space = " ";
+    }
+
+    strcpy(err_buff, buff + strlen("bash -c '("));
+
+    strcat(buff, " 2>&1) 2>&1 > /tmp/buff_sh.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+
+    err = system(buff);
+
+    if (err) {
+        yed_append_text_to_cmd_buff("[!] command '");
+        yed_append_text_to_cmd_buff(err_buff);
+        yed_append_text_to_cmd_buff("' failed");
+        return;
+    }
+
+    /* @bad
+     * Doing it this way means you can only have one open at a time...
+     */
+    if ((existing_buff = yed_get_buffer("/tmp/buff_sh.yed"))) {
+        yed_free_buffer(existing_buff);
+    }
+
+    YEXE("buffer", "/tmp/buff_sh.yed");
 }
 
 void yed_default_command_less(int n_args, char **args) {
