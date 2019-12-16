@@ -69,6 +69,8 @@ void syntax_bjou_highlight(yed_event *event) {
     cha = yed_active_style_get_code_character();
     str = yed_active_style_get_code_string();
 
+    (void)con;
+
     col = 1;
 
     last_was_backslash  = 0;

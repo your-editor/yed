@@ -150,7 +150,7 @@ void comment_toggle_line_hash(yed_frame *frame, yed_line *line, int row) {
     line_len = array_len(line->chars);
 
     /* Are we uncommenting? */
-    if (array_len(line->chars) >= 2) {
+    if (line_len >= 2) {
         c = array_item(line->chars, 0);
         if (*c == '#') {
             c = array_item(line->chars, 1);
@@ -182,7 +182,7 @@ void comment_toggle_line_latex(yed_frame *frame, yed_line *line, int row) {
     line_len = array_len(line->chars);
 
     /* Are we uncommenting? */
-    if (array_len(line->chars) >= 2) {
+    if (line_len >= 2) {
         c = array_item(line->chars, 0);
         if (*c == '%') {
             c = array_item(line->chars, 1);
