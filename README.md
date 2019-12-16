@@ -19,7 +19,7 @@ It makes no assumptions about a user's desired editing style and leaves most fun
 - Dependency free
 - Layered frame management
 - 24-bit truecolor support
-- Dynamic key bindings and keys sequences
+- Dynamic key bindings and key sequences
 - Undo/redo
 - Live find and replace
 - Customization/extension via plugins
@@ -199,5 +199,4 @@ For more examples of configurations and plugins, see the C files in `plugins/`.
 | focus_frame       | Creates an 80 column frame centered on the screen.                                                                                        |
 | indent_c          | Implements automatic indentation behavior for C-like languages.                                                                           |
 | meta_keys         | Allows one to use meta (alt) keys in keybindings.                                                                                         |
-
 
