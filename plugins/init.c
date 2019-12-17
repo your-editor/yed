@@ -1,5 +1,4 @@
 #include "plugin.h"
-#include "menu_frame.h"
 
 void get_env_info(void);
 int has(char *prg);
@@ -7,8 +6,6 @@ int has(char *prg);
 int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
     char *plugins[] = {
-/*         "meta_keys", */
-/*         "wait_keys", */
         "vimish",
         "brace_hl", "tag_hl", "cursor_word_hl",
         "lang/c", "lang/sh", "lang/bjou", "lang/latex",
@@ -20,7 +17,6 @@ int yed_plugin_boot(yed_plugin *self) {
         "styles/first", "styles/elise", "styles/nord", "styles/monokai", "styles/gruvbox",
         "styles/skyfall", "styles/papercolor",
         "styles/casey",
-        "proj",
     };
 
 
@@ -53,7 +49,6 @@ int yed_plugin_boot(yed_plugin *self) {
         YEXE("plugin-load", plugins[i]);
     }
 
-
     /* Keybindings */
     YEXE("vimish-bind", "insert",    "j", "j",                "CMD",    "vimish-exit-insert");
     YEXE("vimish-bind", "normal",    "spc", "c", "o",         "CMD",    "comment-toggle");
@@ -77,6 +72,9 @@ int yed_plugin_boot(yed_plugin *self) {
 
     /* Colors */
     YEXE("style", "casey");
+
+    /* Load a directory-specific plugin if available. */
+    YEXE("plugin-load", "proj");
 
     return 0;
 }
