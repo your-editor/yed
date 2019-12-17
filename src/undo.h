@@ -1,7 +1,6 @@
 #ifndef __UNDO_H__
 #define __UNDO_H__
 
-#include "internal.h"
 
 #define UNDO_CHAR_ADD   (1)
 #define UNDO_CHAR_PUSH  (2)

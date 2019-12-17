@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_frames(void) {
     ys->frames       = array_make(yed_frame*);
     ys->active_frame = NULL;

@@ -1,7 +1,6 @@
 #ifndef __BUCKET_ARRAY_H__
 #define __BUCKET_ARRAY_H__
 
-#include "internal.h"
 
 typedef struct bucket_t {
     void            *data;

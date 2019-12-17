@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void comment_toggle(int n_args, char **args);
 int  comment_toggle_line(yed_frame *frame, yed_line *line, int row);

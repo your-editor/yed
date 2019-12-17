@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void indent_c_post_insert_handler(yed_event *event);
 void indent_c_post_delete_back_handler(yed_event *event);

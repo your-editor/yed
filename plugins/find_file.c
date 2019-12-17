@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void find_file(int n_args, char **args);
 void find_file_start(void);

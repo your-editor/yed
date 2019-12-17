@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 int meta_key(int key);
 void bind_keys(yed_plugin *self);

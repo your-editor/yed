@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 int yed_plugin_boot(yed_plugin *self) {
     int  key, keys[2], virt_key;

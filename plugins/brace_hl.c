@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void brace_hl_cursor_moved_handler(yed_event *event);
 void brace_hl_line_handler(yed_event *event);

@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 #define ALT(rgb, _256) (tc ? (rgb) : (_256))
 

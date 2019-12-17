@@ -1,6 +1,7 @@
 #ifndef __PLUGIN_H__
 #define __PLUGIN_H__
 
+/* This will make everything available to plugins if they include yed/plugin.h */
 #include "internal.h"
 
 #define YED_PLUG_SUCCESS   (0x0)

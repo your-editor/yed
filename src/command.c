@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_commands(void) {
     ys->commands         = tree_make_c(yed_command_name_t, yed_command, strcmp);
     ys->default_commands = tree_make_c(yed_command_name_t, yed_command, strcmp);

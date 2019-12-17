@@ -1,7 +1,6 @@
 #ifndef __COMMAND_H__
 #define __COMMAND_H__
 
-#include "internal.h"
 
 #define YED_CMD_PROMPT ": "
 

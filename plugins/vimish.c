@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 /* COMMANDS */
 void vimish_take_key(int n_args, char **args);

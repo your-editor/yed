@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "internal.h" /* include here so that plugins can see everything. */
 
 void load_init(char *path) {
     int err;

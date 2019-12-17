@@ -11,10 +11,6 @@
 #ifndef _TREE_H_
 #define _TREE_H_
 
-#include <stdint.h>
-#include <stdlib.h> /* malloc, free */
-#include <string.h> /* memcpy */
-
 #define tree_make(K_T, V_T) (CAT2(tree(K_T, V_T), _make)(NULL))
 #define tree_make_c(K_T, V_T, CMP) (CAT2(tree(K_T, V_T), _make)(CMP))
 #define tree_len(t) (t->_len)

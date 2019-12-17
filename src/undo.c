@@ -1,5 +1,3 @@
-#include "internal.h"
-
 yed_undo_record yed_new_undo_record(void) {
     yed_undo_record ur;
 

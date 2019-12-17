@@ -1,6 +1,3 @@
-#include "internal.h"
-
-
 char * yed_run_subproc(char *cmd) {
     FILE    *stream;
     array_t  out;

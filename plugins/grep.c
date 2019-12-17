@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void grep(int n_args, char **args);
 void grep_start(void);

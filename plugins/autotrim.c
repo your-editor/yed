@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void autotrim_pre_write_handler(yed_event *event);
 

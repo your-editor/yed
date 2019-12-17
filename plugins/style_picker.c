@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void style_picker(int n_args, char **args);
 void style_picker_cleanup(void);

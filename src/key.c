@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_keys(void) {
     ys->vkey_binding_map        = tree_make(int, yed_key_binding_ptr_t);
     ys->key_sequences      = array_make(yed_key_sequence);

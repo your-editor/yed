@@ -48,6 +48,7 @@ use_tree(str_t, empty_t);
 #include "fs.h"
 #include "undo.h"
 #include "buffer.h"
+#include "attrs.h"
 #include "frame.h"
 #include "command.h"
 #include "getRSS.h"
@@ -272,6 +273,5 @@ do {                                                    \
                  sizeof(__YPBIND_args) / sizeof(char*), \
                  __YPBIND_args);                        \
 } while (0)
-
 
 #endif

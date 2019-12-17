@@ -1,7 +1,6 @@
 #ifndef __STYLE_H__
 #define __STYLE_H__
 
-#include "internal.h"
 
 #define __STYLE_COMPONENTS     \
     __SCOMP(active)            \

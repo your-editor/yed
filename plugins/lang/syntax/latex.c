@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void latex_syntax_line_handler(yed_event *event);
 void latex_syntax_highlight(yed_event *event);

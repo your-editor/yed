@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void syntax_bjou_line_handler(yed_event *event);
 void syntax_bjou_highlight(yed_event *event);

@@ -4,6 +4,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd $DIR
 
+if ! [ -f install.options ]; then
+    echo "install.sh: [!] Missing 'install.options'."
+    exit 1
+fi
+
 source install.options
 
 cp _yed ${bin_dir}/yed
@@ -12,7 +17,7 @@ cp libyed.so ${lib_dir}
 echo "Installed 'libyed.so': ${lib_dir}"
 mkdir -p ${inc_dir}/yed
 rm -rf ${inc_dir}/yed/*
-cp src/*.h ${inc_dir}/yed
+cp include/yed/* ${inc_dir}/yed
 echo "Installed headers:     ${inc_dir}/yed"
 mkdir -p ${plug_dir}
 

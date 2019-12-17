@@ -1,5 +1,3 @@
-#include "internal.h"
-
 unsigned long long measure_time_now_ms(void) {
     struct timeval tv;
 

@@ -1,5 +1,3 @@
-#include "internal.h"
-
 int yed_get_ft(char *path) {
     char *ext;
 

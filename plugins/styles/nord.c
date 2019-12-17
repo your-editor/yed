@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 #define MAYBE_CONVERT(rgb) (tc ? (rgb) : rgb_to_256(rgb))
 #define ALT(rgb, _256)     (tc ? (rgb) : (_256))

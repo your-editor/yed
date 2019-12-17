@@ -1,7 +1,6 @@
 #ifndef __FRAME_H__
 #define __FRAME_H__
 
-#include "internal.h"
 
 typedef struct yed_frame_t {
     struct yed_frame_t *v_link, *h_link;

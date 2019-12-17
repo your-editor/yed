@@ -1,5 +1,3 @@
-#include "internal.h"
-
 int compute_common_prefix_len(char *in, int n_items, char **items) {
     int  i, len, max_len;
 

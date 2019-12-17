@@ -1,25 +1,5 @@
 #include "internal.h"
-
 #include "internal.c"
-#include "array.c"
-#include "bucket_array.c"
-#include "term.c"
-#include "key.c"
-#include "undo.c"
-#include "buffer.c"
-#include "fs.c"
-#include "frame.c"
-#include "command.c"
-#include "getRSS.c"
-#include "measure_time.c"
-#include "event.c"
-#include "plugin.c"
-#include "find.c"
-#include "var.c"
-#include "util.c"
-#include "style.c"
-#include "subproc.c"
-#include "complete.c"
 
 yed_state *ys;
 

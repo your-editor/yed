@@ -10,7 +10,7 @@ source build.options
 
 LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
 DRIVER_C_FLAGS="-ldl -lm -lpthread"
-PLUGIN_C_FLAGS="-shared -fPIC -Isrc -L. -lyed"
+PLUGIN_C_FLAGS="-shared -fPIC -Iinclude -L. -lyed"
 
 # Add this framework to the Mac debug build so
 # that we can use Instruments.app to profile yed
@@ -38,6 +38,10 @@ ${CC} src/yed.c ${LIB_C_FLAGS} ${cfg} -o libyed.so || exit 1
 
 echo "Compiling the driver.."
 ${CC} src/yed_driver.c ${DRIVER_C_FLAGS} ${cfg} -o _yed &
+
+echo "Creating include directory.."
+mkdir -p include/yed
+cp src/*.h include/yed
 
 # Compile all the plugins.
 for plug in $(find plugins -name "*.c"); do

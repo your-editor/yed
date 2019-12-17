@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_search(void) {
     ys->replace_markers       = array_make(array_t);
     ys->replace_save_lines    = array_make(yed_line*);

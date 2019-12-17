@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void syntax_c_line_handler(yed_event *event);
 void syntax_c_frame_handler(yed_event *event);

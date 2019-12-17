@@ -1,4 +1,3 @@
-#include "internal.h"
 
 #define FT_UNKNOWN (0)
 #define FT_TXT     (1)

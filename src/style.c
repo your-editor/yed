@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_styles(void) {
     ys->styles = tree_make_c(yed_style_name_t, yed_style_ptr_t, strcmp);
     yed_set_default_styles();

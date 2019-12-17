@@ -1,7 +1,3 @@
-#include "internal.h"
-
-
-
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
@@ -257,3 +253,24 @@ int s_to_i(const char *s) {
 
     return i;
 }
+
+#include "array.c"
+#include "bucket_array.c"
+#include "term.c"
+#include "key.c"
+#include "undo.c"
+#include "buffer.c"
+#include "attrs.c"
+#include "fs.c"
+#include "frame.c"
+#include "command.c"
+#include "getRSS.c"
+#include "measure_time.c"
+#include "event.c"
+#include "plugin.c"
+#include "find.c"
+#include "var.c"
+#include "util.c"
+#include "style.c"
+#include "subproc.c"
+#include "complete.c"

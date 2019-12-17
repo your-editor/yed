@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void wait_keys_define(int n_args, char **args);
 int  wait_keys_parse(int *keys, char **args);

@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_vars(void) {
     ys->vars = tree_make_c(yed_var_name_t, yed_var_val_t, strcmp);
     yed_set_default_vars();

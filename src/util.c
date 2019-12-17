@@ -1,5 +1,3 @@
-#include "internal.h"
-
 char *yed_word_under_cursor(void) {
     yed_frame  *frame;
     yed_buffer *buff;

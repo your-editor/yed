@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void latex_compile_current_file(int n_args, char **args);
 void latex_view_current_file(int n_args, char **args);

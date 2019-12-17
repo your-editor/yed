@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void completer(int n_args, char **args);
 void completer_buff_pre_insert_handler(yed_event *event);

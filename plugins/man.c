@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void man(int n_args, char **args);
 void man_word(int n_args, char **args);

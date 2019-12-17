@@ -1,0 +1,231 @@
+int rgb_to_256(unsigned rgb) {
+    int         r,  g,  b;
+    int         ri, gi, bi;
+    int         smaller,    bigger;
+    int         small_dist, big_dist;
+    static int  cutoff_norm[] = { 0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff };
+    static int  cutoff_gs[]   = { 0x08, 0x12, 0x1c, 0x26, 0x30, 0x3a,
+                                  0x44, 0x4e, 0x58, 0x62, 0x6c, 0x76,
+                                  0x80, 0x8a, 0x94, 0x9e, 0xa8, 0xb2,
+                                  0xbc, 0xc6, 0xd0, 0xda, 0xe4 };
+    int        *cutoff, cutoff_len;
+
+    r = RGB_32_r(rgb);
+    g = RGB_32_g(rgb);
+    b = RGB_32_b(rgb);
+
+    if (r == b && b == g) {
+        cutoff     = cutoff_gs;
+        cutoff_len = sizeof(cutoff_gs) / sizeof(cutoff_gs[0]);
+    } else {
+        cutoff     = cutoff_norm;
+        cutoff_len = sizeof(cutoff_norm) / sizeof(cutoff_norm[0]);
+    }
+
+    for (ri = 0; ri < cutoff_len - 1; ri += 1) {
+        smaller = cutoff[ri];
+        bigger  = cutoff[ri + 1];
+
+        if (smaller <= r && r <= bigger) {
+            small_dist = abs(smaller - r);
+            big_dist   = abs(bigger  - r);
+
+            if (big_dist <= small_dist) {
+                ri = ri + 1;
+            }
+
+            break;
+        }
+    }
+
+    /* Check for greyscale. */
+    if (cutoff == cutoff_gs) {
+        if (r < 5) { return 16; }
+        if (r < cutoff[0]) {
+            ri = 0;
+        }
+        return 232 + ri;
+    }
+
+    for (gi = 0; gi < cutoff_len - 1; gi += 1) {
+        smaller = cutoff[gi];
+        bigger  = cutoff[gi + 1];
+
+        if (smaller <= g && g <= bigger) {
+            small_dist = abs(smaller - g);
+            big_dist   = abs(bigger  - g);
+
+            if (big_dist <= small_dist) {
+                gi = gi + 1;
+            }
+
+            break;
+        }
+    }
+
+    for (bi = 0; bi < cutoff_len - 1; bi += 1) {
+        smaller = cutoff[bi];
+        bigger  = cutoff[bi + 1];
+
+        if (smaller <= b && b <= bigger) {
+            small_dist = abs(smaller - b);
+            big_dist   = abs(bigger  - b);
+
+            if (big_dist <= small_dist) {
+                bi = bi + 1;
+            }
+
+            break;
+        }
+    }
+
+    return 16 + (36 * ri) + (6 * gi) + (bi);
+}
+
+void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
+    if (!dst || !src)    { return; }
+
+    dst->flags |= src->flags;
+    if (src->fg) {
+        dst->fg = src->fg;
+    }
+    if (src->bg) {
+        dst->bg = src->bg;
+    }
+}
+
+#define BUFFCATN(buff_p, str, n) \
+do { memcpy((buff_p), (str), (n)); (buff_p) += (n); } while (0)
+
+#define BUFFCAT(buff_p, str)                \
+do {                                        \
+    int __BUFFCAT_len;                      \
+    __BUFFCAT_len = strlen(str);            \
+    memcpy((buff_p), (str), __BUFFCAT_len); \
+    (buff_p) += __BUFFCAT_len;              \
+} while (0)
+
+
+
+
+void yed_get_attr_str(yed_attrs attr, char *buff_p) {
+    int fr, fg, fb;
+    int br, bg, bb;
+
+    *buff_p = 0;
+
+    BUFFCATN(buff_p, "\e[0", 3);
+
+    if (attr.flags & ATTR_BOLD) {
+        BUFFCATN(buff_p, ";1", 2);
+    }
+
+    if (attr.flags & ATTR_INVERSE) {
+        BUFFCATN(buff_p, ";7", 2);
+    }
+
+    if (attr.flags & ATTR_16) {
+        if (attr.fg || attr.bg) {
+            BUFFCATN(buff_p, ";", 1);
+        }
+
+        if (attr.fg && attr.bg) {
+            BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+        } else if (attr.fg) {
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+        } else if (attr.bg) {
+            BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
+        }
+    } else if (attr.flags & ATTR_256) {
+        LIMIT(attr.fg, 0, 255);
+        LIMIT(attr.bg, 0, 255);
+
+        if (attr.fg || attr.bg) {
+            BUFFCATN(buff_p, ";", 1);
+        }
+
+        if (attr.fg && attr.bg) {
+            BUFFCATN(buff_p, "38;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCATN(buff_p, "48;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.bg]);
+        } else if (attr.fg) {
+            BUFFCATN(buff_p, "38;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+        } else if (attr.bg) {
+            BUFFCATN(buff_p, "48;5;", 5);
+            BUFFCAT(buff_p, u8_to_s[attr.bg]);
+        }
+    } else if (attr.flags & ATTR_RGB) {
+        if (attr.fg || attr.bg) {
+            BUFFCATN(buff_p, ";", 1);
+        }
+
+        fr = RGB_32_r(attr.fg);
+        fg = RGB_32_g(attr.fg);
+        fb = RGB_32_b(attr.fg);
+        br = RGB_32_r(attr.bg);
+        bg = RGB_32_g(attr.bg);
+        bb = RGB_32_b(attr.bg);
+
+        if (attr.fg && attr.bg) {
+            BUFFCATN(buff_p, "38;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[fr]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fb]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCATN(buff_p, "48;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[br]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bb]);
+        } else if (attr.fg) {
+            BUFFCATN(buff_p, "38;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[fr]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[fb]);
+        } else if (attr.bg) {
+            BUFFCATN(buff_p, "48;2;", 5);
+            BUFFCAT(buff_p, u8_to_s[br]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bg]);
+            BUFFCATN(buff_p, ";", 1);
+            BUFFCAT(buff_p, u8_to_s[bb]);
+        }
+    }
+
+    BUFFCATN(buff_p, "m", 1);
+    *buff_p = 0;
+}
+
+void yed_set_attr(yed_attrs attr) {
+    char buff[128];
+
+    yed_get_attr_str(attr, buff);
+
+    append_to_output_buff(buff);
+}
+
+int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
+    return    (attr1.fg    == attr2.fg)
+           && (attr1.bg    == attr2.bg)
+           && (attr1.flags == attr2.flags);
+}
+
+yed_line yed_new_line(void) {
+    yed_line line;
+
+    memset(&line, 0, sizeof(line));
+
+    line.chars = array_make(char);
+
+    return line;
+}

@@ -1,7 +1,6 @@
 #ifndef __VAR_H__
 #define __VAR_H__
 
-#include "internal.h"
 
 void yed_init_vars(void);
 

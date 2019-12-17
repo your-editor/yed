@@ -1,5 +1,3 @@
-#include "internal.h"
-
 void yed_init_events(void) {
     int i;
 

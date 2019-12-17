@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include <yed/plugin.h>
 
 void tag_hl_line_handler(yed_event *event);
 void tag_hl_hl_tags(yed_event *event);

@@ -1,7 +1,6 @@
 #ifndef __MENU_FRAME_H__
 #define __MENU_FRAME_H__
 
-#include "internal.h"
 
 static inline void yed_menu_frame_add_name(yed_buffer *buff, char *name, int frame_width) {
     int i, len, n_spaces;
