@@ -88,5 +88,10 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_style(self, "casey", &s);
 
+    s.active.bg   = 0;
+    s.inactive.bg = 0;
+
+    yed_plugin_set_style(self, "casey_transparent", &s);
+
     return 0;
 }
