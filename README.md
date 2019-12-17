@@ -59,7 +59,7 @@ To understand the provided configuration, read the rest of this section and the 
 
 The following will show how basic configuration can be done in `init`.
 
-A typical `init.c` look something like this:
+A typical `init.c` looks something like this:
 ```c
 #include <yed/plugin.h>
 
@@ -157,7 +157,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
 To create your own `init` (or any other) plugin, compile it like this:
 ```sh
-gcc -shared init.c -lyed -o init.so
+gcc -shared -fPIC init.c -lyed -o init.so
 ```
 
 `init.so` can then be moved to `~/.yed` to be loaded automatically.
@@ -199,4 +199,3 @@ For more examples of configurations and plugins, see the C files in `plugins/`.
 | focus_frame       | Creates an 80 column frame centered on the screen.                                                                                        |
 | indent_c          | Implements automatic indentation behavior for C-like languages.                                                                           |
 | meta_keys         | Allows one to use meta (alt) keys in keybindings.                                                                                         |
-
