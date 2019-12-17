@@ -74,7 +74,7 @@ static void write_welcome(void) {
 "                       ((                                  \n"
     };
 
-    l = 4;
+    l = 1;
 
     n_oct_lines = sizeof(oct) / sizeof(char*);
     oct_width   = strlen(oct[0]);
