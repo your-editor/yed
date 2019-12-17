@@ -180,7 +180,7 @@ For more examples of configurations and plugins, see the C files in `plugins/`.
 | completer         | Implements BASH-like completion of words from open buffers on `TAB`.                                                                      |
 | comment           | Provides the `comment-toggle` command to toggle lines of code in C/C++, BASH, bJou, and LaTeX.                                            |
 | tag_hl            | Highlights words prefixed with `@` with the `attention` style attribute.                                                                  |
-| cursor_word_hl    | Highlights other instances of the work under the cursor with the `associate` style attribute.                                             |
+| cursor_word_hl    | Highlights other instances of the word under the cursor with the `associate` style attribute.                                             |
 | brace_hl          | Highlights enclosing pairs of curly braces with `attention` style attribute.                                                              |
 | wait_keys         | Implements a mechanism to define virtual keys where the first waits indefinitely on the second.                                           |
 | man               | Provides the `man-word` command that opens the `man` page for the word under the cursor in a buffer in a floating frame.                  |
