@@ -22,4 +22,5 @@ for plug in $(find plugins -name "*.so" | grep -v "dSYM"); do
     mkdir -p ${dst_dir}
     cp ${plug} ${dst_dir}
 done
+chown -R $(logname) ${plug_dir}
 echo "Installed plugins:     ${plug_dir}"
