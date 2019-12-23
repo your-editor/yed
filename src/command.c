@@ -564,7 +564,7 @@ void yed_default_command_less(int n_args, char **args) {
         lazy_space = " ";
     }
 
-    strcat(buff, " | less");
+    strcat(buff, " | less -r");
 
     printf(TERM_STD_SCREEN);
     err = system(buff);
