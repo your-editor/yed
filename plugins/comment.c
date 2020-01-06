@@ -83,12 +83,13 @@ void comment_toggle(int n_args, char **args) {
 int comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
     switch (frame->buffer->file.ft) {
         case FT_C:
-        case FT_CXX:   comment_toggle_line_c(frame, line, row);     break;
+        case FT_CXX:    comment_toggle_line_c(frame, line, row);     break;
 
         case FT_SH:
-        case FT_BJOU:  comment_toggle_line_hash(frame, line, row);  break;
+        case FT_BJOU:
+        case FT_PYTHON: comment_toggle_line_hash(frame, line, row);  break;
 
-        case FT_LATEX: comment_toggle_line_latex(frame, line, row); break;
+        case FT_LATEX:  comment_toggle_line_latex(frame, line, row); break;
 
         default:
             return 0;
