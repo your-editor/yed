@@ -16,6 +16,8 @@ int yed_get_ft(char *path) {
             return FT_LATEX;
         } else if (strcmp(ext, "bjou") == 0) {
             return FT_BJOU;
+        } else if (strcmp(ext, "py") == 0) {
+            return FT_PYTHON;
         }
     }
 

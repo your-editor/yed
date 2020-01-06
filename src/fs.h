@@ -6,6 +6,7 @@
 #define FT_SH      (4)
 #define FT_LATEX   (5)
 #define FT_BJOU    (6)
+#define FT_PYTHON  (7)
 
 typedef struct {
     int ft;
