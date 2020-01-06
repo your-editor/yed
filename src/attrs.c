@@ -85,7 +85,9 @@ int rgb_to_256(unsigned rgb) {
 void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
     if (!dst || !src)    { return; }
 
+    dst->flags &= ~(ATTR_BOLD);
     dst->flags |= src->flags;
+
     if (src->fg) {
         dst->fg = src->fg;
     }
