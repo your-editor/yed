@@ -124,16 +124,15 @@ void grep_update_buff(void) {
 }
 
 void grep_run(void) {
-    char       cmd_buff[512], *cmd_p, c, last;
+    char       cmd_buff[512], *cmd_p;
     yed_attrs  attr_cmd, attr_attn;
     char       attr_buff[128];
     char      *pattern;
-    int        i, len, err;
+    int        len, err;
 
     grep_set_prompt("(grep) ", NULL);
 
     array_zero_term(ys->cmd_buff);
-
 
     cmd_buff[0]        = 0;
     pattern            = array_data(ys->cmd_buff);
@@ -143,38 +142,11 @@ void grep_run(void) {
 
     strcat(cmd_buff, "bash -c '");
 
-    last  = 0;
-    len   = strlen(prg);
-    i     = 0;
     cmd_p = cmd_buff + strlen(cmd_buff);
 
-    while (i < len) {
-        c = prg[i];
+    len = perc_subst(prg, pattern, cmd_p, sizeof(cmd_buff) - strlen(cmd_buff));
 
-        if (c == '\\') {
-            /* handled later */
-        } else if (c == '%') {
-            if (last == '\\') {
-                *(cmd_p++) = '%';
-            } else {
-                *cmd_p = 0;
-                strcat(cmd_buff, pattern);
-                cmd_p += strlen(pattern);
-            }
-        } else {
-            if (last == '\\') {
-                *(cmd_p++) = '\\';
-            }
-            *(cmd_p++) = c;
-        }
-
-        last  = c;
-        i    += 1;
-    }
-    if (last == '\\') {
-        *(cmd_p++) = '\\';
-    }
-    *cmd_p = 0;
+    ASSERT(len > 0, "buff too small for perc_subst");
 
     strcat(cmd_buff, " 2>/dev/null > /tmp/grep_list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
 
