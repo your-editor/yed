@@ -183,7 +183,7 @@ void syntax_python_highlight(yed_event *event) {
         }
 
         if (!match) {
-            if (word_len == 4 && strncmp(word, "False", 5) == 0) {
+            if (word_len == 5 && strncmp(word, "False", 5) == 0) {
                 match = 1;
 
                 for (i = 0; i < 5; i += 1) {
