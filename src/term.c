@@ -12,7 +12,7 @@ int yed_term_enter(void) {
 
     raw_term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
     /* output modes - disable post processing */
-    raw_term.c_oflag &= ~(OPOST);
+    /* raw_term.c_oflag &= ~(OPOST); */
     /* control modes - set 8 bit chars */
     raw_term.c_cflag |= (CS8);
     /* local modes - choing off, canonical off, no extended functions,
