@@ -70,6 +70,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("get",                    get);
     SET_DEFAULT_COMMAND("unset",                  unset);
     SET_DEFAULT_COMMAND("sh",                     sh);
+    SET_DEFAULT_COMMAND("sh-silent",              sh_silent);
     SET_DEFAULT_COMMAND("buff-sh",                buff_sh);
     SET_DEFAULT_COMMAND("less",                   less);
     SET_DEFAULT_COMMAND("echo",                   echo);
@@ -477,26 +478,72 @@ void yed_default_command_unset(int n_args, char **args) {
 }
 
 void yed_default_command_sh(int n_args, char **args) {
-    char buff[1024];
+    char buff[1024],
+         cmd_buff[512];
     const char *lazy_space;
     int i;
     int err;
 
-    buff[0] = 0;
+    buff[0]     = 0;
+    cmd_buff[0] = 0;
+
+    strcat(buff, "bash -c '(");
 
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
-        strcat(buff, lazy_space);
-        strcat(buff, args[i]);
+        strcat(cmd_buff, lazy_space);
+        strcat(cmd_buff, args[i]);
         lazy_space = " ";
     }
 
-    printf(TERM_STD_SCREEN);
+    strcat(buff, cmd_buff);
+    strcat(buff, "); printf \"\\r\\n[ Hit any key to return to yed. ]\"; read -n 1'; printf \"\\n\\n\"");
+
+    printf(TERM_CLEAR_SCREEN);
+    printf(TERM_CURSOR_HOME);
+    fflush(stdout);
     err = system(buff);
-    printf(TERM_ALT_SCREEN);
+    printf(TERM_CLEAR_SCREEN);
+    fflush(stdout);
 
     yed_append_text_to_cmd_buff("'");
-    yed_append_text_to_cmd_buff(buff);
+    yed_append_text_to_cmd_buff(cmd_buff);
+    yed_append_text_to_cmd_buff("'");
+
+    if (err != 0) {
+        yed_append_text_to_cmd_buff(" exited with non-zero status ");
+        yed_append_int_to_cmd_buff(err);
+    }
+
+    ys->redraw = 1;
+}
+
+void yed_default_command_sh_silent(int n_args, char **args) {
+    char buff[1024],
+         cmd_buff[512];
+    const char *lazy_space;
+    int i;
+    int err;
+
+    buff[0]     = 0;
+    cmd_buff[0] = 0;
+
+    strcat(buff, "bash -c '(");
+
+    lazy_space = "";
+    for (i = 0; i < n_args; i += 1) {
+        strcat(cmd_buff, lazy_space);
+        strcat(cmd_buff, args[i]);
+        lazy_space = " ";
+    }
+
+    strcat(buff, cmd_buff);
+    strcat(buff, ") 2>&1 > /dev/null' 2>&1 > /dev/null");
+
+    err = system(buff);
+
+    yed_append_text_to_cmd_buff("'");
+    yed_append_text_to_cmd_buff(cmd_buff);
     yed_append_text_to_cmd_buff("'");
 
     if (err != 0) {
@@ -557,6 +604,8 @@ void yed_default_command_less(int n_args, char **args) {
 
     buff[0] = 0;
 
+    strcat(buff, "bash -c '(");
+
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
         strcat(buff, lazy_space);
@@ -564,11 +613,13 @@ void yed_default_command_less(int n_args, char **args) {
         lazy_space = " ";
     }
 
-    strcat(buff, " | less -r");
+    strcat(buff, ") 2>&1 | less -rc'");
 
     printf(TERM_STD_SCREEN);
+    fflush(stdout);
     err = system(buff);
     printf(TERM_ALT_SCREEN);
+    fflush(stdout);
 
     yed_append_text_to_cmd_buff("'");
     yed_append_text_to_cmd_buff(buff);
