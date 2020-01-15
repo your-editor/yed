@@ -27,7 +27,7 @@ int yed_plugin_boot(yed_plugin *self) {
         yed_set_var("truecolor",     "yes");
     }
     yed_set_var("tab-width",             "4");
-    yed_set_var("latex-comp-prg",        "pdflatex -halt-on-error --interaction=nonstopmode '%'");
+    yed_set_var("latex-comp-prg",        "xelatex -halt-on-error --interaction=nonstopmode '%'");
     yed_set_var("latex-view-prg",        "echo \"mupdf '%'\" | $SHELL &");
     yed_set_var("latex-update-view-prg", "pkill -HUP mupdf 2>&1 > /dev/null");
     if (has("rg")) {
