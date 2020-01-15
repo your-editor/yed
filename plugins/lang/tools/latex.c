@@ -12,8 +12,10 @@ int yed_plugin_boot(yed_plugin *self) {
 
 void latex_compile_current_file(int n_args, char **args) {
     char       *comp_prg,
+               *update_view_prg,
                *path;
     char        cmd_buff[256];
+    int         len;
     yed_frame  *frame;
     yed_buffer *buff;
 
@@ -47,21 +49,28 @@ void latex_compile_current_file(int n_args, char **args) {
 
     cmd_buff[0] = 0;
 
-    strcat(cmd_buff, comp_prg);
-    strcat(cmd_buff, " ");
-    strcat(cmd_buff, path);
-    strcat(cmd_buff, " | less");
+    len = perc_subst(comp_prg, path, cmd_buff, sizeof(cmd_buff));
+    ASSERT(len > 0, "buff too small for perc_subst");
 
-    YEXE("sh", cmd_buff);
+    YEXE("less", cmd_buff);
+
+    update_view_prg = yed_get_var("latex-update-view-prg");
+    if (update_view_prg) {
+        cmd_buff[0] = 0;
+        len = perc_subst(update_view_prg, path, cmd_buff, sizeof(cmd_buff));
+        ASSERT(len > 0, "buff too small for perc_subst");
+        YEXE("sh-silent", cmd_buff);
+    }
 }
 
 void latex_view_current_file(int n_args, char **args) {
     char       *view_prg,
-               *path;
+               *path,
+               pdf_path_buff[256];
+    int         len;
     char        cmd_buff[256];
     yed_frame  *frame;
     yed_buffer *buff;
-    int         err;
 
     if (!ys->active_frame) {
         yed_append_text_to_cmd_buff("[!] no active frame");
@@ -83,6 +92,10 @@ void latex_view_current_file(int n_args, char **args) {
     }
 
     path = buff->path;
+    path = path_without_ext(path);
+    pdf_path_buff[0] = 0;
+    strcat(pdf_path_buff, path);
+    strcat(pdf_path_buff, ".pdf");
 
     view_prg = yed_get_var("latex-view-prg");
 
@@ -93,19 +106,10 @@ void latex_view_current_file(int n_args, char **args) {
 
     cmd_buff[0] = 0;
 
-    path = path_without_ext(path);
+    len = perc_subst(view_prg, pdf_path_buff, cmd_buff, sizeof(cmd_buff));
+    ASSERT(len > 0, "buff too small for perc_subst");
 
-    strcat(cmd_buff, view_prg);
-    strcat(cmd_buff, " ");
-    strcat(cmd_buff, path);
-    strcat(cmd_buff, ".pdf");
     free(path);
 
-    err = system(cmd_buff);
-    if (err != 0) {
-        yed_append_text_to_cmd_buff("'");
-        yed_append_text_to_cmd_buff(cmd_buff);
-        yed_append_text_to_cmd_buff("' exited with non-zero status ");
-        yed_append_int_to_cmd_buff(err);
-    }
+    YEXE("sh-silent", cmd_buff);
 }
