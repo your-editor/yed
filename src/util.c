@@ -123,3 +123,69 @@ char *exe_path(char *prg) {
 
     return path;
 }
+
+int perc_subst(char *pattern, char *subst, char *buff, int buff_len) {
+    int   i,
+          new_len,
+          patt_len,
+          subst_len;
+    char  c,
+          last,
+         *buff_p;
+
+    i         = 0;
+    new_len   = 0;
+    patt_len  = strlen(pattern);
+    subst_len = strlen(subst);
+    buff[0]   = 0;
+    buff_p    = buff;
+
+    while (i < patt_len) {
+        c = pattern[i];
+
+        if (c == '\\') {
+            /* handled later */
+        } else if (c == '%') {
+            if (last == '\\') {
+                new_len += 1;
+                if (new_len >= buff_len) {
+                    return -1;
+                }
+
+                *(buff_p++) = '%';
+            } else {
+                new_len += subst_len;
+                if (new_len >= buff_len) {
+                    return -1;
+                }
+
+                *buff_p = 0;
+                strcat(buff, subst);
+                buff_p += subst_len;
+            }
+        } else {
+            if (last == '\\') {
+                new_len += 1;
+                if (new_len >= buff_len) {
+                    return -1;
+                }
+                *(buff_p++) = '\\';
+            }
+            new_len += 1;
+            if (new_len >= buff_len) {
+                return -1;
+            }
+            *(buff_p++) = c;
+        }
+
+        last  = c;
+        i    += 1;
+    }
+
+    if (last == '\\') {
+        *(buff_p++) = '\\';
+    }
+    *buff_p = 0;
+
+    return new_len;
+}

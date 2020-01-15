@@ -8,4 +8,6 @@ char * path_without_ext(char *path); /* DO free result. */
 
 char *exe_path(char *prg); /* Free the result. */
 
+int perc_subst(char *pattern, char *subst, char *buff, int buff_len);
+
 #endif
