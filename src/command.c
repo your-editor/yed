@@ -613,7 +613,7 @@ void yed_default_command_less(int n_args, char **args) {
         lazy_space = " ";
     }
 
-    strcat(buff, ") 2>&1 | less -rc'");
+    strcat(buff, ") 2>&1 | less -c'");
 
     printf(TERM_STD_SCREEN);
     fflush(stdout);
