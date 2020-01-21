@@ -245,9 +245,11 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {
         append_to_output_buff(TERM_CURSOR_HIDE);
+        yed_set_attr(yed_active_style_get_active());
         yed_clear_screen();
         yed_cursor_home();
         write_welcome();
+        append_to_output_buff(TERM_RESET);
     }
 
     write_status_bar(0);
