@@ -37,19 +37,19 @@ void syntax_bjou_highlight(yed_event *event) {
     yed_attrs *attr, com, key, pp, cal, num, con, cha, str;
     int        col, old_col, word_len, spaces, i, j, k, match, last_was_backslash, last_was_minus;
     char       c, *word,
-              *kwds[][17] = {
-                { "as",            "do",       "i8",      "if",      "in",     "or",     "u8",     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 2  */
-                { "and",           "bor",      "f32",     "f64",     "for",    "i16",    "i32",    "i64",  "int",  "new",  "not",  "ref",  "u16",  "u32",  "u64",  NULL,   NULL   }, /* 3  */
-                { "Type",          "band",     "bneg",    "bool",    "bshl",   "bshr",   "bxor",   "char", "else", "enum", "f128", "long", "proc", "some", "true", "type", "void" }, /* 4  */
-                { "break",         "false",    "float",   "print",   "short",  "using",  "while",  NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 5  */
-                { "delete",        "double",   "extern",  "import",  "module", "return", "sizeof", NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 6  */
-                { "extends",       "foreach",  "include", "nothing", NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 7  */
-                { "abstract",      "continue", NULL,      NULL,      NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 8  */
-                { NULL,            NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 9  */
-                { "__inline__",    NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 10 */
-                { NULL,            NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 11 */
-                { NULL,            NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 12 */
-                { "__no_mangle__", NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 13 */
+              *kwds[][18] = {
+                { "as",            "do",       "i8",      "if",      "in",     "or",     "u8",     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 2  */
+                { "and",           "bor",      "f32",     "f64",     "for",    "i16",    "i32",    "i64",   "int",  "new",  "not",  "ref",  "u16",  "u32",  "u64",  NULL,   NULL,   NULL   }, /* 3  */
+                { "Type",          "band",     "bneg",    "bool",    "bshl",   "bshr",   "bxor",   "char",  "else", "enum", "f128", "long", "none", "proc", "some", "true", "type", "void" }, /* 4  */
+                { "break",         "const",    "false",   "float",   "print",  "short",  "using",  "while", NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 5  */
+                { "delete",        "double",   "extern",  "import",  "module", "return", "sizeof", NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 6  */
+                { "extends",       "foreach",  "include", "nothing", NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 7  */
+                { "abstract",      "continue", NULL,      NULL,      NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 8  */
+                { NULL,            NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 9  */
+                { "__inline__",    NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 10 */
+                { NULL,            NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 11 */
+                { NULL,            NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 12 */
+                { "__no_mangle__", NULL,       NULL,      NULL,      NULL,     NULL,     NULL,     NULL,    NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL   }, /* 13 */
               };
 
     #define MIN_KWD_LEN   (2)
