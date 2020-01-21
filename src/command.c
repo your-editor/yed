@@ -96,6 +96,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("buffer-next",            buffer_next);
     SET_DEFAULT_COMMAND("buffer-prev",            buffer_prev);
     SET_DEFAULT_COMMAND("buffer-name",            buffer_name);
+    SET_DEFAULT_COMMAND("buffer-set-ft",          buffer_set_ft);
     SET_DEFAULT_COMMAND("frame-new",              frame_new);
     SET_DEFAULT_COMMAND("frame-delete",           frame_delete);
     SET_DEFAULT_COMMAND("frame-vsplit",           frame_vsplit);
@@ -1522,7 +1523,7 @@ void yed_default_command_buffer_name(int n_args, char **args) {
     yed_frame  *frame;
 
     if (n_args != 0) {
-        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
+        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
         return;
     }
@@ -1543,6 +1544,43 @@ void yed_default_command_buffer_name(int n_args, char **args) {
     yed_append_text_to_cmd_buff("'");
     yed_append_text_to_cmd_buff(buffer->name);
     yed_append_text_to_cmd_buff("'");
+}
+
+void yed_default_command_buffer_set_ft(int n_args, char **args) {
+    yed_buffer *buffer;
+    yed_frame  *frame;
+    char       *ft_str;
+    int         ft_new;
+
+    if (n_args != 1) {
+        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
+        yed_append_int_to_cmd_buff(n_args);
+        return;
+    }
+    if (!ys->active_frame) {
+        yed_append_text_to_cmd_buff("[!] no active frame ");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        return;
+    }
+
+    buffer  = frame->buffer;
+    ft_str  = args[0];
+    ft_new  = yed_get_ft(ft_str);
+
+    if (ft_new == FT_UNKNOWN) {
+        yed_append_text_to_cmd_buff("[!] invalid file type extension string");
+        return;
+    }
+
+    buffer->file.ft = ft_new;
+
+    ys->redraw = 1;
 }
 
 void yed_default_command_frame_new(int n_args, char **args) {
