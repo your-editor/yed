@@ -444,28 +444,37 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
             yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
 
-            if (run_len && *run_start == '\t') {
-                append_to_output_buff("»");
-                append_n_to_output_buff(run_start + 1, run_len - 1);
-            } else {
-                append_n_to_output_buff(run_start, run_len);
-            }
+            append_n_to_output_buff(run_start, run_len);
 
             run_start   = c + 1;
             run_len     = -1;
             run_start_n = n + 1;
         } else if (*c == '\t') {
             /*
-             * A TAB character will end our current run and be placed as
-             * the first character of the next run.
+             * A TAB character will end our current run.
+             * We will print a replacement.
              */
 
             yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
             append_n_to_output_buff(run_start, run_len);
+            append_to_output_buff("»");
 
-            run_start   = c;
-            run_len     = 0;
-            run_start_n = n;
+            run_start   = c + 1;
+            run_len     = -1;
+            run_start_n = n + 1;
+        } else if (*c <= 0 || *c > 127 || iscntrl(*c)) {
+            /*
+             * A character that we can't print nicely will also end
+             * our current run. We will print a replacement.
+             */
+
+            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
+            append_n_to_output_buff(run_start, run_len);
+            append_to_output_buff("�");
+
+            run_start   = c + 1;
+            run_len     = -1;
+            run_start_n = n + 1;
         } else if (!yed_attrs_eq(tmp_attr, cur_attr)) {
             /*
              * If the attributes change, our run will be broken.
@@ -473,12 +482,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
             yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
 
-            if (run_len && *run_start == '\t') {
-                append_to_output_buff("»");
-                append_n_to_output_buff(run_start + 1, run_len - 1);
-            } else {
-                append_n_to_output_buff(run_start, run_len);
-            }
+            append_n_to_output_buff(run_start, run_len);
 
             run_start   = c;
             run_len     = 0;
@@ -500,12 +504,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * At end. Dump the run.
      */
     yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-    if (run_len && *run_start == '\t') {
-        append_to_output_buff("»");
-        append_n_to_output_buff(run_start + 1, run_len - 1);
-    } else {
-        append_n_to_output_buff(run_start, run_len);
-    }
+    append_n_to_output_buff(run_start, run_len);
 
     yed_set_cursor(frame->left + n, frame->top + y_offset);
     yed_set_attr(base_attr);
