@@ -40,7 +40,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.bg         = nord1;
 
     s.active_border       = s.active;
-    s.active_border.fg    = nord9;
+    s.active_border.fg    = nord12;
 
     s.inactive_border     = s.inactive;
 
