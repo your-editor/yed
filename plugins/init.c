@@ -14,6 +14,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "grep", "find_file", "man",
         "style_picker",
         "focus_frame",
+        "styles/lab", "styles/book", "styles/blue",
         "styles/first", "styles/elise", "styles/nord", "styles/monokai", "styles/gruvbox",
         "styles/skyfall", "styles/papercolor",
         "styles/casey",
