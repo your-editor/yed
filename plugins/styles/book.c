@@ -14,6 +14,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.bg         = ATTR_16_BLACK;
 
     s.active_border       = s.active;
+    s.active_border.fg    = ATTR_16_BLUE;
 
     s.inactive_border     = s.inactive;
 

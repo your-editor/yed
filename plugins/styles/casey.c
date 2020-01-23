@@ -35,7 +35,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.inactive.bg         = color_bg;
 
     s.active_border       = s.active;
-    s.active_border.fg    = color_white;
+    s.active_border.fg    = color_pp;
 
     s.inactive_border     = s.inactive;
 
@@ -88,8 +88,10 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_style(self, "casey", &s);
 
-    s.active.bg   = 0;
-    s.inactive.bg = 0;
+    s.active.bg          = 0;
+    s.active_border.bg   = 0;
+    s.inactive.bg        = 0;
+    s.inactive_border.bg = 0;
 
     yed_plugin_set_style(self, "casey_transparent", &s);
 
