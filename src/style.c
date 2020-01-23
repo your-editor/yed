@@ -124,25 +124,25 @@ void yed_set_default_styles(void) {
 
     s.selection.flags     = ATTR_INVERSE;
 
-    s.search.flags        = ATTR_16 | ATTR_16_LIGHT;
+    s.search.flags        = ATTR_16 | ATTR_16_LIGHT_FG;
     s.search.fg           = ATTR_16_BLUE;
     s.search.bg           = ATTR_16_YELLOW;
 
-    s.search_cursor.flags = ATTR_16 | ATTR_16_LIGHT;
+    s.search_cursor.flags = ATTR_16 | ATTR_16_LIGHT_FG;
     s.search_cursor.fg    = ATTR_16_BLUE;
     s.search_cursor.bg    = ATTR_16_MAGENTA;
 
-    s.attention.flags     = ATTR_16 | ATTR_16_LIGHT;
+    s.attention.flags     = ATTR_16 | ATTR_16_LIGHT_FG;
     s.attention.fg        = ATTR_16_YELLOW;
 
     s.command_line        = s.active;
 
-    s.status_line.flags   = ATTR_16 | ATTR_BOLD | ATTR_16_LIGHT;
-    s.status_line.fg      = ATTR_16_WHITE;
+    s.status_line.flags   = ATTR_16 | ATTR_BOLD | ATTR_16_LIGHT_FG;
+    s.status_line.fg      = ATTR_16_GREY;
     s.status_line.bg      = ATTR_16_MAGENTA;
 
 
-    s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT;
+    s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT_FG;
     s.code_comment.fg     = ATTR_16_YELLOW;
 
     s.code_keyword.flags  = ATTR_16;
@@ -150,10 +150,10 @@ void yed_set_default_styles(void) {
 
     s.code_preprocessor   = s.code_keyword;
 
-    s.code_fn_call.flags  = ATTR_16 | ATTR_16_LIGHT;
+    s.code_fn_call.flags  = ATTR_16 | ATTR_16_LIGHT_FG;
     s.code_fn_call.fg     = ATTR_16_MAGENTA;
 
-    s.code_number.flags   = ATTR_16 | ATTR_16_LIGHT;
+    s.code_number.flags   = ATTR_16 | ATTR_16_LIGHT_FG;
     s.code_number.fg      = ATTR_16_BLUE;
 
     s.code_constant.flags = ATTR_16;

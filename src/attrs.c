@@ -85,15 +85,17 @@ int rgb_to_256(unsigned rgb) {
 void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
     if (!dst || !src)    { return; }
 
-    dst->flags &= ~(ATTR_BOLD);
-    dst->flags |= src->flags;
-
     if (src->fg) {
+        dst->flags &= ~(ATTR_16_LIGHT_FG);
         dst->fg = src->fg;
     }
     if (src->bg) {
+        dst->flags &= ~(ATTR_16_LIGHT_BG);
         dst->bg = src->bg;
     }
+
+    dst->flags &= ~(ATTR_BOLD);
+    dst->flags |= src->flags;
 }
 
 #define BUFFCATN(buff_p, str, n) \
@@ -113,6 +115,7 @@ do {                                        \
 void yed_get_attr_str(yed_attrs attr, char *buff_p) {
     int fr, fg, fb;
     int br, bg, bb;
+    int f16, b16;
 
     *buff_p = 0;
 
@@ -131,14 +134,29 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
             BUFFCATN(buff_p, ";", 1);
         }
 
-        if (attr.fg && attr.bg) {
-            BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
+        f16 = attr.fg;
+        b16 = attr.bg;
+
+        if (f16 && b16) {
+            if (attr.flags & ATTR_16_LIGHT_FG) {
+                f16 += 60;
+            }
+            if (attr.flags & ATTR_16_LIGHT_BG) {
+                b16 += 60;
+            }
+            BUFFCAT(buff_p, u8_to_s[10 + b16]);
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[attr.fg]);
-        } else if (attr.fg) {
-            BUFFCAT(buff_p, u8_to_s[attr.fg]);
-        } else if (attr.bg) {
-            BUFFCAT(buff_p, u8_to_s[10 + attr.bg]);
+            BUFFCAT(buff_p, u8_to_s[f16]);
+        } else if (f16) {
+            if (attr.flags & ATTR_16_LIGHT_FG) {
+                f16 += 60;
+            }
+            BUFFCAT(buff_p, u8_to_s[f16]);
+        } else if (b16) {
+            if (attr.flags & ATTR_16_LIGHT_BG) {
+                b16 += 60;
+            }
+            BUFFCAT(buff_p, u8_to_s[10 + b16]);
         }
     } else if (attr.flags & ATTR_256) {
         LIMIT(attr.fg, 0, 255);
