@@ -556,12 +556,11 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
 }
 
 int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
-    int          fd, i, j, line_len, file_size, did_map, *idx_it;
+    int          fd, i, line_len, file_size, did_map;
     struct stat  fs;
     char        *file_data, c;
     yed_line    *last_line,
                  line;
-    array_t      return_indices;
 
     fd = fileno(f);
 
@@ -583,8 +582,6 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         did_map = 0;
     }
 
-    return_indices = array_make(int);
-
     last_line = bucket_array_last(buff->lines);
     yed_free_line(last_line);
     bucket_array_pop(buff->lines);
@@ -595,19 +592,14 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         if (c == '\n') {
             line = yed_new_line_with_cap(line_len);
 
-            for (j = 0; j < line_len; j += 1) {
-                c = file_data[i - line_len + j];
-                if (c == '\r')    { array_push(return_indices, j); }
-            }
-
             array_push_n(line.chars, file_data + i - line_len, line_len);
 
             /* Remove '\r' from line. */
-            array_traverse(return_indices, idx_it) {
-                array_delete(line.chars, *idx_it);
+            while (array_len(line.chars)
+            &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
+                array_pop(line.chars);
                 line_len -= 1;
             }
-            array_clear(return_indices);
 
             line.visual_width = line_len;
 
@@ -625,19 +617,14 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
 
             line = yed_new_line_with_cap(line_len);
 
-            for (j = 0; j < line_len; j += 1) {
-                c = file_data[i - line_len + j];
-                if (c == '\r')    { array_push(return_indices, j); }
-            }
-
             array_push_n(line.chars, file_data + i - line_len, line_len);
 
             /* Remove '\r' from line. */
-            array_traverse(return_indices, idx_it) {
-                array_delete(line.chars, *idx_it);
+            while (array_len(line.chars)
+            &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
+                array_pop(line.chars);
                 line_len -= 1;
             }
-            array_clear(return_indices);
 
             line.visual_width = line_len;
 
@@ -647,8 +634,6 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
             bucket_array_push(buff->lines, line);
         }
     }
-
-    array_free(return_indices);
 
     if (did_map) {
         munmap(file_data, file_size);
@@ -665,15 +650,11 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
 }
 
 int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
-    int          i, *idx_it;
     ssize_t      line_len;
     size_t       line_cap;
     char         c, *line_data;
     yed_line    *last_line,
                  line;
-    array_t      return_indices;
-
-    return_indices = array_make(int);
 
     last_line = bucket_array_last(buff->lines);
     yed_free_line(last_line);
@@ -692,22 +673,8 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
             line.visual_width -= 1;
         }
 
-        for (i = 0; i < array_len(line.chars); i += 1) {
-            c = line_data[i];
-            if (c == '\r')    { array_push(return_indices, i); }
-        }
-
-        /* Remove '\r' from line. */
-        array_traverse(return_indices, idx_it) {
-            array_delete(line.chars, *idx_it);
-            line.visual_width -= 1;
-        }
-        array_clear(return_indices);
-
         bucket_array_push(buff->lines, line);
     }
-
-    array_free(return_indices);
 
     if (bucket_array_len(buff->lines) > 1) {
         last_line = bucket_array_last(buff->lines);

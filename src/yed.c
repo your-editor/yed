@@ -222,8 +222,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_search();
     yed_init_plugins();
 
-    ys->start_time_ms = measure_time_now_ms() - start_time;
-
     has_frames = 0;
     array_traverse(ys->options.files, file_it) {
         YEXE("buffer", *file_it);
@@ -263,6 +261,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys->redraw_cls = 0;
 
     pthread_mutex_unlock(&ys->write_ready_mtx);
+
+    ys->start_time_ms = measure_time_now_ms() - start_time;
 
     return ys;
 }
