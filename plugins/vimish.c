@@ -38,9 +38,8 @@ static int mode;
 static array_t mode_bindings[N_MODES];
 static array_t repeat_keys;
 static int repeating;
-static int till_pending; /* 0 = not pending, 1 = pending forward, 2 = pending backward */
 static int last_till_key;
-static int last_till_dir; /* 1 = forward, 2 = backward */
+static char last_till_op;
 static int num_undo_records_before_insert;
 
 void vimish_unload(yed_plugin *self);
@@ -393,7 +392,7 @@ static void fill_cmd_prompt(const char *cmd) {
     YEXE("command-prompt", key_str);
 }
 
-static void vimish_till_fw(int key) {
+static void vimish_do_till_fw(int key) {
     yed_frame *f;
     yed_line  *line;
     int        col;
@@ -416,13 +415,12 @@ static void vimish_till_fw(int key) {
     }
 
     last_till_key = key;
-    last_till_dir = 1;
 
 out:
-    till_pending = 0;
+    return;
 }
 
-static void vimish_till_bw(int key) {
+static void vimish_do_till_bw(int key, int stop_before) {
     yed_frame *f;
     yed_line  *line;
     int        col;
@@ -439,35 +437,66 @@ static void vimish_till_bw(int key) {
     for (col = f->cursor_col - 1; col >= 1; col -= 1) {
         c = yed_line_col_to_char(line, col);
         if (c == key) {
-            yed_set_cursor_within_frame(f, col, f->cursor_line);
+            yed_set_cursor_within_frame(f, col + stop_before, f->cursor_line);
             break;
         }
     }
 
     last_till_key = key;
-    last_till_dir = 2;
 
 out:
-    till_pending = 0;
+    return;
+}
+
+static void vimish_till_fw(void) {
+    int n_keys, keys[16], n_feed, feed[16], till_key, i;
+
+    n_feed = 0;
+    n_keys = yed_read_keys(keys);
+
+    if (n_keys) {
+        till_key = keys[0];
+
+        vimish_do_till_fw(till_key);
+
+        for (i = 1; i < n_keys; i += 1) {
+            feed[n_feed] = keys[i];
+            n_feed += 1;
+        }
+    }
+
+    yed_feed_keys(n_feed, feed);
+}
+
+static void vimish_till_bw(int stop_before) {
+    int n_keys, keys[16], n_feed, feed[16], till_key, i;
+
+    n_feed = 0;
+    n_keys = yed_read_keys(keys);
+
+    if (n_keys) {
+        till_key = keys[0];
+
+        vimish_do_till_bw(till_key, stop_before);
+
+        for (i = 1; i < n_keys; i += 1) {
+            feed[n_feed] = keys[i];
+            n_feed += 1;
+        }
+    }
+
+    yed_feed_keys(n_feed, feed);
 }
 
 static void vimish_repeat_till(void) {
-    if (last_till_dir == 1) {
-        vimish_till_fw(last_till_key);
-    } else if (last_till_dir == 2) {
-        vimish_till_bw(last_till_key);
+    if (last_till_op == 'f' || last_till_op == 't') {
+        vimish_do_till_fw(last_till_key);
+    } else if (last_till_op == 'F' || last_till_op == 'T') {
+        vimish_do_till_bw(last_till_key, last_till_op == 'T');
     }
 }
 
 int vimish_nav_common(int key, char *key_str) {
-    if (till_pending == 1) {
-        vimish_till_fw(key);
-        return 1;
-    } else if (till_pending == 2) {
-        vimish_till_bw(key);
-        return 1;
-    }
-
     switch (key) {
         case 'h':
         case ARROW_LEFT:
@@ -549,12 +578,14 @@ int vimish_nav_common(int key, char *key_str) {
 
         case 'f':
         case 't':
-            till_pending = 1;
+            vimish_till_fw();
+            last_till_op = key;
             break;
 
         case 'F':
         case 'T':
-            till_pending = 2;
+            vimish_till_bw(key == 'T');
+            last_till_op = key;
             break;
 
         case ';':
