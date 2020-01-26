@@ -96,5 +96,13 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_style(self, "nord", &s);
 
+    s.active.bg          = 0;
+    s.active_border.bg   = 0;
+    s.inactive.bg        = 0;
+    s.inactive_border.bg = 0;
+    s.command_line.bg    = 0;
+
+    yed_plugin_set_style(self, "nord_transparent", &s);
+
     return 0;
 }
