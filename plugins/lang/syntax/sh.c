@@ -433,6 +433,40 @@ void syntax_sh_highlight(yed_event *event) {
     match = 0;
 
     /*
+     * Highlight backtick expansion.
+     */
+    i = 0;
+    while (i < array_len(line->chars) - 1) {
+        c = *(char*)array_item(line->chars, i);
+
+        if (c == '`') {
+            col_filter[i + 1] = 1;
+            attr = array_item(event->line_attrs, i);
+            yed_combine_attrs(attr, &con);
+
+            j = 1;
+
+            while (i + j < array_len(line->chars)) {
+                c = *(char*)array_item(line->chars, i + j);
+
+                col_filter[i + j + 1] = 1;
+
+                if (c == '`') {
+                    attr = array_item(event->line_attrs, i + j);
+                    yed_combine_attrs(attr, &con);
+                    break;
+                }
+
+                j += 1;
+            }
+
+            i += j + 1;
+        }
+
+        i += 1;
+    }
+
+    /*
      * Highlight string literals.
      */
     i = 0;
@@ -458,6 +492,10 @@ void syntax_sh_highlight(yed_event *event) {
                 for (k = i; k <= i + j; k += 1) {
                     if (col_filter[k + 1])    { continue; }
 
+                    if (*(char*)array_item(line->chars, k) == '#') {
+                        col_filter[k + 1] = 1;
+                    }
+
                     attr = array_item(event->line_attrs, k);
                     yed_combine_attrs(attr, &str);
                 }
@@ -481,6 +519,10 @@ void syntax_sh_highlight(yed_event *event) {
                 for (k = i; k <= i + j; k += 1) {
                     if (col_filter[k + 1])    { continue; }
 
+                    if (*(char*)array_item(line->chars, k) == '#') {
+                        col_filter[k + 1] = 1;
+                    }
+
                     attr = array_item(event->line_attrs, k);
                     yed_combine_attrs(attr, &cha);
                 }
@@ -490,15 +532,6 @@ void syntax_sh_highlight(yed_event *event) {
         } else {
             i += 1;
         }
-    }
-
-    i = 0;
-    while (i < array_len(line->chars) - 1) {
-        if (*(char*)array_item(line->chars, i) == '`') {
-            attr = array_item(event->line_attrs, i);
-            yed_combine_attrs(attr, &con);
-        }
-        i += 1;
     }
 
     /*
