@@ -4,13 +4,15 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd ${DIR}
 
-./clean.sh
+function corecount {
+    getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu
+}
 
 source build.options
 
-LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
-DRIVER_C_FLAGS="-ldl -lm -lpthread"
-PLUGIN_C_FLAGS="-shared -fPIC -Iinclude -L. -lyed"
+export LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
+export DRIVER_C_FLAGS="-ldl -lm -lpthread"
+export PLUGIN_C_FLAGS="-shared -fPIC -I${DIR}/include -L${DIR} -lyed"
 
 # Add this framework to the Mac debug build so
 # that we can use Instruments.app to profile yed
@@ -33,22 +35,6 @@ if [ $? -eq 0 ]; then
     cfg+=${ERR_LIM}
 fi
 
-echo "Compiling libyed.so.."
-${CC} src/yed.c ${LIB_C_FLAGS} ${cfg} -o libyed.so || exit 1
+export cfg=${cfg}
 
-echo "Compiling the driver.."
-${CC} src/yed_driver.c ${DRIVER_C_FLAGS} ${cfg} -o _yed &
-
-echo "Creating include directory.."
-mkdir -p include/yed
-cp src/*.h include/yed
-
-# Compile all the plugins.
-for plug in $(find plugins -name "*.c"); do
-    echo "Compiling ${plug}.."
-    ${CC} ${plug} ${PLUGIN_C_FLAGS} ${cfg} -o "$(dirname ${plug})"/"$(basename -s".c" ${plug})".so &
-done
-
-wait
-
-echo "Done."
+make all -j$(corecount)
