@@ -1,25 +1,40 @@
 int yed_get_ft(char *path) {
+    char *copy;
+    char *base;
     char *ext;
+    int   ft;
 
-    ext = get_path_ext(path);
+    ft = FT_TXT;
+
+    copy = strdup(path);
+    base = basename(copy);
+    ext  = get_path_ext(base);
 
     if (ext) {
         if (strcmp(ext, "c") == 0
         ||  strcmp(ext, "h") == 0) {
-            return FT_C;
+            ft = FT_C;
         } else if (strcmp(ext, "cpp") == 0
         ||         strcmp(ext, "hpp") == 0) {
-            return FT_CXX;
+            ft = FT_CXX;
         } else if (strcmp(ext, "sh") == 0) {
-            return FT_SH;
+            ft = FT_SH;
         } else if (strcmp(ext, "tex") == 0) {
-            return FT_LATEX;
+            ft = FT_LATEX;
         } else if (strcmp(ext, "bjou") == 0) {
-            return FT_BJOU;
+            ft = FT_BJOU;
         } else if (strcmp(ext, "py") == 0) {
-            return FT_PYTHON;
+            ft = FT_PYTHON;
+        } else if (strcmp(ext, "yedrc") == 0) {
+            ft = FT_YEDRC;
+        }
+    } else {
+        if (strcmp(base, "yedrc") == 0) {
+            ft = FT_YEDRC;
         }
     }
 
-    return FT_TXT;
+    free(copy);
+
+    return ft;
 }

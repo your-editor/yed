@@ -6,9 +6,10 @@ int has(char *prg);
 int yed_plugin_boot(yed_plugin *self) {
     int   i, n_plugins;
     char *plugins[] = {
+        "yedrc",
         "vimish",
         "brace_hl", "tag_hl", "cursor_word_hl",
-        "lang/c", "lang/sh", "lang/bjou", "lang/latex", "lang/python",
+        "lang/c", "lang/sh", "lang/bjou", "lang/latex", "lang/python", "lang/yedrc",
         "indent_c", "comment",
         "autotrim", "completer",
         "grep", "find_file", "man",
@@ -74,6 +75,13 @@ int yed_plugin_boot(yed_plugin *self) {
 
     /* Colors */
     YEXE("style", "casey");
+
+    /* Load a user's rc file. */
+    YEXE("yedrc-load", "~/.yed/.yedrc");
+    YEXE("yedrc-load", "~/.yed/yedrc");
+
+    /* Load a directory-specific rc file. */
+    YEXE("yedrc-load", ".yedrc");
 
     /* Load a directory-specific plugin if available. */
     YEXE("plugin-load", "proj");

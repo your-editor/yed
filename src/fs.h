@@ -7,6 +7,7 @@
 #define FT_LATEX   (5)
 #define FT_BJOU    (6)
 #define FT_PYTHON  (7)
+#define FT_YEDRC   (8)
 
 typedef struct {
     int ft;
