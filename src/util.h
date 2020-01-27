@@ -10,4 +10,10 @@ char *exe_path(char *prg); /* Free the result. */
 
 int perc_subst(char *pattern, char *subst, char *buff, int buff_len);
 
+void expand_path(char *path, char *buff);
+
+array_t sh_split(char *s);
+
+void free_string_array(array_t array);
+
 #endif

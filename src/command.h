@@ -24,6 +24,7 @@ void yed_draw_command_line(void);
 void yed_do_command(void);
 void yed_command_take_key(int key);
 
+int yed_execute_command_from_split(array_t split);
 int yed_execute_command(char* name, int, char**);
 void yed_add_command(char *name, yed_command cmd);
 

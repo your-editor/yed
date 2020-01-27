@@ -189,3 +189,105 @@ int perc_subst(char *pattern, char *subst, char *buff, int buff_len) {
 
     return new_len;
 }
+
+void expand_path(char *path, char *buff) {
+    int   len,
+          i,
+          home_len;
+    char *home,
+         *buff_p;
+    char  c;
+
+    len      = strlen(path);
+    home     = getenv("HOME");
+    home_len = strlen(home);
+
+    if (!home) {
+        memcpy(buff, path, len + 1);
+        return;
+    }
+
+    buff_p = buff;
+
+    for (i = 0; i < len; i += 1) {
+        c = path[i];
+
+        if (c == '~') {
+            *buff_p = 0;
+            strcat(buff, home);
+            buff_p += home_len;
+        } else {
+            *buff_p  = c;
+            buff_p  += 1;
+        }
+    }
+    *buff_p = 0;
+}
+
+array_t sh_split(char *s) {
+    array_t  r;
+    char    *copy,
+            *sub;
+    char     c;
+    int      len,
+             start,
+             end,
+             q;
+
+    r     = array_make(char*);
+    copy  = strdup(s);
+    len   = strlen(copy);
+    start = 0;
+    end   = 0;
+
+    while (start < len && isspace(copy[start])) { start += 1; }
+
+    while (start < len) {
+        c   = copy[start];
+        q   = 0;
+        end = start;
+
+        if (c == '#') {
+            break;
+        } else if (c == '"') {
+            start += 1;
+            while (end + 1 < len
+            &&     copy[end + 1] != '"') {
+                end += 1;
+            }
+            q = 1;
+        } else if (c == '\'') {
+            start += 1;
+            while (end + 1 < len
+            &&     copy[end + 1] != '\'') {
+                end += 1;
+            }
+            q = 1;
+        } else {
+            while (end + 1 < len
+            &&     !isspace(copy[end + 1])) {
+                end += 1;
+            }
+        }
+
+        sub = strndup(copy + start, end - start + 1);
+        array_push(r, sub);
+
+        end  += q;
+        start = end + 1;
+
+        while (start < len && isspace(copy[start])) { start += 1; }
+    }
+
+    return r;
+}
+
+void free_string_array(array_t array) {
+    char **it;
+
+    array_traverse(array, it) {
+        free(*it);
+    }
+
+    array_free(array);
+}

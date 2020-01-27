@@ -201,14 +201,8 @@ void yed_start_command_prompt(void) {
 }
 
 void yed_do_command(void) {
-    char *cmd_cpy,
-         *cmd_beg,
-         *cmd_end,
-         *cmd_curs;
-    int   cmd_len;
-    int   n_split,
-          last_was_space;
-    char *cmd_split[32];
+    array_t   split;
+    char     *cmd_cpy;
 
     array_zero_term(ys->cmd_buff);
     cmd_cpy = malloc(array_len(ys->cmd_buff) + 1);
@@ -217,32 +211,15 @@ void yed_do_command(void) {
 
     yed_clear_cmd_buff();
 
-    cmd_beg = cmd_curs = cmd_cpy;
-    cmd_len = strlen(cmd_beg);
-    cmd_end = cmd_beg + cmd_len;
-    n_split = 0;
-
-    cmd_split[n_split++] = cmd_beg;
-    last_was_space       = 0;
-
-    while (cmd_curs != cmd_end) {
-        if (*cmd_curs == ' ') {
-            last_was_space = 1;
-            *cmd_curs      = 0;
-        } else {
-            if (last_was_space) {
-                cmd_split[n_split++] = cmd_curs;
-            }
-            last_was_space = 0;
-        }
-        cmd_curs += 1;
-    }
+    split = sh_split(cmd_cpy);
 
     ys->interactive_command = NULL;
 
-    yed_execute_command(cmd_beg, n_split - 1, cmd_split + 1);
+    yed_execute_command_from_split(split);
 
     free(cmd_cpy);
+
+    free_string_array(split);
 }
 
 static int    command_prompt_compl_idx       = -1;
@@ -1357,6 +1334,7 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
 void yed_default_command_buffer(int n_args, char **args) {
     yed_buffer                                   *buffer;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    char                                          path[512];
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -1364,20 +1342,22 @@ void yed_default_command_buffer(int n_args, char **args) {
         return;
     }
 
+    expand_path(args[0], path);
+
     yed_append_text_to_cmd_buff("'");
-    yed_append_text_to_cmd_buff(args[0]);
+    yed_append_text_to_cmd_buff(path);
     yed_append_text_to_cmd_buff("'");
 
-    it = tree_lookup(ys->buffers, args[0]);
+    it = tree_lookup(ys->buffers, path);
 
     if (tree_it_good(it)) {
         buffer = tree_it_val(it);
     } else {
-        buffer = yed_create_buffer(args[0]);
+        buffer = yed_create_buffer(path);
         yed_append_text_to_cmd_buff(" (new buffer)");
-        if (!yed_fill_buff_from_file(buffer, args[0])) {
-            buffer->path    = strdup(args[0]);
-            buffer->file.ft = yed_get_ft(args[0]);
+        if (!yed_fill_buff_from_file(buffer, path)) {
+            buffer->path    = strdup(path);
+            buffer->file.ft = yed_get_ft(path);
             buffer->kind    = BUFF_KIND_FILE;
             yed_append_text_to_cmd_buff(" (new file)");
         }
@@ -2281,6 +2261,7 @@ void yed_default_command_write_buffer(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
     char       *path;
+    char        exp_path[512];
 
     if (!ys->active_frame) {
         yed_append_text_to_cmd_buff("[!] no active frame");
@@ -2303,7 +2284,8 @@ void yed_default_command_write_buffer(int n_args, char **args) {
         }
         path = buff->path;
     } else if (n_args == 1) {
-        path = args[0];
+        expand_path(args[0], exp_path);
+        path = exp_path;
     } else {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
         yed_append_int_to_cmd_buff(n_args);
@@ -3267,6 +3249,20 @@ void yed_default_command_redo(int n_args, char **args) {
     }
 }
 
+
+int yed_execute_command_from_split(array_t split) {
+    char  *cmd_name,
+         **args;
+
+    if (array_len(split) == 0) {
+        return 1;
+    }
+
+    cmd_name = *(char**)array_item(split, 0);
+    args     = ((char**)array_data(split)) + 1;
+
+    return yed_execute_command(cmd_name, array_len(split) - 1, args);
+}
 
 int yed_execute_command(char *name, int n_args, char **args) {
     tree_it(yed_command_name_t, yed_command)  it;
