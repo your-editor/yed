@@ -275,12 +275,14 @@ void vimish_bind(int n_args, char **args) {
 
     cmd = args[cmd_delim + 1];
 
+#if 0
     if (!yed_get_command(cmd)) {
         yed_append_text_to_cmd_buff("[!] no command named '");
         yed_append_text_to_cmd_buff(cmd);
         yed_append_text_to_cmd_buff("' found");
         return;
     }
+#endif
 
     n_cmd_args = n_args - (cmd_delim + 2);
     vimish_make_binding(b_mode, n_keys, keys, cmd, n_cmd_args, args + cmd_delim + 2);
