@@ -87,7 +87,8 @@ int comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
 
         case FT_SH:
         case FT_BJOU:
-        case FT_PYTHON: comment_toggle_line_hash(frame, line, row);  break;
+        case FT_PYTHON:
+        case FT_YEDRC:  comment_toggle_line_hash(frame, line, row);  break;
 
         case FT_LATEX:  comment_toggle_line_latex(frame, line, row); break;
 
