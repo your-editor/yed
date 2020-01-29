@@ -26,14 +26,18 @@ void man_word(int n_args, char **args) {
 }
 
 void man(int n_args, char **args) {
-    char path_buff[128], cmd_buff[256], err_buff[256];
+    char path_buff[128], cmd_buff[256], err_buff[256], width_buff[16];
     int  i, err;
 
     path_buff[0] = 0;
     cmd_buff[0]  = 0;
     err_buff[0]  = 0;
 
-    strcat(cmd_buff, "bash -c 'man");
+    sprintf(width_buff, "%d", (int)(((float)ys->term_cols) * 0.7));
+
+    strcat(cmd_buff, "bash -c 'MANWIDTH=");
+    strcat(cmd_buff, width_buff);
+    strcat(cmd_buff, " man --ascii ");
     strcat(err_buff, "man");
     strcat(path_buff, "/tmp/man");
 
@@ -46,7 +50,7 @@ void man(int n_args, char **args) {
         strcat(err_buff, args[i]);
     }
     strcat(path_buff, ".yed");
-    strcat(cmd_buff, " 2>&1 | col -bx > ");
+    strcat(cmd_buff, " 2>/dev/null | col -bx > ");
     strcat(cmd_buff, path_buff);
     strcat(cmd_buff, " && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
 
