@@ -227,18 +227,22 @@ void expand_path(char *path, char *buff) {
 array_t sh_split(char *s) {
     array_t  r;
     char    *copy,
-            *sub;
-    char     c;
+            *sub,
+            *sub_p;
+    char     c, prev;
     int      len,
              start,
              end,
-             q;
+             q,
+             sub_len,
+             i;
 
     r     = array_make(char*);
     copy  = strdup(s);
     len   = strlen(copy);
     start = 0;
     end   = 0;
+    prev  = 0;
 
     while (start < len && isspace(copy[start])) { start += 1; }
 
@@ -251,16 +255,20 @@ array_t sh_split(char *s) {
             break;
         } else if (c == '"') {
             start += 1;
+            prev   = copy[end];
             while (end + 1 < len
-            &&     copy[end + 1] != '"') {
+            &&    (copy[end + 1] != '"' || prev == '\\')) {
                 end += 1;
+                prev = copy[end];
             }
             q = 1;
         } else if (c == '\'') {
             start += 1;
+            prev   = copy[end];
             while (end + 1 < len
-            &&     copy[end + 1] != '\'') {
+            &&    (copy[end + 1] != '\'' || prev == '\\')) {
                 end += 1;
+                prev = copy[end];
             }
             q = 1;
         } else {
@@ -270,7 +278,22 @@ array_t sh_split(char *s) {
             }
         }
 
-        sub = strndup(copy + start, end - start + 1);
+        sub_len = end - start + 1;
+        sub   = malloc(sub_len + 1);
+        sub_p = sub;
+        for (i = 0; i < sub_len; i += 1) {
+            c = copy[start + i];
+            if (c == '\\'
+            &&  i < sub_len - 1
+            &&  (copy[start + i + 1] == '"'
+              || copy[start + i + 1] == '\'')) {
+                continue;
+            }
+            *sub_p = c;
+            sub_p += 1;
+        }
+        *sub_p = 0;
+
         array_push(r, sub);
 
         end  += q;
