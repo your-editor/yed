@@ -23,7 +23,7 @@
 #define color16 (ALT(RGB_32_hex(0087af), 31))
 #define color17 (ALT(RGB_32_hex(008700), 28))
 #define cursorline \
-                (ALT(RGB_32_hex(e4e4e4), 254))
+                (ALT(RGB_32_hex(c6c6c6), 251))
 #define searchfg color07
 #define searchbg \
                 (ALT(RGB_32_hex(ffff5f), 227))
@@ -68,9 +68,10 @@ int yed_plugin_boot(yed_plugin *self) {
     s.search_cursor       = s.search;
     s.search_cursor.flags |= ATTR_BOLD;
 
-    s.selection.flags     = attr_kind;
-    s.selection.fg        = selectfg;
-    s.selection.bg        = selectbg;
+    s.selection           = s.cursor_line;
+/*     s.selection.flags     = attr_kind; */
+/*     s.selection.fg        = selectfg; */
+/*     s.selection.bg        = selectbg; */
 
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = color01;

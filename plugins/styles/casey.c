@@ -43,9 +43,11 @@ int yed_plugin_boot(yed_plugin *self) {
     s.cursor_line.fg      = s.active.fg;
     s.cursor_line.bg      = color_bg_2;
 
-    s.selection.flags     = attr_kind;
-    s.selection.fg        = s.active.bg;
-    s.selection.bg        = s.active.fg;
+    s.selection           = s.cursor_line;
+
+/*     s.selection.flags     = attr_kind; */
+/*     s.selection.fg        = s.active.bg; */
+/*     s.selection.bg        = s.active.fg; */
 
     s.search.flags        = attr_kind;
     s.search.fg           = color_bg;
@@ -87,14 +89,6 @@ int yed_plugin_boot(yed_plugin *self) {
     s.code_character     = s.code_number;
 
     yed_plugin_set_style(self, "casey", &s);
-
-    s.active.bg          = 0;
-    s.active_border.bg   = 0;
-    s.inactive.bg        = 0;
-    s.inactive_border.bg = 0;
-    s.command_line.bg    = 0;
-
-    yed_plugin_set_style(self, "casey_transparent", &s);
 
     return 0;
 }

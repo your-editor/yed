@@ -60,10 +60,10 @@ int yed_plugin_boot(yed_plugin *self) {
     s.search_cursor.fg    = color0F;
     s.search_cursor.bg    = colorbg;
 
-
-    s.selection.flags     = attr_kind | ATTR_INVERSE;
-    s.selection.fg        = color0F;
-    s.selection.bg        = colorbg;
+    s.selection           = s.cursor_line;
+/*     s.selection.flags     = attr_kind | ATTR_INVERSE; */
+/*     s.selection.fg        = color0F; */
+/*     s.selection.bg        = colorbg; */
 
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = color0F;

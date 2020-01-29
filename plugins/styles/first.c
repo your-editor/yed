@@ -18,7 +18,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.inactive.flags      = attr_kind;
     s.inactive.fg         = MAYBE_CONVERT(RGB_32(246, 241, 209));
-    s.inactive.bg         = 0;
+    s.inactive.bg         = MAYBE_CONVERT(RGB_32(0, 10, 20));
 
     s.active_border       = s.active;
 
@@ -27,11 +27,12 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = MAYBE_CONVERT(RGB_32(246, 241, 209));
-    s.cursor_line.bg      = MAYBE_CONVERT(RGB_32(11, 32, 39));
+    s.cursor_line.bg      = MAYBE_CONVERT(RGB_32(21, 42, 49));
 
-    s.selection.flags     = attr_kind;
-    s.selection.fg        = MAYBE_CONVERT(RGB_32(10, 20, 30));
-    s.selection.bg        = MAYBE_CONVERT(RGB_32(246, 241, 209));
+    s.selection           = s.cursor_line;
+/*     s.selection.flags     = attr_kind; */
+/*     s.selection.fg        = MAYBE_CONVERT(RGB_32(10, 20, 30)); */
+/*     s.selection.bg        = MAYBE_CONVERT(RGB_32(246, 241, 209)); */
 
     s.search.flags        = attr_kind | ATTR_BOLD;
     s.search.fg           = MAYBE_CONVERT(RGB_32(0, 0, 255));
@@ -44,8 +45,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = MAYBE_CONVERT(RGB_32(255, 0, 0));
 
-    s.associate.flags     = attr_kind;
-    s.associate.bg        = MAYBE_CONVERT(RGB_32(0, 40, 40));
+    s.associate.flags     = ATTR_BOLD;
 
     s.command_line        = s.active;
 
@@ -97,9 +97,10 @@ int yed_plugin_boot(yed_plugin *self) {
     s.cursor_line.fg      = MAYBE_CONVERT(RGB_32(11, 32, 39));
     s.cursor_line.bg      = MAYBE_CONVERT(RGB_32(207, 215, 199));
 
-    s.selection.flags     = attr_kind;
-    s.selection.fg        = MAYBE_CONVERT(RGB_32(246, 241, 209));
-    s.selection.bg        = MAYBE_CONVERT(RGB_32(11, 32, 39));
+    s.selection           = s.cursor_line;
+/*     s.selection.flags     = attr_kind; */
+/*     s.selection.fg        = MAYBE_CONVERT(RGB_32(246, 241, 209)); */
+/*     s.selection.bg        = MAYBE_CONVERT(RGB_32(11, 32, 39)); */
 
     s.search.flags        = attr_kind | ATTR_BOLD;
     s.search.fg           = MAYBE_CONVERT(RGB_32(0, 0, 255));
@@ -112,8 +113,7 @@ int yed_plugin_boot(yed_plugin *self) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = MAYBE_CONVERT(RGB_32(255, 0, 0));
 
-    s.associate.flags     = attr_kind;
-    s.associate.bg        = MAYBE_CONVERT(RGB_32(0, 200, 240));
+    s.associate.flags     = ATTR_BOLD;
 
     s.command_line        = s.active;
 
