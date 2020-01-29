@@ -120,9 +120,14 @@ void yed_set_default_styles(void) {
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line         = s.active;
+    s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_BG;
+    s.cursor_line.fg        = ATTR_16_GREY;
+    s.cursor_line.bg        = ATTR_16_BLACK;
 
-    s.selection.flags     = ATTR_INVERSE;
+    s.selection             = s.cursor_line;
+/*     s.selection.flags     = ATTR_16 | ATTR_16_LIGHT_BG; */
+/*     s.selection.fg        = ATTR_16_GREY; */
+/*     s.selection.bg        = ATTR_16_BLACK; */
 
     s.search.flags        = ATTR_16 | ATTR_16_LIGHT_FG;
     s.search.fg           = ATTR_16_BLUE;
@@ -134,6 +139,9 @@ void yed_set_default_styles(void) {
 
     s.attention.flags     = ATTR_16 | ATTR_16_LIGHT_FG;
     s.attention.fg        = ATTR_16_YELLOW;
+
+    s.associate.flags     = ATTR_16;
+    s.associate.fg        = ATTR_16_BLUE;
 
     s.command_line        = s.active;
 
