@@ -120,7 +120,7 @@ void yed_set_default_styles(void) {
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_BG;
+    s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG;
     s.cursor_line.fg        = ATTR_16_GREY;
     s.cursor_line.bg        = ATTR_16_BLACK;
 
@@ -158,7 +158,7 @@ void yed_set_default_styles(void) {
 
     s.code_preprocessor   = s.code_keyword;
 
-    s.code_fn_call.flags  = ATTR_16 | ATTR_16_LIGHT_FG;
+    s.code_fn_call.flags  = ATTR_16;
     s.code_fn_call.fg     = ATTR_16_MAGENTA;
 
     s.code_number.flags   = ATTR_16 | ATTR_16_LIGHT_FG;
