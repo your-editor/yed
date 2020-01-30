@@ -378,7 +378,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         array_push(frame->line_attrs, base_attr);
     }
 
-    if (frame->buffer->has_selection) {
+    if (ys->active_frame == frame && frame->buffer->has_selection) {
         col = 1;
         if (ys->active_style) {
             tmp_attr = yed_active_style_get_selection();
@@ -734,6 +734,10 @@ void yed_frame_update(yed_frame *frame) {
     ||  frame->last_cursor_line - frame->cursor_line < -1) {
 
         frame->dirty = 1;
+    }
+
+    if (frame->dirty && frame->buffer) {
+        yed_mark_dirty_frames(frame->buffer);
     }
 
     update_event.kind     = EVENT_FRAME_PRE_UPDATE;

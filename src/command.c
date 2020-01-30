@@ -3030,6 +3030,8 @@ void yed_replace_current_search_take_key(int key) {
         array_zero_term(ys->cmd_buff);
 
         yed_replace_current_search_update();
+
+        ys->active_frame->dirty = 1;
     }
 }
 
