@@ -10,7 +10,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "vimish",
         "brace_hl", "tag_hl", "cursor_word_hl",
         "lang/c", "lang/sh", "lang/bjou", "lang/latex", "lang/python", "lang/yedrc",
-        "indent_c", "comment",
+        "indent_c", "comment", "align",
         "autotrim", "completer",
         "grep", "find_file", "man",
         "style_picker",
