@@ -251,7 +251,7 @@ array_t sh_split(char *s) {
         q   = 0;
         end = start;
 
-        if (c == '#') {
+        if (c == '#' && prev != '\\') {
             break;
         } else if (c == '"') {
             start += 1;
@@ -279,20 +279,27 @@ array_t sh_split(char *s) {
         }
 
         sub_len = end - start + 1;
-        sub   = malloc(sub_len + 1);
-        sub_p = sub;
-        for (i = 0; i < sub_len; i += 1) {
-            c = copy[start + i];
-            if (c == '\\'
-            &&  i < sub_len - 1
-            &&  (copy[start + i + 1] == '"'
-              || copy[start + i + 1] == '\'')) {
-                continue;
+        if (q && sub_len == 0 && start == len) {
+            sub    = malloc(2);
+            sub[0] = copy[end];
+            sub[1] = 0;
+        } else {
+            sub   = malloc(sub_len + 1);
+            sub_p = sub;
+            for (i = 0; i < sub_len; i += 1) {
+                c = copy[start + i];
+                if (c == '\\'
+                &&  i < sub_len - 1
+                &&  (copy[start + i + 1] == '"'
+                || copy[start + i + 1] == '\''
+                || copy[start + i + 1] == '#')) {
+                    continue;
+                }
+                *sub_p = c;
+                sub_p += 1;
             }
-            *sub_p = c;
-            sub_p += 1;
+            *sub_p = 0;
         }
-        *sub_p = 0;
 
         array_push(r, sub);
 
