@@ -112,9 +112,9 @@ void yed_set_default_styles(void) {
     s.active.fg           = ATTR_16_GREY;
     s.active.bg           = ATTR_16_BLACK;
 
-    s.inactive.flags      = ATTR_16;
+    s.inactive.flags      = ATTR_16 | ATTR_16_LIGHT_BG;
     s.inactive.fg         = ATTR_16_BLACK;
-    s.inactive.bg         = ATTR_16_GREY;
+    s.inactive.bg         = ATTR_16_BLACK;
 
     s.active_border       = s.active;
 
