@@ -58,6 +58,7 @@ void align(int n_args, char **args) {
             if (strncmp(line_data, pattern, pattern_len) == 0) {
                 max_col  = MAX(max_col, col);
                 col     += pattern_len;
+                break;
             }
         }
     }
@@ -76,6 +77,7 @@ void align(int n_args, char **args) {
                     for (i = 0; i < max_col - col; i += 1) {
                         yed_insert_into_line(buff, row, col, ' ');
                     }
+                    break;
                 }
             }
         }
