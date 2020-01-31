@@ -171,7 +171,7 @@ For more examples of configurations and plugins, see the C files in `plugins/`.
 |-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | styles/*          | A selection of styles using either 16-color, 256-color, or 24-bit RGB colors.                                                                                 |
 | style_picker      | Opens up a menu-style frame that allows you to preview and select from available styles.                                                                      |
-| style_use_term_bg | Provides the `style-use-term-bg`, which alters the current style to use the background color of your terminal. `style-term-bg` activates a style in this way. |
+| style_use_term_bg | Provides the `style-use-term-bg` command, which alters the current style to use the terminal background color. `style-term-bg` activates a style in this way. |
 | yedrc             | Provides the `yedrc-load` command, which loads a file containing `yed` commands and executes them.                                                            |
 | vimish            | A modal editing front end that is _like_ `vim`, but different.                                                                                                |
 | completer         | Implements BASH-like completion of words from open buffers on `TAB`.                                                                                          |
