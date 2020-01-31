@@ -1412,6 +1412,22 @@ void yed_default_command_buffer_delete(int n_args, char **args) {
     yed_free_buffer(buffer);
 }
 
+#define BUFF_IT_NEXT_CYCLE(it)          \
+do {                                    \
+    tree_it_next(it);                   \
+    if (!tree_it_good(it)) {            \
+        (it) = tree_begin(ys->buffers); \
+    }                                   \
+} while (0)
+
+#define BUFF_IT_PREV_CYCLE(it)         \
+do {                                   \
+    tree_it_prev(it);                  \
+    if (!tree_it_good(it)) {           \
+        (it) = tree_last(ys->buffers); \
+    }                                  \
+} while (0)
+
 void yed_default_command_buffer_next(int n_args, char **args) {
     yed_buffer                                   *buffer;
     yed_frame                                    *frame;
@@ -1427,26 +1443,33 @@ void yed_default_command_buffer_next(int n_args, char **args) {
         return;
     }
 
+    if (!tree_len(ys->buffers)) {
+        yed_append_text_to_cmd_buff("[!] no buffers");
+        return;
+    }
+
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        if (!tree_len(ys->buffers)) {
-            yed_append_text_to_cmd_buff("[!] no buffers");
-            return;
-        }
         it = tree_begin(ys->buffers);
     } else {
         buffer = frame->buffer;
 
         it = tree_lookup(ys->buffers, buffer->name);
-        tree_it_next(it);
-
-        if (!tree_it_good(it)) {
-            it = tree_begin(ys->buffers);
-        }
+        BUFF_IT_NEXT_CYCLE(it);
     }
 
     buffer = tree_it_val(it);
+
+    if (strcmp(buffer->name, "*yank") == 0) {
+        if (tree_len(ys->buffers) == 1) {
+            yed_append_text_to_cmd_buff("[!] no buffers");
+            return;
+        }
+
+        BUFF_IT_NEXT_CYCLE(it);
+        buffer = tree_it_val(it);
+    }
 
     yed_frame_set_buff(ys->active_frame, buffer);
 
@@ -1470,26 +1493,33 @@ void yed_default_command_buffer_prev(int n_args, char **args) {
         return;
     }
 
+    if (!tree_len(ys->buffers)) {
+        yed_append_text_to_cmd_buff("[!] no buffers");
+        return;
+    }
+
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        if (!tree_len(ys->buffers)) {
-            yed_append_text_to_cmd_buff("[!] no buffers");
-            return;
-        }
-        it = tree_begin(ys->buffers);
+        it = tree_last(ys->buffers);
     } else {
         buffer = frame->buffer;
 
         it = tree_lookup(ys->buffers, buffer->name);
-        tree_it_prev(it);
-
-        if (!tree_it_good(it)) {
-            it = tree_last(ys->buffers);
-        }
+        BUFF_IT_PREV_CYCLE(it);
     }
 
     buffer = tree_it_val(it);
+
+    if (strcmp(buffer->name, "*yank") == 0) {
+        if (tree_len(ys->buffers) == 1) {
+            yed_append_text_to_cmd_buff("[!] no buffers");
+            return;
+        }
+
+        BUFF_IT_PREV_CYCLE(it);
+        buffer = tree_it_val(it);
+    }
 
     yed_frame_set_buff(ys->active_frame, buffer);
 
