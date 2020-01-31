@@ -61,6 +61,11 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
     yed_frame *frame;
 
+    LIMIT(top_f, 0.0, 1.0);
+    LIMIT(left_f, 0.0, 1.0);
+    LIMIT(height_f, 0.0, 1.0 - top_f);
+    LIMIT(width_f, 0.0, 1.0 - left_f);
+
     frame = malloc(sizeof(*frame));
 
     frame->v_link          = NULL;
