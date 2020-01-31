@@ -24,6 +24,8 @@ It makes no assumptions about a user's desired editing style and leaves most fun
 - Live find and replace
 - Customization/extension via plugins
 
+![yed](screenshots/2.png)
+
 ## Plugins
 `yed` plugins are shared libraries (typically written in C) that use the various facilities provided by the core editor to implement customization and add additional functionality.
 A plugin may:
