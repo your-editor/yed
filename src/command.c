@@ -1743,6 +1743,8 @@ void frame_move_take_key(int key) {
         yed_clear_cmd_buff();
         yed_frame_reset_cursor(f);
         yed_frame_hard_reset_cursor_x(f);
+        ys->redraw     = 1;
+        ys->redraw_cls = 1;
     } else if (key == ARROW_UP) {
         if (f->btop > 1) {
             yed_undraw_frame(f);
@@ -1838,6 +1840,8 @@ void frame_resize_take_key(int key) {
         yed_clear_cmd_buff();
         yed_frame_reset_cursor(f);
         yed_frame_hard_reset_cursor_x(f);
+        ys->redraw     = 1;
+        ys->redraw_cls = 1;
     } else if (key == ARROW_UP) {
         if (f->height > 1) {
             yed_undraw_frame(f);

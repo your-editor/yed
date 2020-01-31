@@ -221,6 +221,7 @@ void flush_output_buff(void);
 
 void yed_set_small_message(char *msg);
 void yed_write_status_bar(int key);
+void yed_write_welcome(void);
 
 void yed_service_reload(void);
 

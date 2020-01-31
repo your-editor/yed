@@ -230,6 +230,12 @@ void yed_service_reload(void) {
     yed_set_small_message("* reload serviced *");
 
     ys->redraw = ys->redraw_cls = 1;
+    append_to_output_buff(TERM_CURSOR_HIDE);
+    yed_set_attr(yed_active_style_get_active());
+    yed_clear_screen();
+    yed_cursor_home();
+    yed_write_welcome();
+    append_to_output_buff(TERM_RESET);
     memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
     yed_update_frames();
 

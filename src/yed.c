@@ -3,7 +3,7 @@
 
 yed_state *ys;
 
-static void write_welcome(void) {
+void yed_write_welcome(void) {
     int   i, n_oct_lines, oct_width, l;
     char *oct[] = {
 "                                                           \n",
@@ -246,7 +246,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         yed_set_attr(yed_active_style_get_active());
         yed_clear_screen();
         yed_cursor_home();
-        write_welcome();
+        yed_write_welcome();
         append_to_output_buff(TERM_RESET);
     }
 
@@ -361,7 +361,12 @@ int yed_pump(void) {
             yed_handle_resize();
         }
         if (ys->redraw_cls) {
+            append_to_output_buff(TERM_CURSOR_HIDE);
+            yed_set_attr(yed_active_style_get_active());
             yed_clear_screen();
+            yed_cursor_home();
+            yed_write_welcome();
+            append_to_output_buff(TERM_RESET);
             yed_draw_command_line();
             write_status_bar(keys[0]);
         }

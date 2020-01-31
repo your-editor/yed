@@ -164,7 +164,8 @@ void yed_delete_frame(yed_frame *frame) {
     }
 
     yed_undraw_frame(frame);
-    ys->redraw = 1;
+    ys->redraw     = 1;
+    ys->redraw_cls = 1;
 
     array_free(frame->line_attrs);
 
