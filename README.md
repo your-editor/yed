@@ -167,37 +167,35 @@ gcc -shared -fPIC init.c -lyed -o init.so
 For more examples of configurations and plugins, see the C files in `plugins/`.
 
 # Included Plugins
-| Plugin            | Description                                                                                                                               |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| vimish            | A modal editing front end that is _like_ `vim`, but different.                                                                            |
-| style_picker      | Opens up a menu-style frame that allows you to preview and select from available styles.                                                  |
-| styles/gruvbox    | A dark truecolor style. Provides 256-color fallback.                                                                                      |
-| styles/casey      | A dark truecolor style. Provides 256-color fallback.                                                                                      |
-| styles/papercolor | A light truecolor style. Provides 256-color fallback.                                                                                     |
-| styles/skyfall    | A dark truecolor style. Provides 256-color fallback.                                                                                      |
-| styles/first      | One dark and one light truecolor styles. Provides 256-color fallbacks.                                                                    |
-| styles/monokai    | A dark 256-color style.                                                                                                                   |
-| styles/nord       | A dark truecolor style. Provides 256-color fallback.                                                                                      |
-| styles/elise      | A dark truecolor style.                                                                                                                   |
-| completer         | Implements BASH-like completion of words from open buffers on `TAB`.                                                                      |
-| comment           | Provides the `comment-toggle` command to toggle lines of code in C/C++, BASH, bJou, and LaTeX.                                            |
-| tag_hl            | Highlights words prefixed with `@` with the `attention` style attribute.                                                                  |
-| cursor_word_hl    | Highlights other instances of the word under the cursor with the `associate` style attribute.                                             |
-| brace_hl          | Highlights enclosing pairs of curly braces with `attention` style attribute.                                                              |
-| wait_keys         | Implements a mechanism to define virtual keys where the first waits indefinitely on the second.                                           |
-| man               | Provides the `man-word` command that opens the `man` page for the word under the cursor in a buffer in a floating frame.                  |
-| grep              | Provides the `grep` command that interactively greps for a pattern in the current directory and allows you to instantly jump to matches.  |
-| find_file         | Provides the `find-file` command that interactively searches for files in the current directory and allows you to instantly jump to them. |
-| lang/bjou         | Loads `lang/syntax/bjou`.                                                                                                                 |
-| lang/c            | Loads `lang/syntax/c`.                                                                                                                    |
-| lang/sh           | Loads `lang/syntax/sh`.                                                                                                                   |
-| lang/latex        | Loads `lang/syntax/latex` and `lang/tools/latex`.                                                                                         |
-| lang/syntax/bjou  | Provides syntax highlighting for bJou.                                                                                                    |
-| lang/syntax/c     | Provides syntax highlighting for C. Active on C++ buffers.                                                                                |
-| lang/syntax/sh    | Provides syntax highlighting for SHELL and BASH.                                                                                          |
-| lang/syntax/latex | Provides (_very basic_) syntax highlighting for LaTeX.                                                                                    |
-| lang/tools/latex  | Provides the `latex-compile-current-file` and `latex-view-current-file` commands.                                                         |
-| autotrim          | Removes trailing whitespace on buffer write.                                                                                              |
-| focus_frame       | Creates an 80 column frame centered on the screen.                                                                                        |
-| indent_c          | Implements automatic indentation behavior for C-like languages.                                                                           |
-| meta_keys         | Allows one to use meta (alt) keys in keybindings.                                                                                         |
+| Plugin            | Description                                                                                                                                                   |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| styles/*          | A selection of styles using either 16-color, 256-color, or 24-bit RGB colors.                                                                                 |
+| style_picker      | Opens up a menu-style frame that allows you to preview and select from available styles.                                                                      |
+| style_use_term_bg | Provides the `style-use-term-bg`, which alters the current style to use the background color of your terminal. `style-term-bg` activates a style in this way. |
+| yedrc             | Provides the `yedrc-load` command, which loads a file containing `yed` commands and executes them.                                                            |
+| vimish            | A modal editing front end that is _like_ `vim`, but different.                                                                                                |
+| completer         | Implements BASH-like completion of words from open buffers on `TAB`.                                                                                          |
+| comment           | Provides the `comment-toggle` command to toggle lines of code in C/C++, BASH, bJou, and LaTeX.                                                                |
+| align             | Provides the `align` command which aligns text on a selection of lines based on a pattern string.                                                             |
+| tag_hl            | Highlights words prefixed with `@` with the `attention` style attribute.                                                                                      |
+| cursor_word_hl    | Highlights other instances of the word under the cursor with the `associate` style attribute.                                                                 |
+| brace_hl          | Highlights enclosing pairs of curly braces with `attention` style attribute.                                                                                  |
+| wait_keys         | Implements a mechanism to define virtual keys where the first waits indefinitely on the second.                                                               |
+| man               | Provides the `man-word` command that opens the `man` page for the word under the cursor in a buffer in a floating frame.                                      |
+| grep              | Provides the `grep` command that interactively greps for a pattern in the current directory and allows you to instantly jump to matches.                      |
+| find_file         | Provides the `find-file` command that interactively searches for files in the current directory and allows you to instantly jump to them.                     |
+| lang/bjou         | Loads `lang/syntax/bjou`.                                                                                                                                     |
+| lang/c            | Loads `lang/syntax/c`.                                                                                                                                        |
+| lang/sh           | Loads `lang/syntax/sh`.                                                                                                                                       |
+| lang/python       | Loads `lang/syntax/python`.                                                                                                                                   |
+| lang/latex        | Loads `lang/syntax/latex` and `lang/tools/latex`.                                                                                                             |
+| lang/yedrc        | Loads `lang/syntax/yedrc`.                                                                                                                                    |
+| lang/syntax/bjou  | Provides syntax highlighting for bJou.                                                                                                                        |
+| lang/syntax/c     | Provides syntax highlighting for C. Active on C++ buffers.                                                                                                    |
+| lang/syntax/sh    | Provides syntax highlighting for SHELL and BASH.                                                                                                              |
+| lang/syntax/latex | Provides (_very basic_) syntax highlighting for LaTeX.                                                                                                        |
+| lang/tools/latex  | Provides the `latex-compile-current-file` and `latex-view-current-file` commands.                                                                             |
+| autotrim          | Removes trailing whitespace on buffer write.                                                                                                                  |
+| focus_frame       | Creates an 80 column frame centered on the screen.                                                                                                            |
+| indent_c          | Implements automatic indentation behavior for C-like languages.                                                                                               |
+| meta_keys         | Allows one to use meta (alt) keys in keybindings.                                                                                                             |
