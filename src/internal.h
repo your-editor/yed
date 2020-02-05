@@ -165,7 +165,8 @@ typedef struct yed_state_t {
     tree(yed_buffer_name_t,
          yed_buffer_ptr_t)       buffers;
     int                          unnamed_buff_counter;
-    yed_buffer                  *yank_buff;
+    yed_buffer                  *yank_buff,
+                                *command_buff;
     array_t                      frames;
     yed_frame                   *active_frame,
                                 *prev_active_frame;
@@ -181,6 +182,7 @@ typedef struct yed_state_t {
     int                          replace_count;
     array_t                      cmd_buff;
     int                          cmd_cursor_x;
+    array_t                      cmd_name_stack;
     int                          status;
     int                          redraw;
     int                          redraw_cls;

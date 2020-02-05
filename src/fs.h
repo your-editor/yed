@@ -10,7 +10,8 @@
 #define FT_YEDRC   (8)
 
 typedef struct {
-    int ft;
+    int    ft;
+    struct stat stat_at_open;
 } yed_file;
 
 int yed_get_ft(char *path);

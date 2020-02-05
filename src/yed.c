@@ -297,8 +297,8 @@ static void write_small_message(void) {
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
-    yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows);
-    yed_set_attr(yed_active_style_get_command_line());
+    yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows - 1);
+    yed_set_attr(yed_active_style_get_status_line());
     append_to_output_buff(ys->small_message);
 
     append_to_output_buff(TERM_RESET);

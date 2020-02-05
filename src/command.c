@@ -2,7 +2,8 @@ void yed_init_commands(void) {
     ys->commands         = tree_make_c(yed_command_name_t, yed_command, strcmp);
     ys->default_commands = tree_make_c(yed_command_name_t, yed_command, strcmp);
     yed_set_default_commands();
-    ys->cmd_buff = array_make(char);
+    ys->cmd_buff         = array_make(char);
+    ys->cmd_name_stack   = array_make(char*);
 }
 
 yed_command yed_get_command(char *name) {
@@ -167,6 +168,66 @@ void yed_append_int_to_cmd_buff(int i) {
     sprintf(s, "%d", i);
 
     yed_append_text_to_cmd_buff(s);
+}
+
+static int cprint_print_name_and_time = 0;
+
+static void yed__vcprints(char *s, int len) {
+    int  row, i;
+    char c;
+
+    row = yed_buff_n_lines(ys->command_buff);
+
+    for (i = 0; i < len; i += 1) {
+        c = s[i];
+        if (c == '\n') {
+            row = yed_buffer_add_line_no_undo(ys->command_buff);
+        } else {
+            yed_append_to_line_no_undo(ys->command_buff, row, c);
+        }
+    }
+
+    yed_mark_dirty_frames(ys->command_buff);
+}
+
+void yed_vcprint(char *fmt, va_list args) {
+    char       tm_buff[128], nm_tm_buff[512], buff[1024];
+    time_t     t;
+    struct tm *tm;
+    char      *cmd_name;
+    int        len;
+
+    if (cprint_print_name_and_time) {
+        t  = time(NULL);
+        tm = localtime(&t);
+        strftime(tm_buff, sizeof(tm_buff), "%c", tm);
+        cmd_name = *(char**)array_last(ys->cmd_name_stack);
+        len      = snprintf(nm_tm_buff, sizeof(buff), "[%s](%s) ", tm_buff, cmd_name);
+
+        if (len > sizeof(nm_tm_buff) - 1) {
+            len = sizeof(nm_tm_buff) - 1;
+        }
+
+        yed__vcprints(nm_tm_buff, len);
+
+        cprint_print_name_and_time = 0;
+    }
+
+    len = vsnprintf(buff, sizeof(buff), fmt, args);
+
+    if (len > sizeof(buff) - 1) {
+        len = sizeof(buff) - 1;
+    }
+
+    yed__vcprints(buff, len);
+}
+
+void yed_cprint(char *fmt, ...) {
+    va_list va;
+
+    va_start(va, fmt);
+    yed_vcprint(fmt, va);
+    va_end(va);
 }
 
 void yed_cmd_buff_push(char c) {
@@ -619,6 +680,8 @@ void yed_default_command_echo(int n_args, char **args) {
     for (i = 0; i < n_args; i += 1) {
         yed_append_text_to_cmd_buff((char*)space);
         yed_append_text_to_cmd_buff(args[i]);
+        yed_cprint("%s", (char*)space);
+        yed_cprint("%s", args[i]);
         space = " ";
     }
 }
@@ -1403,8 +1466,8 @@ void yed_default_command_buffer_delete(int n_args, char **args) {
         return;
     }
 
-    if (buffer->kind == BUFF_KIND_YANK) {
-        yed_append_text_to_cmd_buff("[!] can't delete the yank buffer");
+    if (buffer->flags & BUFF_SPECIAL) {
+        yed_append_text_to_cmd_buff("[!] can't delete a special buffer");
         return;
     }
 
@@ -1432,6 +1495,7 @@ void yed_default_command_buffer_next(int n_args, char **args) {
     yed_buffer                                   *buffer;
     yed_frame                                    *frame;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    int                                           i;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -1461,14 +1525,19 @@ void yed_default_command_buffer_next(int n_args, char **args) {
 
     buffer = tree_it_val(it);
 
-    if (strcmp(buffer->name, "*yank") == 0) {
-        if (tree_len(ys->buffers) == 1) {
-            yed_append_text_to_cmd_buff("[!] no buffers");
-            return;
+    if (buffer->flags & BUFF_SPECIAL) {
+        for (i = 0; i < tree_len(ys->buffers); i += 1) {
+            BUFF_IT_NEXT_CYCLE(it);
+            buffer = tree_it_val(it);
+            if (!(buffer->flags & BUFF_SPECIAL)) {
+                break;
+            }
         }
+    }
 
-        BUFF_IT_NEXT_CYCLE(it);
-        buffer = tree_it_val(it);
+    if (buffer->flags & BUFF_SPECIAL) {
+        yed_append_text_to_cmd_buff("[!] no buffers");
+        return;
     }
 
     yed_frame_set_buff(ys->active_frame, buffer);
@@ -1482,6 +1551,7 @@ void yed_default_command_buffer_prev(int n_args, char **args) {
     yed_buffer                                   *buffer;
     yed_frame                                    *frame;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    int                                           i;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -1511,14 +1581,19 @@ void yed_default_command_buffer_prev(int n_args, char **args) {
 
     buffer = tree_it_val(it);
 
-    if (strcmp(buffer->name, "*yank") == 0) {
-        if (tree_len(ys->buffers) == 1) {
-            yed_append_text_to_cmd_buff("[!] no buffers");
-            return;
+    if (buffer->flags & BUFF_SPECIAL) {
+        for (i = 0; i < tree_len(ys->buffers); i += 1) {
+            BUFF_IT_PREV_CYCLE(it);
+            buffer = tree_it_val(it);
+            if (!(buffer->flags & BUFF_SPECIAL)) {
+                break;
+            }
         }
+    }
 
-        BUFF_IT_PREV_CYCLE(it);
-        buffer = tree_it_val(it);
+    if (buffer->flags & BUFF_SPECIAL) {
+        yed_append_text_to_cmd_buff("[!] no buffers");
+        return;
     }
 
     yed_frame_set_buff(ys->active_frame, buffer);
@@ -2164,9 +2239,13 @@ void yed_default_command_delete_back(int n_args, char **args) {
 
 void yed_default_command_delete_forward(int n_args, char **args) {
     yed_frame *frame;
-    yed_line  *line;
+    yed_line  *line,
+              *next_line;
     yed_event  event;
     int        row, col;
+    int        r1, c1, r2, c2;
+    int        buff_n_lines;
+    char      *c;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
@@ -2196,10 +2275,6 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     line = yed_buff_get_line(frame->buffer, row);
 
-    if (line->visual_width == 0) {
-        return;
-    }
-
     event.kind  = EVENT_BUFFER_PRE_MOD;
     event.frame = frame;
     event.row   = row;
@@ -2209,11 +2284,47 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     yed_start_undo_record(frame, frame->buffer);
 
-    if (col == line->visual_width + 1) {
-        yed_move_cursor_within_frame(frame, -1, 0);
-        col = frame->cursor_col;
+    if (frame->buffer->has_selection) {
+        r1 = c1 = r2 = c2 = 0;
+        yed_range_sorted_points(&frame->buffer->selection, &r1, &c1, &r2, &c2);
+        frame->buffer->selection.locked = 1;
+        if (frame->buffer->selection.kind == RANGE_LINE) {
+            r1 = MIN(r1, yed_buff_n_lines(frame->buffer) - (r2 - r1) - 1);
+            yed_set_cursor_far_within_frame(frame, 1, r1);
+        } else {
+            yed_set_cursor_far_within_frame(frame, c1, r1);
+        }
+        yed_buff_delete_selection(frame->buffer);
+    } else {
+        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
+        if (col == line->visual_width + 1) {
+            if (frame->cursor_line < yed_buff_n_lines(frame->buffer)) {
+                next_line = yed_buff_get_line(frame->buffer, frame->cursor_line + 1);
+
+                array_traverse(next_line->chars, c) {
+                    yed_append_to_line(frame->buffer, frame->cursor_line, *c);
+                }
+
+                /*
+                 * Kinda hacky, but this will help us pull the buffer
+                 * up if there is a buffer_y_offset and there's content
+                 * to pull up.
+                 */
+                buff_n_lines = yed_buff_n_lines(frame->buffer);
+                if (frame->buffer_y_offset >= buff_n_lines - frame->height) {
+                    yed_frame_reset_cursor(frame);
+                }
+
+                /*
+                 * Delete the old line.
+                 */
+                yed_buff_delete_line(frame->buffer, frame->cursor_line + 1);
+            }
+        } else {
+            yed_delete_from_line(frame->buffer, frame->cursor_line, col);
+        }
     }
-    yed_delete_from_line(frame->buffer, row, col);
 
     yed_end_undo_record(frame, frame->buffer);
 
@@ -3251,6 +3362,11 @@ void yed_default_command_undo(int n_args, char **args) {
 
     buffer = frame->buffer;
 
+    if (buffer->flags & BUFF_SPECIAL) {
+        yed_append_text_to_cmd_buff("[!] can't undo in a special buffer");
+        return;
+    }
+
     if (!yed_undo(frame, buffer)) {
         yed_append_text_to_cmd_buff("[!] nothing to undo");
     }
@@ -3279,6 +3395,11 @@ void yed_default_command_redo(int n_args, char **args) {
     }
 
     buffer = frame->buffer;
+
+    if (buffer->flags & BUFF_SPECIAL) {
+        yed_append_text_to_cmd_buff("[!] can't undo in a special buffer");
+        return;
+    }
 
     if (!yed_redo(frame, buffer)) {
         yed_append_text_to_cmd_buff("[!] nothing to redo");
@@ -3313,6 +3434,7 @@ int yed_execute_command(char *name, int n_args, char **args) {
     it = tree_lookup(ys->commands, name);
 
     if (!tree_it_good(it)) {
+        yed_cprint("unknown command '%s'\n", name);
         cmd_attr    = yed_active_style_get_command_line();
         attn_attr   = yed_active_style_get_attention();
         cmd_attr.fg = attn_attr.fg;
@@ -3329,6 +3451,8 @@ int yed_execute_command(char *name, int n_args, char **args) {
 
     cmd = tree_it_val(it);
 
+    cprint_print_name_and_time = 1;
+
     if (!ys->interactive_command) {
         ys->cmd_prompt = YED_CMD_PROMPT;
         yed_append_text_to_cmd_buff("(");
@@ -3336,7 +3460,12 @@ int yed_execute_command(char *name, int n_args, char **args) {
         yed_append_text_to_cmd_buff(") ");
     }
 
+    array_push(ys->cmd_name_stack, name);
     cmd(n_args, args);
+    array_pop(ys->cmd_name_stack);
+
+    cprint_print_name_and_time = 0;
+/*     yed_cprint("\n"); */
 
     yed_draw_command_line();
 

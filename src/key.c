@@ -233,7 +233,7 @@ static yed_key_binding default_key_bindings[] = {
     { CTRL_D,      "delete-line",       0, NULL },
     { CTRL_S,      "select",            0, NULL },
     { CTRL_V,      "paste-yank-buffer", 0, NULL },
-    { CTRL_W,      "write-buffer",      0, NULL }
+    { CTRL_W,      "write-buffer",      0, NULL },
 };
 
 void yed_set_default_key_binding(int key) {
