@@ -2164,9 +2164,13 @@ void yed_default_command_delete_back(int n_args, char **args) {
 
 void yed_default_command_delete_forward(int n_args, char **args) {
     yed_frame *frame;
-    yed_line  *line;
+    yed_line  *line,
+              *next_line;
     yed_event  event;
     int        row, col;
+    int        r1, c1, r2, c2;
+    int        buff_n_lines;
+    char      *c;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
@@ -2209,11 +2213,47 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     yed_start_undo_record(frame, frame->buffer);
 
-    if (col == line->visual_width + 1) {
-        yed_move_cursor_within_frame(frame, -1, 0);
-        col = frame->cursor_col;
+    if (frame->buffer->has_selection) {
+        r1 = c1 = r2 = c2 = 0;
+        yed_range_sorted_points(&frame->buffer->selection, &r1, &c1, &r2, &c2);
+        frame->buffer->selection.locked = 1;
+        if (frame->buffer->selection.kind == RANGE_LINE) {
+            r1 = MIN(r1, yed_buff_n_lines(frame->buffer) - (r2 - r1) - 1);
+            yed_set_cursor_far_within_frame(frame, 1, r1);
+        } else {
+            yed_set_cursor_far_within_frame(frame, c1, r1);
+        }
+        yed_buff_delete_selection(frame->buffer);
+    } else {
+        line = yed_buff_get_line(frame->buffer, frame->cursor_line);
+
+        if (col == line->visual_width) {
+            if (frame->cursor_line < yed_buff_n_lines(frame->buffer)) {
+                next_line = yed_buff_get_line(frame->buffer, frame->cursor_line + 1);
+
+                array_traverse(next_line->chars, c) {
+                    yed_append_to_line(frame->buffer, frame->cursor_line, *c);
+                }
+
+                /*
+                 * Kinda hacky, but this will help us pull the buffer
+                 * up if there is a buffer_y_offset and there's content
+                 * to pull up.
+                 */
+                buff_n_lines = yed_buff_n_lines(frame->buffer);
+                if (frame->buffer_y_offset >= buff_n_lines - frame->height) {
+                    yed_frame_reset_cursor(frame);
+                }
+
+                /*
+                 * Delete the old line.
+                 */
+                yed_buff_delete_line(frame->buffer, frame->cursor_line + 1);
+            }
+        } else {
+            yed_delete_from_line(frame->buffer, frame->cursor_line, col);
+        }
     }
-    yed_delete_from_line(frame->buffer, row, col);
 
     yed_end_undo_record(frame, frame->buffer);
 
