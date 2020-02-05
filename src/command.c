@@ -2200,10 +2200,6 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     line = yed_buff_get_line(frame->buffer, row);
 
-    if (line->visual_width == 0) {
-        return;
-    }
-
     event.kind  = EVENT_BUFFER_PRE_MOD;
     event.frame = frame;
     event.row   = row;
@@ -2227,7 +2223,7 @@ void yed_default_command_delete_forward(int n_args, char **args) {
     } else {
         line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-        if (col == line->visual_width) {
+        if (col == line->visual_width + 1) {
             if (frame->cursor_line < yed_buff_n_lines(frame->buffer)) {
                 next_line = yed_buff_get_line(frame->buffer, frame->cursor_line + 1);
 
