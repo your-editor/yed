@@ -47,6 +47,7 @@ use_tree(str_t, empty_t);
 #include "key.h"
 #include "fs.h"
 #include "undo.h"
+#include "utf8.h"
 #include "buffer.h"
 #include "attrs.h"
 #include "frame.h"

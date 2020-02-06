@@ -265,6 +265,7 @@ int s_to_i(const char *s) {
 #include "term.c"
 #include "key.c"
 #include "undo.c"
+#include "utf8.c"
 #include "buffer.c"
 #include "attrs.c"
 #include "fs.c"
