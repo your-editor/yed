@@ -1,5 +1,5 @@
 void yed_init_keys(void) {
-    ys->vkey_binding_map        = tree_make(int, yed_key_binding_ptr_t);
+    ys->vkey_binding_map   = tree_make(int, yed_key_binding_ptr_t);
     ys->key_sequences      = array_make(yed_key_sequence);
     ys->released_virt_keys = array_make(int);
 
@@ -70,6 +70,7 @@ int esc_sequence(int *input) {
                 case 'D':    { input[0] = ARROW_LEFT;  break; }
                 case 'H':    { input[0] = HOME_KEY;    break; }
                 case 'F':    { input[0] = END_KEY;     break; }
+                case 'P':    { input[0] = DEL_KEY;     break; }
                 case 'Z':    { input[0] = SHIFT_TAB;   break; }
             }
             return 1;
