@@ -2036,8 +2036,7 @@ void yed_default_command_insert(int n_args, char **args) {
                col, idx,
                i, len,
                tabw;
-    char      *c,
-              *tabw_str;
+    char      *c;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -2105,18 +2104,17 @@ void yed_default_command_insert(int n_args, char **args) {
         yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
     } else {
         if (key == TAB) {
-            tabw_str = yed_get_var("tab-width");
-            if (tabw_str) {
-                sscanf(tabw_str, "%d", &tabw);
-            } else {
-                tabw = 4;
-            }
+            tabw = yed_get_tab_width();
             for (i = 0; i < tabw; i += 1) {
                 yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, ' ');
             }
             yed_move_cursor_within_frame(frame, tabw, 0);
         } else {
-            yed_insert_into_line(frame->buffer, frame->cursor_line, col, key);
+            if (key == SHIFT_TAB) {
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, '\t');
+            } else {
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, key);
+            }
             yed_move_cursor_within_frame(frame, 1, 0);
         }
     }
@@ -2141,7 +2139,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
                col,
                buff_n_lines,
                prev_line_len, old_line_nr;
-    char      *c;
+    char      *c, *g;
+    int        width;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
@@ -2223,8 +2222,10 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 yed_buff_delete_line(frame->buffer, old_line_nr);
             }
         } else {
+            g     = yed_get_glyph(frame->buffer, frame->cursor_line, col - 1);
+            width = yed_get_glyph_width(g);
             yed_delete_from_line(frame->buffer, frame->cursor_line, col - 1);
-            yed_move_cursor_within_frame(frame, -1, 0);
+            yed_move_cursor_within_frame(frame, -1 * width, 0);
         }
     }
 

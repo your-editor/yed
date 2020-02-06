@@ -362,7 +362,7 @@ void yed_undraw_frame(yed_frame *frame) {
 }
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    int  n, col, n_col, starting_idx, run_len, run_start_n;
+    int  n, col, n_col, starting_idx, run_len, run_start_n, i, width;
     yed_attrs cur_attr, base_attr, tmp_attr, *attr_it;
     char *c, *run_start, *cell;
     yed_event event;
@@ -401,7 +401,6 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         }
     }
 
-
     event.kind       = EVENT_LINE_PRE_DRAW;
     event.frame      = frame;
     event.row        = row;
@@ -420,8 +419,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
     n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
     n     = 0;
-    if (array_len(line->chars) < x_offset) {
-        starting_idx = array_len(line->chars);
+    if (line->visual_width < x_offset) {
+        starting_idx = yed_line_col_to_idx(line, line->visual_width);
     } else {
         starting_idx = yed_line_col_to_idx(line, x_offset + 1);
     }
@@ -455,19 +454,26 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             run_start   = c + 1;
             run_len     = -1;
             run_start_n = n + 1;
-        } else if (*c == '\t') {
+        } else if ((width = yed_get_glyph_width(c)) != 1) {
             /*
-             * A TAB character will end our current run.
-             * We will print a replacement.
+             * A character that does not take up one column will end
+             * our current run.
              */
 
             yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
             append_n_to_output_buff(run_start, run_len);
-            append_to_output_buff("»");
+            if (*c == '\t') {
+                for (i = 0; i < width; i += 1) {
+                    append_n_to_output_buff(" ", 1);
+                }
+            } else {
+                append_n_to_output_buff(c, yed_get_glyph_len(c));
+            }
 
-            run_start   = c + 1;
-            run_len     = -1;
-            run_start_n = n + 1;
+            run_start    = c + 1;
+            run_len      = -1;
+            n           += width - 1;
+            run_start_n  = n + 1;
         } else if (*c <= 0 || *c > 127 || iscntrl(*c)) {
             /*
              * A character that we can't print nicely will also end
@@ -839,13 +845,22 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
 }
 
 void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
-    int       new_x;
+    int       new_x, width;
+    yed_line *line;
 
-    if (dir > 0) {
-        dir = 1;
-    } else if (dir < 0) {
-        dir = -1;
+    line = yed_buff_get_line(f->buffer, f->cursor_line);
+
+    if (line->visual_width == 0) { return; }
+
+    if (dir > 0 && f->cursor_col <= line->visual_width) {
+        dir   = 1;
+        width = yed_get_glyph_width(array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col)));
+    } else if (dir < 0 && f->cursor_col > 1) {
+        dir   = -1;
+        width = yed_get_glyph_width(array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
     }
+
+    dir *= width;
 
     if (dir) {
         new_x = f->cur_x + dir;
@@ -942,6 +957,10 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
             f->buffer_x_offset = MAX(0, potential_new_x - f->width);
             f->desired_x       = potential_new_x;
             f->dirty           = 1;
+        }
+
+        if (f->desired_x <= line->visual_width) {
+            f->desired_x = yed_line_idx_to_col(line, yed_line_col_to_idx(line, f->desired_x));
         }
 
         f->cur_x = MIN(f->desired_x - 1, line_width) + f->left - f->buffer_x_offset;

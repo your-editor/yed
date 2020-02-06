@@ -70,3 +70,18 @@ void yed_unset_var(char *var) {
     free(old_var);
     free(old_val);
 }
+
+int yed_get_tab_width(void) {
+    char *tabw_var;
+    int   tabw;
+
+    tabw_var = yed_get_var("tab-width");
+
+    if (tabw_var) {
+        sscanf(tabw_var, "%d", &tabw);
+    } else {
+        tabw = DEFAULT_TABW;
+    }
+
+    return tabw;
+}

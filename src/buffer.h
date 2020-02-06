@@ -53,10 +53,11 @@ yed_buffer * yed_create_buffer(char *name);
 yed_buffer * yed_get_buffer(char *name);
 void yed_free_buffer(yed_buffer *buffer);
 
+int yed_line_idx_to_col(yed_line *line, int idx);
 int yed_line_col_to_idx(yed_line *line, int col);
 char yed_line_col_to_char(yed_line *line, int col);
 yed_line * yed_buff_get_line(yed_buffer *buff, int row);
-
+char *yed_get_glyph(yed_buffer *buff, int row, int col);
 
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, char c);
 void yed_pop_from_line_no_undo(yed_buffer *buff, int row);
