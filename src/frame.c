@@ -527,6 +527,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
 
 
+#if 0
 
     for (col_off = 0; col_off < n_col;) {
         cell = FRAME_CELL(frame, y_offset, col_off);
@@ -592,6 +593,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     }
 
     DUMP_RUN();
+
+#endif
 
 #if 0
     int  n, col, n_col, starting_idx, run_len, run_start_n, i, width;
