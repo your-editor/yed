@@ -362,6 +362,238 @@ void yed_undraw_frame(yed_frame *frame) {
 }
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
+    yed_attrs  cur_attr, base_attr, sel_attr, *attr_it;
+    int        n_col, first_col, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible;
+    char      *cell, *bytes, *run_start;
+
+
+    /* Helper macros */
+    #define DUMP_RUN()                                                    \
+    do {                                                                  \
+        yed_set_cursor(frame->left + run_col_off, frame->top + y_offset); \
+        yed_set_attr(cur_attr);                                           \
+        append_n_to_output_buff(run_start, run_len);                      \
+    } while (0)
+
+    #define NEXT_RUN()                                                    \
+    do {                                                                  \
+        run_start    = bytes;                                             \
+        run_len      = 0;                                                 \
+        run_col_off  = col_off;                                           \
+    } while (0)
+
+
+    /*
+     * Determine what the baseline attributes of text should
+     * look like.
+     */
+    if (frame == ys->active_frame
+    &&  frame->cursor_line == row
+    &&  !frame->buffer->has_selection
+    &&  yed_get_var("cursor-line")) {
+
+        base_attr = yed_active_style_get_cursor_line();
+    } else if (frame == ys->active_frame) {
+        base_attr = yed_active_style_get_active();
+    } else {
+        base_attr = yed_active_style_get_inactive();
+    }
+
+
+    /*
+     * Store the base attributes for each column.
+     * They might be modified later on.
+     */
+    array_clear(frame->line_attrs);
+    for (col = 1; col <= line->visual_width; col += 1) {
+        array_push(frame->line_attrs, base_attr);
+    }
+
+    /*
+     * Find out if there are any columns that are in a selection.
+     * If there are, apply the selection attributes to them in the
+     * line_attrs array.
+     */
+    if (ys->active_frame == frame && frame->buffer->has_selection) {
+        col = 1;
+        if (ys->active_style) {
+            sel_attr = yed_active_style_get_selection();
+        } else {
+            sel_attr        = base_attr;
+            sel_attr.flags |= ATTR_INVERSE;
+        }
+
+        array_traverse(frame->line_attrs, attr_it) {
+            if (yed_is_in_range(&frame->buffer->selection, row, col)) {
+                yed_combine_attrs(attr_it, &sel_attr);
+            }
+            col += 1;
+        }
+    }
+
+    /*
+     * We're about to start drawing.
+     * Do the pre-draw event.
+     */
+    event.kind       = EVENT_LINE_PRE_DRAW;
+    event.frame      = frame;
+    event.row        = row;
+    event.line_attrs = frame->line_attrs;
+
+    yed_trigger_event(&event);
+
+    /*
+     * Compute how many columns we're actually going to draw.
+     * This is NOT necessarily just the line length or the
+     * frame width.
+     */
+    n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
+
+    if (n_col == 0) { return; }
+
+    first_col   = (line->visual_width < x_offset) ? line->visual_width : x_offset + 1;
+    bytes       = array_item(line->chars, yed_line_col_to_idx(line, col));
+
+    /* Set up first run. */
+    run_start   = bytes;
+    run_len     = 0;
+    run_col_off = 0;
+
+    /* Set the initial attrs. */
+    if (line->visual_width) {
+        cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
+        yed_set_attr(cur_attr);
+    } else {
+        cur_attr = base_attr;
+        yed_set_attr(cur_attr);
+    }
+
+    /*
+     * Okay, let's draw.
+     */
+    for (col_off = 0; col_off >= n_col;) {
+        width            = yed_get_glyph_width(bytes);
+        n_bytes          = yed_get_glyph_len(bytes);
+        all_cols_visible = 1;
+
+        if (*bytes == '\t') {
+            DUMP_RUN();
+
+            for (i = 0; i < width; i += 1) {
+                cell = FRAME_CELL(frame, y_offset, col_off);
+                if (!*cell) {
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off + i - 1);
+                    if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+                        yed_set_attr(tmp_attr);
+                        cur_attr = tmp_attr;
+                    }
+                    yed_set_cursor(frame->left + col_off + i, frame->top + y_offset);
+                    append_n_to_output_buff(" ", 1);
+                }
+                col_off += 1;
+            }
+
+            /* Skip it so it's not in the next run. */
+            bytes += n_bytes;
+
+            NEXT_RUN();
+        } else {
+            for (i = 0; i < width; i += 1) {
+                cell = FRAME_CELL(frame, y_offset, col_off + i);
+                if (*cell) {
+                    all_cols_visible = 0;
+                    break;
+                }
+            }
+
+            if (all_cols_visible) {
+                for (i = 0; i < width; i += 1) {
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off + i - 1);
+                    if (yed_attrs_eq(tmp_attr, cur_attr)) {
+                        run_len += n_bytes;
+                    } else {
+                        DUMP_RUN();  NEXT_RUN();
+                    }
+                    col_off += 1;
+                }
+            } else {
+                col_off += width;
+            }
+
+        }
+
+        bytes += n_bytes;
+    }
+
+
+
+
+    for (col_off = 0; col_off < n_col;) {
+        cell = FRAME_CELL(frame, y_offset, col_off);
+
+        if (*cell) {
+            /*
+             * If this cell is already written, it will break our run.
+             * We must make sure that we don't put this character into
+             * the next run because it shouldn't be written at all.
+             */
+            DUMP_RUN();
+
+
+
+            NEXT_RUN();
+        } else {
+            tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+
+            if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+                /*
+                 * If the attributes change, our run will be broken.
+                 */
+                DUMP_RUN(); NEXT_RUN();
+
+                /*
+                 * Set the new attributes for the next run.
+                 */
+                yed_set_attr(tmp_attr);
+                cur_attr = tmp_attr;
+            } else {
+                /*
+                 * At this point, we're just going to add what we're
+                 * looking at to the run.
+                 * Note that if the character is wider than one column,
+                 * we will need to only draw part of it to ensure we are
+                 * drawing within the frame bounaries.
+                 */
+
+                /*
+                 * @todo
+                 * Will we have to worry about characters other than
+                 * TAB that take up more than one column?
+                 * If so, how will we handle it?
+                 * We might be constrained by how many columns we can
+                 * draw, but how will we split up a multi-column character
+                 * to fit that constraint?
+                 */
+
+                width   = yed_get_glyph_width(bytes);
+                n_bytes = yed_get_glyph_len(bytes);
+
+                if (*bytes == '\t') {
+                    for (i = 0; i < width; i += 1) {
+                        append_n_to_output_buff(" ", 1);
+                    }
+                } else {
+                    ASSERT(width == 1, "unhandled width case");
+                    bytes   += n_bytes;
+                    run_len += n_bytes;
+                }
+            }
+        }
+    }
+
+    DUMP_RUN();
+
+#if 0
     int  n, col, n_col, starting_idx, run_len, run_start_n, i, width;
     yed_attrs cur_attr, base_attr, tmp_attr, *attr_it;
     char *c, *run_start, *cell;
@@ -541,6 +773,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
+#endif
 }
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
