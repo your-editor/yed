@@ -125,6 +125,10 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
         BUFFCATN(buff_p, ";1", 2);
     }
 
+    if (attr.flags & ATTR_UNDERLINE) {
+        BUFFCATN(buff_p, ";4", 2);
+    }
+
     if (attr.flags & ATTR_INVERSE) {
         BUFFCATN(buff_p, ";7", 2);
     }
