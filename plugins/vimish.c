@@ -38,6 +38,7 @@ static int mode;
 static array_t mode_bindings[N_MODES];
 static array_t repeat_keys;
 static int repeating;
+static int till_pending; /* 0 = not pending, 1 = pending forward, 2 = pending backward, 3 = pending backward; stop before */
 static int last_till_key;
 static char last_till_op;
 static int num_undo_records_before_insert;
@@ -418,7 +419,10 @@ static void vimish_do_till_fw(int key) {
 
     last_till_key = key;
 
+    vimish_push_repeat_key(key);
+
 out:
+    till_pending = 0;
     return;
 }
 
@@ -446,12 +450,18 @@ static void vimish_do_till_bw(int key, int stop_before) {
 
     last_till_key = key;
 
+    vimish_push_repeat_key(key);
+
 out:
+    till_pending = 0;
     return;
 }
 
 static void vimish_till_fw(void) {
     int n_keys, keys[16], n_feed, feed[16], till_key, i;
+    char buff[16], *buff_p;
+
+    if (repeating)    { return; }
 
     n_feed = 0;
     n_keys = yed_read_keys(keys);
@@ -459,19 +469,23 @@ static void vimish_till_fw(void) {
     if (n_keys) {
         till_key = keys[0];
 
-        vimish_do_till_fw(till_key);
-
         for (i = 1; i < n_keys; i += 1) {
             feed[n_feed] = keys[i];
             n_feed += 1;
         }
     }
 
+    sprintf(buff, "%d", till_key);
+    buff_p = buff;
+    vimish_take_key(1, &buff_p);
     yed_feed_keys(n_feed, feed);
 }
 
-static void vimish_till_bw(int stop_before) {
+static void vimish_till_bw(void) {
     int n_keys, keys[16], n_feed, feed[16], till_key, i;
+    char buff[16], *buff_p;
+
+    if (repeating)    { return; }
 
     n_feed = 0;
     n_keys = yed_read_keys(keys);
@@ -479,14 +493,15 @@ static void vimish_till_bw(int stop_before) {
     if (n_keys) {
         till_key = keys[0];
 
-        vimish_do_till_bw(till_key, stop_before);
-
         for (i = 1; i < n_keys; i += 1) {
             feed[n_feed] = keys[i];
             n_feed += 1;
         }
     }
 
+    sprintf(buff, "%d", till_key);
+    buff_p = buff;
+    vimish_take_key(1, &buff_p);
     yed_feed_keys(n_feed, feed);
 }
 
@@ -499,6 +514,12 @@ static void vimish_repeat_till(void) {
 }
 
 int vimish_nav_common(int key, char *key_str) {
+    if (till_pending == 1) {
+        vimish_do_till_fw(key);
+    } else if (till_pending > 1) {
+        vimish_do_till_bw(key, till_pending == 3);
+    }
+
     switch (key) {
         case 'h':
         case ARROW_LEFT:
@@ -580,13 +601,15 @@ int vimish_nav_common(int key, char *key_str) {
 
         case 'f':
         case 't':
+            till_pending = 1;
             vimish_till_fw();
             last_till_op = key;
             break;
 
         case 'F':
         case 'T':
-            vimish_till_bw(key == 'T');
+            till_pending = 2 + (key == 'T');
+            vimish_till_bw();
             last_till_op = key;
             break;
 
