@@ -27,6 +27,8 @@ int yed_get_ft(char *path) {
             ft = FT_PYTHON;
         } else if (strcmp(ext, "yedrc") == 0) {
             ft = FT_YEDRC;
+        } else if (strcmp(ext, "jgr") == 0) {
+            ft = FT_JGRAPH;
         }
     } else {
         if (strcmp(base, "yedrc") == 0) {

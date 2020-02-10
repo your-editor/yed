@@ -8,6 +8,7 @@
 #define FT_BJOU    (6)
 #define FT_PYTHON  (7)
 #define FT_YEDRC   (8)
+#define FT_JGRAPH  (9)
 
 typedef struct {
     int    ft;
