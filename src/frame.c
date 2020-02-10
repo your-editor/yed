@@ -362,9 +362,10 @@ void yed_undraw_frame(yed_frame *frame) {
 }
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    yed_attrs  cur_attr, base_attr, sel_attr, *attr_it;
-    int        n_col, first_col, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible;
+    yed_attrs  cur_attr, base_attr, sel_attr, tmp_attr, *attr_it;
+    int        col, n_col, first_idx, first_col, width_skip, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible;
     char      *cell, *bytes, *run_start;
+    yed_event  event;
 
 
     /* Helper macros */
@@ -449,10 +450,10 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      */
     n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
 
-    if (n_col == 0) { return; }
-
-    first_col   = (line->visual_width < x_offset) ? line->visual_width : x_offset + 1;
-    bytes       = array_item(line->chars, yed_line_col_to_idx(line, col));
+    first_col = (line->visual_width < x_offset) ? line->visual_width : x_offset + 1;
+    first_idx = yed_line_col_to_idx(line, first_col);
+    bytes     = array_item(line->chars, first_idx);
+    width_skip = first_col - yed_line_idx_to_col(line, first_idx);
 
     /* Set up first run. */
     run_start   = bytes;
@@ -471,7 +472,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     /*
      * Okay, let's draw.
      */
-    for (col_off = 0; col_off >= n_col;) {
+    for (col_off = 0; col_off < n_col;) {
         width            = yed_get_glyph_width(bytes);
         n_bytes          = yed_get_glyph_len(bytes);
         all_cols_visible = 1;
@@ -479,15 +480,15 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         if (*bytes == '\t') {
             DUMP_RUN();
 
-            for (i = 0; i < width; i += 1) {
+            for (i = width_skip; i < width && col_off < n_col; i += 1) {
                 cell = FRAME_CELL(frame, y_offset, col_off);
                 if (!*cell) {
-                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off + i - 1);
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
                     if (!yed_attrs_eq(tmp_attr, cur_attr)) {
                         yed_set_attr(tmp_attr);
                         cur_attr = tmp_attr;
                     }
-                    yed_set_cursor(frame->left + col_off + i, frame->top + y_offset);
+                    yed_set_cursor(frame->left + col_off, frame->top + y_offset);
                     append_n_to_output_buff(" ", 1);
                 }
                 col_off += 1;
@@ -498,8 +499,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
             NEXT_RUN();
         } else {
-            for (i = 0; i < width; i += 1) {
-                cell = FRAME_CELL(frame, y_offset, col_off + i);
+            for (i = width_skip; i < width && col_off < n_col; i += 1) {
+                cell = FRAME_CELL(frame, y_offset, col_off);
                 if (*cell) {
                     all_cols_visible = 0;
                     break;
@@ -507,276 +508,53 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             }
 
             if (all_cols_visible) {
-                for (i = 0; i < width; i += 1) {
-                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off + i - 1);
+                for (i = width_skip; i < width && col_off < n_col; i += 1) {
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
                     if (yed_attrs_eq(tmp_attr, cur_attr)) {
                         run_len += n_bytes;
                     } else {
-                        DUMP_RUN();  NEXT_RUN();
+                        DUMP_RUN();
+                        cur_attr = tmp_attr;
+                        NEXT_RUN();
+                        run_len += n_bytes;
                     }
                     col_off += 1;
                 }
+                bytes += n_bytes;
             } else {
+                DUMP_RUN();
                 col_off += width;
+                bytes   += n_bytes;
+                NEXT_RUN();
             }
-
         }
 
-        bytes += n_bytes;
+        width_skip = 0;
     }
 
+    DUMP_RUN();
 
+    bytes    = ys->_4096_spaces;
+    cur_attr = base_attr;
+    NEXT_RUN();
 
-#if 0
-
-    for (col_off = 0; col_off < n_col;) {
+    for (; col_off < frame->width;) {
         cell = FRAME_CELL(frame, y_offset, col_off);
 
         if (*cell) {
-            /*
-             * If this cell is already written, it will break our run.
-             * We must make sure that we don't put this character into
-             * the next run because it shouldn't be written at all.
-             */
             DUMP_RUN();
-
-
-
+            col_off += 1;
             NEXT_RUN();
         } else {
-            tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
-
-            if (!yed_attrs_eq(tmp_attr, cur_attr)) {
-                /*
-                 * If the attributes change, our run will be broken.
-                 */
-                DUMP_RUN(); NEXT_RUN();
-
-                /*
-                 * Set the new attributes for the next run.
-                 */
-                yed_set_attr(tmp_attr);
-                cur_attr = tmp_attr;
-            } else {
-                /*
-                 * At this point, we're just going to add what we're
-                 * looking at to the run.
-                 * Note that if the character is wider than one column,
-                 * we will need to only draw part of it to ensure we are
-                 * drawing within the frame bounaries.
-                 */
-
-                /*
-                 * @todo
-                 * Will we have to worry about characters other than
-                 * TAB that take up more than one column?
-                 * If so, how will we handle it?
-                 * We might be constrained by how many columns we can
-                 * draw, but how will we split up a multi-column character
-                 * to fit that constraint?
-                 */
-
-                width   = yed_get_glyph_width(bytes);
-                n_bytes = yed_get_glyph_len(bytes);
-
-                if (*bytes == '\t') {
-                    for (i = 0; i < width; i += 1) {
-                        append_n_to_output_buff(" ", 1);
-                    }
-                } else {
-                    ASSERT(width == 1, "unhandled width case");
-                    bytes   += n_bytes;
-                    run_len += n_bytes;
-                }
-            }
+            run_len += 1;
+            col_off += 1;
         }
     }
 
     DUMP_RUN();
 
-#endif
-
-#if 0
-    int  n, col, n_col, starting_idx, run_len, run_start_n, i, width;
-    yed_attrs cur_attr, base_attr, tmp_attr, *attr_it;
-    char *c, *run_start, *cell;
-    yed_event event;
-
-    if (frame == ys->active_frame
-    &&  frame->cursor_line == row
-    &&  !frame->buffer->has_selection
-    &&  yed_get_var("cursor-line")) {
-
-        base_attr = yed_active_style_get_cursor_line();
-    } else if (frame == ys->active_frame) {
-        base_attr = yed_active_style_get_active();
-    } else {
-        base_attr = yed_active_style_get_inactive();
-    }
-
-    array_clear(frame->line_attrs);
-    for (col = 1; col <= line->visual_width; col += 1) {
-        array_push(frame->line_attrs, base_attr);
-    }
-
-    if (ys->active_frame == frame && frame->buffer->has_selection) {
-        col = 1;
-        if (ys->active_style) {
-            tmp_attr = yed_active_style_get_selection();
-        } else {
-            tmp_attr        = base_attr;
-            tmp_attr.flags |= ATTR_INVERSE;
-        }
-
-        array_traverse(frame->line_attrs, attr_it) {
-            if (yed_is_in_range(&frame->buffer->selection, row, col)) {
-                yed_combine_attrs(attr_it, &tmp_attr);
-            }
-            col += 1;
-        }
-    }
-
-    event.kind       = EVENT_LINE_PRE_DRAW;
-    event.frame      = frame;
-    event.row        = row;
-    event.line_attrs = frame->line_attrs;
-
-    yed_trigger_event(&event);
-
-
-    if (line->visual_width) {
-        cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
-        yed_set_attr(cur_attr);
-    } else {
-        cur_attr = base_attr;
-        yed_set_attr(cur_attr);
-    }
-
-    n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
-    n     = 0;
-    if (line->visual_width < x_offset) {
-        starting_idx = yed_line_col_to_idx(line, line->visual_width);
-    } else {
-        starting_idx = yed_line_col_to_idx(line, x_offset + 1);
-    }
-
-    yed_set_cursor(frame->left, frame->top + y_offset);
-
-    col = starting_idx + 1;
-
-    run_start   = array_data(line->chars) + starting_idx;
-    run_len     = 0;
-    run_start_n = n;
-
-    array_traverse_from(line->chars, c, starting_idx) {
-        if (n == n_col)    { break; }
-
-        cell     = FRAME_CELL(frame, y_offset, n);
-        tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, col - 1);
-
-        if (*cell) {
-            /*
-             * If this cell is already written, it will break our run.
-             * So we output the run and start a new one.
-             * We must make sure that we don't put this character into
-             * the next run because it shouldn't be written at all.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-
-            append_n_to_output_buff(run_start, run_len);
-
-            run_start   = c + 1;
-            run_len     = -1;
-            run_start_n = n + 1;
-        } else if ((width = yed_get_glyph_width(c)) != 1) {
-            /*
-             * A character that does not take up one column will end
-             * our current run.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-            append_n_to_output_buff(run_start, run_len);
-            if (*c == '\t') {
-                for (i = 0; i < width; i += 1) {
-                    append_n_to_output_buff(" ", 1);
-                }
-            } else {
-                append_n_to_output_buff(c, yed_get_glyph_len(c));
-            }
-
-            run_start    = c + 1;
-            run_len      = -1;
-            n           += width - 1;
-            run_start_n  = n + 1;
-        } else if (*c <= 0 || *c > 127 || iscntrl(*c)) {
-            /*
-             * A character that we can't print nicely will also end
-             * our current run. We will print a replacement.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-            append_n_to_output_buff(run_start, run_len);
-            append_to_output_buff("�");
-
-            run_start   = c + 1;
-            run_len     = -1;
-            run_start_n = n + 1;
-        } else if (!yed_attrs_eq(tmp_attr, cur_attr)) {
-            /*
-             * If the attributes change, our run will be broken.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-
-            append_n_to_output_buff(run_start, run_len);
-
-            run_start   = c;
-            run_len     = 0;
-            run_start_n = n;
-
-            /*
-             * Set the new attributes for the next run.
-             */
-            yed_set_attr(tmp_attr);
-            cur_attr = tmp_attr;
-        }
-
-        run_len += 1;
-        n       += 1;
-        col     += 1;
-    }
-
-    /*
-     * At end. Dump the run.
-     */
-    yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-    append_n_to_output_buff(run_start, run_len);
-
-    yed_set_cursor(frame->left + n, frame->top + y_offset);
-    yed_set_attr(base_attr);
-
-    run_len     = 0;
-    run_start_n = n;
-    for (; n < frame->width; n += 1) {
-        cell = FRAME_CELL(frame, y_offset, n);
-
-        if (*cell) {
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-            append_n_to_output_buff(ys->_4096_spaces, run_len);
-            run_len     = -1;
-            run_start_n = n + 1;
-        }
-
-        run_len += 1;
-    }
-
-    yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-    append_n_to_output_buff(ys->_4096_spaces, run_len);
-
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
-#endif
 }
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
@@ -1081,12 +859,14 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
 }
 
 void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
-    int       new_x, width;
+    int       new_x, width, old_x_off;
     yed_line *line;
 
     line = yed_buff_get_line(f->buffer, f->cursor_line);
 
     if (line->visual_width == 0) { return; }
+
+    width = 1;
 
     if (dir > 0 && f->cursor_col <= line->visual_width) {
         dir   = 1;
@@ -1096,7 +876,8 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
         width = yed_get_glyph_width(array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
     }
 
-    dir *= width;
+    old_x_off  = f->buffer_x_offset;
+    dir       *= width;
 
     if (dir) {
         new_x = f->cur_x + dir;
@@ -1116,6 +897,11 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
         }
     }
 
+    LIMIT(f->buffer_x_offset, 0, line_width);
+    (void)old_x_off;
+    if (width > 1) {
+        f->cur_x += f->buffer_x_offset - old_x_off;
+    }
     LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
 
     f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);

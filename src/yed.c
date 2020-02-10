@@ -171,6 +171,7 @@ static int parse_options(int argc, char **argv) {
 
 void yed_tool_attach(void) {
     printf("Hit any key to continue once the instrument tool has been attached.\n");
+    printf("pid = %d\n", getpid());
     getchar();
 }
 
