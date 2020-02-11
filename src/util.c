@@ -18,7 +18,7 @@ char *yed_word_under_cursor(void) {
 
     if (col == line->visual_width + 1)     { return NULL; }
 
-    c   = yed_line_col_to_char(line, col);
+    c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
     if (isspace(c))           { return NULL; }
 
@@ -26,7 +26,7 @@ char *yed_word_under_cursor(void) {
 
     if (isalnum(c) || c == '_') {
         while (col > 1) {
-            c = yed_line_col_to_char(line, col - 1);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
             if (!isalnum(c) && c != '_') {
                 break;
@@ -35,17 +35,17 @@ char *yed_word_under_cursor(void) {
             col -= 1;
         }
         word_start = array_item(line->chars, yed_line_col_to_idx(line, col));
-        c = yed_line_col_to_char(line, col);
+        c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         while (col <= line->visual_width
         &&    (isalnum(c) || c == '_')) {
 
             word_len += 1;
             col      += 1;
-            c         = yed_line_col_to_char(line, col);
+            c         = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         }
     } else {
         while (col > 1) {
-            c = yed_line_col_to_char(line, col - 1);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
             if (isalnum(c) || c == '_' || isspace(c)) {
                 break;
@@ -54,13 +54,13 @@ char *yed_word_under_cursor(void) {
             col -= 1;
         }
         word_start = array_item(line->chars, yed_line_col_to_idx(line, col));
-        c = yed_line_col_to_char(line, col);
+        c          = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         while (col <= line->visual_width
         &&    (!isalnum(c) && c != '_' && !isspace(c))) {
 
             word_len += 1;
             col      += 1;
-            c         = yed_line_col_to_char(line, col);
+            c         = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         }
     }
 

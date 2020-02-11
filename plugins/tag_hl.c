@@ -47,13 +47,13 @@ void tag_hl_hl_tags(yed_event *event) {
         word     = array_data(line->chars) + col - 1;
         word_len = 0;
         spaces   = 0;
-        c        = yed_line_col_to_char(line, col);
+        c        = yed_line_col_to_glyph(line, col)->c;
 
         if (isalnum(c) || c == '_') {
             while (col <= line->visual_width) {
                 word_len += 1;
                 col      += 1;
-                c         = yed_line_col_to_char(line, col);
+                c         = yed_line_col_to_glyph(line, col)->c;
 
                 if (!isalnum(c) && c != '_') {
                     break;
@@ -63,7 +63,7 @@ void tag_hl_hl_tags(yed_event *event) {
             while (col <= line->visual_width) {
                 word_len += 1;
                 col      += 1;
-                c         = yed_line_col_to_char(line, col);
+                c         = yed_line_col_to_glyph(line, col)->c;
 
                 if (isalnum(c) || c == '_' || isspace(c)) {
                     break;
@@ -75,7 +75,7 @@ void tag_hl_hl_tags(yed_event *event) {
             while (col <= line->visual_width) {
                 spaces += 1;
                 col    += 1;
-                c       = yed_line_col_to_char(line, col);
+                c       = yed_line_col_to_glyph(line, col)->c;
 
                 if (!isspace(c)) {
                     break;

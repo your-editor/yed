@@ -103,7 +103,7 @@ void style_picker_make_buffer(void) {
         row   = yed_buff_n_lines(buff);
         style = tree_it_key(it);
         for (i = 0; i < strlen(style); i += 1) {
-            yed_append_to_line_no_undo(buff, row, style[i]);
+            yed_append_to_line_no_undo(buff, row, G(style[i]));
         }
         yed_buffer_add_line_no_undo(buff);
     }

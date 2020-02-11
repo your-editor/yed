@@ -226,20 +226,20 @@ int yed_push_undo_action(yed_buffer *buffer, yed_undo_action *action) {
 
 void yed_undo_single_action(yed_frame *frame, yed_buffer *buffer, yed_undo_action *action) {
     switch (action->kind) {
-        case UNDO_CHAR_ADD:
+        case UNDO_GLYPH_ADD:
             yed_delete_from_line_no_undo(buffer, action->row, action->col);
             break;
 
-        case UNDO_CHAR_PUSH:
+        case UNDO_GLYPH_PUSH:
             yed_pop_from_line_no_undo(buffer, action->row);
             break;
 
-        case UNDO_CHAR_DEL:
-            yed_insert_into_line_no_undo(buffer, action->row, action->col, action->c);
+        case UNDO_GLYPH_DEL:
+            yed_insert_into_line_no_undo(buffer, action->row, action->col, action->g);
             break;
 
-        case UNDO_CHAR_POP:
-            yed_append_to_line_no_undo(buffer, action->row, action->c);
+        case UNDO_GLYPH_POP:
+            yed_append_to_line_no_undo(buffer, action->row, action->g);
             break;
 
         case UNDO_LINE_ADD:
@@ -257,19 +257,19 @@ void yed_undo_single_action(yed_frame *frame, yed_buffer *buffer, yed_undo_actio
 
 void yed_redo_single_action(yed_frame *frame, yed_buffer *buffer, yed_undo_action *action) {
     switch (action->kind) {
-        case UNDO_CHAR_ADD:
-            yed_insert_into_line_no_undo(buffer, action->row, action->col, action->c);
+        case UNDO_GLYPH_ADD:
+            yed_insert_into_line_no_undo(buffer, action->row, action->col, action->g);
             break;
 
-        case UNDO_CHAR_PUSH:
-            yed_append_to_line_no_undo(buffer, action->row, action->c);
+        case UNDO_GLYPH_PUSH:
+            yed_append_to_line_no_undo(buffer, action->row, action->g);
             break;
 
-        case UNDO_CHAR_DEL:
+        case UNDO_GLYPH_DEL:
             yed_delete_from_line_no_undo(buffer, action->row, action->col);
             break;
 
-        case UNDO_CHAR_POP:
+        case UNDO_GLYPH_POP:
             yed_pop_from_line_no_undo(buffer, action->row);
             break;
 

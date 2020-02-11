@@ -75,7 +75,7 @@ void align(int n_args, char **args) {
                 line_data = array_data(line->chars) + col - 1;
                 if (strncmp(line_data, pattern, pattern_len) == 0) {
                     for (i = 0; i < max_col - col; i += 1) {
-                        yed_insert_into_line(buff, row, col, ' ');
+                        yed_insert_into_line(buff, row, col, G(' '));
                     }
                     break;
                 }

@@ -144,10 +144,35 @@ int yed_read_key_sequences(char first, int *input) {
     return len;
 }
 
-int yed_read_keys(int *input) {
-    int  nread;
-    int  len;
+int yed_read_mbyte_keys(char first_byte, int n_bytes) {
+    int  i;
     char c;
+
+    ASSERT(n_bytes > 1, "should not read more bytes for single byte char");
+
+    ys->mbyte.bytes[0] = first_byte;
+
+    for (i = 1; i < n_bytes; i += 1) {
+        /*
+         * Check if the read times out.
+         * If this is the case, we're gonna indicate to
+         * the caller that we could not get all of the bytes
+         * that we needed.
+         */
+        if (read(0, &c, 1) == 0) { return 0; }
+
+        ys->mbyte.bytes[i] = c;
+    }
+
+    return 1;
+}
+
+int yed_read_keys(int *input) {
+    int       nread;
+    int       len;
+    char      c;
+    yed_glyph g;
+    int       n_bytes;
 
 /*
  * BLOCKING(ish):
@@ -165,6 +190,11 @@ int yed_read_keys(int *input) {
 
     if (nread == -1)    { return 0; }
 
+    if (c != 0) {
+        g.c     = c;
+        n_bytes = yed_get_glyph_len(g);
+    }
+
     if (c == ESC) {
         input[0] = c;
 
@@ -175,6 +205,11 @@ int yed_read_keys(int *input) {
         }
 
         return len;
+    } else if (n_bytes > 1) {
+        if (yed_read_mbyte_keys(g.c, n_bytes)) {
+            *input = MBYTE;
+            return 1;
+        }
     } else if (c >= 0) {
         return yed_read_key_sequences(c, input);
     }
@@ -202,7 +237,7 @@ void yed_take_key(int key) {
     } else if (binding) {
         yed_execute_command(binding->cmd, binding->n_args, binding->args);
     } else if (key < REAL_KEY_MAX
-      &&      (key == ENTER || key == TAB || !iscntrl(key))) {
+      &&      (key == ENTER || key == TAB || key == MBYTE || !iscntrl(key))) {
         yed_execute_command("insert", 1, &key_str);
     }
 

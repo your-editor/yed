@@ -50,6 +50,12 @@ enum KEY_ACTION {
     PAGE_DOWN,
     SHIFT_TAB,
 
+    /* If we have received a multi-byte character as input,
+     * this virtual key will be returned and the character
+     * will be stored in ys->mbyte. */
+    MBYTE,
+
+
     REAL_KEY_MAX,
 
     VIRT_KEY_START,
@@ -57,11 +63,11 @@ enum KEY_ACTION {
 
 #define CTRL_KEY(c) ((c) & 0x9F)
 
-#define VIRT_KEY(x)      (VIRT_KEY_START + (x))
+#define VIRT_KEY(x) (VIRT_KEY_START + (x))
 
 #define MAX_SEQ_LEN (8)
 
-#define IS_ARROW(k)   ((k) >= ARROW_LEFT && (k) <= ARROW_DOWN)
+#define IS_ARROW(k) ((k) >= ARROW_LEFT && (k) <= ARROW_DOWN)
 
 void yed_init_keys(void);
 

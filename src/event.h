@@ -29,6 +29,7 @@ typedef struct {
     int               row, col;
     array_t           line_attrs;
     int               key;
+    char             *glyph;
     int               cancel;
 } yed_event;
 

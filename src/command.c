@@ -173,17 +173,17 @@ void yed_append_int_to_cmd_buff(int i) {
 static int cprint_print_name_and_time = 0;
 
 static void yed__vcprints(char *s, int len) {
-    int  row, i;
-    char c;
+    int       row, i;
+    yed_glyph g;
 
     row = yed_buff_n_lines(ys->command_buff);
 
     for (i = 0; i < len; i += 1) {
-        c = s[i];
-        if (c == '\n') {
+        g.c = s[i];
+        if (g.c == '\n') {
             row = yed_buffer_add_line_no_undo(ys->command_buff);
         } else {
-            yed_append_to_line_no_undo(ys->command_buff, row, c);
+            yed_append_to_line_no_undo(ys->command_buff, row, g);
         }
     }
 
@@ -1056,11 +1056,11 @@ again:
 
     if (col <= 0)    { goto skip_lines; }
 
-    c = yed_line_col_to_char(line, col);
+    c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
     if (isspace(c)) {
         while (col > 1) {
-            c = yed_line_col_to_char(line, col - 1);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
             if (!isspace(c)) {
                 break;
@@ -1072,7 +1072,7 @@ again:
 
     if (isalnum(c) || c == '_') {
         while (col > 1) {
-            c = yed_line_col_to_char(line, col - 1);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
             if (!isalnum(c) && c != '_') {
                 break;
@@ -1082,7 +1082,7 @@ again:
         }
     } else {
         while (col > 1) {
-            c = yed_line_col_to_char(line, col - 1);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
             if (isalnum(c) || c == '_' || isspace(c)) {
                 break;
@@ -1146,12 +1146,12 @@ again:
         goto skip_lines;
     }
 
-    c = yed_line_col_to_char(line, col);
+    c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
     if (isalnum(c) || c == '_') {
         while (col <= line->visual_width) {
             col += 1;
-            c    = yed_line_col_to_char(line, col);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
             if (!isalnum(c) && c != '_') {
                 break;
@@ -1160,7 +1160,7 @@ again:
     } else if (!isspace(c)) {
         while (col <= line->visual_width) {
             col += 1;
-            c    = yed_line_col_to_char(line, col);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
             if (isalnum(c) || c == '_' || isspace(c)) {
                 break;
@@ -1171,7 +1171,7 @@ again:
     if (isspace(c)) {
         while (col <= line->visual_width) {
             col += 1;
-            c = yed_line_col_to_char(line, col);
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
             if (!isspace(c)) {
                 break;
@@ -1190,7 +1190,7 @@ skip_lines:
         if (line) {
             yed_set_cursor_far_within_frame(frame, 1, row);
             line = yed_buff_get_line(frame->buffer, row);
-            c    = yed_line_col_to_char(line, 1);
+            c    = ((yed_glyph*)yed_line_col_to_glyph(line, 1))->c;
             if (c && isspace(c)) {
                 goto again;
             }
@@ -2036,7 +2036,7 @@ void yed_default_command_insert(int n_args, char **args) {
                col, idx,
                i, len,
                tabw;
-    char      *c;
+    yed_glyph  g, *git;
 
     if (n_args != 1) {
         yed_append_text_to_cmd_buff("[!] expected one argument but got ");
@@ -2093,8 +2093,8 @@ void yed_default_command_insert(int n_args, char **args) {
 
         len = 0;
         idx = yed_line_col_to_idx(line, col);
-        array_traverse_from(line->chars, c, idx) {
-            yed_append_to_line(frame->buffer, frame->cursor_line + 1, *c);
+        yed_line_glyph_traverse_from(*line, git, idx) {
+            yed_append_to_line(frame->buffer, frame->cursor_line + 1, *git);
             len += 1;
         }
         for (; len > 0; len -= 1) {
@@ -2105,15 +2105,21 @@ void yed_default_command_insert(int n_args, char **args) {
     } else {
         if (key == TAB) {
             tabw = yed_get_tab_width();
+            g.c = ' ';
             for (i = 0; i < tabw; i += 1) {
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, ' ');
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, g);
             }
             yed_move_cursor_within_frame(frame, tabw, 0);
         } else {
             if (key == SHIFT_TAB) {
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col, '\t');
+                g.c = '\t';
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
+            } else if (key == MBYTE) {
+                g = ys->mbyte;
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
             } else {
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col, key);
+                g.c = key;
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
             }
             yed_move_cursor_within_frame(frame, 1, 0);
         }
@@ -2138,9 +2144,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
     int        r1, c1, r2, c2,
                col,
                buff_n_lines,
-               prev_line_len, old_line_nr;
-    char      *c, *g;
-    int        width;
+               prev_line_width, old_line_nr;
+    yed_glyph *git;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
@@ -2193,18 +2198,18 @@ void yed_default_command_delete_back(int n_args, char **args) {
 
         if (col == 1) {
             if (frame->cursor_line > 1) {
-                old_line_nr   = frame->cursor_line;
-                previous_line = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
-                prev_line_len = previous_line->visual_width;
+                old_line_nr     = frame->cursor_line;
+                previous_line   = yed_buff_get_line(frame->buffer, frame->cursor_line - 1);
+                prev_line_width = previous_line->visual_width;
 
-                array_traverse(line->chars, c) {
-                    yed_append_to_line(frame->buffer, frame->cursor_line - 1, *c);
+                yed_line_glyph_traverse(*line, git) {
+                    yed_append_to_line(frame->buffer, frame->cursor_line - 1, *git);
                 }
 
                 /*
                  * Move to the previous line.
                  */
-                yed_set_cursor_within_frame(frame, prev_line_len + 1, frame->cursor_line - 1);
+                yed_set_cursor_within_frame(frame, prev_line_width + 1, frame->cursor_line - 1);
 
                 /*
                  * Kinda hacky, but this will help us pull the buffer
@@ -2222,10 +2227,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 yed_buff_delete_line(frame->buffer, old_line_nr);
             }
         } else {
-            g     = yed_get_glyph(frame->buffer, frame->cursor_line, col - 1);
-            width = yed_get_glyph_width(g);
+            yed_move_cursor_within_frame(frame, -1, 0);
             yed_delete_from_line(frame->buffer, frame->cursor_line, col - 1);
-            yed_move_cursor_within_frame(frame, -1 * width, 0);
         }
     }
 
@@ -2246,7 +2249,7 @@ void yed_default_command_delete_forward(int n_args, char **args) {
     int        row, col;
     int        r1, c1, r2, c2;
     int        buff_n_lines;
-    char      *c;
+    yed_glyph *git;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero argument but got ");
@@ -2303,8 +2306,8 @@ void yed_default_command_delete_forward(int n_args, char **args) {
             if (frame->cursor_line < yed_buff_n_lines(frame->buffer)) {
                 next_line = yed_buff_get_line(frame->buffer, frame->cursor_line + 1);
 
-                array_traverse(next_line->chars, c) {
-                    yed_append_to_line(frame->buffer, frame->cursor_line, *c);
+                yed_line_glyph_traverse(*next_line, git) {
+                    yed_append_to_line(frame->buffer, frame->cursor_line, *git);
                 }
 
                 /*
@@ -2661,6 +2664,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
     yed_range  *sel;
     int         preserve_selection;
     int         row, col, yrow, r1, c1, r2, c2;
+    yed_glyph  *g;
 
     if (n_args > 1) {
         yed_append_text_to_cmd_buff("[!] expected zero or one arguments but got ");
@@ -2716,9 +2720,10 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         for (row = r1; row <= r2; row += 1) {
             yrow    = yed_buffer_add_line(ys->yank_buff);
             line_it = yed_buff_get_line(buff, row);
-            for (col = 1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(ys->yank_buff, yrow,
-                    yed_line_col_to_char(line_it, col));
+            for (col = 1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(ys->yank_buff, yrow, *g);
+                col += yed_get_glyph_width(*g);
             }
         }
     } else {
@@ -2726,28 +2731,32 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         yrow    = yed_buffer_add_line(ys->yank_buff);
         line_it = yed_buff_get_line(buff, r1);
         if (r1 == r2) {
-            for (col = c1; col < c2; col += 1) {
-                yed_append_to_line(ys->yank_buff, yrow,
-                    yed_line_col_to_char(line_it, col));
+            for (col = c1; col < c2;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(ys->yank_buff, yrow, *g);
+                col += yed_get_glyph_width(*g);
             }
         } else {
-            for (col = c1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(ys->yank_buff, yrow,
-                    yed_line_col_to_char(line_it, col));
+            for (col = c1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(ys->yank_buff, yrow, *g);
+                col += yed_get_glyph_width(*g);
             }
             for (row = r1 + 1; row <= r2 - 1; row += 1) {
                 yrow    = yed_buffer_add_line(ys->yank_buff);
                 line_it = yed_buff_get_line(buff, row);
-                for (col = 1; col <= line_it->visual_width; col += 1) {
-                    yed_append_to_line(ys->yank_buff, yrow,
-                        yed_line_col_to_char(line_it, col));
+                for (col = 1; col <= line_it->visual_width;) {
+                    g = yed_line_col_to_glyph(line_it, col);
+                    yed_append_to_line(ys->yank_buff, yrow, *g);
+                    col += yed_get_glyph_width(*g);
                 }
             }
             yrow    = yed_buffer_add_line(ys->yank_buff);
             line_it = yed_buff_get_line(buff, r2);
-            for (col = 1; col < c2; col += 1) {
-                yed_append_to_line(ys->yank_buff, yrow,
-                    yed_line_col_to_char(line_it, col));
+            for (col = 1; col < c2;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(ys->yank_buff, yrow, *g);
+                col += yed_get_glyph_width(*g);
             }
         }
     }
@@ -2756,7 +2765,6 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         buff->has_selection = 0;
     }
     frame->dirty = 1;
-
 }
 
 void yed_default_command_paste_yank_buffer(int n_args, char **args) {
@@ -2766,6 +2774,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                *first_line;
     yed_event   event;
     int         yank_buff_n_lines, first_row, last_row, new_row, row, col;
+    yed_glyph  *g;
 
     if (n_args != 0) {
         yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
@@ -2813,53 +2822,61 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             line_it = yed_buff_get_line(ys->yank_buff, row);
             new_row = frame->cursor_line + row;
             yed_buff_insert_line(buff, new_row);
-            for (col = 1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(buff, new_row,
-                    yed_line_col_to_char(line_it, col));
+            for (col = 1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(buff, new_row, *g);
+                col += yed_get_glyph_width(*g);
             }
         }
         yed_set_cursor_far_within_frame(frame, 1, frame->cursor_line + 1);
     } else {
         if (yank_buff_n_lines == 1) {
             line_it  = yed_buff_get_line(ys->yank_buff, 1);
-            for (col = 1; col <= line_it->visual_width; col += 1) {
+            for (col = 1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
                 yed_insert_into_line(buff,
                     frame->cursor_line,
                     frame->cursor_col + col - 1,
-                    yed_line_col_to_char(line_it, col));
+                    *g);
+                col += yed_get_glyph_width(*g);
             }
         } else {
             first_row  = frame->cursor_line;
             last_row   = frame->cursor_line + 1;
             first_line = yed_buff_get_line(buff, first_row);
             yed_buff_insert_line(buff, last_row);
-            for (col = frame->cursor_col; col <= first_line->visual_width; col += 1) {
-                yed_append_to_line(buff, last_row,
-                    yed_line_col_to_char(first_line, col));
+            for (col = frame->cursor_col; col <= first_line->visual_width;) {
+                g = yed_line_col_to_glyph(first_line, col);
+                yed_append_to_line(buff, last_row, *g);
+                col += yed_get_glyph_width(*g);
             }
-            for (col = first_line->visual_width; col >= frame->cursor_col; col -= 1) {
+            while (first_line->visual_width >= frame->cursor_col) {
                 yed_pop_from_line(buff, first_row);
             }
             line_it  = yed_buff_get_line(ys->yank_buff, 1);
-            for (col = 1; col <= line_it->visual_width; col += 1) {
-                yed_append_to_line(buff, first_row,
-                    yed_line_col_to_char(line_it, col));
+            for (col = 1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(buff, first_row, *g);
+                col += yed_get_glyph_width(*g);
             }
             for (row = 2; row <= yank_buff_n_lines - 1; row += 1) {
                 line_it = yed_buff_get_line(ys->yank_buff, row);
                 new_row = frame->cursor_line + row - 1;
                 yed_buff_insert_line(buff, new_row);
-                for (col = 1; col <= line_it->visual_width; col += 1) {
-                    yed_append_to_line(buff, new_row,
-                        yed_line_col_to_char(line_it, col));
+                for (col = 1; col <= line_it->visual_width;) {
+                    g = yed_line_col_to_glyph(line_it, col);
+                    yed_append_to_line(buff, new_row, *g);
+                    col += yed_get_glyph_width(*g);
                 }
             }
             line_it  = yed_buff_get_line(ys->yank_buff, yank_buff_n_lines);
-            for (col = 1; col <= line_it->visual_width; col += 1) {
+            for (col = 1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
                 yed_insert_into_line(buff,
                     frame->cursor_line + yank_buff_n_lines - 1,
                     col,
-                    yed_line_col_to_char(line_it, col));
+                    *g);
+                col += yed_get_glyph_width(*g);
             }
         }
     }
@@ -3056,6 +3073,7 @@ void yed_replace_current_search_update_line(int idx, int row) {
     yed_line   *line,
                *working_line;
     array_t    *markers;
+    yed_glyph   g;
 
     buff = ys->active_frame->buffer;
 
@@ -3071,7 +3089,8 @@ void yed_replace_current_search_update_line(int idx, int row) {
     it = 0;
     array_traverse(*markers, mark) {
         for (i = len - 1; i >= 0; i -= 1) {
-            yed_insert_into_line(buff, row, *mark + (it * len), replacement[i]);
+            g.c = replacement[i];
+            yed_insert_into_line(buff, row, *mark + (it * len), g);
         }
         it += 1;
     }

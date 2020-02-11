@@ -1,5 +1,5 @@
-int yed_get_glyph_width(char *g) {
-    if (*g == '\t') {
+int yed_get_glyph_width(yed_glyph g) {
+    if (g.c == '\t') {
         return yed_get_tab_width();
     }
 
@@ -17,20 +17,16 @@ int yed_get_glyph_width(char *g) {
 #define UTF8_THREE_BYTE_VAL 0X07
 #define UTF8_FOUR_BYTE_VAL  0x0F
 
-int yed_get_glyph_len(char *g) {
-    unsigned char *bytes;
-
-    bytes = (unsigned char*)g;
-
-    if (!((*bytes) >> 7)) {
+int yed_get_glyph_len(yed_glyph g) {
+    if (!(g.u_c >> 7)) {
         return 1;
-    } else if (((*bytes) >> 4) == UTF8_FOUR_BYTE_VAL) {
+    } else if ((g.u_c >> 4) == UTF8_FOUR_BYTE_VAL) {
         /* The byte looks like: 11110xxx */
         return 4;
-    } else if (((*bytes) >> 5) == UTF8_THREE_BYTE_VAL) {
+    } else if ((g.u_c >> 5) == UTF8_THREE_BYTE_VAL) {
         /* The byte looks like: 1110xxxx */
         return 3;
-    } else if (((*bytes) >> 6) == UTF8_TWO_BYTE_VAL) {
+    } else if ((g.u_c >> 6) == UTF8_TWO_BYTE_VAL) {
         /* The byte looks like: 110xxxxx */
         return 2;
     } else {

@@ -44,10 +44,10 @@ use_tree(str_t, empty_t);
 #include "bucket_array.h"
 #include "yed.h"
 #include "term.h"
+#include "utf8.h"
 #include "key.h"
 #include "fs.h"
 #include "undo.h"
-#include "utf8.h"
 #include "buffer.h"
 #include "attrs.h"
 #include "frame.h"
@@ -196,6 +196,7 @@ typedef struct yed_state_t {
          yed_plugin_ptr_t)       plugins;
     array_t                      plugin_dirs;
     yed_key_binding             *real_key_map[REAL_KEY_MAX];
+    yed_glyph                    mbyte;
     tree(int,
          yed_key_binding_ptr_t)  vkey_binding_map;
     array_t                      key_sequences;

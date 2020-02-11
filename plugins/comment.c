@@ -125,13 +125,13 @@ void comment_toggle_line_c(yed_frame *frame, yed_line *line, int row) {
 }
 
 void comment_line_c(yed_frame *frame, int row) {
-    yed_insert_into_line(frame->buffer, row, 1, ' ');
-    yed_insert_into_line(frame->buffer, row, 1, '*');
-    yed_insert_into_line(frame->buffer, row, 1, '/');
+    yed_insert_into_line(frame->buffer, row, 1, G(' '));
+    yed_insert_into_line(frame->buffer, row, 1, G('*'));
+    yed_insert_into_line(frame->buffer, row, 1, G('/'));
 
-    yed_append_to_line(frame->buffer, row, ' ');
-    yed_append_to_line(frame->buffer, row, '*');
-    yed_append_to_line(frame->buffer, row, '/');
+    yed_append_to_line(frame->buffer, row, G(' '));
+    yed_append_to_line(frame->buffer, row, G('*'));
+    yed_append_to_line(frame->buffer, row, G('/'));
 }
 
 void uncomment_line_c(yed_frame *frame, int row) {
@@ -167,8 +167,8 @@ void comment_toggle_line_hash(yed_frame *frame, yed_line *line, int row) {
 }
 
 void comment_line_hash(yed_frame *frame, int row) {
-    yed_insert_into_line(frame->buffer, row, 1, ' ');
-    yed_insert_into_line(frame->buffer, row, 1, '#');
+    yed_insert_into_line(frame->buffer, row, 1, G(' '));
+    yed_insert_into_line(frame->buffer, row, 1, G('#'));
 }
 
 void uncomment_line_hash(yed_frame *frame, int row) {
@@ -199,8 +199,8 @@ void comment_toggle_line_latex(yed_frame *frame, yed_line *line, int row) {
 }
 
 void comment_line_latex(yed_frame *frame, int row) {
-    yed_insert_into_line(frame->buffer, row, 1, ' ');
-    yed_insert_into_line(frame->buffer, row, 1, '%');
+    yed_insert_into_line(frame->buffer, row, 1, G(' '));
+    yed_insert_into_line(frame->buffer, row, 1, G('%'));
 }
 
 void uncomment_line_latex(yed_frame *frame, int row) {

@@ -41,27 +41,34 @@ yed_line * yed_copy_line(yed_line *line) {
     return new_line;
 }
 
-void yed_line_add_char(yed_line *line, char c, int idx) {
-    char *g;
+void yed_line_add_glyph(yed_line *line, yed_glyph g, int idx) {
+    int len, i;
 
-    g = array_insert(line->chars, idx, c);
+    len = yed_get_glyph_len(g);
+    for (i = len - 1; i >= 0; i -= 1) {
+        array_insert(line->chars, idx, g.bytes[i]);
+    }
     line->visual_width += yed_get_glyph_width(g);
 }
 
-void yed_line_append_char(yed_line *line, char c) {
-    char *g;
+void yed_line_append_glyph(yed_line *line, yed_glyph g) {
+    int len, width, i;
 
-    g = array_push(line->chars, c);
-    line->visual_width += yed_get_glyph_width(g);
-}
-
-void yed_line_delete_char(yed_line *line, int idx) {
-    char *g;
-    int          len, width, i;
-
-    g     = array_item(line->chars, idx);
     len   = yed_get_glyph_len(g);
     width = yed_get_glyph_width(g);
+    for (i = 0; i < len; i += 1) {
+        array_push(line->chars, g.bytes[i]);
+    }
+    line->visual_width += width;
+}
+
+void yed_line_delete_glyph(yed_line *line, int idx) {
+    yed_glyph *g;
+    int        len, width, i;
+
+    g     = array_item(line->chars, idx);
+    len   = yed_get_glyph_len(*g);
+    width = yed_get_glyph_width(*g);
 
     for (i = 0; i < len; i += 1) {
         array_delete(line->chars, idx);
@@ -70,13 +77,14 @@ void yed_line_delete_char(yed_line *line, int idx) {
     line->visual_width -= width;
 }
 
-void yed_line_pop_char(yed_line *line) {
-    char *g;
-    int          len, width, i;
+void yed_line_pop_glyph(yed_line *line) {
+    yed_glyph *g;
+    int        idx, len, width, i;
 
-    g     = array_last(line->chars);
-    len   = yed_get_glyph_len(g);
-    width = yed_get_glyph_width(g);
+    idx   = yed_line_col_to_idx(line, line->visual_width);
+    g     = array_item(line->chars, idx);
+    len   = yed_get_glyph_len(*g);
+    width = yed_get_glyph_width(*g);
 
     for (i = 0; i < len; i += 1) {
         array_pop(line->chars);
@@ -166,18 +174,18 @@ void yed_free_buffer(yed_buffer *buffer) {
 
 
 
-void yed_append_to_line_no_undo(yed_buffer *buff, int row, char c) {
+void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g) {
     yed_line *line;
 
     line = yed_buff_get_line(buff, row);
-    yed_line_append_char(line, c);
+    yed_line_append_glyph(line, g);
 }
 
 void yed_pop_from_line_no_undo(yed_buffer *buff, int row) {
     yed_line *line;
 
     line = yed_buff_get_line(buff, row);
-    yed_line_pop_char(line);
+    yed_line_pop_glyph(line);
 }
 
 void yed_line_clear_no_undo(yed_buffer *buff, int row) {
@@ -250,14 +258,14 @@ void yed_buff_delete_line_no_undo(yed_buffer *buff, int row) {
     buff->get_line_cache_row = 0;
 }
 
-void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, char c) {
+void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, yed_glyph g) {
     int       idx;
     yed_line *line;
 
     line = yed_buff_get_line(buff, row);
 
     idx = yed_line_col_to_idx(line, col);
-    yed_line_add_char(line, c, idx);
+    yed_line_add_glyph(line, g, idx);
 
     yed_mark_dirty_frames_line(buff, row);
 }
@@ -269,7 +277,7 @@ void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col) {
     line = yed_buff_get_line(buff, row);
 
     idx = yed_line_col_to_idx(line, col);
-    yed_line_delete_char(line, idx);
+    yed_line_delete_glyph(line, idx);
 
     yed_mark_dirty_frames_line(buff, row);
 }
@@ -295,16 +303,16 @@ void yed_buff_clear_no_undo(yed_buffer *buff) {
  * This is meant to preserve undo/redo behavior.
  */
 
-void yed_append_to_line(yed_buffer *buff, int row, char c) {
+void yed_append_to_line(yed_buffer *buff, int row, yed_glyph g) {
     yed_undo_action uact;
 
-    uact.kind = UNDO_CHAR_PUSH;
+    uact.kind = UNDO_GLYPH_PUSH;
     uact.row  = row;
-    uact.c    = c;
+    uact.g    = g;
 
     yed_push_undo_action(buff, &uact);
 
-    yed_append_to_line_no_undo(buff, row, c);
+    yed_append_to_line_no_undo(buff, row, g);
 }
 
 void yed_pop_from_line(yed_buffer *buff, int row) {
@@ -313,9 +321,9 @@ void yed_pop_from_line(yed_buffer *buff, int row) {
 
     line = yed_buff_get_line(buff, row);
 
-    uact.kind = UNDO_CHAR_POP;
+    uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
-    uact.c    = yed_line_col_to_char(line, line->visual_width);
+    uact.g    = *yed_line_col_to_glyph(line, line->visual_width);
 
     yed_push_undo_action(buff, &uact);
 
@@ -329,10 +337,10 @@ void yed_line_clear(yed_buffer *buff, int row) {
 
     line = yed_buff_get_line(buff, row);
 
-    uact.kind = UNDO_CHAR_POP;
+    uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
     for (i = line->visual_width; i >= 1; i -= 1) {
-        uact.c = yed_line_col_to_char(line, i);
+        uact.g = *yed_line_col_to_glyph(line, i);
         yed_push_undo_action(buff, &uact);
     }
 
@@ -359,17 +367,17 @@ void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line) {
 
     old_line = yed_buff_get_line(buff, row);
 
-    uact.kind = UNDO_CHAR_POP;
+    uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
     for (i = old_line->visual_width; i >= 1; i -= 1) {
-        uact.c = yed_line_col_to_char(old_line, i);
+        uact.g = *yed_line_col_to_glyph(old_line, i);
         yed_push_undo_action(buff, &uact);
     }
 
-    uact.kind = UNDO_CHAR_PUSH;
+    uact.kind = UNDO_GLYPH_PUSH;
     uact.row  = row;
     for (i = 1; i <= line->visual_width; i += 1) {
-        uact.c = yed_line_col_to_char(line, i);
+        uact.g = *yed_line_col_to_glyph(line, i);
         yed_push_undo_action(buff, &uact);
     }
 
@@ -398,10 +406,10 @@ void yed_buff_delete_line(yed_buffer *buff, int row) {
 
     line = yed_buff_get_line(buff, row);
 
-    uact.kind = UNDO_CHAR_POP;
+    uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
     for (i = line->visual_width; i >= 1; i -= 1) {
-        uact.c = yed_line_col_to_char(line, i);
+        uact.g = *yed_line_col_to_glyph(line, i);
         yed_push_undo_action(buff, &uact);
     }
 
@@ -412,17 +420,17 @@ void yed_buff_delete_line(yed_buffer *buff, int row) {
     yed_buff_delete_line_no_undo(buff, row);
 }
 
-void yed_insert_into_line(yed_buffer *buff, int row, int col, char c) {
+void yed_insert_into_line(yed_buffer *buff, int row, int col, yed_glyph g) {
     yed_undo_action uact;
 
-    uact.kind = UNDO_CHAR_ADD;
+    uact.kind = UNDO_GLYPH_ADD;
     uact.row  = row;
     uact.col  = col;
-    uact.c    = c;
+    uact.g    = g;
 
     yed_push_undo_action(buff, &uact);
 
-    yed_insert_into_line_no_undo(buff, row, col, c);
+    yed_insert_into_line_no_undo(buff, row, col, g);
 }
 
 void yed_delete_from_line(yed_buffer *buff, int row, int col) {
@@ -431,10 +439,10 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
 
     line = yed_buff_get_line(buff, row);
 
-    uact.kind = UNDO_CHAR_DEL;
+    uact.kind = UNDO_GLYPH_DEL;
     uact.row  = row;
     uact.col  = col;
-    uact.c    = yed_line_col_to_char(line, col);
+    uact.g    = *yed_line_col_to_glyph(line, col);
 
     yed_push_undo_action(buff, &uact);
 
@@ -449,10 +457,10 @@ void yed_buff_clear(yed_buffer *buff) {
     for (row = bucket_array_len(buff->lines); row >= 1; row -= 1) {
         line = yed_buff_get_line(buff, row);
 
-        uact.kind = UNDO_CHAR_POP;
+        uact.kind = UNDO_GLYPH_POP;
         uact.row  = row;
         for (col = line->visual_width; col >= 1; col -= 1) {
-            uact.c = yed_line_col_to_char(line, col);
+            uact.g = *yed_line_col_to_glyph(line, col);
             yed_push_undo_action(buff, &uact);
         }
 
@@ -483,53 +491,58 @@ int yed_buff_n_lines(yed_buffer *buff) {
 
 
 int yed_line_idx_to_col(yed_line *line, int idx) {
-    char *g;
-    int        i, j, len;
+    yed_glyph *g;
+    int        i, col, len;
 
     len = array_len(line->chars);
 
-    for (i = 0, j = 1; i < len;) {
-        g  = array_item(line->chars, i);
-        i += yed_get_glyph_len(g);
-
-        if (i > idx) {
-            return j;
-        }
-
-        j += yed_get_glyph_width(g);
+    col = 1;
+    for (i = 0; i < idx && i < len;) {
+        g    = array_item(line->chars, i);
+        col += yed_get_glyph_width(*g);
+        i   += yed_get_glyph_len(*g);
     }
 
-    return -1;
+    return col;
 }
 
 int yed_line_col_to_idx(yed_line *line, int col) {
-    char *g;
-    int        i, j, len;
+    yed_glyph *g;
+    int        c, i;
 
-    len = array_len(line->chars);
-
-    for (i = 0, j = 1; i < len;) {
-        g  = array_item(line->chars, i);
-        j += yed_get_glyph_width(g);
-
-        if (j > col) { return i; }
-
-        i += yed_get_glyph_len(g);
+    if (col == line->visual_width + 1) {
+        return array_len(line->chars);
     }
 
-    return -1;
+    ASSERT(col <= line->visual_width, "unable to convert column to glyph index");
+
+    i = 0;
+    for (c = 1; c <= line->visual_width;) {
+        g  = array_item(line->chars, i);
+        c += yed_get_glyph_width(*g);
+
+        if (col < c) { return i; }
+
+        i += yed_get_glyph_len(*g);
+    }
+
+    return i;
 }
 
-char yed_line_col_to_char(yed_line *line, int col) {
+yed_glyph * yed_line_col_to_glyph(yed_line *line, int col) {
     int idx;
 
     idx = yed_line_col_to_idx(line, col);
 
     if (idx == -1) {
-        return 0;
+        return NULL;
     }
 
-    return *(char*)array_item(line->chars, idx);
+    return (yed_glyph*)array_item(line->chars, idx);
+}
+
+yed_glyph * yed_line_last_glyph(yed_line *line) {
+    return yed_line_col_to_glyph(line, line->visual_width);
 }
 
 yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
@@ -554,7 +567,7 @@ yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     return line;
 }
 
-char *yed_get_glyph(yed_buffer *buff, int row, int col) {
+yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col) {
     yed_line *line;
     int       idx;
 
@@ -605,7 +618,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
     char        *file_data, c;
     yed_line    *last_line,
                  line;
-    char        *g;
+    yed_glyph   *g;
 
     fd = fileno(f);
 
@@ -648,8 +661,8 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
 
             for (j = 0; j < line_len;) {
                 g = array_item(line.chars, j);
-                line.visual_width += yed_get_glyph_width(g);
-                j += yed_get_glyph_len(g);
+                line.visual_width += yed_get_glyph_width(*g);
+                j += yed_get_glyph_len(*g);
             }
 
             bucket_array_push(buff->lines, line);
@@ -677,8 +690,8 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
 
             for (j = 0; j < line_len;) {
                 g = array_item(line.chars, j);
-                line.visual_width += yed_get_glyph_width(g);
-                j += yed_get_glyph_len(g);
+                line.visual_width += yed_get_glyph_width(*g);
+                j += yed_get_glyph_len(*g);
             }
 
             bucket_array_push(buff->lines, line);
@@ -708,7 +721,7 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
     char         c, *line_data;
     yed_line    *last_line,
                  line;
-    char        *g;
+    yed_glyph   *g;
     int          j;
 
     last_line = bucket_array_last(buff->lines);
@@ -730,8 +743,8 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
 
         for (j = 0; j < line_len;) {
             g = array_item(line.chars, j);
-            line.visual_width += yed_get_glyph_width(g);
-            j += yed_get_glyph_len(g);
+            line.visual_width += yed_get_glyph_width(*g);
+            j += yed_get_glyph_len(*g);
         }
 
         bucket_array_push(buff->lines, line);
@@ -843,7 +856,7 @@ void yed_buff_delete_selection(yed_buffer *buff) {
     yed_range *range;
     yed_line  *line1,
               *line2;
-    char       c;
+    yed_glyph *g;
     int        r1, c1, r2, c2,
                n, i;
 
@@ -875,8 +888,8 @@ void yed_buff_delete_selection(yed_buffer *buff) {
         ASSERT(line2, "didn't get line2 in yed_buff_delete_selection()");
         n = line2->visual_width - c2 + 1;
         for (i = 0; i < n; i += 1) {
-            c = yed_line_col_to_char(line2, c2 + i);
-            yed_append_to_line(buff, r1, c);
+            g = yed_line_col_to_glyph(line2, c2 + i);
+            yed_append_to_line(buff, r1, *g);
         }
         for (i = c2 - 1; i < n; i += 1) {
             yed_delete_from_line(buff, r1 + 1, 1);

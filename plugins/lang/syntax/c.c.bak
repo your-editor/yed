@@ -166,7 +166,7 @@ void syntax_c_highlight(yed_event *event) {
     }
 
     if (lines_in_comment[event->row - frame->buffer_y_offset]) {
-        for (k = 0 ; k < array_len(line->chars); k += 1) {
+        for (k = 0 ; k < line->visual_width; k += 1) {
             attr = array_item(event->line_attrs, k);
             yed_combine_attrs(attr, &com);
         }

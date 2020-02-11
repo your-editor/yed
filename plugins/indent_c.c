@@ -44,7 +44,6 @@ static void do_indent(yed_frame *frame) {
     yed_line  *prev_line;
     int        i, indent_width,
                tabw;
-    char      *c;
 
     tabw = get_tabw();
 
@@ -56,18 +55,18 @@ static void do_indent(yed_frame *frame) {
     if (!prev_line)    { return; }
 
     indent_width = 0;
-    while (indent_width < array_len(prev_line->chars)
-    &&     *(c = array_item(prev_line->chars, indent_width)) == ' ') {
+    while (indent_width < prev_line->visual_width
+    &&     yed_line_col_to_glyph(prev_line, indent_width + 1)->c == ' ') {
         indent_width += 1;
     }
 
-    if (array_len(prev_line->chars) > 0
-    &&  yed_line_col_to_char(prev_line, array_len(prev_line->chars)) == '{') {
+    if (prev_line->visual_width > 0
+    &&  yed_line_col_to_glyph(prev_line, prev_line->visual_width)->c == '{') {
         indent_width += tabw;
     }
 
     for (i = 0; i < indent_width; i += 1) {
-        yed_insert_into_line(frame->buffer, frame->cursor_line, 1, ' ');
+        yed_insert_into_line(frame->buffer, frame->cursor_line, 1, G(' '));
     }
 
     yed_move_cursor_within_frame(frame, indent_width, 0);
@@ -93,7 +92,7 @@ static void do_brace_backup(yed_frame *frame) {
     i = 0;
 
     while (i < brace_col
-    &&     yed_line_col_to_char(line, i + 1) == ' ') {
+    &&     yed_line_col_to_glyph(line, i + 1)->c == ' ') {
         i += 1;
     }
 
@@ -146,7 +145,7 @@ void indent_c_post_delete_back_handler(yed_event *event) {
     col = all_spaces = 1;
 
     while (col < frame->cursor_col) {
-        if (yed_line_col_to_char(line, col) != ' ') {
+        if (yed_line_col_to_glyph(line, col)->c != ' ') {
             all_spaces = 0;
             break;
         }
@@ -267,7 +266,7 @@ void indent_line(yed_frame *frame, yed_line *line, int row, int tabw) {
     col = 1;
 
      while (col <= line->visual_width) {
-        if (yed_line_col_to_char(line, col) != ' ') {
+        if (yed_line_col_to_glyph(line, col)->c != ' ') {
             break;
         }
         col += 1;
@@ -277,7 +276,7 @@ void indent_line(yed_frame *frame, yed_line *line, int row, int tabw) {
     add = rem ? (tabw - rem) : tabw;
 
     for (i = 0; i < add; i += 1) {
-        yed_insert_into_line(frame->buffer, row, 1, ' ');
+        yed_insert_into_line(frame->buffer, row, 1, G(' '));
     }
 }
 
@@ -289,7 +288,7 @@ void unindent_line(yed_frame *frame, yed_line *line, int row, int tabw) {
     col = 1;
 
      while (col <= line->visual_width) {
-        if (yed_line_col_to_char(line, col) != ' ') {
+        if (yed_line_col_to_glyph(line, col)->c != ' ') {
             break;
         }
         col += 1;

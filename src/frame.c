@@ -473,8 +473,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * Okay, let's draw.
      */
     for (col_off = 0; col_off < n_col;) {
-        width            = yed_get_glyph_width(bytes);
-        n_bytes          = yed_get_glyph_len(bytes);
+        width            = yed_get_glyph_width(*(yed_glyph*)bytes);
+        n_bytes          = yed_get_glyph_len(*(yed_glyph*)bytes);
         all_cols_visible = 1;
 
         if (*bytes == '\t') {
@@ -636,7 +636,12 @@ void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     yed_buffer *old_buff;
 
-    old_buff      = frame->buffer;
+    old_buff = frame->buffer;
+
+    if (old_buff == buff) {
+        return;
+    }
+
     frame->buffer = buff;
     frame->dirty  = 1;
 
@@ -864,16 +869,14 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
 
     line = yed_buff_get_line(f->buffer, f->cursor_line);
 
-    if (line->visual_width == 0) { return; }
-
     width = 1;
 
     if (dir > 0 && f->cursor_col <= line->visual_width) {
         dir   = 1;
-        width = yed_get_glyph_width(array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col)));
+        width = yed_get_glyph_width(*(yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col)));
     } else if (dir < 0 && f->cursor_col > 1) {
         dir   = -1;
-        width = yed_get_glyph_width(array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
+        width = yed_get_glyph_width(*(yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
     }
 
     old_x_off  = f->buffer_x_offset;
@@ -910,9 +913,10 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
 
 void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_event  event;
-    int        col, row,
+    int        dir, glyph_dist, row,
                line_width;
     yed_line  *line;
+    yed_glyph *g, *new_g;
 
     row = new_y - f->cursor_line;
     yed_move_cursor_within_frame(f, 0, row);
@@ -920,16 +924,31 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     line       = yed_buff_get_line(f->buffer, f->cursor_line);
     line_width = line->visual_width;
 
-    col = new_x - f->cursor_col;
-
-    if (f->cursor_col + col > line_width) {
-        f->cur_x      = MIN(f->desired_x - 1, line_width) + f->left - f->buffer_x_offset;
-        f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
-
-        col = new_x - f->cursor_col;
+    if (new_x > line_width + 1) {
+        new_x = line_width + 1;
     }
 
-    yed_move_cursor_within_frame(f, col, 0);
+    if (f->cursor_col != new_x) {
+        dir        = new_x - f->cursor_col > 0 ? 1 : -1;
+        glyph_dist = 0;
+        g          = yed_line_col_to_glyph(line, f->cursor_col);
+        new_g      = yed_line_col_to_glyph(line, new_x);
+
+        if (dir == 1) {
+            while (g != new_g) {
+                g           = ((void*)g) + yed_get_glyph_len(*g);
+                glyph_dist += 1;
+            }
+        } else {
+            while (new_g != g) {
+                new_g       = ((void*)new_g) + yed_get_glyph_len(*new_g);
+                glyph_dist += 1;
+            }
+        }
+
+        glyph_dist *= dir;
+        yed_move_cursor_within_frame(f, glyph_dist, 0);
+    }
 
     event.kind  = EVENT_CURSOR_MOVED;
     event.frame = f;
@@ -937,7 +956,7 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_trigger_event(&event);
 }
 
-void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
+void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
     int       i,
               dir,
               line_width,
@@ -990,8 +1009,8 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
         f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
     }
 
-    dir = col > 0 ? 1 : -1;
-    for (i = 0; i < dir * col; i += 1) {
+    dir = glyph > 0 ? 1 : -1;
+    for (i = 0; i < dir * glyph; i += 1) {
         yed_move_cursor_once_x_within_frame(f, dir, line_width);
     }
 
