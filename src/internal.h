@@ -44,6 +44,8 @@ use_tree(str_t, empty_t);
 #include "bucket_array.h"
 #include "yed.h"
 #include "term.h"
+/* What would be in wcwidth.h: */
+int mk_wcwidth(wchar_t ucs);
 #include "utf8.h"
 #include "key.h"
 #include "fs.h"

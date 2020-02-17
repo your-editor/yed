@@ -7,7 +7,11 @@ int yed_get_glyph_width(yed_glyph g) {
      * and any unicode characters that occupy more than one column.
      */
 
-    return 1;
+    if (g.c <= 127) {
+        return 1;
+    }
+
+    return mk_wcwidth(g.data);
 }
 
 /* Each of these masks detects characters of zero to four bytes */
