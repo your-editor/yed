@@ -731,7 +731,7 @@ void vimish_insert(int key, char *key_str) {
             break;
 
         default:
-            if (key == ENTER || key == TAB || !iscntrl(key)) {
+            if (key == ENTER || key == TAB || key == MBYTE || !iscntrl(key)) {
                 YEXE("insert", key_str);
             } else {
                 vimish_pop_repeat_key();

@@ -5,6 +5,7 @@
 typedef struct __attribute__((packed)) yed_line_t {
     array_t chars;
     int     visual_width;
+    int     n_glyphs;
 } yed_line;
 
 #define RANGE_NORMAL  (0x1)
@@ -101,6 +102,9 @@ void yed_buff_delete_selection(yed_buffer *buff);
 
 
 int yed_buff_is_visible(yed_buffer *buff);
+
+void yed_update_line_visual_widths(void);
+
 
 #define yed_line_glyph_traverse(array, it)                                                  \
     for (it = (array).chars.data;                                                           \

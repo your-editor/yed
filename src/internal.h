@@ -185,6 +185,7 @@ typedef struct yed_state_t {
     int                          cmd_cursor_x;
     array_t                      cmd_name_stack;
     int                          status;
+    int                          tabw;
     int                          redraw;
     int                          redraw_cls;
     tree(yed_command_name_t,
@@ -210,6 +211,9 @@ typedef struct yed_state_t {
     yed_style_name_t             active_style;
     options_t                    options;
     unsigned long long           start_time_ms;
+    unsigned long long           n_pumps;
+    unsigned long long           draw_accum_us;
+    unsigned long long           draw_avg_us;
 } yed_state;
 
 extern yed_state *ys;

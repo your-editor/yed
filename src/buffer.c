@@ -36,6 +36,7 @@ yed_line * yed_copy_line(yed_line *line) {
     *new_line = yed_new_line();
 
     new_line->visual_width = line->visual_width;
+    new_line->n_glyphs     = line->n_glyphs;
     array_copy(new_line->chars, line->chars);
 
     return new_line;
@@ -49,6 +50,7 @@ void yed_line_add_glyph(yed_line *line, yed_glyph g, int idx) {
         array_insert(line->chars, idx, g.bytes[i]);
     }
     line->visual_width += yed_get_glyph_width(g);
+    line->n_glyphs     += 1;
 }
 
 void yed_line_append_glyph(yed_line *line, yed_glyph g) {
@@ -60,6 +62,7 @@ void yed_line_append_glyph(yed_line *line, yed_glyph g) {
         array_push(line->chars, g.bytes[i]);
     }
     line->visual_width += width;
+    line->n_glyphs     += 1;
 }
 
 void yed_line_delete_glyph(yed_line *line, int idx) {
@@ -75,6 +78,7 @@ void yed_line_delete_glyph(yed_line *line, int idx) {
     }
 
     line->visual_width -= width;
+    line->n_glyphs     -= 1;
 }
 
 void yed_line_pop_glyph(yed_line *line) {
@@ -91,6 +95,7 @@ void yed_line_pop_glyph(yed_line *line) {
     }
 
     line->visual_width -= width;
+    line->n_glyphs     -= 1;
 }
 
 yed_buffer yed_new_buff(void) {
@@ -496,6 +501,11 @@ int yed_line_idx_to_col(yed_line *line, int idx) {
 
     len = array_len(line->chars);
 
+    if (line->n_glyphs == line->visual_width
+    &&  line->n_glyphs == array_len(line->chars)) {
+        return idx + 1;
+    }
+
     col = 1;
     for (i = 0; i < idx && i < len;) {
         g    = array_item(line->chars, i);
@@ -512,6 +522,11 @@ int yed_line_col_to_idx(yed_line *line, int col) {
 
     if (col == line->visual_width + 1) {
         return array_len(line->chars);
+    }
+
+    if (line->n_glyphs == line->visual_width
+    &&  line->n_glyphs == array_len(line->chars)) {
+        return col - 1;
     }
 
     ASSERT(col <= line->visual_width, "unable to convert column to glyph index");
@@ -648,7 +663,10 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         c = file_data[i];
 
         if (c == '\n') {
-            line = yed_new_line_with_cap(line_len);
+            line                   = yed_new_line_with_cap(line_len);
+/*             line.chars.should_free = 0; */
+/*             line.chars.data        = file_data + i - line_len; */
+/*             line.chars.used        = line_len; */
 
             array_push_n(line.chars, file_data + i - line_len, line_len);
 
@@ -662,6 +680,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
             for (j = 0; j < line_len;) {
                 g = array_item(line.chars, j);
                 line.visual_width += yed_get_glyph_width(*g);
+                line.n_glyphs     += 1;
                 j += yed_get_glyph_len(*g);
             }
 
@@ -677,7 +696,10 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         if (file_size) {
             /* There's only one line in the file, but it doesn't have a newline. */
 
-            line = yed_new_line_with_cap(line_len);
+            line                   = yed_new_line_with_cap(line_len);
+/*             line.chars.should_free = 0; */
+/*             line.chars.data        = file_data + i - line_len; */
+/*             line.chars.used        = line_len; */
 
             array_push_n(line.chars, file_data + i - line_len, line_len);
 
@@ -691,6 +713,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
             for (j = 0; j < line_len;) {
                 g = array_item(line.chars, j);
                 line.visual_width += yed_get_glyph_width(*g);
+                line.n_glyphs     += 1;
                 j += yed_get_glyph_len(*g);
             }
 
@@ -701,6 +724,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         }
     }
 
+/*     (void)did_map; */
     if (did_map) {
         munmap(file_data, file_size);
     }
@@ -744,6 +768,7 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
         for (j = 0; j < line_len;) {
             g = array_item(line.chars, j);
             line.visual_width += yed_get_glyph_width(*g);
+            line.n_glyphs     += 1;
             j += yed_get_glyph_len(*g);
         }
 
@@ -914,4 +939,21 @@ int yed_buff_is_visible(yed_buffer *buff) {
     }
 
     return 0;
+}
+
+void yed_update_line_visual_widths(void) {
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  bit;
+    yed_buffer                                   *buff;
+    yed_line                                     *line;
+    yed_glyph                                    *glyph;
+
+    tree_traverse(ys->buffers, bit) {
+        buff = tree_it_val(bit);
+        bucket_array_traverse(buff->lines, line) {
+            line->visual_width = 0;
+            yed_line_glyph_traverse(*line, glyph) {
+                line->visual_width += yed_get_glyph_width(*glyph);
+            }
+        }
+    }
 }

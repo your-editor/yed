@@ -1014,10 +1014,20 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
         yed_move_cursor_once_x_within_frame(f, dir, line_width);
     }
 
+
     if (f->buffer->has_selection && !f->buffer->selection.locked) {
         f->buffer->selection.cursor_row = f->cursor_line;
         f->buffer->selection.cursor_col = f->cursor_col;
     }
+
+    /*
+     * Do some more of this sanity checking in case something wacky
+     * happens and yed_move_cursor_once_x_within_frame() never gets
+     * called, but the cursor still isn't in the right place.
+     */
+    LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
+
+    f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
 
     if (row > 1 || row < -1) {
         f->dirty = 1;

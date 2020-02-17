@@ -4,7 +4,7 @@ YED_DIR=..
 
 all: $(TARGETS)
 
-%.so: %.c
+%.so: %.c $(LIB_SRC)
 	@echo "Compiling plugin $@.."
 	@$(CC) $< $(PLUGIN_C_FLAGS) $(cfg) -o $@
 

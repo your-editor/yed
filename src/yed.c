@@ -180,8 +180,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     char              **file_it;
     unsigned long long  start_time;
 
-    start_time = measure_time_now_ms();
-
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
 
@@ -197,7 +195,10 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         yed_tool_attach();
     }
 
+    start_time = measure_time_now_ms();
+
     yed_init_vars();
+    ys->tabw = yed_get_tab_width();
     yed_init_styles();
     yed_init_buffers();
     yed_init_frames();
@@ -282,6 +283,7 @@ void yed_fini(yed_state *state) {
     bytes = pretty_bytes(getPeakRSS());
 
     printf("Startup time: %llums\nPeak RSS:     %s\nThanks for using yed!\n", startup_time, bytes);
+    printf("Average draw time: %.1fus\n", ((float)ys->draw_accum_us) / ((float)ys->n_pumps));
 
     free(bytes);
 }
@@ -308,7 +310,8 @@ static void write_small_message(void) {
 }
 
 int yed_pump(void) {
-    int   keys[16], n_keys, i;
+    int                keys[16], n_keys, i, tabw_var_val;
+    unsigned long long start_us;
 
     if (ys->status == YED_RELOAD) {
         yed_service_reload();
@@ -357,6 +360,14 @@ int yed_pump(void) {
         yed_take_key(keys[i]);
     }
 
+    if ((tabw_var_val = yed_get_tab_width()) != ys->tabw) {
+        ys->tabw = tabw_var_val;
+        yed_update_line_visual_widths();
+        ys->redraw = 1;
+    }
+
+    start_us = measure_time_now_us();
+
     if (ys->redraw) {
         if (yed_check_for_resize()) {
             yed_handle_resize();
@@ -374,6 +385,9 @@ int yed_pump(void) {
     }
 
     yed_update_frames();
+
+    ys->draw_accum_us += measure_time_now_us() - start_us;
+    ys->n_pumps       += 1;
 
     ys->redraw = ys->redraw_cls = 0;
 

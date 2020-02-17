@@ -1,7 +1,5 @@
 int yed_get_glyph_width(yed_glyph g) {
-    if (g.c == '\t') {
-        return yed_get_tab_width();
-    }
+    if (g.c == '\t') { return ys->tabw; }
 
     /*
      * @todo

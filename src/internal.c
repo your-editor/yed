@@ -18,6 +18,10 @@ void yed_assert_fail(const char *msg, const char *fname, int line, const char *c
 
 
 uint64_t next_power_of_2(uint64_t x) {
+    if (x == 0) {
+        return 2;
+    }
+
     x--;
     x |= x >> 1;
     x |= x >> 2;

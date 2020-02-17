@@ -1105,7 +1105,7 @@ skip_lines:
             goto again;
         }
     } else {
-        yed_move_cursor_within_frame(frame, col - frame->cursor_col, 0);
+        yed_set_cursor_within_frame(frame, col, frame->cursor_line);
     }
 }
 
@@ -1196,7 +1196,7 @@ skip_lines:
             }
         }
     } else {
-        yed_move_cursor_within_frame(frame, col - frame->cursor_col, 0);
+        yed_set_cursor_within_frame(frame, col, frame->cursor_line);
     }
 }
 

@@ -9,13 +9,13 @@ static inline void yed_menu_frame_add_name(yed_buffer *buff, char *name, int fra
     n_spaces = (frame_width / 2) - (len / 2);
 
     for (i = 0; i < n_spaces; i += 1) {
-        yed_append_to_line_no_undo(buff, 1, ' ');
+        yed_append_to_line_no_undo(buff, 1, G(' '));
     }
 
     for (i = 0; i < len; i += 1) {
         if (name[i] == '\n')    { break; }
 
-        yed_append_to_line_no_undo(buff, 1, name[i]);
+        yed_append_to_line_no_undo(buff, 1, G(name[i]));
     }
 }
 
@@ -31,7 +31,7 @@ static inline void yed_menu_frame_add_text(yed_buffer *buff, char *text) {
             yed_buffer_add_line_no_undo(buff);
             row = yed_buff_n_lines(buff);
         } else {
-            yed_append_to_line(buff, row, text[i]);
+            yed_append_to_line(buff, row, G(text[i]));
         }
     }
 }
@@ -45,7 +45,7 @@ static inline void yed_menu_frame_add_option(yed_buffer *buff, char *option) {
     for (i = 0; i < len; i += 1) {
         if (option[i] == '\n')    { break; }
 
-        yed_append_to_line_no_undo(buff, yed_buff_n_lines(buff), option[i]);
+        yed_append_to_line_no_undo(buff, yed_buff_n_lines(buff), G(option[i]));
     }
 }
 

@@ -102,20 +102,20 @@ int comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
 
 /* C */
 void comment_toggle_line_c(yed_frame *frame, yed_line *line, int row) {
-    int   line_len;
-    char *c;
+    int        line_len;
+    yed_glyph *g;
 
-    line_len = array_len(line->chars);
+    line_len = line->visual_width;
 
     /* Are we uncommenting? */
-    if (array_len(line->chars) >= 6) {
-        c = array_item(line->chars, 0);
-        if (*c == '/') { c = array_item(line->chars, 1);
-        if (*c == '*') { c = array_item(line->chars, 2);
-        if (*c == ' ') { c = array_item(line->chars, line_len - 1);
-        if (*c == '/') { c = array_item(line->chars, line_len - 2);
-        if (*c == '*') { c = array_item(line->chars, line_len - 3);
-        if (*c == ' ') {
+    if (line_len >= 6) {
+        g = yed_line_col_to_glyph(line, 1);
+        if (g->c == '/') { g = yed_line_col_to_glyph(line, 2);
+        if (g->c == '*') { g = yed_line_col_to_glyph(line, 3);
+        if (g->c == ' ') { g = yed_line_col_to_glyph(line, line_len);
+        if (g->c == '/') { g = yed_line_col_to_glyph(line, line_len - 1);
+        if (g->c == '*') { g = yed_line_col_to_glyph(line, line_len - 2);
+        if (g->c == ' ') {
             uncomment_line_c(frame, row);
             return;
         }}}}}}
@@ -146,17 +146,17 @@ void uncomment_line_c(yed_frame *frame, int row) {
 
 /* Hash-comment languages */
 void comment_toggle_line_hash(yed_frame *frame, yed_line *line, int row) {
-    int   line_len;
-    char *c;
+    int        line_len;
+    yed_glyph *g;
 
-    line_len = array_len(line->chars);
+    line_len = line->visual_width;
 
     /* Are we uncommenting? */
     if (line_len >= 2) {
-        c = array_item(line->chars, 0);
-        if (*c == '#') {
-            c = array_item(line->chars, 1);
-            if (*c == ' ') {
+        g = yed_line_col_to_glyph(line, 1);
+        if (g->c == '#') {
+            g = yed_line_col_to_glyph(line, 2);
+            if (g->c == ' ') {
                 uncomment_line_hash(frame, row);
                 return;
             }
@@ -178,18 +178,18 @@ void uncomment_line_hash(yed_frame *frame, int row) {
 
 /* LaTeX */
 void comment_toggle_line_latex(yed_frame *frame, yed_line *line, int row) {
-    int   line_len;
-    char *c;
+    int        line_len;
+    yed_glyph *g;
 
-    line_len = array_len(line->chars);
+    line_len = line->visual_width;
 
     /* Are we uncommenting? */
     if (line_len >= 2) {
-        c = array_item(line->chars, 0);
-        if (*c == '%') {
-            c = array_item(line->chars, 1);
-            if (*c == ' ') {
-                uncomment_line_latex(frame, row);
+        g = yed_line_col_to_glyph(line, 1);
+        if (g->c == '%') {
+            g = yed_line_col_to_glyph(line, 2);
+            if (g->c == ' ') {
+                uncomment_line_hash(frame, row);
                 return;
             }
         }
