@@ -2,22 +2,22 @@
 #define __UNDO_H__
 
 
-#define UNDO_CHAR_ADD   (1)
-#define UNDO_CHAR_PUSH  (2)
-#define UNDO_CHAR_DEL   (3)
-#define UNDO_CHAR_POP   (4)
-#define UNDO_LINE_ADD   (6)
-#define UNDO_LINE_DEL   (7)
-#define UNDO_CONTENT    (11)
-#define UNDO_DIFF       (12)
+#define UNDO_GLYPH_ADD   (1)
+#define UNDO_GLYPH_PUSH  (2)
+#define UNDO_GLYPH_DEL   (3)
+#define UNDO_GLYPH_POP   (4)
+#define UNDO_LINE_ADD    (6)
+#define UNDO_LINE_DEL    (7)
+#define UNDO_CONTENT     (11)
+#define UNDO_DIFF        (12)
 
 struct yed_line_t;
 
 typedef struct {
-    int  kind;
-    int  col;
-    int  row;
-    char c;
+    int       kind;
+    int       col;
+    int       row;
+    yed_glyph g;
 } yed_undo_action;
 
 typedef struct {

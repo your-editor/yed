@@ -362,11 +362,32 @@ void yed_undraw_frame(yed_frame *frame) {
 }
 
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    int  n, col, n_col, starting_idx, run_len, run_start_n;
-    yed_attrs cur_attr, base_attr, tmp_attr, *attr_it;
-    char *c, *run_start, *cell;
-    yed_event event;
+    yed_attrs  cur_attr, base_attr, sel_attr, tmp_attr, *attr_it;
+    int        col, n_col, first_idx, first_col, width_skip, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible;
+    char      *cell, *bytes, *run_start;
+    yed_event  event;
 
+
+    /* Helper macros */
+    #define DUMP_RUN()                                                    \
+    do {                                                                  \
+        yed_set_cursor(frame->left + run_col_off, frame->top + y_offset); \
+        yed_set_attr(cur_attr);                                           \
+        append_n_to_output_buff(run_start, run_len);                      \
+    } while (0)
+
+    #define NEXT_RUN()                                                    \
+    do {                                                                  \
+        run_start    = bytes;                                             \
+        run_len      = 0;                                                 \
+        run_col_off  = col_off;                                           \
+    } while (0)
+
+
+    /*
+     * Determine what the baseline attributes of text should
+     * look like.
+     */
     if (frame == ys->active_frame
     &&  frame->cursor_line == row
     &&  !frame->buffer->has_selection
@@ -379,29 +400,42 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         base_attr = yed_active_style_get_inactive();
     }
 
+
+    /*
+     * Store the base attributes for each column.
+     * They might be modified later on.
+     */
     array_clear(frame->line_attrs);
     for (col = 1; col <= line->visual_width; col += 1) {
         array_push(frame->line_attrs, base_attr);
     }
 
+    /*
+     * Find out if there are any columns that are in a selection.
+     * If there are, apply the selection attributes to them in the
+     * line_attrs array.
+     */
     if (ys->active_frame == frame && frame->buffer->has_selection) {
         col = 1;
         if (ys->active_style) {
-            tmp_attr = yed_active_style_get_selection();
+            sel_attr = yed_active_style_get_selection();
         } else {
-            tmp_attr        = base_attr;
-            tmp_attr.flags |= ATTR_INVERSE;
+            sel_attr        = base_attr;
+            sel_attr.flags |= ATTR_INVERSE;
         }
 
         array_traverse(frame->line_attrs, attr_it) {
             if (yed_is_in_range(&frame->buffer->selection, row, col)) {
-                yed_combine_attrs(attr_it, &tmp_attr);
+                yed_combine_attrs(attr_it, &sel_attr);
             }
             col += 1;
         }
     }
 
-
+    /*
+     * We're about to start drawing.
+     * Do the pre-draw event.
+     */
     event.kind       = EVENT_LINE_PRE_DRAW;
     event.frame      = frame;
     event.row        = row;
@@ -409,7 +443,24 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
     yed_trigger_event(&event);
 
+    /*
+     * Compute how many columns we're actually going to draw.
+     * This is NOT necessarily just the line length or the
+     * frame width.
+     */
+    n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
 
+    first_col = (line->visual_width < x_offset) ? line->visual_width : x_offset + 1;
+    first_idx = yed_line_col_to_idx(line, first_col);
+    bytes     = array_item(line->chars, first_idx);
+    width_skip = first_col - yed_line_idx_to_col(line, first_idx);
+
+    /* Set up first run. */
+    run_start   = bytes;
+    run_len     = 0;
+    run_col_off = 0;
+
+    /* Set the initial attrs. */
     if (line->visual_width) {
         cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
         yed_set_attr(cur_attr);
@@ -418,120 +469,89 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         yed_set_attr(cur_attr);
     }
 
-    n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
-    n     = 0;
-    if (array_len(line->chars) < x_offset) {
-        starting_idx = array_len(line->chars);
-    } else {
-        starting_idx = yed_line_col_to_idx(line, x_offset + 1);
-    }
-
-    yed_set_cursor(frame->left, frame->top + y_offset);
-
-    col = starting_idx + 1;
-
-    run_start   = array_data(line->chars) + starting_idx;
-    run_len     = 0;
-    run_start_n = n;
-
-    array_traverse_from(line->chars, c, starting_idx) {
-        if (n == n_col)    { break; }
-
-        cell     = FRAME_CELL(frame, y_offset, n);
-        tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, col - 1);
-
-        if (*cell) {
-            /*
-             * If this cell is already written, it will break our run.
-             * So we output the run and start a new one.
-             * We must make sure that we don't put this character into
-             * the next run because it shouldn't be written at all.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-
-            append_n_to_output_buff(run_start, run_len);
-
-            run_start   = c + 1;
-            run_len     = -1;
-            run_start_n = n + 1;
-        } else if (*c == '\t') {
-            /*
-             * A TAB character will end our current run.
-             * We will print a replacement.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-            append_n_to_output_buff(run_start, run_len);
-            append_to_output_buff("»");
-
-            run_start   = c + 1;
-            run_len     = -1;
-            run_start_n = n + 1;
-        } else if (*c <= 0 || *c > 127 || iscntrl(*c)) {
-            /*
-             * A character that we can't print nicely will also end
-             * our current run. We will print a replacement.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-            append_n_to_output_buff(run_start, run_len);
-            append_to_output_buff("�");
-
-            run_start   = c + 1;
-            run_len     = -1;
-            run_start_n = n + 1;
-        } else if (!yed_attrs_eq(tmp_attr, cur_attr)) {
-            /*
-             * If the attributes change, our run will be broken.
-             */
-
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-
-            append_n_to_output_buff(run_start, run_len);
-
-            run_start   = c;
-            run_len     = 0;
-            run_start_n = n;
-
-            /*
-             * Set the new attributes for the next run.
-             */
-            yed_set_attr(tmp_attr);
-            cur_attr = tmp_attr;
-        }
-
-        run_len += 1;
-        n       += 1;
-        col     += 1;
-    }
-
     /*
-     * At end. Dump the run.
+     * Okay, let's draw.
      */
-    yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-    append_n_to_output_buff(run_start, run_len);
+    for (col_off = 0; col_off < n_col;) {
+        width            = yed_get_glyph_width(*(yed_glyph*)bytes);
+        n_bytes          = yed_get_glyph_len(*(yed_glyph*)bytes);
+        all_cols_visible = 1;
 
-    yed_set_cursor(frame->left + n, frame->top + y_offset);
-    yed_set_attr(base_attr);
+        if (*bytes == '\t') {
+            DUMP_RUN();
 
-    run_len     = 0;
-    run_start_n = n;
-    for (; n < frame->width; n += 1) {
-        cell = FRAME_CELL(frame, y_offset, n);
+            for (i = width_skip; i < width && col_off < n_col; i += 1) {
+                cell = FRAME_CELL(frame, y_offset, col_off);
+                if (!*cell) {
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                    if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+                        yed_set_attr(tmp_attr);
+                        cur_attr = tmp_attr;
+                    }
+                    yed_set_cursor(frame->left + col_off, frame->top + y_offset);
+                    append_n_to_output_buff(" ", 1);
+                }
+                col_off += 1;
+            }
 
-        if (*cell) {
-            yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-            append_n_to_output_buff(ys->_4096_spaces, run_len);
-            run_len     = -1;
-            run_start_n = n + 1;
+            /* Skip it so it's not in the next run. */
+            bytes += n_bytes;
+
+            NEXT_RUN();
+        } else {
+            for (i = width_skip; i < width && col_off < n_col; i += 1) {
+                cell = FRAME_CELL(frame, y_offset, col_off);
+                if (*cell) {
+                    all_cols_visible = 0;
+                    break;
+                }
+            }
+
+            if (all_cols_visible) {
+                for (i = width_skip; i < width && col_off < n_col; i += 1) {
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                    if (yed_attrs_eq(tmp_attr, cur_attr)) {
+                        run_len += n_bytes;
+                    } else {
+                        DUMP_RUN();
+                        cur_attr = tmp_attr;
+                        NEXT_RUN();
+                        run_len += n_bytes;
+                    }
+                    col_off += 1;
+                }
+                bytes += n_bytes;
+            } else {
+                DUMP_RUN();
+                col_off += width;
+                bytes   += n_bytes;
+                NEXT_RUN();
+            }
         }
 
-        run_len += 1;
+        width_skip = 0;
     }
 
-    yed_set_cursor(frame->left + run_start_n, frame->top + y_offset);
-    append_n_to_output_buff(ys->_4096_spaces, run_len);
+    DUMP_RUN();
+
+    bytes    = ys->_4096_spaces;
+    cur_attr = base_attr;
+    NEXT_RUN();
+
+    for (; col_off < frame->width;) {
+        cell = FRAME_CELL(frame, y_offset, col_off);
+
+        if (*cell) {
+            DUMP_RUN();
+            col_off += 1;
+            NEXT_RUN();
+        } else {
+            run_len += 1;
+            col_off += 1;
+        }
+    }
+
+    DUMP_RUN();
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
@@ -616,7 +636,12 @@ void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     yed_buffer *old_buff;
 
-    old_buff      = frame->buffer;
+    old_buff = frame->buffer;
+
+    if (old_buff == buff) {
+        return;
+    }
+
     frame->buffer = buff;
     frame->dirty  = 1;
 
@@ -839,13 +864,23 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
 }
 
 void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
-    int       new_x;
+    int       new_x, width, old_x_off;
+    yed_line *line;
 
-    if (dir > 0) {
-        dir = 1;
-    } else if (dir < 0) {
-        dir = -1;
+    line = yed_buff_get_line(f->buffer, f->cursor_line);
+
+    width = 1;
+
+    if (dir > 0 && f->cursor_col <= line->visual_width) {
+        dir   = 1;
+        width = yed_get_glyph_width(*(yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col)));
+    } else if (dir < 0 && f->cursor_col > 1) {
+        dir   = -1;
+        width = yed_get_glyph_width(*(yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
     }
+
+    old_x_off  = f->buffer_x_offset;
+    dir       *= width;
 
     if (dir) {
         new_x = f->cur_x + dir;
@@ -865,6 +900,11 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
         }
     }
 
+    LIMIT(f->buffer_x_offset, 0, line_width);
+    (void)old_x_off;
+    if (width > 1) {
+        f->cur_x += f->buffer_x_offset - old_x_off;
+    }
     LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
 
     f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
@@ -873,9 +913,10 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
 
 void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_event  event;
-    int        col, row,
+    int        dir, glyph_dist, row,
                line_width;
     yed_line  *line;
+    yed_glyph *g, *new_g;
 
     row = new_y - f->cursor_line;
     yed_move_cursor_within_frame(f, 0, row);
@@ -883,16 +924,31 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     line       = yed_buff_get_line(f->buffer, f->cursor_line);
     line_width = line->visual_width;
 
-    col = new_x - f->cursor_col;
-
-    if (f->cursor_col + col > line_width) {
-        f->cur_x      = MIN(f->desired_x - 1, line_width) + f->left - f->buffer_x_offset;
-        f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
-
-        col = new_x - f->cursor_col;
+    if (new_x > line_width + 1) {
+        new_x = line_width + 1;
     }
 
-    yed_move_cursor_within_frame(f, col, 0);
+    if (f->cursor_col != new_x) {
+        dir        = new_x - f->cursor_col > 0 ? 1 : -1;
+        glyph_dist = 0;
+        g          = yed_line_col_to_glyph(line, f->cursor_col);
+        new_g      = yed_line_col_to_glyph(line, new_x);
+
+        if (dir == 1) {
+            while (g != new_g) {
+                g           = ((void*)g) + yed_get_glyph_len(*g);
+                glyph_dist += 1;
+            }
+        } else {
+            while (new_g != g) {
+                new_g       = ((void*)new_g) + yed_get_glyph_len(*new_g);
+                glyph_dist += 1;
+            }
+        }
+
+        glyph_dist *= dir;
+        yed_move_cursor_within_frame(f, glyph_dist, 0);
+    }
 
     event.kind  = EVENT_CURSOR_MOVED;
     event.frame = f;
@@ -900,7 +956,7 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_trigger_event(&event);
 }
 
-void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
+void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
     int       i,
               dir,
               line_width,
@@ -944,20 +1000,34 @@ void yed_move_cursor_within_frame(yed_frame *f, int col, int row) {
             f->dirty           = 1;
         }
 
+        if (f->desired_x <= line->visual_width) {
+            f->desired_x = yed_line_idx_to_col(line, yed_line_col_to_idx(line, f->desired_x));
+        }
+
         f->cur_x = MIN(f->desired_x - 1, line_width) + f->left - f->buffer_x_offset;
 
         f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
     }
 
-    dir = col > 0 ? 1 : -1;
-    for (i = 0; i < dir * col; i += 1) {
+    dir = glyph > 0 ? 1 : -1;
+    for (i = 0; i < dir * glyph; i += 1) {
         yed_move_cursor_once_x_within_frame(f, dir, line_width);
     }
+
 
     if (f->buffer->has_selection && !f->buffer->selection.locked) {
         f->buffer->selection.cursor_row = f->cursor_line;
         f->buffer->selection.cursor_col = f->cursor_col;
     }
+
+    /*
+     * Do some more of this sanity checking in case something wacky
+     * happens and yed_move_cursor_once_x_within_frame() never gets
+     * called, but the cursor still isn't in the right place.
+     */
+    LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
+
+    f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
 
     if (row > 1 || row < -1) {
         f->dirty = 1;

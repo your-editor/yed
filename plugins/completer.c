@@ -78,10 +78,10 @@ void completer_buff_pre_insert_handler(yed_event *event) {
     if (event->col == line->visual_width + 1) {
         c = 0;
     } else {
-        c = yed_line_col_to_char(line, event->col);
+        c = ((yed_glyph*)yed_line_col_to_glyph(line, event->col))->c;
     }
 
-    prev_c = yed_line_col_to_char(line, event->col - 1);
+    prev_c = ((yed_glyph*)yed_line_col_to_glyph(line, event->col - 1))->c;
 
     /* There must be part of a word behind the cursor. */
     if (!isalnum(prev_c) && prev_c != '_') {

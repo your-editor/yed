@@ -3,10 +3,11 @@
 array_t _array_make(int elem_size) {
     array_t a;
 
-    a.data      = NULL;
-    a.elem_size = elem_size;
-    a.used      = 0;
-    a.capacity  = ARRAY_DEFAULT_CAP;
+    a.data        = NULL;
+    a.elem_size   = elem_size;
+    a.used        = 0;
+    a.capacity    = ARRAY_DEFAULT_CAP;
+    a.should_free = 1;
 
     return a;
 }
@@ -14,16 +15,17 @@ array_t _array_make(int elem_size) {
 array_t _array_make_with_cap(int elem_size, int initial_cap) {
     array_t a;
 
-    a.data      = NULL;
-    a.elem_size = elem_size;
-    a.used      = 0;
-    a.capacity  = initial_cap;
+    a.data        = NULL;
+    a.elem_size   = elem_size;
+    a.used        = 0;
+    a.capacity    = initial_cap;
+    a.should_free = 1;
 
     return a;
 }
 
 void _array_free(array_t *array) {
-    if (array->data) {
+    if (array->data && array->should_free) {
         free(array->data);
     }
     memset(array, 0, sizeof(*array));
@@ -34,7 +36,8 @@ void _array_grow_if_needed(array_t *array) {
     int   grow;
 
     if (!array->data) {
-        array->data = malloc(array->capacity * array->elem_size);
+        array->data        = malloc(array->capacity * array->elem_size);
+        array->should_free = 1;
     } else {
         grow = 0;
 
@@ -47,7 +50,10 @@ void _array_grow_if_needed(array_t *array) {
             data_save   = array->data;
             array->data = malloc(array->capacity * array->elem_size);
             memcpy(array->data, data_save, array->used * array->elem_size);
-            free(data_save);
+            if (array->should_free) {
+                free(data_save);
+            }
+            array->should_free = 1;
         }
     }
 }
@@ -63,7 +69,8 @@ void _array_grow_if_needed_to(array_t *array, int new_cap) {
     }
 
     if (!array->data) {
-        array->data = malloc(array->capacity * array->elem_size);
+        array->data        = malloc(array->capacity * array->elem_size);
+        array->should_free = 1;
     } else {
         while (array->used >= array->capacity) {
             array->capacity = next_power_of_2(array->capacity + 1);
@@ -74,7 +81,10 @@ void _array_grow_if_needed_to(array_t *array, int new_cap) {
             data_save   = array->data;
             array->data = malloc(array->capacity * array->elem_size);
             memcpy(array->data, data_save, array->used * array->elem_size);
-            free(data_save);
+            if (array->should_free) {
+                free(data_save);
+            }
+            array->should_free = 1;
         }
     }
 }
@@ -99,7 +109,7 @@ void * _array_push(array_t *array, void *elem) {
 void * _array_push_n(array_t *array, void *elems, int n) {
     void *elem_slot;
 
-    if (!n)    { return NULL; }
+    if (unlikely(n == 0))    { return NULL; }
 
     _array_grow_if_needed_to(array, array->used + n);
 

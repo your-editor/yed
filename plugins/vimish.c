@@ -399,7 +399,7 @@ static void vimish_do_till_fw(int key) {
     yed_frame *f;
     yed_line  *line;
     int        col;
-    char       c;
+    yed_glyph *g;
 
     if (!ys->active_frame || !ys->active_frame->buffer)    { goto out; }
 
@@ -409,12 +409,13 @@ static void vimish_do_till_fw(int key) {
 
     if (!line)    { goto out; }
 
-    for (col = f->cursor_col + 1; col <= array_len(line->chars); col += 1) {
-        c = yed_line_col_to_char(line, col);
-        if (c == key) {
+    for (col = f->cursor_col + 1; col <= line->visual_width; ) {
+        g = yed_line_col_to_glyph(line, col);
+        if (g->c == key) {
             yed_set_cursor_within_frame(f, col, f->cursor_line);
             break;
         }
+        col += yed_get_glyph_width(*g);
     }
 
     last_till_key = key;
@@ -430,7 +431,7 @@ static void vimish_do_till_bw(int key, int stop_before) {
     yed_frame *f;
     yed_line  *line;
     int        col;
-    char       c;
+    yed_glyph *g;
 
     if (!ys->active_frame || !ys->active_frame->buffer)    { goto out; }
 
@@ -440,12 +441,15 @@ static void vimish_do_till_bw(int key, int stop_before) {
 
     if (!line)    { goto out; }
 
-    for (col = f->cursor_col - 1; col >= 1; col -= 1) {
-        c = yed_line_col_to_char(line, col);
-        if (c == key) {
-            yed_set_cursor_within_frame(f, col + stop_before, f->cursor_line);
+    for (col = f->cursor_col - 1; col >= 1;) {
+        g = yed_line_col_to_glyph(line, col);
+        if (g->c == key) {
+            yed_set_cursor_within_frame(f,
+                                        col + (stop_before * yed_get_glyph_width(*g)),
+                                        f->cursor_line);
             break;
         }
+        col = yed_line_idx_to_col(line, yed_line_col_to_idx(line, col - 1));
     }
 
     last_till_key = key;
@@ -750,7 +754,7 @@ void vimish_insert(int key, char *key_str) {
             break;
 
         default:
-            if (key == ENTER || key == TAB || !iscntrl(key)) {
+            if (key == ENTER || key == TAB || key == MBYTE || !iscntrl(key)) {
                 YEXE("insert", key_str);
             } else {
                 vimish_pop_repeat_key();

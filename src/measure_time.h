@@ -3,5 +3,6 @@
 
 
 unsigned long long measure_time_now_ms(void);
+unsigned long long measure_time_now_us(void);
 
 #endif

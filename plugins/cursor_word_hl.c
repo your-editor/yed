@@ -94,10 +94,10 @@ void cursor_word_hl_hl_word(yed_event *event) {
     while (col <= line->visual_width) {
         is_alnum = 0;
         old_col  = col;
-        word     = array_data(line->chars) + col - 1;
+        word     = (char*)yed_line_col_to_glyph(line, col);
         word_len = 0;
         spaces   = 0;
-        c        = yed_line_col_to_char(line, col);
+        c        = yed_line_col_to_glyph(line, col)->c;
 
         if (isalnum(c) || c == '_') {
             if (isalpha(c)) {
@@ -106,7 +106,7 @@ void cursor_word_hl_hl_word(yed_event *event) {
             while (col <= line->visual_width) {
                 word_len += 1;
                 col      += 1;
-                c         = yed_line_col_to_char(line, col);
+                c         = yed_line_col_to_glyph(line, col)->c;
 
                 if (isalpha(c)) {
                     is_alnum = 1;
@@ -120,7 +120,7 @@ void cursor_word_hl_hl_word(yed_event *event) {
             while (col <= line->visual_width) {
                 word_len += 1;
                 col      += 1;
-                c         = yed_line_col_to_char(line, col);
+                c         = yed_line_col_to_glyph(line, col)->c;
 
                 if (isalnum(c) || c == '_' || isspace(c)) {
                     break;
@@ -132,7 +132,7 @@ void cursor_word_hl_hl_word(yed_event *event) {
             while (col <= line->visual_width) {
                 spaces += 1;
                 col    += 1;
-                c       = yed_line_col_to_char(line, col);
+                c       = yed_line_col_to_glyph(line, col)->c;
 
                 if (!isspace(c)) {
                     break;

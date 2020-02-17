@@ -8,6 +8,7 @@ typedef struct __attribute__((packed)) {
     int   elem_size;
     int   used;
     int   capacity;
+    int   should_free;
 } array_t;
 
 array_t _array_make(int elem_size);

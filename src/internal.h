@@ -44,6 +44,7 @@ use_tree(str_t, empty_t);
 #include "bucket_array.h"
 #include "yed.h"
 #include "term.h"
+#include "utf8.h"
 #include "key.h"
 #include "fs.h"
 #include "undo.h"
@@ -184,6 +185,7 @@ typedef struct yed_state_t {
     int                          cmd_cursor_x;
     array_t                      cmd_name_stack;
     int                          status;
+    int                          tabw;
     int                          redraw;
     int                          redraw_cls;
     tree(yed_command_name_t,
@@ -195,6 +197,7 @@ typedef struct yed_state_t {
          yed_plugin_ptr_t)       plugins;
     array_t                      plugin_dirs;
     yed_key_binding             *real_key_map[REAL_KEY_MAX];
+    yed_glyph                    mbyte;
     tree(int,
          yed_key_binding_ptr_t)  vkey_binding_map;
     array_t                      key_sequences;
@@ -208,6 +211,9 @@ typedef struct yed_state_t {
     yed_style_name_t             active_style;
     options_t                    options;
     unsigned long long           start_time_ms;
+    unsigned long long           n_pumps;
+    unsigned long long           draw_accum_us;
+    unsigned long long           draw_avg_us;
 } yed_state;
 
 extern yed_state *ys;

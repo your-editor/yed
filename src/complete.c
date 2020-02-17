@@ -84,12 +84,12 @@ void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
     while (col < line->visual_width) {
         start_col = col;
 
-        c = yed_line_col_to_char(line, col);
+        c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
         if (isalnum(c) || c == '_') {
             while (col <= line->visual_width) {
                 col += 1;
-                c    = yed_line_col_to_char(line, col);
+                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
                 if (!isalnum(c) && c != '_') {
                     break;
@@ -105,7 +105,7 @@ void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
         } else if (!isspace(c)) {
             while (col <= line->visual_width) {
                 col += 1;
-                c    = yed_line_col_to_char(line, col);
+                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
                 if (isalnum(c) || c == '_' || isspace(c)) {
                     break;
@@ -116,7 +116,7 @@ void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
         if (isspace(c)) {
             while (col <= line->visual_width) {
                 col += 1;
-                c = yed_line_col_to_char(line, col);
+                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
                 if (!isspace(c)) {
                     break;

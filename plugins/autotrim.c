@@ -33,8 +33,8 @@ void autotrim_pre_write_handler(yed_event *event) {
 
     for (row = 1; row <= yed_buff_n_lines(event->buffer); row += 1) {
         line = yed_buff_get_line(event->buffer, row);
-        while (array_len(line->chars)
-        &&     *(char*)array_last(line->chars) == ' ') {
+        while (line->visual_width
+        &&     yed_line_col_to_glyph(line, line->visual_width)->c == ' ') {
             yed_pop_from_line(event->buffer, row);
         }
     }
