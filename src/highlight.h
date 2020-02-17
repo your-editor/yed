@@ -42,7 +42,6 @@ typedef struct {
     array_t kwds_by_len;
 } highlight_kwd_set;
 
-
 /*
  * Really sorry.
  */
@@ -818,10 +817,11 @@ static inline int _highlight_line_ml_within(highlight_info *info, int row, yed_f
         line   = yed_buff_get_line(frame->buffer, row);
         attrs  = _kind_to_attrs(set, within->kind);
         if (attrs) {
-            _highlight_range_with_attrs(1, line->visual_width, line_attrs, attrs);
+            if (state == prev_state) {
+                _highlight_range_with_attrs(1, line->visual_width, line_attrs, attrs);
+                return line->visual_width;
+            }
         }
-
-        return line->visual_width;
     } else if (prev_state) {
         within = array_item(info->within, prev_state - 1);
         line   = yed_buff_get_line(frame->buffer, row);
@@ -831,7 +831,7 @@ static inline int _highlight_line_ml_within(highlight_info *info, int row, yed_f
             info->ml_states[state_idx] = 0;
             attrs = _kind_to_attrs(set, within->kind);
             if (attrs) {
-                col = yed_line_idx_to_col(line, scan - s + within->end_len);
+                col = yed_line_idx_to_col(line, scan - s + within->end_len - 1);
                 _highlight_range_with_attrs(1, col, line_attrs, attrs);
             }
         }

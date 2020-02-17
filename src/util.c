@@ -321,3 +321,24 @@ void free_string_array(array_t array) {
 
     array_free(array);
 }
+
+char * last_strstr(const char *haystack, const char *needle) {
+    char *result, *p;
+
+    if (*needle == '\0') {
+        return (char *) haystack;
+    }
+
+    result = NULL;
+
+    for (;;) {
+        p = strstr(haystack, needle);
+
+        if (p == NULL) { break; }
+
+        result   = p;
+        haystack = p + 1;
+    }
+
+    return result;
+}

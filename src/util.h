@@ -16,4 +16,6 @@ array_t sh_split(char *s);
 
 void free_string_array(array_t array);
 
+char *last_strstr(const char *haystack, const char *needle);
+
 #endif
