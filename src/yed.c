@@ -283,7 +283,7 @@ void yed_fini(yed_state *state) {
     bytes = pretty_bytes(getPeakRSS());
 
     printf("Startup time: %llums\nPeak RSS:     %s\nThanks for using yed!\n", startup_time, bytes);
-    printf("Average draw time: %.1fus\n", ((float)ys->draw_accum_us) / ((float)ys->n_pumps));
+/*     printf("Average draw time: %.1fus\n", ((float)ys->draw_accum_us) / ((float)ys->n_pumps)); */
 
     free(bytes);
 }
