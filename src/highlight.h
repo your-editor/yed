@@ -8,6 +8,8 @@
 #define HL_COMMENT (8)
 #define HL_ATTN    (9)
 
+#define HL_IGNORE  (100)
+
 typedef struct {
     yed_attrs key,
               con,
@@ -401,6 +403,8 @@ static inline void _highlight_range_with_attrs(int start, int end, array_t line_
     int        col;
     yed_attrs *dst_attrs;
 
+    if (!attrs) { return; }
+
     for (col = start; col <= end; col += 1) {
         dst_attrs = array_item(line_attrs, col - 1);
         yed_combine_attrs(dst_attrs, attrs);
@@ -418,6 +422,7 @@ static inline yed_attrs * _kind_to_attrs(attrs_set *set, int kind) {
         case HL_PP:      return &set->pp;
         case HL_CALL:    return &set->cal;
         case HL_ATTN:    return &set->atn;
+        case HL_IGNORE:  return NULL;
     }
 
     return NULL;
@@ -435,7 +440,6 @@ static inline int _highlight_line_eol(highlight_info *info, yed_line *line, arra
     if (!eol) { return 0; }
 
     attrs = _kind_to_attrs(set, eol->kind);
-    if (!attrs) { return 0; }
 
     _highlight_range_with_attrs(col, line->visual_width, line_attrs, attrs);
 
@@ -453,7 +457,6 @@ static inline int _highlight_line_keyword(highlight_info *info, yed_line *line, 
     if (!lookup) { return 0; }
 
     attrs = _kind_to_attrs(set, lookup->kind);
-    if (!attrs) { return 0; }
 
     _highlight_range_with_attrs(col, col + word_len - 1, line_attrs, attrs);
 
@@ -491,7 +494,6 @@ static inline int _highlight_line_prefixed_keyword(highlight_info *info, yed_lin
     if (!lookup) { return 0; }
 
     attrs = _kind_to_attrs(set, lookup->kind);
-    if (!attrs) { return 0; }
 
     _highlight_range_with_attrs(hl_start_col, hl_start_col + word_len + used_last - 1, line_attrs, attrs);
 
@@ -521,7 +523,6 @@ static inline int _highlight_line_prefix(highlight_info *info, yed_line *line, a
     }
 
     attrs = _kind_to_attrs(set, hl->kind);
-    if (!attrs) { return 0; }
 
     _highlight_range_with_attrs(hl_start_col, hl_start_col + word_len + used_last - 1, line_attrs, attrs);
 
@@ -546,7 +547,6 @@ static inline int _highlight_line_suffix(highlight_info *info, yed_line *line, a
     if (!hl) { return 0; }
 
     attrs = _kind_to_attrs(set, hl->kind);
-    if (!attrs) { return 0; }
 
     _highlight_range_with_attrs(col, col + word_len + !!hl->inclusive - 1, line_attrs, attrs);
 
@@ -569,10 +569,6 @@ static inline int _highlight_line_within(highlight_info *info, int state_idx, ye
     within_idx = 0;
     array_traverse(info->within, within) {
         attrs = _kind_to_attrs(set, within->kind);
-        if (!attrs) {
-            within_idx += 1;
-            continue;
-        }
 
         if (strncmp(str, within->start, within->start_len) != 0) {
             within_idx += 1;
