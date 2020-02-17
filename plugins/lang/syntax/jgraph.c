@@ -71,7 +71,7 @@ void syntax_jgraph_frame_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->kind != FT_JGRAPH) {
+    ||  frame->buffer->file.ft != FT_JGRAPH) {
         return;
     }
 
@@ -86,7 +86,7 @@ void syntax_jgraph_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->kind != FT_JGRAPH) {
+    ||  frame->buffer->file.ft != FT_JGRAPH) {
         return;
     }
 
@@ -101,7 +101,7 @@ void syntax_jgraph_buff_mod_pre_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->kind != FT_JGRAPH) {
+    ||  frame->buffer->file.ft != FT_JGRAPH) {
         return;
     }
 
