@@ -198,7 +198,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     start_time = measure_time_now_ms();
 
     yed_init_vars();
-    ys->tabw = yed_get_tab_width();
+    ys->tabw = yed_get_tab_width(); /* Set again after plugins are loaded. */
     yed_init_styles();
     yed_init_buffers();
     yed_init_frames();
@@ -223,6 +223,14 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_events();
     yed_init_search();
     yed_init_plugins();
+
+
+    /*
+     * Check if some configuration chaged the tab width
+     * and set it in ys before loading buffers and doing
+     * the first draw.
+     */
+    ys->tabw = yed_get_tab_width();
 
     has_frames = 0;
     array_traverse(ys->options.files, file_it) {
