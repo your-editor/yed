@@ -168,17 +168,19 @@ typedef struct {
 } eol_hl;
 
 typedef struct {
-    int                           max_scan;
-    highlight_kwd_set             kwds;
-    tree(char, highlight_kwd_set) prefix_sets;
-    array_t                       general_prefixes;
-    array_t                       general_suffixes;
-    array_t                       within;
-    array_t                       eols;
-    int                           hl_numbers;
-    int                           has_ml;
-    int                           ml_states[1024];
-    int                           state_before;
+    int                            max_scan;
+    highlight_kwd_set              kwds;
+    tree(char, highlight_kwd_set)  prefix_sets;
+    array_t                        general_prefixes;
+    array_t                        general_suffixes;
+    array_t                        within;
+    array_t                        eols;
+    int                            hl_numbers;
+    int                            has_ml;
+    int                            ml_states[1024];
+    int                            state_before;
+    yed_frame                     *f;
+    int                            dirty;
 } highlight_info;
 
 static inline void highlight_info_make(highlight_info *info) {
@@ -890,6 +892,16 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
     int                last_is_word_boundary;
     int                prev_state, state_idx;
 
+    if (event->frame != info->f) {
+        info->dirty = 1;
+        info->f     = event->frame;
+    }
+
+    if (info->dirty) {
+        memset(info->ml_states, 0, sizeof(info->ml_states));
+        info->dirty = 0;
+    }
+
     line = yed_buff_get_line(event->frame->buffer, event->row);
 
     state_idx = event->row - (event->frame->buffer_y_offset + 1);
@@ -967,7 +979,7 @@ next:
 }
 
 static inline void highlight_frame_pre_draw_update(highlight_info *info, yed_event *event) {
-    memset(info->ml_states, 0, sizeof(info->ml_states));
+    info->dirty = 1;
 }
 
 static inline void highlight_buffer_pre_mod_update(highlight_info *info, yed_event *event) {

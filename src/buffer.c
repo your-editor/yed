@@ -101,15 +101,16 @@ void yed_line_pop_glyph(yed_line *line) {
 yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
-    buff.lines              = bucket_array_make(1024, yed_line);
-    buff.get_line_cache     = NULL;
-    buff.get_line_cache_row = 0;
-    buff.path               = NULL;
-    buff.has_selection      = 0;
-    buff.flags              = 0;
-    buff.undo_history       = yed_new_undo_history();
-    buff.last_cursor_row    = 1;
-    buff.last_cursor_col    = 1;
+    buff.lines                = bucket_array_make(1024, yed_line);
+    buff.get_line_cache       = NULL;
+    buff.get_line_cache_row   = 0;
+    buff.path                 = NULL;
+    buff.mmap_underlying_buff = NULL;
+    buff.has_selection        = 0;
+    buff.flags                = 0;
+    buff.undo_history         = yed_new_undo_history();
+    buff.last_cursor_row      = 1;
+    buff.last_cursor_col      = 1;
 
     yed_buffer_add_line_no_undo(&buff);
 
@@ -160,6 +161,10 @@ void yed_free_buffer(yed_buffer *buffer) {
 
     if (buffer->path) {
         free(buffer->path);
+    }
+
+    if (buffer->mmap_underlying_buff) {
+        free(buffer->mmap_underlying_buff);
     }
 
     bucket_array_traverse(buffer->lines, line) {
@@ -628,9 +633,9 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
 }
 
 int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
-    int          fd, i, j, line_len, file_size, did_map;
+    int          fd, i, line_len, file_size, did_map;
     struct stat  fs;
-    char        *file_data, c;
+    char        *file_data, *underlying_buff, *end, *scan, *tmp, c;
     yed_line    *last_line,
                  line;
     yed_glyph   *g;
@@ -651,82 +656,68 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         }
 
         did_map = 1;
+
+        /*
+         * Add 3 bytes of padding so that we don't violate anything
+         * when we call yed_get_string_info().
+         * See the comment there (src/utf8.c) for more info.
+         */
+        underlying_buff = malloc(file_size + 3);
+
+        memcpy(underlying_buff, file_data, file_size);
     } else {
         did_map = 0;
     }
 
+    /*
+     * This buffer is going to come to us with a pre-made
+     * empty line.
+     * We don't need it though.
+     */
     last_line = bucket_array_last(buff->lines);
     yed_free_line(last_line);
     bucket_array_pop(buff->lines);
 
-    for (i = 0, line_len = 0; i < file_size; i += 1) {
-        c = file_data[i];
 
-        if (c == '\n') {
-            line                   = yed_new_line_with_cap(line_len);
-/*             line.chars.should_free = 0; */
-/*             line.chars.data        = file_data + i - line_len; */
-/*             line.chars.used        = line_len; */
+    scan = underlying_buff;
+    end  = underlying_buff + file_size;
 
-            array_push_n(line.chars, file_data + i - line_len, line_len);
+    while (scan < end) {
+        tmp      = memchr(scan, '\n', end - scan);
+        line_len = (tmp ? tmp : end) - scan;
 
-            /* Remove '\r' from line. */
-            while (array_len(line.chars)
-            &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
-                array_pop(line.chars);
-                line_len -= 1;
-            }
+        line                   = yed_new_line_with_cap(line_len);
+        line.chars.should_free = 0;
+        line.chars.data        = scan;
+        line.chars.used        = line_len;
 
-            for (j = 0; j < line_len;) {
-                g = array_item(line.chars, j);
-                line.visual_width += yed_get_glyph_width(*g);
-                line.n_glyphs     += 1;
-                j += yed_get_glyph_len(*g);
-            }
-
-            bucket_array_push(buff->lines, line);
-
-            line_len = 0;
-        } else {
-            line_len += 1;
+        /* Remove '\r' from line. */
+        while (array_len(line.chars)
+        &&    ((c = *(char*)array_last(line.chars)) == '\r')) {
+            array_pop(line.chars);
+            line_len -= 1;
         }
+
+        (void)g;
+        (void)i;
+        yed_get_string_info(line.chars.data, line_len, &line.n_glyphs, &line.visual_width);
+/*         for (i = 0; i < line_len;) { */
+/*             g                  = array_item(line.chars, i); */
+/*             line.visual_width += yed_get_glyph_width(*g); */
+/*             i                 += yed_get_glyph_len(*g); */
+/*             line.n_glyphs     += 1; */
+/*         } */
+
+        bucket_array_push(buff->lines, line);
+
+        if (unlikely(!tmp)) { break; }
+
+        scan = tmp + 1;
     }
 
-    if (!bucket_array_len(buff->lines)) {
-        if (file_size) {
-            /* There's only one line in the file, but it doesn't have a newline. */
-
-            line                   = yed_new_line_with_cap(line_len);
-/*             line.chars.should_free = 0; */
-/*             line.chars.data        = file_data + i - line_len; */
-/*             line.chars.used        = line_len; */
-
-            array_push_n(line.chars, file_data + i - line_len, line_len);
-
-            /* Remove '\r' from line. */
-            while (array_len(line.chars)
-            &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
-                array_pop(line.chars);
-                line_len -= 1;
-            }
-
-            for (j = 0; j < line_len;) {
-                g = array_item(line.chars, j);
-                line.visual_width += yed_get_glyph_width(*g);
-                line.n_glyphs     += 1;
-                j += yed_get_glyph_len(*g);
-            }
-
-            bucket_array_push(buff->lines, line);
-        } else {
-            line = yed_new_line();
-            bucket_array_push(buff->lines, line);
-        }
-    }
-
-/*     (void)did_map; */
     if (did_map) {
         munmap(file_data, file_size);
+        buff->mmap_underlying_buff = underlying_buff;
     }
 
     if (bucket_array_len(buff->lines) > 1) {
@@ -734,6 +725,9 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         if (array_len(last_line->chars) == 0) {
             bucket_array_pop(buff->lines);
         }
+    } else if (bucket_array_len(buff->lines) == 0) {
+        line = yed_new_line();
+        bucket_array_push(buff->lines, line);
     }
 
     return 1;

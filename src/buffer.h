@@ -2,7 +2,7 @@
 #define __BUFFER_H__
 
 
-typedef struct __attribute__((packed)) yed_line_t {
+typedef struct yed_line_t {
     array_t chars;
     int     visual_width;
     int     n_glyphs;
@@ -39,6 +39,7 @@ typedef struct yed_buffer_t {
     yed_undo_history      undo_history;
     int                   last_cursor_row,
                           last_cursor_col;
+    char                 *mmap_underlying_buff;
 } yed_buffer;
 
 void yed_init_buffers(void);

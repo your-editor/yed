@@ -3,7 +3,7 @@
 
 #define ARRAY_DEFAULT_CAP (16)
 
-typedef struct __attribute__((packed)) {
+typedef struct {
     void *data;
     int   elem_size;
     int   used;

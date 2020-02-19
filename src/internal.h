@@ -25,46 +25,6 @@
 #include <unistd.h>
 #include <libgen.h>
 
-typedef struct { } empty_t;
-
-#include "typedefs.h"
-
-#include "tree.h"
-#define inline
-use_tree(int, yed_key_binding_ptr_t);
-use_tree(yed_buffer_name_t, yed_buffer_ptr_t);
-use_tree(yed_command_name_t, yed_command);
-use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
-use_tree(yed_var_name_t, yed_var_val_t);
-use_tree(yed_style_name_t, yed_style_ptr_t);
-use_tree(str_t, empty_t);
-#undef inline
-
-#include "array.h"
-#include "bucket_array.h"
-#include "yed.h"
-#include "term.h"
-/* What would be in wcwidth.h: */
-int mk_wcwidth(wchar_t ucs);
-#include "utf8.h"
-#include "key.h"
-#include "fs.h"
-#include "undo.h"
-#include "buffer.h"
-#include "attrs.h"
-#include "frame.h"
-#include "command.h"
-#include "getRSS.h"
-#include "measure_time.h"
-#include "event.h"
-#include "plugin.h"
-#include "find.h"
-#include "var.h"
-#include "util.h"
-#include "style.h"
-#include "subproc.h"
-#include "complete.h"
-
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 
@@ -139,6 +99,46 @@ uint64_t next_power_of_2(uint64_t x);
 #define GiB(x) ((x) * 1024ULL * MiB(1ULL))
 #define TiB(x) ((x) * 1024ULL * GiB(1ULL))
 char *pretty_bytes(uint64_t n_bytes);
+
+typedef struct { } empty_t;
+
+#include "typedefs.h"
+
+#include "tree.h"
+#define inline
+use_tree(int, yed_key_binding_ptr_t);
+use_tree(yed_buffer_name_t, yed_buffer_ptr_t);
+use_tree(yed_command_name_t, yed_command);
+use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
+use_tree(yed_var_name_t, yed_var_val_t);
+use_tree(yed_style_name_t, yed_style_ptr_t);
+use_tree(str_t, empty_t);
+#undef inline
+
+#include "array.h"
+#include "bucket_array.h"
+#include "yed.h"
+#include "term.h"
+/* What would be in wcwidth.h: */
+int mk_wcwidth(wchar_t ucs);
+#include "utf8.h"
+#include "key.h"
+#include "fs.h"
+#include "undo.h"
+#include "buffer.h"
+#include "attrs.h"
+#include "frame.h"
+#include "command.h"
+#include "getRSS.h"
+#include "measure_time.h"
+#include "event.h"
+#include "plugin.h"
+#include "find.h"
+#include "var.h"
+#include "util.h"
+#include "style.h"
+#include "subproc.h"
+#include "complete.h"
 
 typedef struct {
     array_t  files;
