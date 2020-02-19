@@ -508,19 +508,17 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             }
 
             if (all_cols_visible) {
-                for (i = width_skip; i < width && col_off < n_col; i += 1) {
-                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
-                    if (yed_attrs_eq(tmp_attr, cur_attr)) {
-                        run_len += n_bytes;
-                    } else {
-                        DUMP_RUN();
-                        cur_attr = tmp_attr;
-                        NEXT_RUN();
-                        run_len += n_bytes;
-                    }
-                    col_off += 1;
+                tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                if (yed_attrs_eq(tmp_attr, cur_attr)) {
+                    run_len += n_bytes;
+                } else {
+                    DUMP_RUN();
+                    cur_attr = tmp_attr;
+                    NEXT_RUN();
+                    run_len += n_bytes;
                 }
-                bytes += n_bytes;
+                col_off += width;
+                bytes   += n_bytes;
             } else {
                 DUMP_RUN();
                 col_off += width;

@@ -435,7 +435,7 @@ void yed_insert_into_line(yed_buffer *buff, int row, int col, yed_glyph g) {
 
     uact.kind = UNDO_GLYPH_ADD;
     uact.row  = row;
-    uact.col  = col;
+    uact.col  = yed_line_normalize_col(yed_buff_get_line(buff, row),  col);
     uact.g    = g;
 
     yed_push_undo_action(buff, &uact);
@@ -451,7 +451,7 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
 
     uact.kind = UNDO_GLYPH_DEL;
     uact.row  = row;
-    uact.col  = col;
+    uact.col  = yed_line_normalize_col(yed_buff_get_line(buff, row),  col);
     uact.g    = *yed_line_col_to_glyph(line, col);
 
     yed_push_undo_action(buff, &uact);
@@ -585,6 +585,13 @@ yed_line * yed_buff_get_line(yed_buffer *buff, int row) {
     buff->get_line_cache_row = row;
 
     return line;
+}
+
+int yed_line_normalize_col(yed_line *line, int col) {
+    int idx;
+
+    idx = yed_line_col_to_idx(line, col);
+    return yed_line_idx_to_col(line, idx);
 }
 
 yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col) {

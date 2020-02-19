@@ -25,6 +25,11 @@
 #include <unistd.h>
 #include <libgen.h>
 
+#include <locale.h>
+#define __USE_XOPEN
+#define _XOPEN_SOURCE
+#include <wchar.h>
+
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 

@@ -197,6 +197,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     start_time = measure_time_now_ms();
 
+    setlocale(LC_ALL, "en_US.utf8");
+
     yed_init_vars();
     ys->tabw = yed_get_tab_width(); /* Set again after plugins are loaded. */
     yed_init_styles();
@@ -320,6 +322,10 @@ static void write_small_message(void) {
 int yed_pump(void) {
     int                keys[16], n_keys, i, tabw_var_val;
     unsigned long long start_us;
+
+    if (ys->status == YED_QUIT) {
+        return YED_QUIT;
+    }
 
     if (ys->status == YED_RELOAD) {
         yed_service_reload();

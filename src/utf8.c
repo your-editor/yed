@@ -1,18 +1,19 @@
-#if 0
-int yed_get_glyph_width(yed_glyph g) {
-    /*
-     * @todo
-     * Determine width for control characters such as NULL ('\0')
-     * and any unicode characters that occupy more than one column.
-     */
+int _yed_get_mbyte_width(yed_glyph g) {
+    int     len, w;
+    wchar_t wch;
 
-    if (likely(g.u_c <= 127)) {
-        return unlikely(g.c == '\t') ? ys->tabw : 1;
-    }
+    len = yed_get_glyph_len(g);
 
-    return mk_wcwidth(g.data);
+    /* Reset the shift state. */
+    mbtowc(NULL, 0, 0);
+
+    mbtowc(&wch, (const char*)g.bytes, len);
+    w = wcwidth(wch);
+
+    if (unlikely(w <= 0)) { return 1; }
+
+    return w;
 }
-#endif
 
 /*
  * @bad @todo

@@ -60,6 +60,7 @@ int yed_line_col_to_idx(yed_line *line, int col);
 yed_line * yed_buff_get_line(yed_buffer *buff, int row);
 yed_glyph * yed_line_col_to_glyph(yed_line *line, int col);
 yed_glyph * yed_line_last_glyph(yed_line *line);
+int yed_line_normalize_col(yed_line *line, int col);
 yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col);
 
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g);
