@@ -512,12 +512,20 @@ static inline int _highlight_line_prefix(highlight_info *info, yed_line *line, a
     hl = _highlight_get_general_prefix(info, last_c);
 
     if (hl) {
+        g  = yed_line_col_to_glyph(line, col);
+        if (!isalnum(g->c) && g->c != '_') {
+            return 0;
+        }
         used_last     = 1;
         hl_start_col  = col - !!hl->inclusive;
     } else if (word_len > 1) {
         g  = yed_line_col_to_glyph(line, col);
         hl = _highlight_get_general_prefix(info, g->c);
-        if (!hl) { return 0; }
+        if (!hl || col == line->visual_width) { return 0; }
+        g  = yed_line_col_to_glyph(line, col + 1);
+        if (!isalnum(g->c) && g->c != '_') {
+            return 0;
+        }
         used_last     = 0;
         hl_start_col  = col + !hl->inclusive;
     } else {
