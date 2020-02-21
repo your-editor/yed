@@ -100,12 +100,10 @@ void brace_hl_buff_mod_handler(yed_event *event) {
 }
 
 void brace_hl_find_braces(yed_frame *frame) {
-    int       row, col;
-    int       i;
-    int       start;
-    int       balance;
-    yed_line *line;
-    char      c;
+    int        row, col;
+    int        balance;
+    yed_line  *line;
+    yed_glyph *g;
 
     beg_row = beg_col = end_row = end_col = 0;
 
@@ -121,29 +119,27 @@ void brace_hl_find_braces(yed_frame *frame) {
 
         if (row == frame->cursor_line) {
             if (col == 1) { continue; }
-            else if (col > 1) {
-                col -= 1;
-            }
-            c = yed_line_col_to_char(line, col);
-            start = col - 1;
+            col -= 1;
         } else {
-            start = array_len(line->chars) - 1;
+            col = line->visual_width;
         }
 
-        for (i = start; i >= 0; i -= 1) {
-            c = *(char*)array_item(line->chars, i);
+        while (col > 0) {
+            g = yed_line_col_to_glyph(line, col);
 
-            if (c == '{') {
+            if (g->c == '{') {
                 if (balance == 0) {
                     beg_row = row;
-                    beg_col = i + 1;
+                    beg_col = col;
                     goto done_back;
                 } else {
                     balance += 1;
                 }
-            } else if (c == '}') {
+            } else if (g->c == '}') {
                 balance -= 1;
             }
+
+            col -= yed_get_glyph_len(*g);
         }
     }
 done_back:
@@ -158,27 +154,26 @@ done_back:
 
         if (line->visual_width == 0) { continue; }
 
-        if (row == frame->cursor_line) {
-            c = yed_line_col_to_char(line, col);
-            start = col - 1;
-        } else {
-            start = 0;
+        if (row != frame->cursor_line) {
+            col = 1;
         }
 
-        for (i = start; i < line->visual_width; i += 1) {
-            c = *(char*)array_item(line->chars, i);
+        while (col <= line->visual_width) {
+            g = yed_line_col_to_glyph(line, col);
 
-            if (c == '{') {
+            if (g->c == '{') {
                 balance += 1;
-            } else if (c == '}') {
+            } else if (g->c == '}') {
                 if (balance == 0) {
                     end_row = row;
-                    end_col = i + 1;
+                    end_col = col;
                     goto done_forward;
                 } else {
                     balance -= 1;
                 }
             }
+
+            col += yed_get_glyph_len(*g);
         }
     }
 
