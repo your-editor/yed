@@ -19,7 +19,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "styles/lab", "styles/book", "styles/blue",
         "styles/first", "styles/elise", "styles/nord", "styles/monokai", "styles/gruvbox",
         "styles/skyfall", "styles/papercolor",
-        "styles/casey", "styles/cadet", "styles/moss", "styles/hat",
+        "styles/casey", "styles/cadet", "styles/moss", "styles/hat", "styles/dracula",
     };
 
 
