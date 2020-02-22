@@ -222,6 +222,70 @@ void yed_vcprint(char *fmt, va_list args) {
     }
 }
 
+void yed_vcerr(char *fmt, va_list args) {
+    char       buff[1024], fmt_buff[256];
+    int        len, i, j;
+    char       spc, dot;
+    va_list    args_copy;
+    int        should_clear;
+    char      *current_command;
+    yed_attrs  cmd_attr, attn_attr;
+    char       attr_buff[128];
+
+    fmt_buff[0] = 0;
+    strcat(fmt_buff, "[!] ");
+    strcat(fmt_buff, fmt);
+    fmt = fmt_buff;
+
+    should_clear    = yed_vlog(fmt, args);
+    current_command = *(char**)array_last(ys->log_name_stack);
+    if (should_clear && !ys->interactive_command) {
+        yed_clear_cmd_buff();
+        ys->cmd_prompt = YED_CMD_PROMPT;
+        yed_append_text_to_cmd_buff("(");
+        yed_append_text_to_cmd_buff(current_command);
+        yed_append_text_to_cmd_buff(") ");
+        cprinted_len = 3 + strlen(current_command);
+
+        cmd_attr    = yed_active_style_get_command_line();
+        attn_attr   = yed_active_style_get_attention();
+        cmd_attr.fg = attn_attr.fg;
+        yed_get_attr_str(cmd_attr, attr_buff);
+        yed_append_non_text_to_cmd_buff(attr_buff);
+    }
+
+    va_copy(args_copy, args);
+    len = vsnprintf(buff, sizeof(buff), fmt, args_copy);
+    va_end(args_copy);
+
+    if (len > sizeof(buff) - 1) {
+        len = sizeof(buff) - 1;
+    }
+
+    spc = ' ';
+    dot = '.';
+    for (i = 0; i < len && cprinted_len < ys->term_cols - 3; i += 1) {
+        if (buff[i] == '\n') {
+            for (j = 0; j < 4 && cprinted_len < ys->term_cols - 3; j += 1) {
+                array_push(ys->cmd_buff, spc);
+                cprinted_len += 1;
+            }
+        } else {
+            array_push(ys->cmd_buff, buff[i]);
+            cprinted_len += 1;
+        }
+
+        if (cprinted_len == ys->term_cols - 3) {
+            array_push(ys->cmd_buff, dot);
+            array_push(ys->cmd_buff, dot);
+            array_push(ys->cmd_buff, dot);
+            cprinted_len += 3;
+        }
+    }
+    yed_append_non_text_to_cmd_buff(TERM_RESET);
+    yed_append_non_text_to_cmd_buff(TERM_CURSOR_HIDE);
+}
+
 void yed_cprint(char *fmt, ...) {
     va_list va;
 
@@ -231,23 +295,11 @@ void yed_cprint(char *fmt, ...) {
 }
 
 void yed_cerr(char *fmt, ...) {
-    va_list   va;
-    yed_attrs cmd_attr, attn_attr;
-    char      attr_buff[128];
+    va_list va;
 
-    cmd_attr    = yed_active_style_get_command_line();
-    attn_attr   = yed_active_style_get_attention();
-    cmd_attr.fg = attn_attr.fg;
-    yed_get_attr_str(cmd_attr, attr_buff);
-    yed_append_non_text_to_cmd_buff(attr_buff);
-
-    yed_cprint("[!] ");
     va_start(va, fmt);
-    yed_vcprint(fmt, va);
+    yed_vcerr(fmt, va);
     va_end(va);
-
-    yed_append_non_text_to_cmd_buff(TERM_RESET);
-    yed_append_non_text_to_cmd_buff(TERM_CURSOR_HIDE);
 }
 
 void yed_cmd_buff_push(char c) {
@@ -1395,6 +1447,9 @@ void yed_default_command_buffer(int n_args, char **args) {
         }
     }
 
+    if (!ys->active_frame) {
+        YEXE("frame-new");
+    }
     if (ys->active_frame) {
         yed_frame_set_buff(ys->active_frame, buffer);
     }
@@ -3312,7 +3367,7 @@ void yed_default_command_redo(int n_args, char **args) {
     buffer = frame->buffer;
 
     if (buffer->flags & BUFF_SPECIAL) {
-        yed_cerr("can't undo in a special buffer");
+        yed_cerr("can't redo in a special buffer");
         return;
     }
 

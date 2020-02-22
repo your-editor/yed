@@ -3,7 +3,11 @@
 void load_init(char *path) {
     int err;
 
+    LOG_FN_ENTER();
+
     if (!path)    { goto not_found; }
+
+    yed_log("attempting to load init plugin from '%s'", path);
 
     yed_add_plugin_dir(path);
 
@@ -14,19 +18,21 @@ void load_init(char *path) {
             case YED_PLUG_NOT_FOUND:
                 goto not_found;
             case YED_PLUG_SUCCESS:
-                yed_set_small_message("loaded init");
+                yed_log("\nloaded init");
                 break;
             case YED_PLUG_NO_BOOT:
-                yed_set_small_message("!! init missing 'yed_plugin_boot' !!");
+                yed_log("\n[!] init missing 'yed_plugin_boot'");
                 break;
             case YED_PLUG_BOOT_FAIL:
-                yed_set_small_message("!! init 'yed_plugin_boot' failed !!");
+                yed_log("\n[!] init 'yed_plugin_boot' failed");
                 break;
         }
     } else {
 not_found:
-        yed_set_small_message("init plugin not found");
+        yed_log("\n[!] init plugin not found");
     }
+
+    LOG_EXIT();
 }
 
 void load_default_init(void) {
