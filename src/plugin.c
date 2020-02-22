@@ -352,9 +352,27 @@ void yed_plugin_set_style(yed_plugin *plug, char *name, yed_style *style) {
 }
 
 void yed_add_plugin_dir(char *s) {
-    char *s_dup;
+    char   buff[1024], *s_dup;
+    char **it;
+    int    idx;
 
-    s_dup = strdup(s);
+    expand_path(s, buff);
+
+    /*
+     * Delete the directory if it's already in the array.
+     * If it's already in there we want to move it to the
+     * beginning so that it's priority is updated.
+     */
+    idx = 0;
+    array_traverse(ys->plugin_dirs, it) {
+        if (strcmp(buff, *it) == 0) {
+            array_delete(ys->plugin_dirs, idx);
+            break;
+        }
+        idx += 1;
+    }
+
+    s_dup = strdup(buff);
 
     array_insert(ys->plugin_dirs, 0, s_dup);
 }

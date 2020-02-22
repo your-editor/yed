@@ -22,8 +22,7 @@ void style_term_bg(int n_args, char **args) {
     yed_style *s;
 
     if (n_args != 1) {
-        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
-        yed_append_int_to_cmd_buff(n_args);
+        yed_cerr("[!] expected 1 argument but got %d", n_args);
         return;
     }
 

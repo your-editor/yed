@@ -275,6 +275,7 @@ int s_to_i(const char *s) {
 #include "attrs.c"
 #include "fs.c"
 #include "frame.c"
+#include "log.c"
 #include "command.c"
 #include "getRSS.c"
 #include "measure_time.c"

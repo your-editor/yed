@@ -30,20 +30,19 @@ void comment_toggle(int n_args, char **args) {
                 status;
 
     if (n_args != 0) {
-        yed_append_text_to_cmd_buff("[!] expected zero arguments but got ");
-        yed_append_int_to_cmd_buff(n_args);
+        yed_cerr("expected 0 arguments but got %d", n_args);
         return;
     }
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame ");
+        yed_cerr("no active frame");
         return;
     }
 
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        yed_cerr("active frame has no buffer");
         return;
     }
 
@@ -73,7 +72,7 @@ void comment_toggle(int n_args, char **args) {
     yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
 
     if (status == 0) {
-        yed_append_text_to_cmd_buff("[!] unhandled ft");
+        yed_cerr("unhandled ft");
         yed_cancel_undo_record(frame, buff);
     } else {
         yed_end_undo_record(frame, buff);

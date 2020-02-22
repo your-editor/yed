@@ -172,14 +172,14 @@ void indent(int n_args, char **args) {
                 row;
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame ");
+        yed_cerr("no active frame");
         return;
     }
 
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        yed_cerr("active frame has no buffer");
         return;
     }
 
@@ -220,14 +220,14 @@ void unindent(int n_args, char **args) {
                 row;
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame ");
+        yed_cerr("no active frame");
         return;
     }
 
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        yed_cerr("active frame has no buffer");
         return;
     }
 

@@ -41,7 +41,7 @@ void grep(int n_args, char **args) {
     if (!ys->interactive_command) {
         prg = yed_get_var("grep-prg");
         if (!prg) {
-            yed_append_text_to_cmd_buff("[!] 'grep-prg' not set");
+            yed_cerr("'grep-prg' not set");
             return;
         }
         grep_start();

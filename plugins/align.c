@@ -18,7 +18,7 @@ void align(int n_args, char **args) {
     yed_line   *line;
 
     if (n_args != 1) {
-        yed_append_text_to_cmd_buff("[!] expected one argument, a pattern string");
+        yed_cerr("expected 1 argument, a pattern string");
         return;
     }
 
@@ -26,14 +26,14 @@ void align(int n_args, char **args) {
     pattern_len = strlen(pattern);
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame");
+        yed_cerr("no active frame");
         return;
     }
 
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        yed_cerr("active frame has no buffer");
         return;
     }
 
@@ -41,7 +41,7 @@ void align(int n_args, char **args) {
 
     if (!buff->has_selection
     ||  buff->selection.anchor_row == buff->selection.cursor_row) {
-        yed_append_text_to_cmd_buff("[!] multiple lines must be selected");
+        yed_cerr("multiple lines must be selected");
         return;
     }
 

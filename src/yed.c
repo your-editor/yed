@@ -203,9 +203,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys->tabw = yed_get_tab_width(); /* Set again after plugins are loaded. */
     yed_init_styles();
     yed_init_buffers();
+    yed_init_log();
     yed_init_frames();
-
-/*     ys->small_message = "* started yed *"; */
 
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
@@ -224,6 +223,11 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_keys();
     yed_init_events();
     yed_init_search();
+
+    LOG_FN_ENTER();
+
+    yed_log("basic systems initialized");
+
     yed_init_plugins();
 
 
@@ -234,7 +238,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
      */
     ys->tabw = yed_get_tab_width();
 
-    has_frames = 0;
+    has_frames = !!array_len(ys->frames);
     array_traverse(ys->options.files, file_it) {
         YEXE("buffer", *file_it);
     }
@@ -275,6 +279,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     pthread_mutex_unlock(&ys->write_ready_mtx);
 
     ys->start_time_ms = measure_time_now_ms() - start_time;
+
+    yed_log("\nStartup time: %llums", ys->start_time_ms);
+    LOG_EXIT();
 
     return ys;
 }
@@ -320,8 +327,9 @@ static void write_small_message(void) {
 }
 
 int yed_pump(void) {
-    int                keys[16], n_keys, i, tabw_var_val;
-    unsigned long long start_us;
+    int                  keys[16], n_keys, i, tabw_var_val;
+    unsigned long long   start_us;
+    yed_frame          **frame;
 
     if (ys->status == YED_QUIT) {
         return YED_QUIT;
@@ -379,6 +387,15 @@ int yed_pump(void) {
         yed_update_line_visual_widths();
         ys->redraw = 1;
     }
+
+    array_traverse(ys->frames, frame) {
+        if ((*frame) != ys->active_frame
+        &&  (*frame)->buffer == ys->log_buff) {
+            yed_set_cursor_far_within_frame((*frame), 1, yed_buff_n_lines(ys->log_buff));
+            (*frame)->dirty = 1;
+        }
+    }
+
 
     start_us = measure_time_now_us();
 

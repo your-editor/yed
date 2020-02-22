@@ -1,18 +1,20 @@
 void yed_init_buffers(void) {
     yed_buffer *yank_buff;
-    yed_buffer *command_buff;
+    yed_buffer *log_buff;
+
+    LOG_FN_ENTER();
 
     ys->buffers = tree_make_c(yed_buffer_name_t, yed_buffer_ptr_t, strcmp);
 
-    yank_buff            = yed_create_buffer("*yank");
-    yank_buff->kind      = BUFF_KIND_YANK;
-    yank_buff->flags    |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    ys->yank_buff        = yank_buff;
+    yank_buff         = yed_create_buffer("*yank");
+    yank_buff->kind   = BUFF_KIND_YANK;
+    yank_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
+    ys->yank_buff     = yank_buff;
 
-    command_buff         = yed_create_buffer("*command");
-    command_buff->kind   = BUFF_KIND_CMD;
-    command_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    ys->command_buff     = command_buff;
+    log_buff          = yed_create_buffer("*log");
+    log_buff->kind    = BUFF_KIND_LOG;
+    log_buff->flags  |= BUFF_RD_ONLY | BUFF_SPECIAL;
+    ys->log_buff      = log_buff;
 }
 
 yed_line yed_new_line_with_cap(int len) {

@@ -18,7 +18,7 @@ typedef struct {
 
 #define BUFF_KIND_FILE  (0x1)
 #define BUFF_KIND_YANK  (0x2)
-#define BUFF_KIND_CMD   (0x3)
+#define BUFF_KIND_LOG   (0x3)
 
 #define BUFF_MODIFIED   (0x1)
 #define BUFF_RD_ONLY    (0x2)

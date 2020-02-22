@@ -16,7 +16,7 @@ void man_word(int n_args, char **args) {
     word = yed_word_under_cursor();
 
     if (!word) {
-        yed_append_text_to_cmd_buff("[!] cursor is not on a word");
+        yed_cerr("cursor is not on a word");
         return;
     }
 
@@ -57,9 +57,7 @@ void man(int n_args, char **args) {
     err = system(cmd_buff);
 
     if (err) {
-        yed_append_text_to_cmd_buff("[!] command '");
-        yed_append_text_to_cmd_buff(err_buff);
-        yed_append_text_to_cmd_buff("' failed");
+        yed_cerr("command '%s' failed", err_buff);
         return;
     }
 

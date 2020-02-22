@@ -26,7 +26,7 @@ void completer(int n_args, char **args) {
     int        i, word_len, cpl;
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame ");
+        yed_cerr("no active frame");
         return;
     }
 
@@ -52,8 +52,7 @@ void completer(int n_args, char **args) {
         }
 
         if (compl_num_items > 1) {
-            yed_append_int_to_cmd_buff(compl_num_items);
-            yed_append_text_to_cmd_buff(" words with same prefix");
+            yed_cerr("%d words with same prefix", compl_num_items);
         }
 
         /* Cleanup */

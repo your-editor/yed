@@ -133,6 +133,7 @@ int mk_wcwidth(wchar_t ucs);
 #include "buffer.h"
 #include "attrs.h"
 #include "frame.h"
+#include "log.h"
 #include "command.h"
 #include "getRSS.h"
 #include "measure_time.h"
@@ -174,7 +175,9 @@ typedef struct yed_state_t {
          yed_buffer_ptr_t)       buffers;
     int                          unnamed_buff_counter;
     yed_buffer                  *yank_buff,
-                                *command_buff;
+                                *log_buff;
+    array_t                      log_name_stack;
+    char                        *cur_log_name;
     array_t                      frames;
     yed_frame                   *active_frame,
                                 *prev_active_frame;

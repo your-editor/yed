@@ -4,7 +4,7 @@ int yed_get_ft(char *path) {
     char *ext;
     int   ft;
 
-    ft = FT_TXT;
+    ft = FT_UNKNOWN;
 
     copy = strdup(path);
     base = basename(copy);

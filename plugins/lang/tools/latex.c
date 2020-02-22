@@ -20,21 +20,21 @@ void latex_compile_current_file(int n_args, char **args) {
     yed_buffer *buff;
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame");
+        yed_cerr("no active frame");
         return;
     }
 
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        yed_cerr("active frame has no buffer");
         return;
     }
 
     buff = frame->buffer;
 
     if (buff->kind != BUFF_KIND_FILE || !buff->path) {
-        yed_append_text_to_cmd_buff("[!] buffer is not a file");
+        yed_cerr("buffer is not a file");
         return;
     }
 
@@ -43,7 +43,7 @@ void latex_compile_current_file(int n_args, char **args) {
     comp_prg = yed_get_var("latex-comp-prg");
 
     if (!comp_prg) {
-        yed_append_text_to_cmd_buff("[!] 'latex-comp-prg' not set");
+        yed_cerr("'latex-comp-prg' not set");
         return;
     }
 
@@ -73,21 +73,21 @@ void latex_view_current_file(int n_args, char **args) {
     yed_buffer *buff;
 
     if (!ys->active_frame) {
-        yed_append_text_to_cmd_buff("[!] no active frame");
+        yed_cerr("no active frame");
         return;
     }
 
     frame = ys->active_frame;
 
     if (!frame->buffer) {
-        yed_append_text_to_cmd_buff("[!] active frame has no buffer");
+        yed_cerr("active frame has no buffer");
         return;
     }
 
     buff = frame->buffer;
 
     if (buff->kind != BUFF_KIND_FILE || !buff->path) {
-        yed_append_text_to_cmd_buff("[!] buffer is not a file");
+        yed_cerr("buffer is not a file");
         return;
     }
 
@@ -100,7 +100,7 @@ void latex_view_current_file(int n_args, char **args) {
     view_prg = yed_get_var("latex-view-prg");
 
     if (!view_prg) {
-        yed_append_text_to_cmd_buff("[!] 'latex-view-prg' not set");
+        yed_cerr("'latex-view-prg' not set");
         return;
     }
 

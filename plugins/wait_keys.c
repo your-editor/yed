@@ -33,8 +33,7 @@ void wait_keys_define(int n_args, char **args) {
     char key_str[32], var_name[128];
 
     if (n_args != 2) {
-        yed_append_text_to_cmd_buff("[!] expected two arguments but got ");
-        yed_append_int_to_cmd_buff(n_args);
+        yed_cerr("expected 2 arguments but got %d", n_args);
         return;
     }
 
@@ -82,9 +81,7 @@ int wait_keys_parse(int *keys, char **args) {
         }
 
         if (key_i == -1 || !yed_is_key(key_i)) {
-            yed_append_text_to_cmd_buff("[!] invalid key '");
-            yed_append_text_to_cmd_buff(key_str);
-            yed_append_text_to_cmd_buff("'");
+            yed_cerr("invalid key '%s'", key_str);
             return 0;
         }
 
@@ -100,8 +97,7 @@ void wait_keys_take_key(int n_args, char **args) {
     char var_name[128], *vkey_str;
 
     if (n_args != 1) {
-        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
-        yed_append_int_to_cmd_buff(n_args);
+        yed_cerr("expected 1 argument but got %d", n_args);
         return;
     }
 

@@ -41,7 +41,7 @@ void find_file(int n_args, char **args) {
     if (!ys->interactive_command) {
         prg = yed_get_var("find-file-prg");
         if (!prg) {
-            yed_append_text_to_cmd_buff("[!] 'find-file-prg' not set");
+            yed_cerr("'find-file-prg' not set");
             return;
         }
         find_file_start();

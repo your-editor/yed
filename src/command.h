@@ -21,6 +21,7 @@ void yed_append_non_text_to_cmd_buff(char *s);
 void yed_append_int_to_cmd_buff(int i);
 
 void yed_cprint(char *fmt, ...);
+void yed_cerr(char *fmt, ...);
 
 void yed_draw_command_line(void);
 void yed_do_command(void);

@@ -175,7 +175,9 @@ static void _vimish_take_key(int key, char *maybe_key_str) {
         case MODE_DELETE: vimish_delete(key, key_str); break;
         case MODE_YANK:   vimish_yank(key, key_str);   break;
         default:
-            yed_append_text_to_cmd_buff("[!] invalid mode (?)");
+            LOG_FN_ENTER();
+            yed_log("[!] invalid mode (?)");
+            LOG_EXIT();
     }
 }
 
@@ -183,8 +185,7 @@ void vimish_take_key(int n_args, char **args) {
     int key;
 
     if (n_args != 1) {
-        yed_append_text_to_cmd_buff("[!] expected one argument but got ");
-        yed_append_int_to_cmd_buff(n_args);
+        yed_cerr("expected 1 argument, but got %d", n_args);
         return;
     }
 
@@ -199,7 +200,7 @@ void vimish_bind(int n_args, char **args) {
     char  key_c;
 
     if (n_args < 1) {
-        yed_append_text_to_cmd_buff("[!] missing 'mode' as first argument");
+        yed_cerr("missing 'mode' as first argument");
         return;
     }
 
@@ -210,14 +211,12 @@ void vimish_bind(int n_args, char **args) {
     else if (strcmp(mode_str, "delete") == 0)    { b_mode = MODE_DELETE; }
     else if (strcmp(mode_str, "yank")   == 0)    { b_mode = MODE_YANK;   }
     else {
-        yed_append_text_to_cmd_buff("[!] no mode named '");
-        yed_append_text_to_cmd_buff(mode_str);
-        yed_append_text_to_cmd_buff("'");
+        yed_cerr("no mode named '%s'", mode_str);
         return;
     }
 
     if (n_args < 2) {
-        yed_append_text_to_cmd_buff("[!] missing 'keys' as second argument until 'CMD'");
+        yed_cerr("missing 'keys' as second argument until 'CMD'");
         return;
     }
 
@@ -230,12 +229,12 @@ void vimish_bind(int n_args, char **args) {
     }
 
     if (cmd_delim == -1) {
-        yed_append_text_to_cmd_buff("[!] missing 'CMD'");
+        yed_cerr("missing 'CMD'");
         return;
     }
 
     if (cmd_delim == n_args - 1) {
-        yed_append_text_to_cmd_buff("[!] missing command name as argument after 'CMD'");
+        yed_cerr("missing command name as argument after 'CMD'");
         return;
     }
 
@@ -265,9 +264,7 @@ void vimish_bind(int n_args, char **args) {
         }
 
         if (key_i == -1) {
-            yed_append_text_to_cmd_buff("[!] invalid key '");
-            yed_append_text_to_cmd_buff(key_str);
-            yed_append_text_to_cmd_buff("'");
+            yed_cerr("invalid key '%s'", key_str);
             return;
         }
 
@@ -275,15 +272,6 @@ void vimish_bind(int n_args, char **args) {
     }
 
     cmd = args[cmd_delim + 1];
-
-#if 0
-    if (!yed_get_command(cmd)) {
-        yed_append_text_to_cmd_buff("[!] no command named '");
-        yed_append_text_to_cmd_buff(cmd);
-        yed_append_text_to_cmd_buff("' found");
-        return;
-    }
-#endif
 
     n_cmd_args = n_args - (cmd_delim + 2);
     vimish_make_binding(b_mode, n_keys, keys, cmd, n_cmd_args, args + cmd_delim + 2);
@@ -715,8 +703,7 @@ enter_insert:
             break;
 
         default:
-            yed_append_text_to_cmd_buff("[!] [NORMAL] unhandled key ");
-            yed_append_int_to_cmd_buff(key);
+            yed_cerr("[NORMAL] unhandled key %d", key);
     }
 }
 
@@ -758,8 +745,7 @@ void vimish_insert(int key, char *key_str) {
                 YEXE("insert", key_str);
             } else {
                 vimish_pop_repeat_key();
-                yed_append_text_to_cmd_buff("[!] [INSERT] unhandled key ");
-                yed_append_int_to_cmd_buff(key);
+                yed_cerr("[INSERT] unhandled key %d", key);
             }
     }
 
@@ -789,8 +775,7 @@ void vimish_delete(int key, char *key_str) {
 
         default:
             vimish_pop_repeat_key();
-            yed_append_text_to_cmd_buff("[!] [DELETE] unhandled key ");
-            yed_append_int_to_cmd_buff(key);
+            yed_cerr("[DELETE] unhandled key %d", key);
     }
 }
 
@@ -810,8 +795,7 @@ void vimish_yank(int key, char *key_str) {
             break;
 
         default:
-            yed_append_text_to_cmd_buff("[!] [YANK] unhandled key ");
-            yed_append_int_to_cmd_buff(key);
+            yed_cerr("[YANK] unhandled key %d", key);
     }
 }
 
