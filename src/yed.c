@@ -239,14 +239,18 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     ys->tabw = yed_get_tab_width();
 
     has_frames = !!array_len(ys->frames);
+
+    if (array_len(ys->options.files) >= 1) {
+        YEXE("frame-new");
+        has_frames = 1;
+    }
+
     array_traverse(ys->options.files, file_it) {
         YEXE("buffer", *file_it);
     }
 
     if (array_len(ys->options.files) >= 1) {
-        YEXE("frame-new");
         YEXE("buffer", *(char**)array_item(ys->options.files, 0));
-        has_frames = 1;
     }
     if (array_len(ys->options.files) > 1) {
         YEXE("frame-vsplit");

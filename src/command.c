@@ -1430,6 +1430,11 @@ void yed_default_command_buffer(int n_args, char **args) {
         return;
     }
 
+    if (!ys->active_frame
+    &&  array_len(ys->frames) == 0) {
+        YEXE("frame-new");
+    }
+
     expand_path(args[0], path);
 
     it = tree_lookup(ys->buffers, path);
@@ -1447,9 +1452,6 @@ void yed_default_command_buffer(int n_args, char **args) {
         }
     }
 
-    if (!ys->active_frame) {
-        YEXE("frame-new");
-    }
     if (ys->active_frame) {
         yed_frame_set_buff(ys->active_frame, buffer);
     }
