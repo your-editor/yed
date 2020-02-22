@@ -17,5 +17,5 @@ do {                               \
 #define LOG_FN_ENTER()     _LOG_ENTER((char*)__FUNCTION__)
 #define LOG_CMD_ENTER(cmd) _LOG_ENTER(cmd)
 
-void yed_vlog(char *fmt, va_list args);
-void yed_log(char *fmt, ...);
+int yed_vlog(char *fmt, va_list args);
+int yed_log(char *fmt, ...);

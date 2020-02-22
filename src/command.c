@@ -177,10 +177,21 @@ void yed_vcprint(char *fmt, va_list args) {
     int        len, i, j;
     char       spc, dot;
     va_list    args_copy;
+    int        should_clear;
+    char      *current_command;
 
     va_copy(args_copy, args);
 
-    yed_vlog(fmt, args);
+    should_clear    = yed_vlog(fmt, args);
+    current_command = *(char**)array_last(ys->log_name_stack);
+    if (should_clear && !ys->interactive_command) {
+        yed_clear_cmd_buff();
+        ys->cmd_prompt = YED_CMD_PROMPT;
+        yed_append_text_to_cmd_buff("(");
+        yed_append_text_to_cmd_buff(current_command);
+        yed_append_text_to_cmd_buff(") ");
+        cprinted_len = 3 + strlen(current_command);
+    }
 
     len = vsnprintf(buff, sizeof(buff), fmt, args_copy);
     va_end(args_copy);

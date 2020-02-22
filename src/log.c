@@ -24,7 +24,7 @@ void yed__log_prints(char *s, int len) {
     yed_mark_dirty_frames(ys->log_buff);
 }
 
-void yed_vlog(char *fmt, va_list args) {
+int yed_vlog(char *fmt, va_list args) {
     char       tm_buff[128], nm_tm_buff[512], buff[1024];
     time_t     t;
     struct tm *tm;
@@ -71,12 +71,17 @@ void yed_vlog(char *fmt, va_list args) {
     } else {
         yed__log_prints(buff, len);
     }
+
+    return new_header;
 }
 
-void yed_log(char *fmt, ...) {
+int yed_log(char *fmt, ...) {
     va_list va;
+    int     r;
 
     va_start(va, fmt);
-    yed_vlog(fmt, va);
+    r = yed_vlog(fmt, va);
     va_end(va);
+
+    return r;
 }
