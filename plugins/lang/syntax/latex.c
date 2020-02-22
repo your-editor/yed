@@ -18,6 +18,7 @@ int yed_plugin_boot(yed_plugin *self) {
     highlight_info_make(&hinfo);
 
     highlight_prefixed_words_inclusive(&hinfo, '\\', HL_CALL);
+    highlight_to_eol_from(&hinfo, "%", HL_COMMENT);
     highlight_within(&hinfo, "$", "$", '\\', -1, HL_STR);
 
     ys->redraw = 1;
