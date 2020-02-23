@@ -54,7 +54,7 @@ void syntax_yedrc_highlight(yed_event *event) {
     yed_frame *frame;
     yed_line  *line;
     yed_attrs *attr, key;
-    int        col, old_col, word_len, spaces, i;
+    int        col, old_col, word_len, i;
     char       c, *word, *word_cpy;
 
     frame = event->frame;
@@ -70,14 +70,18 @@ void syntax_yedrc_highlight(yed_event *event) {
         old_col  = col;
         word     = array_data(line->chars) + col - 1;
         word_len = 0;
-        spaces   = 0;
         c        = yed_line_col_to_glyph(line, col)->c;
+
+        if (c == ')') { return; }
 
         if (isalnum(c) || c == '_' || c == '-') {
             while (col <= line->visual_width) {
                 word_len += 1;
                 col      += 1;
-                c         = yed_line_col_to_glyph(line, col)->c;
+
+                if (col > line->visual_width) { break; }
+
+                c = yed_line_col_to_glyph(line, col)->c;
 
                 if (!isalnum(c) && c != '_' && c != '-') {
                     break;
@@ -87,7 +91,10 @@ void syntax_yedrc_highlight(yed_event *event) {
             while (col <= line->visual_width) {
                 word_len += 1;
                 col      += 1;
-                c         = yed_line_col_to_glyph(line, col)->c;
+
+                if (col > line->visual_width) { break; }
+
+                c = yed_line_col_to_glyph(line, col)->c;
 
                 if (isalnum(c) || c == '_' || c == '-' || isspace(c)) {
                     break;
@@ -97,13 +104,13 @@ void syntax_yedrc_highlight(yed_event *event) {
 
         if (isspace(c)) {
             while (col <= line->visual_width) {
-                spaces += 1;
-                col    += 1;
-                c       = yed_line_col_to_glyph(line, col)->c;
+                col += 1;
 
-                if (!isspace(c)) {
-                    break;
-                }
+                if (col > line->visual_width) { break; }
+
+                c = yed_line_col_to_glyph(line, col)->c;
+
+                if (!isspace(c)) { break; }
             }
         }
 
