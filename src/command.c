@@ -223,7 +223,7 @@ void yed_vcprint(char *fmt, va_list args) {
 }
 
 void yed_vcerr(char *fmt, va_list args) {
-    char       buff[1024], fmt_buff[256];
+    char       buff[1024];
     int        len, i, j;
     char       spc, dot;
     va_list    args_copy;
@@ -232,10 +232,7 @@ void yed_vcerr(char *fmt, va_list args) {
     yed_attrs  cmd_attr, attn_attr;
     char       attr_buff[128];
 
-    fmt_buff[0] = 0;
-    strcat(fmt_buff, "[!] ");
-    strcat(fmt_buff, fmt);
-    fmt = fmt_buff;
+    va_copy(args_copy, args);
 
     should_clear    = yed_vlog(fmt, args);
     current_command = *(char**)array_last(ys->log_name_stack);
@@ -254,7 +251,6 @@ void yed_vcerr(char *fmt, va_list args) {
         yed_append_non_text_to_cmd_buff(attr_buff);
     }
 
-    va_copy(args_copy, args);
     len = vsnprintf(buff, sizeof(buff), fmt, args_copy);
     va_end(args_copy);
 
@@ -295,7 +291,13 @@ void yed_cprint(char *fmt, ...) {
 }
 
 void yed_cerr(char *fmt, ...) {
+    char    fmt_buff[256];
     va_list va;
+
+    fmt_buff[0] = 0;
+    strcat(fmt_buff, "[!] ");
+    strcat(fmt_buff, fmt);
+    fmt = fmt_buff;
 
     va_start(va, fmt);
     yed_vcerr(fmt, va);
