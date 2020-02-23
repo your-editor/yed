@@ -309,6 +309,8 @@ array_t sh_split(char *s) {
         while (start < len && isspace(copy[start])) { start += 1; }
     }
 
+    free(copy);
+
     return r;
 }
 

@@ -290,7 +290,15 @@ int yed_reload_plugins(void) {
 }
 
 void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
-    char *name_dup;
+    tree_it(yed_command_name_t, yed_command)  it;
+    char                                     *old_name, *name_dup;
+
+    it = tree_lookup(ys->commands, name);
+    if (tree_it_good(it)) {
+        old_name = tree_it_key(it);
+        tree_delete(ys->commands, name);
+        free(old_name);
+    }
 
     name_dup = strdup(name);
     tree_insert(ys->commands, strdup(name), command);

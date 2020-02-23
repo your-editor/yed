@@ -90,11 +90,17 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void vimish_unload(yed_plugin *self) {
-    int                 i;
+    int                 i, j;
     vimish_key_binding *b;
 
     for (i = 0; i < N_MODES; i += 1) {
         array_traverse(mode_bindings[i], b) {
+            if (b->args) {
+                for (j = 0; j < b->n_args; j += 1) {
+                    free(b->args[j]);
+                }
+                free(b->args);
+            }
             free(b->cmd);
         }
         array_free(mode_bindings[i]);
