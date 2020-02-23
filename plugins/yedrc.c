@@ -15,6 +15,7 @@ tree(yedrc_path_t, int) loading;
 void yedrc_load(int n_args, char **args) {
     char                       *path;
     char                        exp_path[512];
+    char                        abs_path[512];
     tree_it(yedrc_path_t, int)  it;
     FILE                       *f;
     char                        line[512];
@@ -25,26 +26,33 @@ void yedrc_load(int n_args, char **args) {
         return;
     }
 
+    yed_cprint("'%s'\n", args[0]);
+
     path = args[0];
     expand_path(path, exp_path);
     path = exp_path;
 
-    yed_cprint("'%s'\n", path);
-
-    it = tree_lookup(loading, path);
-    if (tree_it_good(it)) {
-        yed_cerr("yedrc file '%s' is recursive! aborting load", path);
-        return;
-    }
-
     f = fopen(path, "r");
 
     if (!f) {
-        yed_cerr("unable to open yedrc file '%s'", path);
+        yed_cerr("unable to open yedrc file '%s'", args[0]);
         return;
     }
 
-    yed_cprint("executing '%s'", path);
+    path = realpath(exp_path, abs_path);
+
+    if (!path) {
+        yed_cerr("invalid path to yedrc file '%s'", args[0]);
+        return;
+    }
+
+    it = tree_lookup(loading, path);
+    if (tree_it_good(it)) {
+        yed_cerr("yedrc file '%s' is recursive! aborting load", args[0]);
+        return;
+    }
+
+    yed_cprint("executing '%s'", args[0]);
 
     tree_insert(loading, path, 1);
 
@@ -58,7 +66,7 @@ void yedrc_load(int n_args, char **args) {
 
     tree_delete(loading, path);
 
-    yed_cprint("done loading '%s'", path);
+    yed_cprint("done loading '%s'", args[0]);
 
     fclose(f);
 }
