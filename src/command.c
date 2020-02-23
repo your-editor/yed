@@ -2505,6 +2505,7 @@ void yed_default_command_plugins_list(int n_args, char **args) {
         return;
     }
 
+    yed_cprint("");
     tree_traverse(ys->plugins, it) {
         yed_cprint("\n%s", tree_it_key(it));
     }
@@ -2528,6 +2529,7 @@ void yed_default_command_plugins_list_dirs(int n_args, char **args) {
         return;
     }
 
+    yed_cprint("");
     array_traverse(ys->plugin_dirs, dir_it) {
         yed_cprint("\n%s", *dir_it);
     }
@@ -3309,6 +3311,7 @@ void yed_default_command_styles_list(int n_args, char **args) {
         return;
     }
 
+    yed_cprint("");
     tree_traverse(ys->styles, it) {
         yed_cprint("\n%s", tree_it_key(it));
     }
