@@ -127,8 +127,9 @@ void yed_set_small_message(char *msg) {
 }
 
 static void write_status_bar(int key) {
-    int sav_x, sav_y;
+    int   sav_x, sav_y;
     char *path;
+    char *status_line_var;
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
@@ -155,6 +156,25 @@ static void write_status_bar(int key) {
     append_n_to_output_buff("     ", 5);
     yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
     append_int_to_output_buff(key);
+
+
+
+    if ((status_line_var = yed_get_var("status-line-var"))) {
+        status_line_var = yed_get_var(status_line_var);
+        if (status_line_var) {
+            yed_set_small_message(status_line_var);
+        } else {
+            yed_set_small_message("<undefined>");
+        }
+    }
+
+    if (ys->small_message) {
+        yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows - 1);
+        yed_set_attr(yed_active_style_get_status_line());
+        append_to_output_buff(ys->small_message);
+    }
+
+
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
     yed_set_cursor(sav_x, sav_y);
@@ -230,8 +250,6 @@ void yed_service_reload(void) {
     yed_reload_plugins();
 
     yed_register_sigwinch_handler();
-
-    yed_set_small_message("* reload serviced *");
 
     ys->redraw = ys->redraw_cls = 1;
     append_to_output_buff(TERM_CURSOR_HIDE);

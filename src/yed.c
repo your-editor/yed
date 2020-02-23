@@ -313,23 +313,6 @@ void yed_fini(yed_state *state) {
 void yed_set_state(yed_state *state)    { ys = state; }
 yed_state * yed_get_state(void)         { return ys;  }
 
-static void write_small_message(void) {
-    int sav_x, sav_y;
-
-    if (!ys->small_message) {
-        return;
-    }
-
-    sav_x = ys->cur_x;
-    sav_y = ys->cur_y;
-    yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows - 1);
-    yed_set_attr(yed_active_style_get_status_line());
-    append_to_output_buff(ys->small_message);
-
-    append_to_output_buff(TERM_RESET);
-    append_to_output_buff(TERM_CURSOR_HIDE);
-    yed_set_cursor(sav_x, sav_y);
-}
 
 int yed_pump(void) {
     int                  keys[16], n_keys, i, tabw_var_val;
@@ -344,8 +327,6 @@ int yed_pump(void) {
         yed_service_reload();
         restart_writer();
     }
-
-    write_small_message();
 
     /* Not sure why this is necessary, but... */
     if (!ys->interactive_command && ys->active_frame) {
@@ -428,14 +409,12 @@ int yed_pump(void) {
     ys->redraw = ys->redraw_cls = 0;
 
     if (ys->interactive_command) {
+        write_status_bar(keys[0]);
         yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
         append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
-    } else if (ys->active_frame) {
-        write_status_bar(keys[0]);
-        append_to_output_buff(TERM_RESET);
-        append_to_output_buff(TERM_CURSOR_SHOW);
     } else {
+        write_status_bar(keys[0]);
         append_to_output_buff(TERM_CURSOR_HIDE);
         append_to_output_buff(TERM_RESET);
     }

@@ -85,6 +85,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     vimish_change_mode(MODE_NORMAL, 0, 0);
     yed_set_var("vimish-mode", mode_strs[mode]);
+    YEXE("set", "status-line-var", "vimish-mode");
 
     return 0;
 }
@@ -161,7 +162,6 @@ void vimish_change_mode(int new_mode, int by_line, int cancel) {
         case MODE_YANK:   enter_yank(by_line);   break;
     }
 
-    yed_append_text_to_cmd_buff(mode_strs[new_mode]);
     yed_set_var("vimish-mode", mode_strs[new_mode]);
 }
 

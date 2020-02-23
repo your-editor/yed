@@ -331,7 +331,6 @@ void yed_draw_command_line() {
 
 void yed_start_command_prompt(void) {
     ys->interactive_command = "command-prompt";
-    yed_set_small_message(NULL);
     yed_clear_cmd_buff();
 }
 
@@ -1901,7 +1900,6 @@ void start_frame_move(void) {
     ys->interactive_command = "frame-move";
     ys->cmd_prompt          =
         "(frame-move) Use arrows to move frame. ENTER to stop.";
-    yed_set_small_message(NULL);
     yed_clear_cmd_buff();
 }
 
@@ -1997,7 +1995,6 @@ void start_frame_resize(void) {
     ys->interactive_command = "frame-resize";
     ys->cmd_prompt          =
         "(frame-resize) Use arrows to reize frame. ENTER to stop.";
-    yed_set_small_message(NULL);
     yed_clear_cmd_buff();
 }
 
@@ -2913,7 +2910,6 @@ void yed_find_in_buffer_take_key(int key) {
 void yed_start_find_in_buffer(void) {
     ys->interactive_command = "find-in-buffer";
     ys->cmd_prompt          = "(find-in-buffer) ";
-    yed_set_small_message(NULL);
     ys->search_save_row     = ys->active_frame->cursor_line;
     ys->search_save_col     = ys->active_frame->cursor_col;
     yed_clear_cmd_buff();
@@ -3213,7 +3209,6 @@ void yed_start_replace_current_search(void) {
 
     ys->interactive_command  = "replace-current-search";
     ys->cmd_prompt           = "(replace-current-search) ";
-    yed_set_small_message(NULL);
     ys->search_save_row      = ys->active_frame->cursor_line;
     ys->search_save_col      = ys->active_frame->cursor_col;
     ys->current_search       = ys->save_search;

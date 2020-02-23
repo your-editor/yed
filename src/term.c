@@ -68,6 +68,7 @@ int yed_term_exit(void) {
     }
 
     printf(TERM_STD_SCREEN);
+    printf(TERM_CURSOR_SHOW);
 
     tcsetattr(0, TCSAFLUSH, &ys->sav_term);
 

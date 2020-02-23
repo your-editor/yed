@@ -63,7 +63,6 @@ void find_file_cleanup(void) {
 void find_file_start(void) {
     ys->interactive_command = "find-file";
     find_file_set_prompt("(find-file) ", NULL);
-    yed_set_small_message(NULL);
     find_file_make_frame();
     find_file_make_buffer();
     yed_frame_set_buff(frame, buff);

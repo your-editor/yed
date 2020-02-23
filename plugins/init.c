@@ -28,22 +28,22 @@ int yed_plugin_boot(yed_plugin *self) {
     get_env_info();
 
     if (yed_term_says_it_supports_truecolor()) {
-        yed_set_var("truecolor",     "yes");
+        YEXE("set", "truecolor",     "yes");
     }
-    yed_set_var("tab-width",             "4");
-    yed_set_var("latex-comp-prg",        "xelatex -halt-on-error --interaction=nonstopmode '%'");
-    yed_set_var("latex-view-prg",        "echo \"mupdf '%'\" | $SHELL &");
-    yed_set_var("latex-update-view-prg", "pkill -HUP mupdf 2>&1 > /dev/null");
+    YEXE("set", "tab-width",             "4");
+    YEXE("set", "latex-comp-prg",        "xelatex -halt-on-error --interaction=nonstopmode '%'");
+    YEXE("set", "latex-view-prg",        "echo \"mupdf '%'\" | $SHELL &");
+    YEXE("set", "latex-update-view-prg", "pkill -HUP mupdf 2>&1 > /dev/null");
     if (has("rg")) {
-        yed_set_var("grep-prg",      "rg --vimgrep \"%\"");
+        YEXE("set", "grep-prg",      "rg --vimgrep \"%\"");
     }
     if (has("fzf")) {
-        yed_set_var("find-file-prg", "fzf --filter=\"%\"");
+        YEXE("set", "find-file-prg", "fzf --filter=\"%\"");
     }
 
     /* I like the cursor line. But it's not default. */
-    yed_set_var("cursor-line", "yes");
-    yed_set_var("vimish-insert-no-cursor-line", "yes");
+    YEXE("set", "cursor-line", "yes");
+    YEXE("set", "vimish-insert-no-cursor-line", "yes");
 
     /* Load all plugins. */
     YEXE("plugins-add-dir", "./.yed");
@@ -95,8 +95,8 @@ void get_env_info(void) {
     char *term,
          *user;
 
-    if ((term = getenv("TERM"))) { yed_set_var("term", term); }
-    if ((user = getenv("USER"))) { yed_set_var("user", user); }
+    if ((term = getenv("TERM"))) { YEXE("set", "term", term); }
+    if ((user = getenv("USER"))) { YEXE("set", "user", user); }
 }
 
 /*

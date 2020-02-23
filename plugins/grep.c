@@ -66,7 +66,6 @@ void grep_start(void) {
     ys->interactive_command = "grep";
     grep_set_prompt("(grep) ", NULL);
     save_current_search = ys->current_search;
-    yed_set_small_message(NULL);
     grep_make_frame();
     grep_make_buffer();
     yed_frame_set_buff(frame, buff);
