@@ -22,6 +22,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     highlight_within(&hinfo, "[", "]", 0, -1, HL_NUM);
     highlight_to_eol_from(&hinfo, "[!]", HL_ATTN);
+    highlight_to_eol_from(&hinfo, "#", HL_COMMENT);
     highlight_within(&hinfo, "\"", "\"", '\\', -1, HL_STR);
     highlight_within(&hinfo, "'", "'", '\\', -1, HL_CHAR);
 
