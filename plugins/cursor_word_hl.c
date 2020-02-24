@@ -4,21 +4,25 @@
 
 void cursor_word_hl_line_handler(yed_event *event);
 void cursor_word_hl_cursor_moved_handler(yed_event *event);
+void cursor_word_hl_delete_back_handler(yed_event *event);
 void cursor_word_hl_hl_word(yed_event *event);
 
 static char *the_word;
 static int   the_word_len;
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler line, cursor_moved;
+    yed_event_handler line, cursor_moved, delete_back;
 
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = cursor_word_hl_line_handler;
     cursor_moved.kind  = EVENT_CURSOR_MOVED;
     cursor_moved.fn    = cursor_word_hl_cursor_moved_handler;
+    delete_back.kind   = EVENT_BUFFER_POST_DELETE_BACK;
+    delete_back.fn     = cursor_word_hl_delete_back_handler;
 
     yed_plugin_add_event_handler(self, line);
     yed_plugin_add_event_handler(self, cursor_moved);
+    yed_plugin_add_event_handler(self, delete_back);
 
     return 0;
 }
@@ -59,6 +63,44 @@ void cursor_word_hl_cursor_moved_handler(yed_event *event) {
         if (the_word) {
             free(the_word);
             the_word     = NULL;
+            the_word_len = 0;
+            frame->dirty = 1;
+        }
+        return;
+    }
+
+    if (the_word) {
+        if (strcmp(the_word, word) == 0) {
+            free(word);
+            return;
+        }
+        free(the_word);
+    }
+
+    the_word     = word;
+    the_word_len = strlen(the_word);
+    frame->dirty = 1;
+}
+
+void cursor_word_hl_delete_back_handler(yed_event *event) {
+    yed_frame *frame;
+    char      *word;
+
+    frame = event->frame;
+
+    if (!frame
+    ||  !frame->buffer
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
+        return;
+    }
+
+    word = yed_word_under_cursor();
+
+    if (!word) {
+        if (the_word) {
+            free(the_word);
+            the_word     = NULL;
+            the_word_len = 0;
             frame->dirty = 1;
         }
         return;
