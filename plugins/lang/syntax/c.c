@@ -75,6 +75,7 @@ int yed_plugin_boot(yed_plugin *self) {
     highlight_within(&hinfo, "'", "'", '\\', 1, HL_CHAR);
     highlight_to_eol_from(&hinfo, "//", HL_COMMENT);
     highlight_within_multiline(&hinfo, "/*", "*/", 0, HL_COMMENT);
+    highlight_within_multiline(&hinfo, "#if 0", "#endif", 0, HL_COMMENT);
 
     ys->redraw = 1;
 

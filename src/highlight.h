@@ -613,7 +613,7 @@ static inline int _highlight_line_within(highlight_info *info, int state_idx, ye
         }
 
         _highlight_range_with_attrs(start_col, line->visual_width, line_attrs, attrs);
-        return line->visual_width - start_col;
+        return line->visual_width - start_col + 1;
     }
 
     return 0;
@@ -822,11 +822,9 @@ static inline int _highlight_line_ml_within(highlight_info *info, int row, yed_f
         within = array_item(info->within, state - 1);
         line   = yed_buff_get_line(frame->buffer, row);
         attrs  = _kind_to_attrs(set, within->kind);
-        if (attrs) {
-            if (state == prev_state) {
-                _highlight_range_with_attrs(1, line->visual_width, line_attrs, attrs);
-                return line->visual_width;
-            }
+        if (state == prev_state) {
+            _highlight_range_with_attrs(1, line->visual_width, line_attrs, attrs);
+            return line->visual_width;
         }
     } else if (prev_state) {
         within = array_item(info->within, prev_state - 1);
@@ -836,10 +834,8 @@ static inline int _highlight_line_ml_within(highlight_info *info, int row, yed_f
         if (scan) {
             info->ml_states[state_idx] = 0;
             attrs = _kind_to_attrs(set, within->kind);
-            if (attrs) {
-                col = yed_line_idx_to_col(line, scan - s + within->end_len - 1);
-                _highlight_range_with_attrs(1, col, line_attrs, attrs);
-            }
+            col   = yed_line_idx_to_col(line, scan - s + within->end_len - 1);
+            _highlight_range_with_attrs(1, col, line_attrs, attrs);
         }
 
         return col;
