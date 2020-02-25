@@ -98,6 +98,8 @@ static void do_brace_backup(yed_frame *frame) {
 
     if (i != brace_col - 1)    { return; }
 
+    if (tabw > i) { tabw = i; }
+
     yed_move_cursor_within_frame(frame, -tabw, 0);
     for (i = 0; i < tabw; i += 1) {
         yed_delete_from_line(frame->buffer, frame->cursor_line, 1);
