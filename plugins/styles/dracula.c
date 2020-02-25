@@ -6,7 +6,7 @@
 #define white      MAYBE_CONVERT(RGB_32_hex(F8F8F2))
 #define dark_grey  MAYBE_CONVERT(RGB_32_hex(282A36))
 #define sel_fg     MAYBE_CONVERT(RGB_32_hex(282A36))
-#define sel_bg     MAYBE_CONVERT(RGB_32_hex(F8F8F2))
+#define sel_bg     MAYBE_CONVERT(RGB_32_hex(807b96))
 #define black      MAYBE_CONVERT(RGB_32_hex(181A26))
 #define grey       MAYBE_CONVERT(RGB_32_hex(4D4D4D))
 #define red        MAYBE_CONVERT(RGB_32_hex(FF5555))
