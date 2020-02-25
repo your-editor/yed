@@ -17,17 +17,7 @@ yed_undo_history yed_new_undo_history(void) {
     return uh;
 }
 
-void yed_free_undo_action(yed_undo_action *action) {
-    /* TODO */
-}
-
 void yed_free_undo_record(yed_undo_record *record) {
-    yed_undo_action *action;
-
-    array_traverse(record->actions, action) {
-        yed_free_undo_action(action);
-    }
-
     array_free(record->actions);
 }
 
@@ -176,7 +166,6 @@ void yed_merge_undo_records(struct yed_buffer_t *buffer) {
     yed_undo_history *history;
     yed_undo_record  *last_record,
                      *new_last_record;
-    yed_undo_action  *action;
 
     if (buffer->kind == BUFF_KIND_YANK)    { return; }
 
@@ -187,9 +176,12 @@ void yed_merge_undo_records(struct yed_buffer_t *buffer) {
     last_record     = array_last(history->undo);
     new_last_record = array_item(history->undo, array_len(history->undo) - 2);
 
-    array_traverse(last_record->actions, action) {
-        array_push(new_last_record->actions, *action);
-    }
+    array_push_n(new_last_record->actions,
+                 array_data(last_record->actions),
+                 array_len(last_record->actions));
+/*     array_traverse(last_record->actions, action) { */
+/*         array_push(new_last_record->actions, *action); */
+/*     } */
 
     new_last_record->end_cursor_row = last_record->end_cursor_row;
     new_last_record->end_cursor_col = last_record->end_cursor_col;
