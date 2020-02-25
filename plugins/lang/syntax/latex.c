@@ -1,7 +1,8 @@
 #include <yed/plugin.h>
 #include <yed/highlight.h>
 
-highlight_info hinfo;
+highlight_info hinfo1;
+highlight_info hinfo2;
 
 void unload(yed_plugin *self);
 void syntax_latex_line_handler(yed_event *event);
@@ -15,11 +16,15 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_unload_fn(self, unload);
     yed_plugin_add_event_handler(self, line);
 
-    highlight_info_make(&hinfo);
+    highlight_info_make(&hinfo1);
 
-    highlight_prefixed_words_inclusive(&hinfo, '\\', HL_CALL);
-    highlight_to_eol_from(&hinfo, "%", HL_COMMENT);
-    highlight_within(&hinfo, "$", "$", '\\', -1, HL_STR);
+    highlight_within(&hinfo1, "$", "$", '\\', -1, HL_STR);
+    highlight_to_eol_from(&hinfo1, "%", HL_COMMENT);
+
+    highlight_info_make(&hinfo2);
+
+    highlight_to_eol_from(&hinfo2, "%", HL_IGNORE);
+    highlight_prefixed_words_inclusive(&hinfo2, '\\', HL_CALL);
 
     ys->redraw = 1;
 
@@ -27,7 +32,8 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void unload(yed_plugin *self) {
-    highlight_info_free(&hinfo);
+    highlight_info_free(&hinfo2);
+    highlight_info_free(&hinfo1);
     ys->redraw = 1;
 }
 
@@ -43,5 +49,6 @@ void syntax_latex_line_handler(yed_event *event) {
         return;
     }
 
-    highlight_line(&hinfo, event);
+    highlight_line(&hinfo1, event);
+    highlight_line(&hinfo2, event);
 }

@@ -24,7 +24,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char              *kwds[] = {
         "if",       "fi",       "do",       "in",
         "for",
-        "done",     "else",     "elif",     "then",     "wait",   "case",   "esac",   "time"
+        "done",     "else",     "elif",     "then",     "wait",   "case",   "esac",   "time",
         "while",    "until",    "shift",    "break",
         "source",   "select",   "export",
         "continue", "function",
@@ -32,7 +32,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char              *builtins[] = {
         "bg",        "cd",       "fc",       "fg",
         "let",       "pwd",      "set",
-        "bind",      "dirs",     "echo",     "eval",    "exec",    "exit",    "false",   "hash",    "help",    "jobs",    "kill",    "popd", "read", "test", "trap", "true", "type", "wait"
+        "bind",      "dirs",     "echo",     "eval",    "exec",    "exit",    "false",   "hash",    "help",    "jobs",    "kill",    "popd", "read", "test", "trap", "true", "type", "wait",
         "alias",     "break",    "local",    "pushd",   "shopt",   "times",   "umask",   "unset",
         "caller",    "disown",   "enable",   "logout",  "printf",  "return",  "ulimit",
         "builtin",   "command",  "compgen",  "compopt", "declare", "getopts", "history", "mapfile", "suspend", "typeset", "unalias",

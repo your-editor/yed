@@ -18,7 +18,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "as",       "if",       "in",     "is",     "or",
         "and",      "def",      "del",    "for",    "not",    "try",
         "elif",     "else",     "from",   "pass",   "with",
-        "async",    "await",    "break",  "class",  "raise",  "while",  "yield"
+        "async",    "await",    "break",  "class",  "raise",  "while",  "yield",
         "assert",   "except",   "global", "import", "lambda", "return",
         "finally",
         "continue", "nonlocal",
