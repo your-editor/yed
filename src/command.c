@@ -2491,7 +2491,7 @@ void yed_default_command_plugin_unload(int n_args, char **args) {
     }
 
     yed_unload_plugin(args[0]);
-    yed_cprint("success");
+    yed_cprint("successfully unloaded plugin '%s'", args[0]);
 }
 
 void yed_default_command_plugins_list(int n_args, char **args) {

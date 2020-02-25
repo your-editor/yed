@@ -3,7 +3,8 @@
 
 #define ARRAY_LOOP(a) for (__typeof((a)[0]) *it = (a); it < (a) + (sizeof(a) / sizeof((a)[0])); ++it)
 
-highlight_info hinfo;
+highlight_info hinfo1;
+highlight_info hinfo2;
 
 void unload(yed_plugin *self);
 void log_hl_line_handler(yed_event *event);
@@ -18,13 +19,16 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_add_event_handler(self, line);
 
-    highlight_info_make(&hinfo);
+    highlight_info_make(&hinfo1);
 
-    highlight_within(&hinfo, "[", "]", 0, -1, HL_NUM);
-    highlight_to_eol_from(&hinfo, "[!]", HL_ATTN);
-    highlight_to_eol_from(&hinfo, "#", HL_COMMENT);
-    highlight_within(&hinfo, "\"", "\"", '\\', -1, HL_STR);
-    highlight_within(&hinfo, "'", "'", '\\', -1, HL_CHAR);
+    highlight_within(&hinfo1, "[", "]", 0, -1, HL_NUM);
+    highlight_to_eol_from(&hinfo1, "#", HL_COMMENT);
+    highlight_within(&hinfo1, "\"", "\"", '\\', -1, HL_STR);
+    highlight_within(&hinfo1, "'", "'", '\\', -1, HL_CHAR);
+
+    highlight_info_make(&hinfo2);
+
+    highlight_to_eol_from(&hinfo2, "[!]", HL_ATTN);
 
     ys->redraw = 1;
 
@@ -32,7 +36,8 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void unload(yed_plugin *self) {
-    highlight_info_free(&hinfo);
+    highlight_info_free(&hinfo2);
+    highlight_info_free(&hinfo1);
     ys->redraw = 1;
 }
 
@@ -126,5 +131,6 @@ void log_hl_line_handler(yed_event *event) {
     }
 
     log_hl_hl_cmds(event);
-    highlight_line(&hinfo, event);
+    highlight_line(&hinfo1, event);
+    highlight_line(&hinfo2, event);
 }
