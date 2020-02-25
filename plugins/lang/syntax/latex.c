@@ -19,6 +19,8 @@ int yed_plugin_boot(yed_plugin *self) {
     highlight_info_make(&hinfo1);
 
     highlight_within(&hinfo1, "$", "$", '\\', -1, HL_STR);
+    highlight_within(&hinfo1, "``", "''", 0, -1, HL_CON);
+    highlight_within(&hinfo1, "`", "'", 0, -1, HL_CON);
     highlight_to_eol_from(&hinfo1, "%", HL_COMMENT);
 
     highlight_info_make(&hinfo2);
