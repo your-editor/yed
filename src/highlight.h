@@ -597,7 +597,7 @@ static inline int _highlight_line_within(highlight_info *info, int state_idx, ye
                     _highlight_range_with_attrs(start_col, col + within->end_len - 1, line_attrs, attrs);
                     return (col - start_col) + within->end_len;
                 } else {
-                    break;
+                    return 0;
                 }
             } else if (g->c == within->escape && col < line->visual_width) {
                 col += yed_get_glyph_width(*g);
@@ -946,11 +946,11 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
             last_is_word_boundary = (!isalnum(last_c) && last_c != '_');
         }
 
-        if (_highlight_line_eol(info, line, line_attrs, &attrs, col)) {
-            return;
-        }
-
         if (!(bump = _highlight_line_within(info, state_idx, line, line_attrs, &attrs, col))) {
+            if (_highlight_line_eol(info, line, line_attrs, &attrs, col)) {
+                return;
+            }
+
             _highlight_line_get_word_info(info, line, col, &word_len, &all_num);
 
             if (!last_is_word_boundary) {

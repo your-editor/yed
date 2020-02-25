@@ -9,6 +9,8 @@ highlight_info hinfo2;
 typedef struct {
     char       close;
     yed_attrs *attrs;
+    int        is_arith;
+    int        paren_balance;
 } sh_hl_cxt;
 
 void unload(yed_plugin *self);
@@ -68,6 +70,8 @@ int yed_plugin_boot(yed_plugin *self) {
 
     highlight_info_make(&hinfo2);
 
+    highlight_within_multiline(&hinfo2, "${", "}", 0, HL_IGNORE);
+    highlight_within(&hinfo2, "$", "#", 0, 0, HL_IGNORE);
     highlight_to_eol_from(&hinfo2, "#", HL_COMMENT);
     highlight_within_multiline(&hinfo2, "\"", "\"", '\\', HL_IGNORE);
 
@@ -152,7 +156,7 @@ void syntax_sh_highlight_strings_and_expansions(yed_line *line, array_t line_att
     int        col;
     array_t    stack;
     sh_hl_cxt *cxt, new_cxt;
-    yed_attrs  str, con;
+    yed_attrs  str, con, num;
     yed_glyph *g;
 
     if (line->visual_width == 0) {
@@ -162,6 +166,7 @@ void syntax_sh_highlight_strings_and_expansions(yed_line *line, array_t line_att
     stack = array_make(sh_hl_cxt);
     str   = yed_active_style_get_code_string();
     con   = yed_active_style_get_code_constant();
+    num   = yed_active_style_get_code_number();
     cxt   = NULL;
     for (col = 1; col <= line->visual_width; col += 1) {
         g = yed_line_col_to_glyph(line, col);
@@ -178,36 +183,74 @@ void syntax_sh_highlight_strings_and_expansions(yed_line *line, array_t line_att
                     yed_combine_attrs(array_item(line_attrs, col - 1), cxt->attrs);
                     break;
                 case ')':
+                    if (cxt->is_arith) {
+                        if (cxt->paren_balance != 0) {
+                            cxt->paren_balance -= 1;
+                            goto dont_pop;
+                        } else if (col < line->visual_width) {
+                            if (yed_line_col_to_glyph(line, col + 1)->c == ')') {
+                                yed_combine_attrs(array_item(line_attrs, col - 1), &num);
+                                yed_combine_attrs(array_item(line_attrs, col), &num);
+                                col += 1;
+                            }
+                        }
+                        break;
+                    } /* else fall through */
                 case '}':
                     yed_combine_attrs(array_item(line_attrs, col - 1), &con);
                     break;
             }
             array_pop(stack);
+            goto next;
+dont_pop:;
         } else {
             switch (g->c) {
                 case '"':
-                    new_cxt.close = '"';
-                    new_cxt.attrs = &str;
+                    new_cxt.close    = '"';
+                    new_cxt.attrs    = &str;
+                    new_cxt.is_arith = 0;
                     array_push(stack, new_cxt);
                     break;
                 case '\'':
-                    new_cxt.close = '\'';
-                    new_cxt.attrs = &str;
+                    new_cxt.close    = '\'';
+                    new_cxt.attrs    = &str;
+                    new_cxt.is_arith = 0;
                     array_push(stack, new_cxt);
+                    break;
+                case '(':
+                    if (cxt && cxt->is_arith) {
+                        cxt->paren_balance += 1;
+                    } else if (col < line->visual_width) {
+                        if (yed_line_col_to_glyph(line, col + 1)->c == '(') {
+                            yed_combine_attrs(array_item(line_attrs, col - 1), &num);
+                            yed_combine_attrs(array_item(line_attrs, col), &num);
+                            new_cxt.close         = ')';
+                            new_cxt.attrs         = NULL;
+                            new_cxt.is_arith      = 1;
+                            new_cxt.paren_balance = -1;
+                            array_push(stack, new_cxt);
+                        }
+                    }
                     break;
                 case '$':
                     if (col < line->visual_width) {
                         if (yed_line_col_to_glyph(line, col + 1)->c == '(') {
-                            yed_combine_attrs(array_item(line_attrs, col - 1), &con);
-                            yed_combine_attrs(array_item(line_attrs, col), &con);
-                            new_cxt.close = ')';
-                            new_cxt.attrs = NULL;
-                            array_push(stack, new_cxt);
+                            if (col < line->visual_width - 1
+                            &&  yed_line_col_to_glyph(line, col + 2)->c == '(') {
+                                yed_combine_attrs(array_item(line_attrs, col - 1), &con);
+                                goto next;
+                            } else {
+                                yed_combine_attrs(array_item(line_attrs, col - 1), &con);
+                                yed_combine_attrs(array_item(line_attrs, col), &con);
+                                new_cxt.close    = ')';
+                                new_cxt.attrs    = NULL;
+                                new_cxt.is_arith = 0;
+                                array_push(stack, new_cxt);
+                            }
                         } else if (yed_line_col_to_glyph(line, col + 1)->c == '{') {
-                            yed_combine_attrs(array_item(line_attrs, col - 1), &con);
-                            yed_combine_attrs(array_item(line_attrs, col), &con);
-                            new_cxt.close = '}';
-                            new_cxt.attrs = &con;
+                            new_cxt.close    = '}';
+                            new_cxt.attrs    = &con;
+                            new_cxt.is_arith = 0;
                             array_push(stack, new_cxt);
                         } else {
                             yed_combine_attrs(array_item(line_attrs, col - 1), &con);
@@ -225,9 +268,9 @@ void syntax_sh_highlight_strings_and_expansions(yed_line *line, array_t line_att
                     }
                     break;
             }
-
-            cxt = array_last(stack);
         }
+
+        cxt = array_last(stack);
 
         if (cxt && cxt->attrs) {
             yed_combine_attrs(array_item(line_attrs, col - 1), cxt->attrs);
