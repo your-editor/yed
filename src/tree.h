@@ -548,18 +548,18 @@
         return t;                                                              \
     }                                                                          \
                                                                                \
-	inline void CAT2(tree(K_T, V_T), _reset_fns)(                       \
+    inline void CAT2(tree(K_T, V_T), _reset_fns)(                              \
             tree(K_T, V_T) t, void *cmp) {                                     \
                                                                                \
-		t->_free   = CAT2(tree(K_T, V_T), _free);                              \
-		t->_lookup = CAT2(tree(K_T, V_T), _lookup);                            \
-		t->_insert = CAT2(tree(K_T, V_T), _insert);                            \
-		t->_delete = CAT2(tree(K_T, V_T), _delete);                            \
-		t->_begin  = CAT2(tree(K_T, V_T), _begin);                             \
-		t->_last   = CAT2(tree(K_T, V_T), _last);                              \
-		t->_geq    = CAT2(tree(K_T, V_T), _geq);                               \
-		t->_gtr    = CAT2(tree(K_T, V_T), _gtr);                               \
-		t->_cmp    = (CAT2(tree(K_T, V_T), _cmp_t))cmp;                        \
-	}
+        t->_free   = CAT2(tree(K_T, V_T), _free);                              \
+        t->_lookup = CAT2(tree(K_T, V_T), _lookup);                            \
+        t->_insert = CAT2(tree(K_T, V_T), _insert);                            \
+        t->_delete = CAT2(tree(K_T, V_T), _delete);                            \
+        t->_begin  = CAT2(tree(K_T, V_T), _begin);                             \
+        t->_last   = CAT2(tree(K_T, V_T), _last);                              \
+        t->_geq    = CAT2(tree(K_T, V_T), _geq);                               \
+        t->_gtr    = CAT2(tree(K_T, V_T), _gtr);                               \
+        t->_cmp    = (CAT2(tree(K_T, V_T), _cmp_t))cmp;                        \
+    }
 
 #endif

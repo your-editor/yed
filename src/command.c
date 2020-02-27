@@ -365,7 +365,7 @@ void yed_command_take_key(int key) {
     char *c, *new;
     int   free_new;
 
-    if (key == CTRL_F || key == CTRL_C) {
+    if (key == ESC || key == CTRL_C) {
         ys->interactive_command = NULL;
         if (command_prompt_compl_items) {
             free(command_prompt_compl_items);
@@ -2868,7 +2868,7 @@ int yed_inc_find_in_buffer(void) {
 void yed_find_in_buffer_take_key(int key) {
     int found;
 
-    if (key == CTRL_F || key == CTRL_C) {
+    if (key == ESC || key == CTRL_C) {
         ys->interactive_command = NULL;
         ys->current_search      = NULL;
         yed_clear_cmd_buff();
@@ -3118,7 +3118,7 @@ void replace_free(void) {
 void yed_replace_current_search_take_key(int key) {
     char *cpy;
 
-    if (key == CTRL_F || key == CTRL_C) {
+    if (key == ESC || key == CTRL_C) {
         ys->interactive_command = NULL;
         yed_clear_cmd_buff();
         replace_abort();

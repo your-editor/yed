@@ -1,7 +1,20 @@
 #include "internal.h" /* include here so that plugins can see everything. */
 
+static void * yed_get_handle_for_plug_if_in_dir(char *plug_name, char *dir_name) {
+    char buff[256];
+
+    buff[0] = 0;
+    strcat(buff, dir_name);
+    strcat(buff, "/");
+    strcat(buff, plug_name);
+    strcat(buff, ".so");
+
+    return dlopen(buff, RTLD_NOW | RTLD_LOCAL);
+}
+
 void load_init(char *path) {
-    int err;
+    int   err;
+    void *handle;
 
     LOG_FN_ENTER();
 
@@ -9,9 +22,13 @@ void load_init(char *path) {
 
     yed_log("attempting to load init plugin from '%s'", path);
 
-    yed_add_plugin_dir(path);
-
     if (access(path, F_OK) != -1) {
+        handle = yed_get_handle_for_plug_if_in_dir("init", path);
+
+        if (!handle) { goto not_found;}
+
+        yed_add_plugin_dir(path);
+
         err = yed_load_plugin("init");
 
         switch (err) {
@@ -58,6 +75,13 @@ void yed_init_plugins(void) {
     ys->plugin_dirs = array_make(char*);
     ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
 
+#ifdef DEFAULT_PLUG_DIR
+    LOG_FN_ENTER();
+    yed_log("adding default plugin directory '%s'", XSTR(DEFAULT_PLUG_DIR));
+    yed_add_plugin_dir(XSTR(DEFAULT_PLUG_DIR));
+    LOG_EXIT();
+#endif
+
     if (!ys->options.no_init) {
         if (ys->options.init) {
             load_init(ys->options.init);
@@ -78,8 +102,8 @@ void yed_plugin_force_lib_unload(yed_plugin *plug) {
 
 int yed_load_plugin(char *plug_name) {
     int                         err;
-    char                      **dir_it;
     char                        buff[256];
+    char                      **dir_it;
     yed_plugin                 *plug;
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)   it;
@@ -93,15 +117,9 @@ int yed_load_plugin(char *plug_name) {
     plug = malloc(sizeof(*plug));
 
     array_traverse(ys->plugin_dirs, dir_it) {
-        buff[0] = 0;
-        strcat(buff, *dir_it);
-        strcat(buff, "/");
-        strcat(buff, plug_name);
-        strcat(buff, ".so");
-
-        plug->handle = dlopen(buff, RTLD_NOW | RTLD_LOCAL);
-
-        if (plug->handle) {
+        if ((plug->handle = yed_get_handle_for_plug_if_in_dir(plug_name, *dir_it))) {
+            buff[0] = 0;
+            sprintf(buff, "%s/%s.so", *dir_it, plug_name);
             break;
         }
     }

@@ -4,7 +4,7 @@ DRIVER_SRC=src/yed_driver.c
 CLEAN_SO=$(shell find . -name "*.so")
 CLEAN_DSYM=$(shell find . -name "*.dSYM")
 
-all: libyed.so _yed plugins
+all: libyed.so _yed plugins start
 	@echo "Done."
 
 libyed.so: $(LIB_SRC)
@@ -21,6 +21,11 @@ _yed: libyed.so $(DRIVER_SRC)
 .PHONY: plugins
 plugins: libyed.so _yed
 	@cd plugins && $(MAKE) all
+
+.PHONY: start
+start: libyed.so _yed
+	@echo "Compiling the configuration tutorial.."
+	@cd share/start && $(CC) init.c $(PLUGIN_C_FLAGS) $(cfg) -o init.so
 
 install:
 	@./install.sh

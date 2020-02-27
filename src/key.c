@@ -252,7 +252,7 @@ void yed_feed_keys(int n, int *keys) {
 }
 
 static yed_key_binding default_key_bindings[] = {
-    { CTRL_F,      "command-prompt",    0, NULL },
+    { CTRL_P,      "command-prompt",    0, NULL },
     { ARROW_UP,    "cursor-up",         0, NULL },
     { ARROW_DOWN,  "cursor-down",       0, NULL },
     { ARROW_RIGHT, "cursor-right",      0, NULL },
@@ -264,12 +264,14 @@ static yed_key_binding default_key_bindings[] = {
     { BACKSPACE,   "delete-back",       0, NULL },
     { DEL_KEY,     "delete-forward",    0, NULL },
     { CTRL_C,      "yank-selection",    0, NULL },
-    { CTRL_F,      "command-prompt",    0, NULL },
     { CTRL_L,      "frame-next",        0, NULL },
     { CTRL_D,      "delete-line",       0, NULL },
     { CTRL_S,      "select",            0, NULL },
     { CTRL_V,      "paste-yank-buffer", 0, NULL },
     { CTRL_W,      "write-buffer",      0, NULL },
+    { CTRL_U,      "undo",              0, NULL },
+    { CTRL_R,      "redo",              0, NULL },
+    { CTRL_F,      "find-in-buffer",    0, NULL },
 };
 
 void yed_set_default_key_binding(int key) {

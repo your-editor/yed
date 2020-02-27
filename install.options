@@ -7,12 +7,13 @@ else
     lib_dir="/usr/lib"
 fi
 
+plug_dir="${lib_dir}/yed/plugins"
 bin_dir="/usr/bin"
-
 inc_dir="/usr/include"
+share_dir="/usr/share"
 
 # This will force us to get the home directory of the
 # user even when `sudo` is being used.
 eval HOME_DIR=$(echo ~$(logname))
 
-plug_dir="${HOME_DIR}/.yed"
+user_dir="${HOME_DIR}/.yed"

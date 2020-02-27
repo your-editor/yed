@@ -43,6 +43,9 @@ do { if (unlikely(!(cond))) {                        \
 #define ASSERT(cond, mst) ;
 #endif
 
+#define _XSTR(x) #x
+#define XSTR(x)  _XSTR(x)
+
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
 #define LIMIT(x, lower, upper) do { \
