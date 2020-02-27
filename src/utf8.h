@@ -18,17 +18,27 @@ int _yed_get_mbyte_width(yed_glyph g);
             ? 1                         \
             : _yed_get_mbyte_width(g))) \
 
+/*
+ * This is what the length table would look like:
+ */
+/* static const unsigned char _utf8_lens[] = { */
+/*     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, */
+/*     0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0 */
+/* }; */
+
+/*
+ * But this is what we use instead because we might be
+ * editing a binary. In that case, there might be byte
+ * sequences that aren't valid UTF-8.
+ */
 static const unsigned char _utf8_lens[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 1
 };
 
 #define yed_get_glyph_len(g)                  \
     (likely(G_IS_ASCII(g))                    \
         ? 1                                   \
         : (int)(_utf8_lens[(g).u_c >> 3ULL]))
-
-/* #define yed_get_glyph_len(g)               \ */
-/*         (int)(_utf8_lens[(g).u_c >> 3ULL]) */
 
 void yed_get_string_info(char *bytes, int len, int *n_glyphs, int *width);
