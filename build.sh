@@ -15,6 +15,13 @@ export LIB_C_FLAGS="-DDEFAULT_PLUG_DIR=\"${lib_dir}/yed/plugins\" -shared -fPIC 
 export DRIVER_C_FLAGS="-ldl -lm -lpthread"
 export PLUGIN_C_FLAGS="-shared -fPIC -I${DIR}/include -L${DIR} -lyed"
 
+
+strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
+if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
+    LIB_C_FLAGS+=" -DNEED_STRNSTR"
+fi
+
+
 # Add this framework to the Mac debug build so
 # that we can use Instruments.app to profile yed
 if [ "$(uname)" == "Darwin" ]; then

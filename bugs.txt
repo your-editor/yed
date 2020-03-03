@@ -1,0 +1,2 @@
+- replace-current-search is broken for buffers with multi-column glyphs
+- vimish has issues with f/t in combination with keys that are nav commands

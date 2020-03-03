@@ -344,3 +344,47 @@ char * last_strstr(const char *haystack, const char *needle) {
 
     return result;
 }
+
+char * last_strnstr(const char *haystack, const char *needle, size_t len) {
+    char *result, *p, *end;
+
+    if (*needle == '\0') {
+        return (char *) haystack;
+    }
+
+    result = NULL;
+    end    = (char*)haystack + len;
+
+    for (;;) {
+        p = strnstr(haystack, needle, end - haystack);
+
+        if (p == NULL) { break; }
+
+        result   = p;
+        haystack = p + 1;
+    }
+
+    return result;
+}
+
+#ifdef NEED_STRNSTR
+char *strnstr(const char *haystack, const char *needle, size_t len) {
+    int    i;
+    size_t needle_len;
+
+    if ((needle_len = strnlen(needle, len)) == 0) {
+        return (char *)haystack;
+    }
+
+    for (i = 0; i <= (int)(len-needle_len); i += 1) {
+        if ((*haystack == *needle)
+        &&  (strncmp(haystack, needle, needle_len)) == 0) {
+            return (char *)haystack;
+        }
+
+        haystack += 1;
+    }
+
+    return NULL;
+}
+#endif

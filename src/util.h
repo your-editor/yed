@@ -17,5 +17,10 @@ array_t sh_split(char *s);
 void free_string_array(array_t array);
 
 char *last_strstr(const char *haystack, const char *needle);
+char *last_strnstr(const char *haystack, const char *needle, size_t len);
+
+#ifdef NEED_STRNSTR
+char *strnstr(const char *haystack, const char *needle, size_t len);
+#endif
 
 #endif
