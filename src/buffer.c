@@ -626,8 +626,10 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
 
         errno = 0;
         if (fstat(fd, &fs) != 0) {
+            errno = 0;
             return BUFF_FILL_STATUS_ERR_NOF;
         } else if (S_ISDIR(fs.st_mode)) {
+            errno = 0;
             return BUFF_FILL_STATUS_ERR_DIR;
         }
     }
@@ -682,6 +684,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
         file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
 
         if (file_data == MAP_FAILED) {
+            errno = 0;
             return BUFF_FILL_STATUS_ERR_MAP;
         }
 
