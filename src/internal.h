@@ -15,6 +15,7 @@
 #include <termios.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <math.h>

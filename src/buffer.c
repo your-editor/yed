@@ -612,56 +612,77 @@ yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col) {
 
 
 int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
-    char *mode;
-    FILE *f;
-    int   status;
+    char        *mode;
+    FILE        *f;
+    struct stat  fs;
+    int          fd;
+    int          status;
 
-    f = fopen(path, "r");
-    if (!f) {
-        return 0;
+    status = BUFF_FILL_STATUS_SUCCESS;
+    errno  = 0;
+    f      = fopen(path, "r");
+    if (f) {
+        fd = fileno(f);
+
+        errno = 0;
+        if (fstat(fd, &fs) != 0) {
+            return BUFF_FILL_STATUS_ERR_NOF;
+        } else if (S_ISDIR(fs.st_mode)) {
+            return BUFF_FILL_STATUS_ERR_DIR;
+        }
+    }
+
+    if (errno) {
+        if (errno == ENOENT) {
+            status = BUFF_FILL_STATUS_ERR_NOF;
+        } else if (errno == EISDIR) {
+            status = BUFF_FILL_STATUS_ERR_DIR;
+        } else if (errno == EACCES) {
+            status = BUFF_FILL_STATUS_ERR_PER;
+        } else {
+            status = BUFF_FILL_STATUS_ERR_UNK;
+        }
+
+        errno = 0;
+        return status;
     }
 
     yed_buff_clear_no_undo(buff);
 
     if ((mode = yed_get_var("buffer-load-mode"))
     && (strcmp(mode, "map") == 0)) {
-        status = yed_fill_buff_from_file_map(buff, f);
+        status = yed_fill_buff_from_file_map(buff, fd, fs.st_size);
     } else {
         status = yed_fill_buff_from_file_stream(buff, f);
+    }
+
+    if (status != BUFF_FILL_STATUS_SUCCESS) {
+        goto cleanup;
     }
 
     buff->path    = strdup(path);
     buff->file.ft = yed_get_ft(path);
     buff->kind    = BUFF_KIND_FILE;
-
-    fclose(f);
-
     yed_mark_dirty_frames(buff);
+
+cleanup:
+    fclose(f);
 
     return status;
 }
 
-int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
-    int          fd, i, line_len, file_size, did_map;
-    struct stat  fs;
+int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long file_size) {
+    int          i, line_len, did_map;
     char        *file_data, *underlying_buff, *end, *scan, *tmp, c;
     yed_line    *last_line,
                  line;
     yed_glyph   *g;
 
-    fd = fileno(f);
-
-    if (fstat(fd, &fs) != 0) {
-        ERR("unable to stat file");
-    }
-
-    file_size = fs.st_size;
-
     if (file_size != 0) {
         file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
 
         if (file_data == MAP_FAILED) {
-            ERR("mmap failed");
+            return BUFF_FILL_STATUS_ERR_MAP;
         }
 
         did_map = 1;
@@ -739,7 +760,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f) {
         bucket_array_push(buff->lines, line);
     }
 
-    return 1;
+    return BUFF_FILL_STATUS_SUCCESS;
 }
 
 int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
@@ -788,22 +809,33 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
         bucket_array_push(buff->lines, line);
     }
 
-    return 1;
+    return BUFF_FILL_STATUS_SUCCESS;
 }
 
-void yed_write_buff_to_file(yed_buffer *buff, char *path) {
+int yed_write_buff_to_file(yed_buffer *buff, char *path) {
     FILE      *f;
     yed_line  *line;
     yed_event  event;
+    int        status;
 
     event.kind   = EVENT_BUFFER_PRE_WRITE;
     event.buffer = buff;
     yed_trigger_event(&event);
 
-    f = fopen(path, "w");
+    status = BUFF_WRITE_STATUS_SUCCESS;
+    errno  = 0;
+    f      = fopen(path, "w");
     if (!f) {
-        ERR("unable to open file");
-        return;
+        if (errno == EISDIR) {
+            status = BUFF_WRITE_STATUS_ERR_DIR;
+        } else if (errno == EACCES) {
+            status = BUFF_WRITE_STATUS_ERR_PER;
+        } else {
+            status = BUFF_WRITE_STATUS_ERR_UNK;
+        }
+
+        errno = 0;
+        return status;
     }
 
     /*
@@ -824,6 +856,8 @@ void yed_write_buff_to_file(yed_buffer *buff, char *path) {
     buff->kind = BUFF_KIND_FILE;
 
     fclose(f);
+
+    return status;
 }
 
 void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2) {

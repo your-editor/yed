@@ -1425,6 +1425,7 @@ void yed_default_command_buffer(int n_args, char **args) {
     yed_buffer                                   *buffer;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
     char                                          path[512];
+    int                                           status;
 
     if (n_args != 1) {
         yed_cerr("expected 1 argument, but got %d", n_args);
@@ -1444,18 +1445,46 @@ void yed_default_command_buffer(int n_args, char **args) {
         buffer = tree_it_val(it);
     } else {
         buffer = yed_create_buffer(path);
-        yed_cprint("'%s' (new buffer)", path);
-        if (!yed_fill_buff_from_file(buffer, path)) {
-            buffer->path    = strdup(path);
-            buffer->file.ft = yed_get_ft(path);
-            buffer->kind    = BUFF_KIND_FILE;
-            yed_cprint(" (new file)");
+        status = yed_fill_buff_from_file(buffer, path);
+
+        switch (status) {
+            case BUFF_FILL_STATUS_ERR_DIR:
+                yed_cerr("did not create buffer '%s' -- path is a directory", path);
+                goto cleanup;
+            case BUFF_FILL_STATUS_ERR_PER:
+                yed_cerr("did not create buffer '%s' -- permission denied", path);
+                goto cleanup;
+            case BUFF_FILL_STATUS_ERR_MAP:
+                yed_cerr("did not create buffer '%s' -- mmap() failed", path);
+                goto cleanup;
+            case BUFF_FILL_STATUS_ERR_UNK:
+                yed_cerr("did not create buffer '%s' -- unknown error", path);
+                goto cleanup;
+            case BUFF_FILL_STATUS_ERR_NOF:
+            case BUFF_FILL_STATUS_SUCCESS:
+                yed_cprint("'%s' (new buffer)", path);
+
+                if (status == BUFF_FILL_STATUS_ERR_NOF) {
+                    buffer->path    = strdup(path);
+                    buffer->file.ft = yed_get_ft(path);
+                    buffer->kind    = BUFF_KIND_FILE;
+                    yed_cprint(" (new file)");
+                }
+
+                break;
         }
     }
 
     if (ys->active_frame) {
         yed_frame_set_buff(ys->active_frame, buffer);
     }
+
+    goto out;
+
+cleanup:
+    yed_free_buffer(buffer);
+
+out:;
 }
 
 void yed_default_command_buffer_delete(int n_args, char **args) {
@@ -2406,6 +2435,7 @@ void yed_default_command_write_buffer(int n_args, char **args) {
     yed_buffer *buff;
     char       *path;
     char        exp_path[512];
+    int         status;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -2435,9 +2465,22 @@ void yed_default_command_write_buffer(int n_args, char **args) {
         return;
     }
 
-    yed_write_buff_to_file(buff, path);
+    status = yed_write_buff_to_file(buff, path);
 
-    yed_cprint("wrote to '%s'", path);
+    switch (status) {
+        case BUFF_WRITE_STATUS_ERR_DIR:
+            yed_cerr("did not write to '%s' -- path is a directory", path);
+            break;
+        case BUFF_WRITE_STATUS_ERR_PER:
+            yed_cerr("did not write to '%s' -- permission denied", path);
+            break;
+        case BUFF_WRITE_STATUS_ERR_UNK:
+            yed_cerr("did not write to '%s' -- unknown error", path);
+            break;
+        case BUFF_WRITE_STATUS_SUCCESS:
+            yed_cprint("wrote to '%s'", path);
+            break;
+    }
 }
 
 void yed_default_command_plugin_load(int n_args, char **args) {

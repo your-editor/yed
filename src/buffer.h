@@ -16,14 +16,26 @@ typedef struct {
     int anchor_row, anchor_col, cursor_row, cursor_col;
 } yed_range;
 
-#define BUFF_KIND_FILE  (0x1)
-#define BUFF_KIND_YANK  (0x2)
-#define BUFF_KIND_LOG   (0x3)
+#define BUFF_KIND_FILE            (0x1)
+#define BUFF_KIND_YANK            (0x2)
+#define BUFF_KIND_LOG             (0x3)
 
-#define BUFF_MODIFIED   (0x1)
-#define BUFF_RD_ONLY    (0x2)
-#define BUFF_YANK_LINES (0x4)
-#define BUFF_SPECIAL    (0x8)
+#define BUFF_MODIFIED             (0x1)
+#define BUFF_RD_ONLY              (0x2)
+#define BUFF_YANK_LINES           (0x4)
+#define BUFF_SPECIAL              (0x8)
+
+#define BUFF_FILL_STATUS_SUCCESS  (0)
+#define BUFF_FILL_STATUS_ERR_NOF  (1)
+#define BUFF_FILL_STATUS_ERR_DIR  (2)
+#define BUFF_FILL_STATUS_ERR_PER  (3)
+#define BUFF_FILL_STATUS_ERR_MAP  (4)
+#define BUFF_FILL_STATUS_ERR_UNK  (5)
+
+#define BUFF_WRITE_STATUS_SUCCESS (0)
+#define BUFF_WRITE_STATUS_ERR_DIR (1)
+#define BUFF_WRITE_STATUS_ERR_PER (2)
+#define BUFF_WRITE_STATUS_ERR_UNK (3)
 
 typedef struct yed_buffer_t {
     int                   kind;
@@ -94,9 +106,9 @@ int yed_buff_n_lines(yed_buffer *buff);
 
 
 int yed_fill_buff_from_file(yed_buffer *buff, char *path);
-int yed_fill_buff_from_file_map(yed_buffer *buff, FILE *f);
+int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long file_size);
 int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f);
-void yed_write_buff_to_file(yed_buffer *buff, char *path);
+int yed_write_buff_to_file(yed_buffer *buff, char *path);
 
 void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2);
 int yed_is_in_range(yed_range *range, int row, int col);
