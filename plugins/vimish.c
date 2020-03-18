@@ -471,12 +471,12 @@ static void vimish_till_fw(void) {
             feed[n_feed] = keys[i];
             n_feed += 1;
         }
-    }
 
-    sprintf(buff, "%d", till_key);
-    buff_p = buff;
-    vimish_take_key(1, &buff_p);
-    yed_feed_keys(n_feed, feed);
+        sprintf(buff, "%d", till_key);
+        buff_p = buff;
+        vimish_take_key(1, &buff_p);
+        yed_feed_keys(n_feed, feed);
+    }
 }
 
 static void vimish_till_bw(void) {

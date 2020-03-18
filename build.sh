@@ -21,7 +21,6 @@ if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1
     LIB_C_FLAGS+=" -DNEED_STRNSTR"
 fi
 
-
 # Add this framework to the Mac debug build so
 # that we can use Instruments.app to profile yed
 if [ "$(uname)" == "Darwin" ]; then

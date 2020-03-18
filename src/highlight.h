@@ -836,9 +836,9 @@ static inline int _highlight_line_ml_within(highlight_info *info, int row, yed_f
             attrs = _kind_to_attrs(set, within->kind);
             col   = yed_line_idx_to_col(line, scan - s + within->end_len - 1);
             _highlight_range_with_attrs(1, col, line_attrs, attrs);
-        }
 
-        return col;
+            return col;
+        }
     }
 
     return 0;
