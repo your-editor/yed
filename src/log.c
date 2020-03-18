@@ -51,7 +51,7 @@ int yed_vlog(char *fmt, va_list args) {
             header_fmt = "\n[%s](%s) ";
         }
 
-        len = snprintf(nm_tm_buff, sizeof(buff), header_fmt, tm_buff, log_name);
+        len = snprintf(nm_tm_buff, sizeof(nm_tm_buff), header_fmt, tm_buff, log_name);
 
         if (len > sizeof(nm_tm_buff) - 1) {
             len = sizeof(nm_tm_buff) - 1;

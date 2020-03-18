@@ -674,33 +674,32 @@ cleanup:
 }
 
 int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long file_size) {
-    int          i, line_len, did_map;
+    int          i, line_len;
     char        *file_data, *underlying_buff, *end, *scan, *tmp, c;
     yed_line    *last_line,
                  line;
     yed_glyph   *g;
 
-    if (file_size != 0) {
-        file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
 
-        if (file_data == MAP_FAILED) {
-            errno = 0;
-            return BUFF_FILL_STATUS_ERR_MAP;
-        }
-
-        did_map = 1;
-
-        /*
-         * Add 3 bytes of padding so that we don't violate anything
-         * when we call yed_get_string_info().
-         * See the comment there (src/utf8.c) for more info.
-         */
-        underlying_buff = malloc(file_size + 3);
-
-        memcpy(underlying_buff, file_data, file_size);
-    } else {
-        did_map = 0;
+    if (file_size == 0) {
+        return BUFF_FILL_STATUS_SUCCESS;
     }
+
+    file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
+
+    if (file_data == MAP_FAILED) {
+        errno = 0;
+        return BUFF_FILL_STATUS_ERR_MAP;
+    }
+
+    /*
+        * Add 3 bytes of padding so that we don't violate anything
+        * when we call yed_get_string_info().
+        * See the comment there (src/utf8.c) for more info.
+        */
+    underlying_buff = malloc(file_size + 3);
+
+    memcpy(underlying_buff, file_data, file_size);
 
     /*
      * This buffer is going to come to us with a pre-made
@@ -734,12 +733,6 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
         (void)g;
         (void)i;
         yed_get_string_info(line.chars.data, line_len, &line.n_glyphs, &line.visual_width);
-/*         for (i = 0; i < line_len;) { */
-/*             g                  = array_item(line.chars, i); */
-/*             line.visual_width += yed_get_glyph_width(*g); */
-/*             i                 += yed_get_glyph_len(*g); */
-/*             line.n_glyphs     += 1; */
-/*         } */
 
         bucket_array_push(buff->lines, line);
 
@@ -748,10 +741,8 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
         scan = tmp + 1;
     }
 
-    if (did_map) {
-        munmap(file_data, file_size);
-        buff->mmap_underlying_buff = underlying_buff;
-    }
+    munmap(file_data, file_size);
+    buff->mmap_underlying_buff = underlying_buff;
 
     if (bucket_array_len(buff->lines) > 1) {
         last_line = bucket_array_last(buff->lines);
@@ -859,6 +850,12 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
     buff->kind = BUFF_KIND_FILE;
 
     fclose(f);
+
+    if (status == BUFF_WRITE_STATUS_SUCCESS) {
+        event.kind   = EVENT_BUFFER_POST_WRITE;
+        event.buffer = buff;
+        yed_trigger_event(&event);
+    }
 
     return status;
 }
