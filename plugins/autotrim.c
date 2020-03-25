@@ -20,6 +20,15 @@ void autotrim_pre_write_handler(yed_event *event) {
 
     f = NULL;
 
+    if (event->buffer->file.ft != FT_C
+    &&  event->buffer->file.ft != FT_CXX
+    &&  event->buffer->file.ft != FT_SH
+    &&  event->buffer->file.ft != FT_BJOU
+    &&  event->buffer->file.ft != FT_PYTHON
+    &&  event->buffer->file.ft != FT_YEDRC) {
+        return;
+    }
+
     if (ys->active_frame && ys->active_frame->buffer == event->buffer) {
         f = ys->active_frame;
     }
