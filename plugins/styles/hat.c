@@ -13,6 +13,7 @@
 #define red         ALT(          RGB_32_hex(c13f2e), 1)
 #define orange      MAYBE_CONVERT(RGB_32_hex(ff731c))
 #define attn        MAYBE_CONVERT(RGB_32_hex(ff0000))
+#define sel_color   MAYBE_CONVERT(RGB_32_hex(444444))
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_style s;
@@ -39,7 +40,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = white;
-    s.cursor_line.bg      = black;
+    s.cursor_line.bg      = sel_color;
 
     s.search.flags        = attr_kind;
     s.search.fg           = black;
@@ -51,7 +52,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     s.selection.flags     = attr_kind;
     s.selection.fg        = white;
-    s.selection.bg        = black;
+    s.selection.bg        = sel_color;
 
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = attn;

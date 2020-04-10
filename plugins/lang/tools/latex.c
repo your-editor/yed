@@ -50,7 +50,7 @@ void latex_compile_current_file(int n_args, char **args) {
     cmd_buff[0] = 0;
 
     len = perc_subst(comp_prg, path, cmd_buff, sizeof(cmd_buff));
-    ASSERT(len > 0, "buff too small for perc_subst");
+    ASSERT(len >= 0, "buff too small for perc_subst");
 
     YEXE("less", cmd_buff);
 
@@ -58,7 +58,7 @@ void latex_compile_current_file(int n_args, char **args) {
     if (update_view_prg) {
         cmd_buff[0] = 0;
         len = perc_subst(update_view_prg, path, cmd_buff, sizeof(cmd_buff));
-        ASSERT(len > 0, "buff too small for perc_subst");
+        ASSERT(len >= 0, "buff too small for perc_subst");
         YEXE("sh-silent", cmd_buff);
     }
 }
@@ -107,7 +107,7 @@ void latex_view_current_file(int n_args, char **args) {
     cmd_buff[0] = 0;
 
     len = perc_subst(view_prg, pdf_path_buff, cmd_buff, sizeof(cmd_buff));
-    ASSERT(len > 0, "buff too small for perc_subst");
+    ASSERT(len >= 0, "buff too small for perc_subst");
 
     free(path);
 
