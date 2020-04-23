@@ -243,13 +243,3 @@ int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
            && (attr1.bg    == attr2.bg)
            && (attr1.flags == attr2.flags);
 }
-
-yed_line yed_new_line(void) {
-    yed_line line;
-
-    memset(&line, 0, sizeof(line));
-
-    line.chars = array_make(char);
-
-    return line;
-}

@@ -17,6 +17,16 @@ void yed_init_buffers(void) {
     ys->log_buff      = log_buff;
 }
 
+yed_line yed_new_line(void) {
+    yed_line line;
+
+    memset(&line, 0, sizeof(line));
+
+    line.chars = array_make(char);
+
+    return line;
+}
+
 yed_line yed_new_line_with_cap(int len) {
     yed_line line;
 
@@ -693,10 +703,10 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
     }
 
     /*
-        * Add 3 bytes of padding so that we don't violate anything
-        * when we call yed_get_string_info().
-        * See the comment there (src/utf8.c) for more info.
-        */
+     * Add 3 bytes of padding so that we don't violate anything
+     * when we call yed_get_string_info().
+     * See the comment there (src/utf8.c) for more info.
+     */
     underlying_buff = malloc(file_size + 3);
 
     memcpy(underlying_buff, file_data, file_size);
