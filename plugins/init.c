@@ -21,6 +21,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "styles/skyfall", "styles/papercolor",
         "styles/casey", "styles/cadet", "styles/moss", "styles/hat", "styles/dracula",
         "styles/solarized",
+        "styles/sammy",
     };
 
 
