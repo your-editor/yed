@@ -112,17 +112,20 @@ void yed_set_default_styles(void) {
     s.active.fg           = ATTR_16_GREY;
     s.active.bg           = ATTR_16_BLACK;
 
-    s.inactive.flags      = ATTR_16 | ATTR_16_LIGHT_BG;
-    s.inactive.fg         = ATTR_16_BLACK;
-    s.inactive.bg         = ATTR_16_BLACK;
+    s.inactive            = s.active;
+/*     s.inactive.flags      = ATTR_16 | ATTR_16_LIGHT_BG; */
+/*     s.inactive.fg         = ATTR_16_BLACK; */
+/*     s.inactive.bg         = ATTR_16_BLACK; */
 
     s.active_border       = s.active;
+    s.active_border.fg    = ATTR_16_CYAN;
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG;
-    s.cursor_line.fg        = ATTR_16_GREY;
-    s.cursor_line.bg        = ATTR_16_BLACK;
+    s.cursor_line         = s.active;
+/*     s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG; */
+/*     s.cursor_line.fg        = ATTR_16_GREY; */
+/*     s.cursor_line.bg        = ATTR_16_BLACK; */
 
     s.selection             = s.cursor_line;
 /*     s.selection.flags     = ATTR_16 | ATTR_16_LIGHT_BG; */
@@ -141,19 +144,19 @@ void yed_set_default_styles(void) {
     s.attention.fg        = ATTR_16_YELLOW;
 
     s.associate.flags     = ATTR_16;
-    s.associate.fg        = ATTR_16_BLUE;
+    s.associate.bg        = ATTR_16_BLUE;
 
     s.command_line        = s.active;
 
-    s.status_line.flags   = ATTR_16 | ATTR_BOLD | ATTR_16_LIGHT_FG;
-    s.status_line.fg      = ATTR_16_GREY;
-    s.status_line.bg      = ATTR_16_MAGENTA;
+    s.status_line.flags   = ATTR_16 | ATTR_BOLD;
+    s.status_line.fg      = ATTR_16_BLACK;
+    s.status_line.bg      = ATTR_16_CYAN;
 
 
-    s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT_FG;
+    s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_BOLD;
     s.code_comment.fg     = ATTR_16_YELLOW;
 
-    s.code_keyword.flags  = ATTR_16;
+    s.code_keyword.flags  = ATTR_16 | ATTR_BOLD;
     s.code_keyword.fg     = ATTR_16_RED;
 
     s.code_preprocessor   = s.code_keyword;
