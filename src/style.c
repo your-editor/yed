@@ -127,10 +127,9 @@ void yed_set_default_styles(void) {
 /*     s.cursor_line.fg        = ATTR_16_GREY; */
 /*     s.cursor_line.bg        = ATTR_16_BLACK; */
 
-    s.selection             = s.cursor_line;
-/*     s.selection.flags     = ATTR_16 | ATTR_16_LIGHT_BG; */
-/*     s.selection.fg        = ATTR_16_GREY; */
-/*     s.selection.bg        = ATTR_16_BLACK; */
+    s.selection.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG;
+    s.selection.fg        = ATTR_16_GREY;
+    s.selection.bg        = ATTR_16_BLACK;
 
     s.search.flags        = ATTR_16 | ATTR_16_LIGHT_FG;
     s.search.fg           = ATTR_16_BLUE;
