@@ -15,7 +15,7 @@
 #define background  MAYBE_CONVERT(RGB_32_hex(3A506B))
 #define foreground  MAYBE_CONVERT(RGB_32_hex(FAF3DD))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(sammy) {
     yed_style s;
     int       tc,
               attr_kind;

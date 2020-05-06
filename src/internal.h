@@ -297,4 +297,6 @@ do {                                                    \
                  __YPBIND_args);                        \
 } while (0)
 
+#include "pack_styles.h"
+
 #endif

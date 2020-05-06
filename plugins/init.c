@@ -16,12 +16,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "style_picker",
         "focus_frame",
         "style_use_term_bg",
-        "styles/lab", "styles/book", "styles/blue",
-        "styles/first", "styles/elise", "styles/nord", "styles/monokai", "styles/gruvbox",
-        "styles/skyfall", "styles/papercolor",
-        "styles/casey", "styles/cadet", "styles/moss", "styles/hat", "styles/dracula",
-        "styles/solarized",
-        "styles/sammy",
+        "style_pack",
     };
 
 

@@ -25,7 +25,7 @@
 #define color0E (MAYBE_CONVERT(RGB_32_hex(51e2c2)))
 #define color0F (MAYBE_CONVERT(RGB_32_hex(c6c6c6)))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(skyfall) {
     yed_style s;
     int       tc,
               attr_kind;

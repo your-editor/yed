@@ -1,6 +1,6 @@
 #include <yed/plugin.h>
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(monokai) {
     yed_style s;
 
     memset(&s, 0, sizeof(s));

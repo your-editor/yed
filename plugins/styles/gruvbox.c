@@ -21,7 +21,7 @@
 #define base0E (ALT(RGB_32_hex(d3869b), 175))
 #define base0F (ALT(RGB_32_hex(d65d0e), 166))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(gruvbox) {
     yed_style s;
     int       tc,
               attr_kind;

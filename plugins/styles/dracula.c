@@ -17,7 +17,7 @@
 #define blue       MAYBE_CONVERT(RGB_32_hex(8BE9FD))
 #define light_grey MAYBE_CONVERT(RGB_32_hex(BFBFBF))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(dracula) {
     yed_style s;
     int       tc,
               attr_kind;

@@ -2,7 +2,7 @@
 
 #define MAYBE_CONVERT(rgb) (tc ? (rgb) : rgb_to_256(rgb))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(first) {
     yed_style s;
     int       tc,
               attr_kind;

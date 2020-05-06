@@ -15,7 +15,7 @@
 #define attn        MAYBE_CONVERT(RGB_32_hex(ff0000))
 #define sel_color   MAYBE_CONVERT(RGB_32_hex(444444))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(hat) {
     yed_style s;
     int       tc,
               attr_kind;

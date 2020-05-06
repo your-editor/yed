@@ -16,7 +16,7 @@
 #define color_fn      MAYBE_CONVERT(RGB_32(150, 90, 80))
 #define color_num     MAYBE_CONVERT(RGB_32(110, 150, 100))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(casey) {
     yed_style s;
     int       tc,
               attr_kind;

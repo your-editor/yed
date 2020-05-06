@@ -12,7 +12,7 @@
 #define dark_blue    MAYBE_CONVERT(RGB_32_hex(495867))
 #define rust         MAYBE_CONVERT(RGB_32_hex(a55f4a))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(moss) {
     yed_style s;
     int       tc,
               attr_kind;

@@ -21,7 +21,7 @@
 #define nord14             MAYBE_CONVERT(RGB_32_hex(A3BE8C))
 #define nord15             MAYBE_CONVERT(RGB_32_hex(B48EAD))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(nord) {
     yed_style s;
     int       tc,
               attr_kind;

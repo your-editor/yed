@@ -34,7 +34,7 @@
 #define statusbg \
                 (ALT(RGB_32_hex(005f87), 24))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(papercolor) {
     yed_style s;
     int       tc,
               attr_kind;

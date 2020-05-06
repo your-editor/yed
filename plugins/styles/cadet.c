@@ -14,7 +14,7 @@
 #define orange      MAYBE_CONVERT(RGB_32_hex(D08770))
 #define rust        MAYBE_CONVERT(RGB_32_hex(795c5f))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(cadet) {
     yed_style s;
     int       tc,
               attr_kind;

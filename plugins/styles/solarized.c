@@ -21,7 +21,7 @@
 
 #define attn        MAYBE_CONVERT(RGB_32_hex(ff0000))
 
-int yed_plugin_boot(yed_plugin *self) {
+PACKABLE_STYLE(solarized) {
     yed_style s;
     int       tc,
               attr_kind;
