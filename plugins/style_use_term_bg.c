@@ -10,6 +10,9 @@ void style_use_term_bg(int n_args, char **args) {
     if (s->command_line.bg == s->active.bg) {
         s->command_line.bg = 0;
     }
+    if (s->cursor_line.bg == s->active.bg) {
+        s->cursor_line.bg = 0;
+    }
     s->active.bg          = 0;
     s->active_border.bg   = 0;
     s->inactive.bg        = 0;

@@ -131,12 +131,12 @@ void yed_set_default_styles(void) {
     s.selection.fg        = ATTR_16_GREY;
     s.selection.bg        = ATTR_16_BLACK;
 
-    s.search.flags        = ATTR_16 | ATTR_16_LIGHT_FG;
-    s.search.fg           = ATTR_16_BLUE;
+    s.search.flags        = ATTR_16;
+    s.search.fg           = ATTR_16_BLACK;
     s.search.bg           = ATTR_16_YELLOW;
 
-    s.search_cursor.flags = ATTR_16 | ATTR_16_LIGHT_FG;
-    s.search_cursor.fg    = ATTR_16_BLUE;
+    s.search_cursor.flags = ATTR_16;
+    s.search_cursor.fg    = ATTR_16_BLACK;
     s.search_cursor.bg    = ATTR_16_MAGENTA;
 
     s.attention.flags     = ATTR_16 | ATTR_16_LIGHT_FG;
