@@ -40,7 +40,7 @@ void cursor_word_hl_line_handler(yed_event *event) {
         return;
     }
 
-    if (the_word) {
+    if (the_word && !ys->current_search) {
         cursor_word_hl_hl_word(event);
     }
 }
