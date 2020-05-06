@@ -118,7 +118,7 @@ void yed_set_default_styles(void) {
 /*     s.inactive.bg         = ATTR_16_BLACK; */
 
     s.active_border       = s.active;
-    s.active_border.fg    = ATTR_16_CYAN;
+    s.active_border.fg    = ATTR_16_BLUE;
 
     s.inactive_border     = s.inactive;
 
@@ -139,17 +139,18 @@ void yed_set_default_styles(void) {
     s.search_cursor.fg    = ATTR_16_BLACK;
     s.search_cursor.bg    = ATTR_16_MAGENTA;
 
-    s.attention.flags     = ATTR_16 | ATTR_16_LIGHT_FG;
-    s.attention.fg        = ATTR_16_YELLOW;
+    s.attention.flags     = ATTR_16;
+    s.attention.fg        = ATTR_16_RED;
 
-    s.associate.flags     = ATTR_16;
-    s.associate.bg        = ATTR_16_BLUE;
+    s.associate.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG;
+    s.associate.fg        = ATTR_16_BLUE;
+    s.associate.bg        = ATTR_16_BLACK;
 
     s.command_line        = s.active;
 
     s.status_line.flags   = ATTR_16 | ATTR_BOLD;
     s.status_line.fg      = ATTR_16_BLACK;
-    s.status_line.bg      = ATTR_16_CYAN;
+    s.status_line.bg      = ATTR_16_BLUE;
 
 
     s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_BOLD;
@@ -164,10 +165,9 @@ void yed_set_default_styles(void) {
     s.code_fn_call.fg     = ATTR_16_MAGENTA;
 
     s.code_number.flags   = ATTR_16 | ATTR_16_LIGHT_FG;
-    s.code_number.fg      = ATTR_16_BLUE;
+    s.code_number.fg      = ATTR_16_CYAN;
 
-    s.code_constant.flags = ATTR_16;
-    s.code_constant.fg    = ATTR_16_CYAN;
+    s.code_constant       = s.code_number;
 
     s.code_string.flags   = ATTR_16;
     s.code_string.fg      = ATTR_16_GREEN;
