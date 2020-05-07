@@ -229,7 +229,7 @@ void yed_vcerr(char *fmt, va_list args) {
     va_list    args_copy;
     int        should_clear;
     char      *current_command;
-    yed_attrs  cmd_attr, attn_attr;
+    yed_attrs  cmd_attr, attn_attr, err_attr;
     char       attr_buff[128];
 
     va_copy(args_copy, args);
@@ -246,8 +246,9 @@ void yed_vcerr(char *fmt, va_list args) {
 
         cmd_attr    = yed_active_style_get_command_line();
         attn_attr   = yed_active_style_get_attention();
-        cmd_attr.fg = attn_attr.fg;
-        yed_get_attr_str(cmd_attr, attr_buff);
+        err_attr    = cmd_attr;
+        err_attr.fg = attn_attr.fg;
+        yed_get_attr_str(err_attr, attr_buff);
         yed_append_non_text_to_cmd_buff(attr_buff);
     }
 
@@ -278,8 +279,11 @@ void yed_vcerr(char *fmt, va_list args) {
             cprinted_len += 3;
         }
     }
-    yed_append_non_text_to_cmd_buff(TERM_RESET);
-    yed_append_non_text_to_cmd_buff(TERM_CURSOR_HIDE);
+
+    if (should_clear && !ys->interactive_command) {
+        yed_get_attr_str(cmd_attr, attr_buff);
+        yed_append_non_text_to_cmd_buff(attr_buff);
+    }
 }
 
 void yed_cprint(char *fmt, ...) {
