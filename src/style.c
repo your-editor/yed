@@ -108,7 +108,7 @@ void yed_set_default_styles(void) {
     /* style default */
     memset(&s, 0, sizeof(s));
 
-    s.active.flags        = ATTR_16;
+    s.active.flags        = ATTR_16 | ATTR_16_LIGHT_FG;
     s.active.fg           = ATTR_16_GREY;
     s.active.bg           = ATTR_16_BLACK;
 
