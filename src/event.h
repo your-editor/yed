@@ -7,6 +7,8 @@ typedef enum {
     EVENT_FRAME_PRE_BUFF_DRAW,
     EVENT_FRAME_PRE_DELETE,
     EVENT_LINE_PRE_DRAW,
+    EVENT_BUFFER_PRE_LOAD,
+    EVENT_BUFFER_POST_LOAD,
     EVENT_BUFFER_PRE_INSERT,
     EVENT_BUFFER_POST_INSERT,
     EVENT_BUFFER_PRE_DELETE_BACK,
@@ -32,6 +34,7 @@ typedef struct {
     int               key;
     char             *glyph;
     int               cancel;
+    char             *path;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

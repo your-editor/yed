@@ -1429,6 +1429,7 @@ void yed_default_command_buffer(int n_args, char **args) {
     yed_buffer                                   *buffer;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
     char                                          path[512];
+    yed_event                                     event;
     int                                           status;
 
     if (n_args != 1) {
@@ -1448,6 +1449,12 @@ void yed_default_command_buffer(int n_args, char **args) {
     if (tree_it_good(it)) {
         buffer = tree_it_val(it);
     } else {
+        event.kind  = EVENT_BUFFER_PRE_LOAD;
+        event.frame = ys->active_frame;
+        event.path  = path;
+
+        yed_trigger_event(&event);
+
         buffer = yed_create_buffer(path);
         status = yed_fill_buff_from_file(buffer, path);
 
@@ -1474,6 +1481,11 @@ void yed_default_command_buffer(int n_args, char **args) {
                     buffer->kind    = BUFF_KIND_FILE;
                     yed_cprint(" (new file)");
                 }
+
+                event.kind   = EVENT_BUFFER_POST_LOAD;
+                event.buffer = buffer;
+
+                yed_trigger_event(&event);
 
                 break;
         }

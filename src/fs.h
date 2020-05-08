@@ -9,6 +9,7 @@
 #define FT_PYTHON  (7)
 #define FT_YEDRC   (8)
 #define FT_JGRAPH  (9)
+#define NUM_FT     (10)
 
 typedef struct {
     int    ft;
