@@ -124,6 +124,51 @@ char *exe_path(char *prg) {
     return path;
 }
 
+int file_exists_in_path(char *path, char *name) {
+    char *_path, *next;
+    int   found;
+    int   has_next;
+    char  buff[1024];
+
+    if (!name || !path || strlen(path) == 0) {
+        return 0;
+    }
+
+    found = 0;
+    _path = strdup(path);
+    path  = _path;
+
+    do {
+        has_next = 0;
+
+        if ((next = strchr(path, ':'))) {
+            *next     = 0;
+            next     += 1;
+            has_next  = 1;
+        }
+
+        if (strlen(path) == 0) { continue; }
+
+        sprintf(buff, "%s/%s", path, name);
+        if (access(buff, F_OK) == 0) {
+            found = 1;
+            goto out;
+        }
+    } while ((path = next), has_next);
+
+
+out:
+    free(_path);
+    return found;
+}
+
+int file_exists_in_PATH(char *name) {
+    char *path;
+
+    path = getenv("PATH");
+    return file_exists_in_path(path, name);
+}
+
 int perc_subst(char *pattern, char *subst, char *buff, int buff_len) {
     int   i,
           new_len,

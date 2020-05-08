@@ -12,6 +12,9 @@ int perc_subst(char *pattern, char *subst, char *buff, int buff_len);
 
 void expand_path(char *path, char *buff);
 
+int file_exists_in_path(char *path, char *name);
+int file_exists_in_PATH(char *name);
+
 array_t sh_split(char *s);
 
 void free_string_array(array_t array);
