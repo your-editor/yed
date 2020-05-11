@@ -11,3 +11,5 @@ ybuild.sh
 kammerdienerb_init.c
 include
 profile
+perf.data
+.yedrc

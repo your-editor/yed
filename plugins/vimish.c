@@ -514,8 +514,10 @@ static void vimish_repeat_till(void) {
 int vimish_nav_common(int key, char *key_str) {
     if (till_pending == 1) {
         vimish_do_till_fw(key);
+        goto out;
     } else if (till_pending > 1) {
         vimish_do_till_bw(key, till_pending == 3);
+        goto out;
     }
 
     switch (key) {
@@ -618,6 +620,8 @@ int vimish_nav_common(int key, char *key_str) {
         default:
             return 0;
     }
+
+out:
     return 1;
 }
 
