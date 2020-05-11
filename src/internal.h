@@ -222,7 +222,7 @@ typedef struct yed_state_t {
          yed_var_val_t)          vars;
     tree(yed_style_name_t,
          yed_style_ptr_t)        styles;
-    yed_style_name_t             active_style;
+    yed_style_ptr_t              active_style;
     options_t                    options;
     unsigned long long           start_time_ms;
     unsigned long long           n_pumps;

@@ -30,7 +30,8 @@ void yed_remove_style(char *name) {
     yed_style                 *style;
 
     if (ys->active_style
-    &&  strcmp(name, ys->active_style) == 0) {
+    &&  strcmp(name, ys->active_style->_name) == 0) {
+        free(ys->active_style);
         ys->active_style = NULL;
         ys->redraw       = 1;
     }
@@ -67,9 +68,18 @@ int yed_activate_style(char *name) {
             return 0;
         }
 
-        ys->active_style = style->_name;
+        if (ys->active_style) {
+            free(ys->active_style);
+            ys->active_style = NULL;
+        }
+
+        ys->active_style = malloc(sizeof(*ys->active_style));
+        memcpy(ys->active_style, style, sizeof(*style));
     } else {
-        ys->active_style = NULL;
+        if (ys->active_style) {
+            free(ys->active_style);
+            ys->active_style = NULL;
+        }
     }
 
     ys->redraw = ys->redraw_cls = 1;
@@ -78,11 +88,7 @@ int yed_activate_style(char *name) {
 }
 
 yed_style * yed_get_active_style(void) {
-    if (!ys->active_style) {
-        return NULL;
-    }
-
-    return yed_get_style(ys->active_style);
+    return ys->active_style;
 }
 
 #define __SCOMP(comp)                           \

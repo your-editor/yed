@@ -39,7 +39,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
 void style_picker(int n_args, char **args) {
     if (ys->active_style) {
-        save = strdup(ys->active_style);
+        save = strdup(ys->active_style->_name);
     }
     style_picker_make_frame();
     style_picker_make_buffer();
@@ -126,7 +126,7 @@ void style_picker_select(void) {
     array_zero_term(line->chars);
     style = strdup(array_data(line->chars));
 
-    if (ys->active_style && strcmp(style, ys->active_style)) {
+    if (ys->active_style && strcmp(style, ys->active_style->_name)) {
         yed_activate_style(style);
     }
 
