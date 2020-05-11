@@ -901,14 +901,14 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
         info->f     = event->frame;
     }
 
+    state_idx = event->row - (event->frame->buffer_y_offset + 1);
+
     if (info->dirty) {
         memset(info->ml_states, 0, sizeof(info->ml_states));
         info->dirty = 0;
     }
 
     line = yed_buff_get_line(event->frame->buffer, event->row);
-
-    state_idx = event->row - (event->frame->buffer_y_offset + 1);
 
     if (line->visual_width == 0) {
         if (info->has_ml) {

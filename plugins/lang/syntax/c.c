@@ -19,7 +19,7 @@ int yed_plugin_boot(yed_plugin *self) {
         "bool",     "break",
         "case",     "char",     "const",  "continue",
         "default",  "do",       "double",
-        "else",     "enum",
+        "else",     "enum",     "extern",
         "float",    "for",
         "goto",
         "if",       "inline",   "int",
@@ -65,6 +65,19 @@ int yed_plugin_boot(yed_plugin *self) {
         highlight_add_kwd(&hinfo, *it, HL_KEY);
     ARRAY_LOOP(pp_kwds)
         highlight_add_prefixed_kwd(&hinfo, '#', *it, HL_PP);
+    highlight_add_kwd(&hinfo, "__VA_ARGS__", HL_PP);
+    highlight_add_kwd(&hinfo, "__FILE__", HL_PP);
+    highlight_add_kwd(&hinfo, "__func__", HL_PP);
+    highlight_add_kwd(&hinfo, "__FUNCTION__", HL_PP);
+    highlight_add_kwd(&hinfo, "__LINE__", HL_PP);
+    highlight_add_kwd(&hinfo, "__DATE__", HL_PP);
+    highlight_add_kwd(&hinfo, "__TIME__", HL_PP);
+    highlight_add_kwd(&hinfo, "__STDC__", HL_PP);
+    highlight_add_kwd(&hinfo, "__STDC_VERSION__", HL_PP);
+    highlight_add_kwd(&hinfo, "__STDC_HOSTED__", HL_PP);
+    highlight_add_kwd(&hinfo, "__cplusplus", HL_PP);
+    highlight_add_kwd(&hinfo, "__OBJC__", HL_PP);
+    highlight_add_kwd(&hinfo, "__ASSEMBLER__", HL_PP);
     highlight_add_kwd(&hinfo, "NULL", HL_CON);
     highlight_add_kwd(&hinfo, "stdin", HL_CON);
     highlight_add_kwd(&hinfo, "stdout", HL_CON);

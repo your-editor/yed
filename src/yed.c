@@ -318,6 +318,7 @@ int yed_pump(void) {
     int                  keys[16], n_keys, i, tabw_var_val;
     unsigned long long   start_us;
     yed_frame          **frame;
+    yed_event            event;
 
     if (ys->status == YED_QUIT) {
         return YED_QUIT;
@@ -337,6 +338,7 @@ int yed_pump(void) {
     ys->status = YED_NORMAL;
 
     memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
+    memset(keys, 0, sizeof(keys));
 
     /*
      * Wait for the writer thread to signal that it
@@ -361,6 +363,12 @@ int yed_pump(void) {
     pthread_mutex_unlock(&ys->write_ready_mtx);
 
     append_to_output_buff(TERM_CURSOR_HIDE);
+
+
+
+
+    event.kind = EVENT_PRE_PUMP;
+    yed_trigger_event(&event);
 
     n_keys = yed_read_keys(keys);
 
@@ -418,6 +426,9 @@ int yed_pump(void) {
         append_to_output_buff(TERM_CURSOR_HIDE);
         append_to_output_buff(TERM_RESET);
     }
+
+    event.kind = EVENT_POST_PUMP;
+    yed_trigger_event(&event);
 
     if (ys->status == YED_RELOAD) {
         yed_unload_plugin_libs();

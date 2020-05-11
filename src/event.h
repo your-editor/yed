@@ -21,6 +21,8 @@ typedef enum {
     EVENT_CURSOR_MOVED,
     EVENT_KEY_PRESSED,
     EVENT_TERMINAL_RESIZED,
+    EVENT_PRE_PUMP,
+    EVENT_POST_PUMP,
 
     N_EVENTS,
 } yed_event_kind_t;
