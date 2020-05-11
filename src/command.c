@@ -3329,7 +3329,7 @@ void yed_default_command_replace_current_search(int n_args, char **args) {
 void yed_default_command_style(int n_args, char **args) {
     if (n_args == 0) {
         if (ys->active_style) {
-            yed_cprint("'%s'", ys->active_style);
+            yed_cprint("'%s'", ys->active_style->_name);
         } else {
             yed_cerr("no style activated");
         }
@@ -3353,8 +3353,12 @@ void yed_default_command_style_off(int n_args, char **args) {
 
     yed_cprint("");
 
-    ys->active_style = NULL;
-    ys->redraw       = 1;
+    if (ys->active_style) {
+        free(ys->active_style);
+        ys->active_style = NULL;
+    }
+
+    ys->redraw = 1;
 }
 
 void yed_default_command_styles_list(int n_args, char **args) {

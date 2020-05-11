@@ -135,7 +135,11 @@ static void write_status_bar(int key) {
     sav_y = ys->cur_y;
 
     yed_set_cursor(1, ys->term_rows - 1);
-    yed_set_attr(yed_active_style_get_status_line());
+    if (ys->active_style) {
+        yed_set_attr(yed_active_style_get_status_line());
+    } else {
+        append_to_output_buff(TERM_INVERSE);
+    }
     append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
 
     if (ys->active_frame) {
@@ -170,7 +174,11 @@ static void write_status_bar(int key) {
 
     if (ys->small_message) {
         yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows - 1);
-        yed_set_attr(yed_active_style_get_status_line());
+        if (ys->active_style) {
+            yed_set_attr(yed_active_style_get_status_line());
+        } else {
+            append_to_output_buff(TERM_INVERSE);
+        }
         append_to_output_buff(ys->small_message);
     }
 
