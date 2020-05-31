@@ -19,7 +19,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_command(self, "lazy-plug-ft", lazy_plug_ft_cmd);
 
-    buff_post_load_handler.kind = EVENT_BUFFER_POST_LOAD;
+    buff_post_load_handler.kind = EVENT_BUFFER_POST_SET_FT;
     buff_post_load_handler.fn   = lazy_plug_buff_post_load_handler;
 
     yed_plugin_add_event_handler(self, buff_post_load_handler);
