@@ -34,5 +34,4 @@ uninstall:
 	@./uninstall.sh
 
 clean:
-	rm -rf $(CLEAN_SO) $(CLEAN_DSYM) _yed include
-	@cd plugins && $(MAKE) clean
+	@./clean.sh

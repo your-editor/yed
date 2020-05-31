@@ -15,6 +15,3 @@ style_pack.so: style_pack.c $(STYLE_SRC) $(LIB_SRC)
 %.so: %.c $(LIB_SRC)
 	@echo "Compiling plugin $@.."
 	@$(CC) $< $(PLUGIN_C_FLAGS) $(cfg) -o $@
-
-clean:
-	rm -rf $(TARGETS)
