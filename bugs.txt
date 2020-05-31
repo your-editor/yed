@@ -1,1 +1,3 @@
 - replace-current-search is broken for buffers with multi-column glyphs
+- vimish: try this 'dtgd.'
+- highlight: doesn't highlight f() as fn call for C
