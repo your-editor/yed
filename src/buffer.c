@@ -627,6 +627,7 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
     struct stat  fs;
     int          fd;
     int          status;
+    yed_event    event;
 
     status = BUFF_FILL_STATUS_SUCCESS;
     errno  = 0;
@@ -672,8 +673,15 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
         goto cleanup;
     }
 
-    buff->path    = strdup(path);
+    buff->path = strdup(path);
+
+    event.kind = EVENT_BUFFER_PRE_SET_FT;
+    event.buffer = buff;
+    yed_trigger_event(&event);
     buff->file.ft = yed_get_ft(path);
+    event.kind = EVENT_BUFFER_POST_SET_FT;
+    yed_trigger_event(&event);
+
     buff->kind    = BUFF_KIND_FILE;
     yed_mark_dirty_frames(buff);
 
@@ -854,8 +862,13 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
     }
 
     if (!buff->path) {
-        buff->path    = strdup(path);
+        buff->path = strdup(path);
+
+        event.kind = EVENT_BUFFER_PRE_SET_FT;
+        yed_trigger_event(&event);
         buff->file.ft = yed_get_ft(path);
+        event.kind = EVENT_BUFFER_POST_SET_FT;
+        yed_trigger_event(&event);
     }
     buff->kind = BUFF_KIND_FILE;
 

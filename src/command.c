@@ -1475,15 +1475,22 @@ void yed_default_command_buffer(int n_args, char **args) {
             case BUFF_FILL_STATUS_SUCCESS:
                 yed_cprint("'%s' (new buffer)", path);
 
+                event.buffer = buffer;
+
                 if (status == BUFF_FILL_STATUS_ERR_NOF) {
                     buffer->path    = strdup(path);
+
+                    event.kind = EVENT_BUFFER_PRE_SET_FT;
+                    yed_trigger_event(&event);
                     buffer->file.ft = yed_get_ft(path);
-                    buffer->kind    = BUFF_KIND_FILE;
+                    event.kind = EVENT_BUFFER_POST_SET_FT;
+                    yed_trigger_event(&event);
+
+                    buffer->kind = BUFF_KIND_FILE;
                     yed_cprint(" (new file)");
                 }
 
-                event.kind   = EVENT_BUFFER_POST_LOAD;
-                event.buffer = buffer;
+                event.kind = EVENT_BUFFER_POST_LOAD;
 
                 yed_trigger_event(&event);
 
@@ -1697,6 +1704,7 @@ void yed_default_command_buffer_set_ft(int n_args, char **args) {
     yed_frame  *frame;
     char       *ft_str;
     int         ft_new;
+    yed_event   event;
 
     if (n_args != 1) {
         yed_cerr("expected 1 argument, but got %d", n_args);
@@ -1723,7 +1731,12 @@ void yed_default_command_buffer_set_ft(int n_args, char **args) {
         return;
     }
 
+    event.kind = EVENT_BUFFER_PRE_SET_FT;
+    event.buffer = buffer;
+    yed_trigger_event(&event);
     buffer->file.ft = ft_new;
+    event.kind = EVENT_BUFFER_POST_SET_FT;
+    yed_trigger_event(&event);
 
     ys->redraw = 1;
 }
