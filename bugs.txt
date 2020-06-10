@@ -2,3 +2,8 @@
 - vimish: try this 'dtgd.'
 - highlight: doesn't highlight f() as fn call for C
 - brace_hl is slow for large files (try the 21M gcc.c) -- make the scanning give up after some number of lines
+- deleting selected ranges (I guess not line ranges) with multi-col chars is busted
+    - yanking seems to work
+    - try deleting the whitespace range before the word 'foozle'
+		foozle
+- should 'search not found' use yed_cerr()?
