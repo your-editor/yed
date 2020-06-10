@@ -2515,6 +2515,7 @@ void yed_default_command_write_buffer(int n_args, char **args) {
 void yed_default_command_plugin_load(int n_args, char **args) {
     int   err;
     char *dlerr;
+    char  err_buff[512];
 
     if (n_args != 1) {
         yed_cerr("expected 1 argument, but got %d", n_args);
@@ -2525,25 +2526,28 @@ void yed_default_command_plugin_load(int n_args, char **args) {
     if (err == YED_PLUG_SUCCESS) {
         yed_cprint("loaded plugin '%s'", args[0]);
     } else {
-        yed_cprint("('%s') -- ", args[0]);
+        err_buff[0] = 0;
+        sprintf(err_buff, "('%s') -- ", args[0]);
 
         switch (err) {
             case YED_PLUG_NOT_FOUND:
                 dlerr = dlerror();
                 if (dlerr) {
-                    yed_cprint("could not find plugin -- ");
-                    yed_cprint("%s", dlerr);
+                    sprintf(err_buff + strlen(err_buff), "could not find plugin -- ");
+                    sprintf(err_buff + strlen(err_buff), "%s", dlerr);
                 } else {
-                    yed_cprint("could not find plugin");
+                    sprintf(err_buff + strlen(err_buff), "could not find plugin");
                 }
                 break;
             case YED_PLUG_NO_BOOT:
-                yed_cprint("could not find symbol 'yed_plugin_boot'");
+                sprintf(err_buff + strlen(err_buff), "could not find symbol 'yed_plugin_boot'");
                 break;
             case YED_PLUG_BOOT_FAIL:
-                yed_cprint("'yed_plugin_boot' failed");
+                sprintf(err_buff + strlen(err_buff), "'yed_plugin_boot' failed");
                 break;
         }
+
+        yed_cerr("%s", err_buff);
     }
 }
 
