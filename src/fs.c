@@ -29,6 +29,9 @@ int yed_get_ft(char *path) {
             ft = FT_YEDRC;
         } else if (strcmp(ext, "jgr") == 0) {
             ft = FT_JGRAPH;
+        } else if (strcmp(ext, "gl")   == 0
+        ||         strcmp(ext, "glsl") == 0) {
+            ft = FT_GLSL;
         }
     } else {
         if (strcmp(base, "yedrc") == 0) {
