@@ -19,6 +19,7 @@
 #include "styles/solarized.c"
 #include "styles/sammy.c"
 #include "styles/tempus_future.c"
+#include "styles/olive.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, lab);
@@ -39,6 +40,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, solarized);
     PACK_STYLE(self, sammy);
     PACK_STYLE(self, tempus_future);
+    PACK_STYLE(self, olive);
 
     return 0;
 }
