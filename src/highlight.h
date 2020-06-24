@@ -547,7 +547,7 @@ static inline int _highlight_line_suffix(highlight_info *info, yed_line *line, a
 
     suff_col = col + word_len;
 
-    if (word_len <= 1 || suff_col > line->visual_width) {
+    if (word_len < 1 || suff_col > line->visual_width) {
         return 0;
     }
 
