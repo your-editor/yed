@@ -4,4 +4,3 @@
     - yanking seems to work
     - try deleting the whitespace range before the word 'foozle'
 		foozle
-- should 'search not found' use yed_cerr()?
