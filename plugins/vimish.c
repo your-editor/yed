@@ -414,8 +414,6 @@ static void vimish_do_till_fw(int key) {
 
     last_till_key = key;
 
-    vimish_push_repeat_key(key);
-
 out:
     till_pending = 0;
     return;
@@ -447,8 +445,6 @@ static void vimish_do_till_bw(int key, int stop_before) {
     }
 
     last_till_key = key;
-
-    vimish_push_repeat_key(key);
 
 out:
     till_pending = 0;
