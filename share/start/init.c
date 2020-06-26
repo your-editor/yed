@@ -119,6 +119,7 @@ int yed_plugin_boot(yed_plugin *self) {
     /* YEXE("plugin-load", "lang/python"); */
     /* YEXE("plugin-load", "lang/sh"); */
     /* YEXE("plugin-load", "lang/yedrc"); */
+    /* YEXE("plugin-load", "lang/glsl"); */
 
 
 
