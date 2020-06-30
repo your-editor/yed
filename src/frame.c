@@ -1122,6 +1122,24 @@ void yed_update_frames(void) {
     if (ys->active_frame) {
         yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
     }
+
+    /*
+     * When more than one frame, (say A and B) share a buffer,
+     * we update A, mark B's frame as dirty since they share a
+     * dirty buffer, and set A's dirty flag to 0.
+     * Then, we update B, RESET A's dirty flag to 1, and then set
+     * B's to 0.
+     * This causes at least one of the frames to always be dirty
+     * and force a redraw every pump.
+     * So, we just run through all the frames and make sure that
+     * they are seen as clean after the update.
+     *
+     *                                       Brandon Kammerdiener
+     *                                       June 30, 2020
+     */
+    array_traverse(ys->frames, frame) {
+        (*frame)->dirty = 0;
+    }
 }
 
 int yed_frame_line_is_visible(yed_frame *frame, int row) {
