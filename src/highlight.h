@@ -793,8 +793,11 @@ static inline int _highlight_get_ml_state(highlight_info *info, yed_frame *frame
 
     state_idx = row - (frame->buffer_y_offset + 1);
 
-    if (row == frame->buffer_y_offset + 1) {
+    if (info->dirty || row == frame->buffer_y_offset + 1) {
         *prev_state = _highlight_scan_for_prev_ml_state(info, row, frame);
+        if (state_idx > 0) {
+            info->ml_states[state_idx - 1] = *prev_state;
+        }
         return _highlight_get_next_ml_state(info, row, frame, *prev_state);
     }
 
@@ -905,7 +908,6 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
 
     if (info->dirty) {
         memset(info->ml_states, 0, sizeof(info->ml_states));
-        info->dirty = 0;
     }
 
     line = yed_buff_get_line(event->frame->buffer, event->row);
@@ -914,7 +916,7 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
         if (info->has_ml) {
             info->ml_states[state_idx] = _highlight_get_ml_state(info, event->frame, event->row, &prev_state);
         }
-        return;
+        goto out;
     }
 
     line_attrs = event->line_attrs;
@@ -948,7 +950,7 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
 
         if (!(bump = _highlight_line_within(info, state_idx, line, line_attrs, &attrs, col))) {
             if (_highlight_line_eol(info, line, line_attrs, &attrs, col)) {
-                return;
+                goto out;
             }
 
             _highlight_line_get_word_info(info, line, col, &word_len, &all_num);
@@ -980,6 +982,9 @@ next:
         col    += bump;
         last_c  = col > 1 ? yed_line_col_to_glyph(line, col - 1)->c : 0;
     }
+
+out:
+    info->dirty = 0;
 }
 
 static inline void highlight_frame_pre_draw_update(highlight_info *info, yed_event *event) {
