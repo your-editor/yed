@@ -3,6 +3,9 @@ LIB_SRC+=$(shell find src -name "*.h")
 DRIVER_SRC=src/yed_driver.c
 CLEAN_SO=$(shell find . -name "*.so")
 CLEAN_DSYM=$(shell find . -name "*.dSYM")
+PLUG_SRC=$(shell find plugins -name "*.c")
+STYLE_SRC=$(shell find plugins/styles -name "*.c")
+PLUG_TARGETS=$(patsubst %.c,%.so,$(PLUG_SRC))
 
 all: libyed.so _yed plugins start
 	@echo "Done."
@@ -19,8 +22,18 @@ _yed: libyed.so $(DRIVER_SRC)
 	@$(CC) src/yed_driver.c $(DRIVER_C_FLAGS) $(cfg) -o _yed
 
 .PHONY: plugins
-plugins: libyed.so _yed
-	@cd plugins && $(MAKE) all
+plugins: libyed.so _yed $(PLUG_TARGETS)
+
+# The way style_pack is designed causes a bunch of macro
+# redefinition warnings.
+# Let's just silence those.
+plugins/style_pack.so: plugins/style_pack.c $(STYLE_SRC) libyed.so
+	@echo "Compiling plugin $@.."
+	@$(CC) $< $(PLUGIN_C_FLAGS) $(cfg) -w -Wno-error -o $@
+
+plugins/%.so: plugins/%.c libyed.so
+	@echo "Compiling plugin $@.."
+	@$(CC) $< $(PLUGIN_C_FLAGS) $(cfg) -o $@
 
 .PHONY: start
 start: libyed.so _yed
