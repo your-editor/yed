@@ -60,6 +60,7 @@ yed_style * yed_get_style(char *name) {
 
 int yed_activate_style(char *name) {
     yed_style *style;
+    yed_event  event;
 
     if (name) {
         style = yed_get_style(name);
@@ -81,6 +82,9 @@ int yed_activate_style(char *name) {
             ys->active_style = NULL;
         }
     }
+
+    event.kind = EVENT_STYLE_CHANGE;
+    yed_trigger_event(&event);
 
     ys->redraw = ys->redraw_cls = 1;
 
@@ -107,6 +111,22 @@ __STYLE_COMPONENTS
 
 #undef __SCOMP
 
+yed_attrs yed_get_active_style_scomp(int scomp) {
+    yed_style *style;
+
+    style = yed_get_active_style();
+
+    if (!style) { goto fail; }
+
+    switch (scomp) {
+        #define __SCOMP(comp) case STYLE_##comp: return style->comp;
+        __STYLE_COMPONENTS
+        #undef __SCOMP
+    }
+
+fail:
+    return ZERO_ATTR;
+}
 
 void yed_set_default_styles(void) {
     yed_style s;

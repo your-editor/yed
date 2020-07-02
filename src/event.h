@@ -25,6 +25,7 @@ typedef enum {
     EVENT_TERMINAL_RESIZED,
     EVENT_PRE_PUMP,
     EVENT_POST_PUMP,
+    EVENT_STYLE_CHANGE,
 
     N_EVENTS,
 } yed_event_kind_t;

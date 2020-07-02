@@ -24,6 +24,12 @@
     __SCOMP(code_string)       \
     __SCOMP(code_character)
 
+enum {
+    #define __SCOMP(comp) STYLE_##comp,
+    __STYLE_COMPONENTS
+    #undef __SCOMP
+};
+
 typedef struct yed_style_t {
     char      *_name;
     #define __SCOMP(comp) yed_attrs comp;
@@ -37,6 +43,7 @@ void yed_remove_style(char *name);
 yed_style * yed_get_style(char *name);
 int yed_activate_style(char *name);
 yed_style * yed_get_active_style(void);
+yed_attrs yed_get_active_style_scomp(int scomp);
 
 #define __SCOMP(comp) yed_attrs yed_active_style_get_##comp(void);
 __STYLE_COMPONENTS

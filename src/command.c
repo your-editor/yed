@@ -3386,6 +3386,8 @@ void yed_default_command_style(int n_args, char **args) {
 }
 
 void yed_default_command_style_off(int n_args, char **args) {
+    yed_event event;
+
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
         return;
@@ -3397,6 +3399,9 @@ void yed_default_command_style_off(int n_args, char **args) {
         free(ys->active_style);
         ys->active_style = NULL;
     }
+
+    event.kind = EVENT_STYLE_CHANGE;
+    yed_trigger_event(&event);
 
     ys->redraw = 1;
 }
