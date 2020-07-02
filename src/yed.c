@@ -205,6 +205,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_buffers();
     yed_init_log();
     yed_init_frames();
+    yed_init_direct_draw();
 
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
@@ -407,14 +408,15 @@ int yed_pump(void) {
             yed_draw_command_line();
             write_status_bar(keys[0]);
         }
+        yed_mark_direct_draws_as_dirty();
     }
 
     yed_update_frames();
+    ys->redraw = ys->redraw_cls = 0;
+    yed_do_direct_draws();
 
     ys->draw_accum_us += measure_time_now_us() - start_us;
     ys->n_pumps       += 1;
-
-    ys->redraw = ys->redraw_cls = 0;
 
     if (ys->interactive_command) {
         write_status_bar(keys[0]);

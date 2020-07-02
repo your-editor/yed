@@ -177,14 +177,14 @@ int yed_read_keys(int *input) {
 /*
  * BLOCKING(ish):
  **********************************************/
-    while ((nread = read(0, &c, 1)) == 0);
+/*     while ((nread = read(0, &c, 1)) == 0); */
 /**********************************************/
 
 /*
  * NON-BLOCKING:
  **********************************************/
-/*     nread = read(0, &c, 1); */
-/*     if (nread == 0)     { return 0; } */
+    nread = read(0, &c, 1);
+    if (nread == 0)     { return 0; }
 /**********************************************/
 
 
@@ -226,6 +226,8 @@ void yed_take_key(int key) {
     event.kind = EVENT_KEY_PRESSED;
     event.key  = key;
     yed_trigger_event(&event);
+
+    if (event.cancel) { return; }
 
     binding = yed_get_key_binding(key);
 

@@ -313,3 +313,4 @@ int s_to_i(const char *s) {
 #include "style.c"
 #include "subproc.c"
 #include "complete.c"
+#include "direct_draw.c"

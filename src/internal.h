@@ -149,6 +149,7 @@ int mk_wcwidth(wchar_t ucs);
 #include "style.h"
 #include "subproc.h"
 #include "complete.h"
+#include "direct_draw.h"
 
 typedef struct {
     array_t  files;
@@ -228,6 +229,8 @@ typedef struct yed_state_t {
     unsigned long long           n_pumps;
     unsigned long long           draw_accum_us;
     unsigned long long           draw_avg_us;
+
+    array_t                      direct_draws;
 } yed_state;
 
 extern yed_state *ys;

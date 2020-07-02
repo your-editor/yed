@@ -12,7 +12,6 @@ static struct yed_state_t *state;
 int load_yed_lib(void);
 void call_yed_fini(void);
 
-
 int main(int argc, char **argv) {
     int status;
 
