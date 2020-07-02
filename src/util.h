@@ -26,4 +26,7 @@ char *last_strnstr(const char *haystack, const char *needle, size_t len);
 char *strnstr(const char *haystack, const char *needle, size_t len);
 #endif
 
+int rect_intersect(int top_a, int bottom_a, int left_a, int right_a,
+                   int top_b, int bottom_b, int left_b, int right_b);
+
 #endif

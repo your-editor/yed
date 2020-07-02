@@ -1,4 +1,4 @@
-char * yed_run_subproc(char *cmd) {
+char * yed_run_subproc(char *cmd, int *output_len, int *status) {
     FILE    *stream;
     array_t  out;
     char     c;
@@ -10,7 +10,7 @@ char * yed_run_subproc(char *cmd) {
     out = array_make(char);
 
     c = 0;
-    while ((c = fgetc(stream)) >= 0) {
+    while ((c = fgetc(stream)) != EOF) {
         if (c == '\r') {
             continue;
         }
@@ -22,9 +22,10 @@ char * yed_run_subproc(char *cmd) {
         array_pop(out);
     }
 
-    array_zero_term(out);
+    *output_len = array_len(out);
+    *status     = pclose(stream);
 
-    pclose(stream);
+    array_zero_term(out);
 
     return array_data(out);
 }

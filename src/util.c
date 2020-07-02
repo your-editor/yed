@@ -105,6 +105,8 @@ char * path_without_ext(char *path) {
 char *exe_path(char *prg) {
     char  cmd_buff[256];
     char *path;
+    int   len;
+    int   status;
 
     cmd_buff[0] = 0;
 
@@ -112,7 +114,7 @@ char *exe_path(char *prg) {
     strcat(cmd_buff, prg);
     strcat(cmd_buff, " 2>/dev/null");
 
-    path = yed_run_subproc(cmd_buff);
+    path = yed_run_subproc(cmd_buff, &len, &status);
 
     if (path) {
         if (strlen(path) == 0) {
@@ -433,3 +435,11 @@ char *strnstr(const char *haystack, const char *needle, size_t len) {
     return NULL;
 }
 #endif
+
+int rect_intersect(int top_a, int bottom_a, int left_a, int right_a,
+                   int top_b, int bottom_b, int left_b, int right_b) {
+
+    return (left_a <= right_b && right_a >= left_b
+            &&
+            top_a <= bottom_b && bottom_a >= top_b);
+}
