@@ -115,7 +115,7 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
     bucket_array_traverse_from(buff->lines, line, row - 1) {
         data_len = array_len(line->chars);
 
-        if (!line->visual_width) {
+        if (!line->visual_width || col > line->visual_width) {
             r += 1;
             continue;
         }

@@ -332,6 +332,7 @@ void yed_undraw_frame(yed_frame *frame) {
     y = ys->cur_y;
 
     append_to_output_buff(TERM_RESET);
+    append_to_output_buff(TERM_CURSOR_HIDE);
 
     for (i = 0; i < frame->bheight; i += 1) {
         yed_set_cursor(frame->bleft, frame->btop + i);
@@ -622,6 +623,9 @@ void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x
     }
 
     yed_frame_draw_fill(frame, lines_drawn);
+
+    yed_mark_dirty_direct_draws(frame->top,  frame->top +  frame->height - 1,
+                                frame->left, frame->left + frame->width  - 1);
 }
 
 void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
@@ -1137,9 +1141,7 @@ void yed_update_frames(void) {
      *                                       Brandon Kammerdiener
      *                                       June 30, 2020
      */
-    array_traverse(ys->frames, frame) {
-        (*frame)->dirty = 0;
-    }
+    array_traverse(ys->frames, frame) { (*frame)->dirty = 0; }
 }
 
 int yed_frame_line_is_visible(yed_frame *frame, int row) {
@@ -1172,6 +1174,9 @@ void yed_frame_update_dirty_line(yed_frame *frame) {
         line = yed_buff_get_line(frame->buffer, frame->dirty_line);
         if (line) {
             yed_frame_draw_line(frame, line, frame->dirty_line, y - frame->top, frame->buffer_x_offset);
+
+            yed_mark_dirty_direct_draws(y,           y,
+                                        frame->left, frame->left + frame->width  - 1);
         }
     }
 }
@@ -1201,6 +1206,9 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
 /*             append_to_output_buff(TERM_RESET); */
 /*             append_to_output_buff(TERM_CURSOR_HIDE); */
 /*         } */
+
+        yed_mark_dirty_direct_draws(y,           y,
+                                    frame->left, frame->left + frame->width  - 1);
     }
 }
 
@@ -1234,4 +1242,9 @@ void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
             (*frame)->dirty_line = dirty_row;
         }
     }
+}
+
+int yed_cell_is_in_frame(int row, int col, yed_frame *frame) {
+    return    (row >= frame->top  && row <= frame->top  + frame->height - 1)
+           || (col >= frame->left && col <= frame->left + frame->width  - 1);
 }
