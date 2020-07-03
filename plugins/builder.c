@@ -191,13 +191,36 @@ static void builder_write_output_to_tmp_file(void) {
     LOG_EXIT();
 }
 
+static yed_attrs get_err_attrs(void) {
+
+    yed_attrs a;
+    yed_attrs active;
+    yed_attrs attn;
+    float     brightness;
+
+    active = yed_active_style_get_active();
+
+    a = active;
+
+    if (a.flags & ATTR_RGB) {
+        brightness = ((RGB_32_r(active.bg) + RGB_32_g(active.bg) + RGB_32_b(active.bg)) / 3) / 255.0f;
+
+        a.bg = RGB_32(0x7f + (u32)(brightness * 0x7f),
+                        0x0  + (u32)(brightness * 0x7f),
+                        0x0  + (u32)(brightness * 0x7f));
+    } else {
+        attn = yed_active_style_get_attention();
+        a.bg = attn.fg;
+    }
+
+    return a;
+}
+
 static void builder_draw_error_message(int do_draw) {
     char      line_buff[1024];
     int       line_len;
     int       n_glyphs;
     int       line_width;
-    yed_attrs a;
-/*     u32       r, g, b; */
 
     if ((do_draw && err_dd) || (!do_draw && !err_dd)) {
         return;
@@ -208,28 +231,9 @@ static void builder_draw_error_message(int do_draw) {
         line_len = strlen(line_buff);
         yed_get_string_info(line_buff, line_len, &n_glyphs, &line_width);
 
-        a = yed_active_style_get_active();
-
-        if (a.flags & ATTR_RGB) {
-            a.bg = 0x880000;
-/*             r = RGB_32_r(a.bg); */
-/*             g = RGB_32_g(a.bg); */
-/*             b = RGB_32_b(a.bg); */
-/*  */
-/*             r = MIN(255, r * 1.5); */
-/*             g = MIN(255, g * 0.5); */
-/*             b = MIN(255, b * 0.5); */
-/*  */
-/*             a.bg = RGB_32(r, g, b); */
-        } else if (a.flags & ATTR_256) {
-            a.bg = rgb_to_256(0x880000);
-        } else {
-            a.bg = ATTR_16_RED;
-        }
-
         err_dd = yed_direct_draw(ys->term_rows - 3,
                                  ys->term_cols - line_width,
-                                 a,
+                                 get_err_attrs(),
                                  line_buff);
     } else {
         yed_kill_direct_draw(err_dd);
@@ -261,9 +265,8 @@ void builder_pump_handler(yed_event *event) {
 
 void builder_line_handler(yed_event *event) {
     yed_buffer *buff;
-/*     yed_attrs   active; */
     yed_attrs  *ait;
-/*     u32         r, g, b; */
+    yed_attrs   a;
 
     if (!has_err)               { return; }
     if (event->row != err_line) { return; }
@@ -272,25 +275,10 @@ void builder_line_handler(yed_event *event) {
 
     if (event->frame->buffer != buff) { return; }
 
-/*     active = yed_active_style_get_active(); */
+    a = get_err_attrs();
 
     array_traverse(event->line_attrs, ait) {
-        if (ait->flags & ATTR_RGB) {
-/*             r = RGB_32_r(active.bg); */
-/*             g = RGB_32_g(active.bg); */
-/*             b = RGB_32_b(active.bg); */
-/*  */
-/*             r = MIN(255, r * 1.5); */
-/*             g = MIN(255, g * 0.5); */
-/*             b = MIN(255, b * 0.5); */
-/*  */
-/*             ait->bg = RGB_32(r, g, b); */
-            ait->bg = 0x880000;
-        } else if (ait->flags & ATTR_256) {
-            ait->bg = rgb_to_256(0x880000);
-        } else {
-            ait->bg = ATTR_16_RED;
-        }
+        *ait = a;
     }
 }
 
