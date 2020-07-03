@@ -15,7 +15,7 @@ tree(yedrc_path_t, int) loading;
 void yedrc_load(int n_args, char **args) {
     char                       *path;
     char                        exp_path[512];
-    char                        abs_path[512];
+    char                        abs_path[4096];
     tree_it(yedrc_path_t, int)  it;
     FILE                       *f;
     char                        line[512];
