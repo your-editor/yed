@@ -161,6 +161,23 @@ yed_buffer * yed_get_buffer(char *name) {
     return tree_it_val(it);
 }
 
+yed_buffer * yed_get_buffer_by_path(char *path) {
+    char                                          a_path[4096];
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    yed_buffer                                   *buff;
+
+    if (abs_path(path, a_path)) { path = a_path; }
+
+    tree_traverse(ys->buffers, it) {
+        buff = tree_it_val(it);
+        if (buff->path && strcmp(buff->path, path) == 0) {
+            return buff;
+        }
+    }
+
+    return NULL;
+}
+
 void yed_free_buffer(yed_buffer *buffer) {
     yed_line *line;
 
@@ -628,6 +645,7 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
     int          fd;
     int          status;
     yed_event    event;
+    char         a_path[4096];
 
     status = BUFF_FILL_STATUS_SUCCESS;
     errno  = 0;
@@ -673,7 +691,11 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
         goto cleanup;
     }
 
-    buff->path = strdup(path);
+    if (abs_path(path, a_path)) {
+        buff->path = strdup(a_path);
+    } else {
+        buff->path = strdup(path);
+    }
 
     event.kind = EVENT_BUFFER_PRE_SET_FT;
     event.buffer = buff;
@@ -829,6 +851,7 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
     yed_line  *line;
     yed_event  event;
     int        status;
+    char       a_path[4096];
 
     event.kind   = EVENT_BUFFER_PRE_WRITE;
     event.buffer = buff;
@@ -862,7 +885,11 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
     }
 
     if (!buff->path) {
-        buff->path = strdup(path);
+        if (abs_path(path, a_path)) {
+            buff->path = strdup(a_path);
+        } else {
+            buff->path = strdup(path);
+        }
 
         event.kind = EVENT_BUFFER_PRE_SET_FT;
         yed_trigger_event(&event);

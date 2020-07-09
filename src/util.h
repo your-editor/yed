@@ -3,6 +3,9 @@
 
 char * yed_word_under_cursor(void);
 
+char * abs_path(char *path, char *buff);
+char * relative_path_if_subtree(char *path, char *buff);
+char * homeify_path(char *path, char *buff);
 char * get_path_ext(char *path);     /* Don't free result. */
 char * path_without_ext(char *path); /* DO free result. */
 

@@ -176,6 +176,7 @@ void yed_tool_attach(void) {
 }
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
+    char                cwd[4096];
     int                 has_frames;
     char              **file_it;
     unsigned long long  start_time;
@@ -198,6 +199,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     start_time = measure_time_now_ms();
 
     setlocale(LC_ALL, "en_US.utf8");
+
+    getcwd(cwd, sizeof(cwd));
+    ys->working_dir = strdup(cwd);
 
     yed_init_vars();
     ys->tabw = yed_get_tab_width(); /* Set again after plugins are loaded. */

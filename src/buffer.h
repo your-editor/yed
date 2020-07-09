@@ -65,6 +65,7 @@ yed_line * yed_copy_line(yed_line *line);
 yed_buffer yed_new_buff(void);
 yed_buffer * yed_create_buffer(char *name);
 yed_buffer * yed_get_buffer(char *name);
+yed_buffer * yed_get_buffer_by_path(char *path);
 void yed_free_buffer(yed_buffer *buffer);
 
 int yed_line_idx_to_col(yed_line *line, int idx);

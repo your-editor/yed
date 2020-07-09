@@ -271,7 +271,7 @@ void builder_line_handler(yed_event *event) {
     if (!has_err)               { return; }
     if (event->row != err_line) { return; }
 
-    buff = yed_get_buffer(err_file);
+    buff = yed_get_buffer_by_path(err_file);
 
     if (event->frame->buffer != buff) { return; }
 
@@ -285,7 +285,7 @@ void builder_line_handler(yed_event *event) {
 static void builder_buff_post_mod_handler(yed_event *event) {
     yed_buffer *buff;
 
-    buff = yed_get_buffer(err_file);
+    buff = yed_get_buffer_by_path(err_file);
 
     if (event->frame->buffer != buff) { return; }
 
@@ -304,7 +304,7 @@ static void builder_cursor_moved_handler(yed_event *event) {
     yed_buffer *buff;
 
     if (has_err && event->frame->cursor_line == err_line) {
-        buff = yed_get_buffer(err_file);
+        buff = yed_get_buffer_by_path(err_file);
         if (event->frame->buffer == buff) {
             builder_draw_error_message(1);
             return;
@@ -377,12 +377,8 @@ static void builder_jump_to_error_location(int n_args, char **args) {
     if (!(err_parse_cmd = yed_get_var("builder-error-parse-command"))) {
 /*         err_parse_cmd = "grep ': error:'"; */
         err_parse_cmd = "awk -F':' '"
-                        "    function basename(path) {\n"
-                        "        sub(\".*/\", \"\", path)\n"
-                        "        return path\n"
-                        "    }\n"
                         "    /: error:/ { print $0; }"
-                        "    /: undefined reference/ { printf(\"%s:%s:%s\\n\", basename($1), $2, $3); }"
+                        "    /: undefined reference/ { printf(\"%s:%s:1:%s\\n\", $1, $2, $3); }"
                         "'";
     }
 
@@ -416,7 +412,7 @@ static void builder_jump_to_error_location(int n_args, char **args) {
     col = MAX(1, col);
     scan = bump + 2;
 
-    buff = yed_get_buffer(file_buff);
+    buff = yed_get_buffer_by_path(file_buff);
     if (buff) {
         if (yed_buff_is_visible(buff)) {
             array_traverse(ys->frames, fit) {

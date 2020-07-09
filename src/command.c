@@ -97,6 +97,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("buffer-next",            buffer_next);
     SET_DEFAULT_COMMAND("buffer-prev",            buffer_prev);
     SET_DEFAULT_COMMAND("buffer-name",            buffer_name);
+    SET_DEFAULT_COMMAND("buffer-path",            buffer_path);
     SET_DEFAULT_COMMAND("buffer-set-ft",          buffer_set_ft);
     SET_DEFAULT_COMMAND("frame-new",              frame_new);
     SET_DEFAULT_COMMAND("frame-delete",           frame_delete);
@@ -1427,8 +1428,10 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
 
 void yed_default_command_buffer(int n_args, char **args) {
     yed_buffer                                   *buffer;
-    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
-    char                                          path[512];
+    yed_buffer                                   *lookup;
+    char                                          path[4096];
+    char                                          h_path[4096];
+    char                                         *name;
     yed_event                                     event;
     int                                           status;
 
@@ -1442,12 +1445,21 @@ void yed_default_command_buffer(int n_args, char **args) {
         YEXE("frame-new");
     }
 
-    expand_path(args[0], path);
+    relative_path_if_subtree(args[0], path);
+    if (homeify_path(path, h_path)) {
+        name = h_path;
+    } else {
+        name = path;
+    }
 
-    it = tree_lookup(ys->buffers, path);
+    lookup = yed_get_buffer(name);
 
-    if (tree_it_good(it)) {
-        buffer = tree_it_val(it);
+    if (!lookup) {
+        lookup = yed_get_buffer_by_path(path);
+    }
+
+    if (lookup) {
+        buffer = lookup;
     } else {
         event.kind  = EVENT_BUFFER_PRE_LOAD;
         event.frame = ys->active_frame;
@@ -1455,7 +1467,7 @@ void yed_default_command_buffer(int n_args, char **args) {
 
         yed_trigger_event(&event);
 
-        buffer = yed_create_buffer(path);
+        buffer = yed_create_buffer(name);
         status = yed_fill_buff_from_file(buffer, path);
 
         switch (status) {
@@ -1473,7 +1485,7 @@ void yed_default_command_buffer(int n_args, char **args) {
                 goto cleanup;
             case BUFF_FILL_STATUS_ERR_NOF:
             case BUFF_FILL_STATUS_SUCCESS:
-                yed_cprint("'%s' (new buffer)", path);
+                yed_cprint("'%s' (new buffer)", name);
 
                 event.buffer = buffer;
 
@@ -1697,6 +1709,36 @@ void yed_default_command_buffer_name(int n_args, char **args) {
     buffer = frame->buffer;
 
     yed_cprint("'%s'", buffer->name);
+}
+
+void yed_default_command_buffer_path(int n_args, char **args) {
+    yed_buffer *buffer;
+    yed_frame  *frame;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    buffer = frame->buffer;
+
+    if (buffer->name) {
+        yed_cprint("%s", buffer->path);
+    } else {
+        yed_cerr("buffer has no path");
+    }
 }
 
 void yed_default_command_buffer_set_ft(int n_args, char **args) {
@@ -2463,7 +2505,7 @@ void yed_default_command_write_buffer(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
     char       *path;
-    char        exp_path[512];
+    char        exp_path[4096];
     int         status;
 
     if (!ys->active_frame) {
@@ -2485,9 +2527,9 @@ void yed_default_command_write_buffer(int n_args, char **args) {
             yed_cerr("buffer is not associated with a file yet -- provide a file name");
             return;
         }
-        path = buff->path;
+        path = buff->name;
     } else if (n_args == 1) {
-        expand_path(args[0], exp_path);
+        relative_path_if_subtree(args[0], exp_path);
         path = exp_path;
     } else {
         yed_cerr("expected 0 or 1 arguments, but got %d", n_args);

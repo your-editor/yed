@@ -71,6 +71,81 @@ char *yed_word_under_cursor(void) {
     return ret;
 }
 
+char * abs_path(char *path, char *buff) {
+    char exp_path[4096];
+
+    exp_path[0] = buff[0] = 0;
+
+    expand_path(path, exp_path);
+    if (!realpath(exp_path, buff)) {
+        return NULL;
+    }
+
+    return buff;
+}
+
+char * relative_path_if_subtree(char *path, char *buff) {
+    int  is_subtree;
+    char a_path[4096];
+    int  cwd_len;
+
+    buff[0] = 0;
+
+    is_subtree = (path[0] != '/' && path[0] != '~');
+
+    /*
+     * If the path is already relative, then
+     * we're done.
+     */
+    if (is_subtree) {
+        strcat(buff, path);
+        return buff;
+    }
+
+    /* Do expansion. */
+    if (!abs_path(path, a_path)) { return NULL; }
+
+    /*
+     * If the absolute path puts us in a subtree of
+     * the current directory, then we can turn it into
+     * a relative path by lopping off the current directory
+     * portion of the path.
+     */
+    cwd_len = strlen(ys->working_dir);
+
+    if (cwd_len >= strlen(a_path)) { goto abs; }
+
+    if (strncmp(a_path, ys->working_dir, cwd_len) == 0) {
+        strcat(buff, a_path + cwd_len + 1);
+        return buff;
+    }
+
+abs:
+    /* Fail safe. */
+    strcat(buff, a_path);
+    return buff;
+}
+
+char * homeify_path(char *path, char *buff) {
+    int   len,
+          home_len;
+    char *home;
+
+    len      = strlen(path);
+    home     = getenv("HOME");
+    home_len = strlen(home);
+
+    if (!home) { return NULL; }
+
+    if (strncmp(path, home, home_len) == 0) {
+        buff[0] = '~';
+        memcpy(buff + 1, path + home_len, len - home_len + 1);
+        return buff;
+    }
+
+    return NULL;
+}
+
 char * get_path_ext(char *path) {
     char *ext;
 

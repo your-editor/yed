@@ -69,6 +69,7 @@ DEF_DEFAULT_COMMAND(buffer_delete);
 DEF_DEFAULT_COMMAND(buffer_next);
 DEF_DEFAULT_COMMAND(buffer_prev);
 DEF_DEFAULT_COMMAND(buffer_name);
+DEF_DEFAULT_COMMAND(buffer_path);
 DEF_DEFAULT_COMMAND(buffer_set_ft);
 DEF_DEFAULT_COMMAND(frame_new);
 DEF_DEFAULT_COMMAND(frame_delete);

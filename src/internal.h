@@ -231,6 +231,7 @@ typedef struct yed_state_t {
     unsigned long long           draw_avg_us;
 
     array_t                      direct_draws;
+    char                        *working_dir;
 } yed_state;
 
 extern yed_state *ys;
