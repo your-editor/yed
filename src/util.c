@@ -78,7 +78,7 @@ char * abs_path(char *path, char *buff) {
 
     expand_path(path, exp_path);
     if (!realpath(exp_path, buff)) {
-        return NULL;
+        memcpy(buff, exp_path, strlen(exp_path) + 1);
     }
 
     return buff;
@@ -103,7 +103,7 @@ char * relative_path_if_subtree(char *path, char *buff) {
     }
 
     /* Do expansion. */
-    if (!abs_path(path, a_path)) { return NULL; }
+    abs_path(path, a_path);
 
     /*
      * If the absolute path puts us in a subtree of
