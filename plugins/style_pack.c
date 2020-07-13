@@ -21,6 +21,7 @@
 #include "styles/tempus_future.c"
 #include "styles/olive.c"
 #include "styles/vt.c"
+#include "styles/bold.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, lab);
@@ -43,6 +44,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, tempus_future);
     PACK_STYLE(self, olive);
     PACK_STYLE(self, vt);
+    PACK_STYLE(self, bold);
 
     return 0;
 }
