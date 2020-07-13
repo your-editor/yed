@@ -27,14 +27,11 @@ PACKABLE_STYLE(vt) {
     s.code_preprocessor   = s.code_keyword;
 
     s.code_number.flags   = ATTR_16;
-    s.code_number.fg      = ATTR_16_RED;
+    s.code_number.fg      = ATTR_16_MAGENTA;
 
     s.code_constant       = s.code_number;
-
-    s.code_string.flags   = ATTR_16;
-    s.code_string.fg      = ATTR_16_RED;
-
-    s.code_character      = s.code_string;
+    s.code_string         = s.code_number;
+    s.code_character      = s.code_number;
 
     yed_plugin_set_style(self, "vt", &s);
 
