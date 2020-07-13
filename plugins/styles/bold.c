@@ -89,7 +89,7 @@ PACKABLE_STYLE(bold) {
 
 #define background (15)
 #define forground  (233)
-#define sel        (250)
+#define sel        (248)
 #define accent     (23)
 #define assoc      (111)
 #define attn       (167)
