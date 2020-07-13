@@ -419,11 +419,24 @@ static void builder_jump_to_error_location(int n_args, char **args) {
     buff = yed_get_buffer_by_path(file_buff);
     if (buff) {
         if (yed_buff_is_visible(buff)) {
+            /*
+             * Pre-pass to make sure that if the active frame has the buffer,
+             * we don't switch to another frame that might also have the buffer.
+             */
+            array_traverse(ys->frames, fit) {
+                if ((*fit)->buffer == buff
+                &&  *fit == ys->active_frame) {
+                    goto done;
+                }
+            }
+
             array_traverse(ys->frames, fit) {
                 if ((*fit)->buffer == buff) {
                     yed_activate_frame(*fit);
+                    goto done;
                 }
             }
+done:;
         } else {
             YEXE("buffer", file_buff);
         }
