@@ -209,7 +209,11 @@ static yed_attrs get_err_attrs(void) {
                         0x0  + (u32)(brightness * 0x7f),
                         0x0  + (u32)(brightness * 0x7f));
     } else {
-        attn = yed_active_style_get_attention();
+        attn    = yed_active_style_get_attention();
+        a.flags = attn.flags & ~(ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG | ATTR_INVERSE);
+        if (attn.flags & ATTR_16_LIGHT_FG) {
+            a.flags |= ATTR_16_LIGHT_BG;
+        }
         a.bg = attn.fg;
     }
 
