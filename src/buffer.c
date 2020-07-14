@@ -884,7 +884,7 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
         fprintf(f, "\n");
     }
 
-    if (!buff->path) {
+    if (!buff->path && !(buff->flags & BUFF_SPECIAL)) {
         if (abs_path(path, a_path)) {
             buff->path = strdup(a_path);
         } else {
@@ -897,7 +897,10 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
         event.kind = EVENT_BUFFER_POST_SET_FT;
         yed_trigger_event(&event);
     }
-    buff->kind = BUFF_KIND_FILE;
+
+    if (!(buff->flags & BUFF_SPECIAL)) {
+        buff->kind = BUFF_KIND_FILE;
+    }
 
     fclose(f);
 

@@ -2523,7 +2523,10 @@ void yed_default_command_write_buffer(int n_args, char **args) {
     buff = frame->buffer;
 
     if (n_args == 0) {
-        if (buff->path == NULL) {
+        if (buff->flags & BUFF_SPECIAL) {
+            yed_cerr("special buffer doesn't have a path -- you must provide the file name");
+            return;
+        } else if (buff->path == NULL) {
             yed_cerr("buffer is not associated with a file yet -- provide a file name");
             return;
         }
