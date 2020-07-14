@@ -707,7 +707,7 @@ void yed_default_command_less(int n_args, char **args) {
 
     strcpy(cmd_buff, buff + strlen("bash -c '("));
 
-    strcat(buff, ") 2>&1 | less -c'");
+    strcat(buff, ") 2>&1 | less -cR'");
 
     printf(TERM_STD_SCREEN);
     fflush(stdout);
