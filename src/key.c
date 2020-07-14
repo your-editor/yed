@@ -1,3 +1,5 @@
+static int ctrl_h_is_bs;
+
 void yed_init_keys(void) {
     ys->vkey_binding_map   = tree_make(int, yed_key_binding_ptr_t);
     ys->key_sequences      = array_make(yed_key_sequence);
@@ -95,7 +97,10 @@ int yed_read_key_sequences(char first, int *input) {
     char c;
     yed_key_sequence *seq_it;
 
-    c   = first;
+    c = (first == CTRL_H && ctrl_h_is_bs
+            ? BACKSPACE
+            : first);
+
     len = 0;
 
     if (ys->interactive_command) {
@@ -104,6 +109,8 @@ int yed_read_key_sequences(char first, int *input) {
     } else {
         do {
             /* We have consumed a keystroke. */
+            if (c == CTRL_H && ctrl_h_is_bs) { c = BACKSPACE; }
+
             input[len]    = c;
             len          += 1;
 
@@ -174,6 +181,8 @@ int yed_read_keys(int *input) {
     yed_glyph g;
     int       n_bytes;
 
+    ctrl_h_is_bs = yed_var_is_truthy("ctrl-h-is-backspace");
+
 /*
  * BLOCKING(ish):
  **********************************************/
@@ -191,6 +200,8 @@ int yed_read_keys(int *input) {
     if (nread == -1)    { return 0; }
 
     if (c != 0) {
+        if (c == CTRL_H && ctrl_h_is_bs) { c = BACKSPACE; }
+
         g.c     = c;
         n_bytes = yed_get_glyph_len(g);
     }
@@ -304,7 +315,15 @@ void yed_bind_key(yed_key_binding binding) {
     char            **args;
     int               i;
 
-    if (binding.key == KEY_NULL)    { return; }
+    LOG_FN_ENTER();
+
+    if (binding.key == KEY_NULL)    { goto out; }
+    if (binding.key == CTRL_H
+    &&  yed_var_is_truthy("ctrl-h-is-backspace")) {
+        yed_log("[!] warning: Binding ctrl-h to '%s' while 'ctrl-h-is-backspace' is set.\n"
+                "    Pressing backspace may invoke this binding depending on what your "
+                "terminal sends when you press backspace.", binding.cmd);
+    }
 
     yed_unbind_key(binding.key);
 
@@ -325,6 +344,9 @@ void yed_bind_key(yed_key_binding binding) {
     } else {
         tree_insert(ys->vkey_binding_map, binding.key, b);
     }
+
+out:
+    LOG_EXIT();
 }
 
 void yed_unbind_key(int key) {
