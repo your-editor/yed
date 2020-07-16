@@ -17,7 +17,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char              *kwds[] = {
         "as",            "do",       "i8",      "if",      "in",     "or",     "u8",
         "and",           "bor",      "f32",     "f64",     "for",    "i16",    "i32",    "i64",   "int",  "new",  "not",  "ref",  "u16",  "u32",  "u64",
-        "Type",          "band",     "bneg",    "bool",    "bshl",   "bshr",   "bxor",   "char",  "else", "enum", "f128", "long", "none", "proc", "some", "true", "type", "void",
+        "Type",          "band",     "bneg",    "bool",    "bshl",   "bshr",   "bxor",   "char",  "else", "enum", "f128", "long", "none", "proc", "some", "this", "true", "type", "void",
         "break",         "const",    "false",   "float",   "print",  "short",  "using",  "while",
         "delete",        "double",   "extern",  "import",  "module", "return", "sizeof",
         "extends",       "foreach",  "include",
