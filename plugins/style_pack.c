@@ -23,6 +23,7 @@
 #include "styles/vt.c"
 #include "styles/bold.c"
 #include "styles/doug.c"
+#include "styles/acme.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, lab);
@@ -47,6 +48,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, vt);
     PACK_STYLE(self, bold);
     PACK_STYLE(self, doug);
+    PACK_STYLE(self, acme);
 
     return 0;
 }
