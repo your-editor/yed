@@ -5,6 +5,7 @@ void yed_init_vars(void) {
 
 void yed_set_default_vars(void) {
     yed_set_var("tab-width",                 "4");
+    yed_set_var("ctrl-h-is-backspace",       "yes");
     yed_set_var("enable-search-cursor-move", "yes");
     yed_set_var("buffer-load-mode",          "map");
     /* indent-c-disable-bs is not set by default */
@@ -84,4 +85,25 @@ int yed_get_tab_width(void) {
     }
 
     return tabw;
+}
+
+int yed_var_is_truthy(char *var) {
+    char *val;
+
+    if (!(val = yed_get_var(var))) {
+        return 0;
+    }
+
+    if (strlen(val)          == 0
+    ||  strcmp(val, "0")     == 0
+    ||  strcmp(val, "no")    == 0
+    ||  strcmp(val, "No")    == 0
+    ||  strcmp(val, "NO")    == 0
+    ||  strcmp(val, "false") == 0
+    ||  strcmp(val, "False") == 0
+    ||  strcmp(val, "FALSE") == 0) {
+        return 0;
+    }
+
+    return 1;
 }

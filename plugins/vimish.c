@@ -110,12 +110,24 @@ void vimish_unload(yed_plugin *self) {
 }
 
 void bind_keys(void) {
-    int  key;
-    char key_str[32];
+    char *ctrl_h_is_bs;
+    char *ctrl_h_is_bs_cpy;
+    int   key;
+    char  key_str[32];
+
+    if ((ctrl_h_is_bs = yed_get_var("ctrl-h-is-backspace"))) {
+        ctrl_h_is_bs_cpy = strdup(ctrl_h_is_bs);
+        yed_unset_var("ctrl-h-is-backspace");
+    }
 
     for (key = 1; key < REAL_KEY_MAX; key += 1) {
         sprintf(key_str, "%d", key);
         YPBIND(Self, key, "vimish-take-key", key_str);
+    }
+
+    if (ctrl_h_is_bs) {
+        yed_set_var("ctrl-h-is-backspace", ctrl_h_is_bs_cpy);
+        free(ctrl_h_is_bs_cpy);
     }
 }
 

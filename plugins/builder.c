@@ -19,7 +19,7 @@ static u64                notif_stay_ms;
 static array_t            dd_lines;
 static int                has_err;
 static int                err_fixed;
-static char               err_msg[512];
+static char               err_msg[1024];
 static yed_direct_draw_t *err_dd;
 static char               err_file[512];
 static int                err_line;
@@ -221,7 +221,7 @@ static yed_attrs get_err_attrs(void) {
 }
 
 static void builder_draw_error_message(int do_draw) {
-    char      line_buff[1024];
+    char      line_buff[sizeof(err_msg) + 8];
     int       line_len;
     int       n_glyphs;
     int       line_width;
@@ -326,6 +326,8 @@ static void builder_style_handler(yed_event *event) {
 }
 
 static void builder_set_err(char *file, int line, int col, char *msg) {
+    int max_err_len;
+
     if (!has_err) {
         yed_plugin_add_event_handler(Self, line_handler);
         yed_plugin_add_event_handler(Self, buff_post_mod_handler);
@@ -340,7 +342,13 @@ static void builder_set_err(char *file, int line, int col, char *msg) {
     err_col     = MAX(col, 1);
     err_fixed   = 0;
     err_msg[0]  = 0;
-    strcat(err_msg, msg);
+
+    max_err_len = (ys->term_cols / 4 * 3) - 4; /* 4 is the padding on both sides. */
+
+    strncat(err_msg, msg, max_err_len - 3);
+    if (strlen(msg) > max_err_len) {
+        strcat(err_msg, "...");
+    }
 
 
     builder_draw_error_message(1);
