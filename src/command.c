@@ -2504,6 +2504,7 @@ void yed_default_command_delete_line(int n_args, char **args) {
 void yed_default_command_write_buffer(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
+    char       *pretty_path;
     char       *path;
     char        exp_path[4096];
     int         status;
@@ -2530,8 +2531,11 @@ void yed_default_command_write_buffer(int n_args, char **args) {
             yed_cerr("buffer is not associated with a file yet -- provide a file name");
             return;
         }
-        path = buff->name;
+        pretty_path = buff->name;
+        relative_path_if_subtree(buff->name, exp_path);
+        path = exp_path;
     } else if (n_args == 1) {
+        pretty_path = args[0];
         relative_path_if_subtree(args[0], exp_path);
         path = exp_path;
     } else {
@@ -2543,16 +2547,16 @@ void yed_default_command_write_buffer(int n_args, char **args) {
 
     switch (status) {
         case BUFF_WRITE_STATUS_ERR_DIR:
-            yed_cerr("did not write to '%s' -- path is a directory", path);
+            yed_cerr("did not write to '%s' -- path is a directory", pretty_path);
             break;
         case BUFF_WRITE_STATUS_ERR_PER:
-            yed_cerr("did not write to '%s' -- permission denied", path);
+            yed_cerr("did not write to '%s' -- permission denied", pretty_path);
             break;
         case BUFF_WRITE_STATUS_ERR_UNK:
-            yed_cerr("did not write to '%s' -- unknown error", path);
+            yed_cerr("did not write to '%s' -- unknown error", pretty_path);
             break;
         case BUFF_WRITE_STATUS_SUCCESS:
-            yed_cprint("wrote to '%s'", path);
+            yed_cprint("wrote to '%s'", pretty_path);
             break;
     }
 }
