@@ -2,9 +2,12 @@
 
 #define MAYBE_CONVERT(rgb) (tc ? (rgb) : rgb_to_256(rgb))
 
-#define acme_bg            MAYBE_CONVERT(0xFFFFE8)
+#define _acme_bg      (0xFFFFE8)
+#define _acme_bg_dark (0xE5E5D0)
+
+#define acme_bg            MAYBE_CONVERT(_acme_bg)
 #define acme_bg_alt2       MAYBE_CONVERT(0xeFeFd8)
-#define acme_bg_dark       MAYBE_CONVERT(0xE5E5D0)
+#define acme_bg_dark       MAYBE_CONVERT(_acme_bg_dark)
 #define acme_fg            MAYBE_CONVERT(0x444444)
 #define acme_fg_alt        MAYBE_CONVERT(0xB8B09A)
 #define acme_fg_alt_dark   MAYBE_CONVERT(0x988d6d)
@@ -21,7 +24,7 @@
 #define acme_green_alt     MAYBE_CONVERT(0x006600)
 #define acme_green_light   MAYBE_CONVERT(0xe8fce8)
 #define acme_blue          MAYBE_CONVERT(0x1054af)
-#define acme_blue_light    MAYBE_CONVERT(0xe1faff)
+#define acme_blue_light    MAYBE_CONVERT(0xc1dadf)
 #define acme_purple        MAYBE_CONVERT(0x555599)
 #define acme_purple_light  MAYBE_CONVERT(0xffeaff)
 
@@ -30,8 +33,8 @@
 #define srch            acme_fg_alt_dark
 #define srch_cursor     acme_green
 #define attn            acme_red
-#define assoc_bg        MAYBE_CONVERT(background - 0x222211)
-#define status_bg       acme_bg_dark
+#define assoc_bg        MAYBE_CONVERT(_acme_bg - 0x222211)
+#define status_bg       MAYBE_CONVERT(_acme_bg_dark - 0x303017)
 #define sel_color       acme_blue_light
 #define comment         acme_yellow
 #define keyword         acme_fg
