@@ -389,7 +389,7 @@ static void builder_jump_to_error_location(int n_args, char **args) {
     if (!(err_parse_cmd = yed_get_var("builder-error-parse-command"))) {
 /*         err_parse_cmd = "grep ': error:'"; */
         err_parse_cmd = "awk -F':' '"
-                        "    /: error:/ { print $0; }"
+                        "    /:( fatal)? error:/ { print $0; }"
                         "    /: undefined reference/ { printf(\"%s:%s:1:%s\\n\", $1, $2, $3); }"
                         "'";
     }
