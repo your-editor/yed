@@ -1,5 +1,4 @@
 - replace-current-search is broken for buffers with multi-column glyphs
-- brace_hl is slow for large files (try the 21M gcc.c) -- make the scanning give up after some number of lines
 - deleting selected ranges (I guess not line ranges) with multi-col chars is busted
     - yanking seems to work
     - try deleting the whitespace range before the word 'foozle'
