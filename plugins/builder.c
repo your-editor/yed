@@ -40,6 +40,7 @@ static void builder_style_handler(yed_event *event);
 static void builder_jump_to_error_location(int n_args, char **args);
 static void builder_print_error(int n_args, char **args);
 static void builder_view_output(int n_args, char **args);
+static void builder_echo_status(int n_args, char **args);
 static void notif_start(void);
 static void notif_stop(void);
 
@@ -57,6 +58,7 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "builder-jump-to-error", builder_jump_to_error_location);
     yed_plugin_set_command(self, "builder-print-error",   builder_print_error);
     yed_plugin_set_command(self, "builder-view-output",   builder_view_output);
+    yed_plugin_set_command(self, "builder-echo-status",   builder_echo_status);
 
     pump_handler.kind          = EVENT_PRE_PUMP;
     pump_handler.fn            = builder_pump_handler;
@@ -170,6 +172,7 @@ static void builder_report(void) {
         notif_stop();
     }
     notif_start();
+    YEXE("builder-echo-status");
 }
 
 static void builder_write_output_to_tmp_file(void) {
@@ -251,10 +254,10 @@ void builder_pump_handler(yed_event *event) {
     if (build_is_running) {
         LOCKED(mtx) {
             if (build_is_finished) {
-                builder_write_output_to_tmp_file();
-                builder_report();
                 build_is_running   = 0;
                 builder_run_before = 1;
+                builder_write_output_to_tmp_file();
+                builder_report();
             }
         }
     }
@@ -520,6 +523,25 @@ static void builder_view_output(int n_args, char **args) {
         yed_cprint("%s", cmd_buff);
     } else {
         yed_cerr("'%s' exited with non-zero status %d", cmd_buff, err);
+    }
+}
+
+static void builder_echo_status(int n_args, char **args) {
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!builder_run_before) {
+        yed_cprint("builder has not been run");
+    } else if (build_is_running) {
+        yed_cprint("a build is currently running");
+    } else if (build_is_finished) {
+        if (build_failed) {
+            yed_cprint("the build FAILED");
+        } else {
+            yed_cprint("the build SUCCEEDED");
+        }
     }
 }
 
