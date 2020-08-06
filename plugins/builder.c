@@ -1,8 +1,11 @@
 #include <yed/plugin.h>
 
 static yed_plugin        *Self;
+static yed_event_handler  pump_handler;
+static yed_event_handler  style_handler;
 static yed_event_handler  line_handler;
 static yed_event_handler  buff_post_mod_handler;
+static yed_event_handler  buff_post_write_handler;
 static yed_event_handler  cursor_moved_handler;
 static int                build_is_running;
 static int                build_is_finished;
@@ -35,6 +38,7 @@ static void builder_unload(yed_plugin *self);
 static void builder_pump_handler(yed_event *event);
 static void builder_line_handler(yed_event *event);
 static void builder_buff_post_mod_handler(yed_event *event);
+static void builder_buff_post_write_handler(yed_event *event);
 static void builder_cursor_moved_handler(yed_event *event);
 static void builder_style_handler(yed_event *event);
 static void builder_jump_to_error_location(int n_args, char **args);
@@ -47,9 +51,6 @@ static void notif_stop(void);
 static void builder_start(int n_args, char **args);
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler pump_handler;
-    yed_event_handler style_handler;
-
     Self = self;
 
     yed_plugin_set_unload_fn(self, builder_unload);
@@ -60,16 +61,18 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "builder-view-output",   builder_view_output);
     yed_plugin_set_command(self, "builder-echo-status",   builder_echo_status);
 
-    pump_handler.kind          = EVENT_PRE_PUMP;
-    pump_handler.fn            = builder_pump_handler;
-    line_handler.kind          = EVENT_LINE_PRE_DRAW;
-    line_handler.fn            = builder_line_handler;
-    buff_post_mod_handler.kind = EVENT_BUFFER_POST_MOD;
-    buff_post_mod_handler.fn   = builder_buff_post_mod_handler;
-    cursor_moved_handler.kind  = EVENT_CURSOR_MOVED;
-    cursor_moved_handler.fn    = builder_cursor_moved_handler;
-    style_handler.kind         = EVENT_STYLE_CHANGE;
-    style_handler.fn           = builder_style_handler;
+    pump_handler.kind            = EVENT_PRE_PUMP;
+    pump_handler.fn              = builder_pump_handler;
+    line_handler.kind            = EVENT_LINE_PRE_DRAW;
+    line_handler.fn              = builder_line_handler;
+    buff_post_mod_handler.kind   = EVENT_BUFFER_POST_MOD;
+    buff_post_mod_handler.fn     = builder_buff_post_mod_handler;
+    buff_post_write_handler.kind = EVENT_BUFFER_POST_WRITE;
+    buff_post_write_handler.fn   = builder_buff_post_write_handler;
+    cursor_moved_handler.kind    = EVENT_CURSOR_MOVED;
+    cursor_moved_handler.fn      = builder_cursor_moved_handler;
+    style_handler.kind           = EVENT_STYLE_CHANGE;
+    style_handler.fn             = builder_style_handler;
 
     yed_plugin_add_event_handler(self, pump_handler);
     yed_plugin_add_event_handler(self, style_handler);
@@ -300,6 +303,26 @@ static void builder_buff_post_mod_handler(yed_event *event) {
 
     yed_delete_event_handler(line_handler);
     yed_delete_event_handler(buff_post_mod_handler);
+    yed_delete_event_handler(buff_post_write_handler);
+    yed_delete_event_handler(cursor_moved_handler);
+
+    has_err    = 0;
+    err_fixed  = 1;
+    ys->redraw = 1;
+}
+
+static void builder_buff_post_write_handler(yed_event *event) {
+    yed_buffer *buff;
+
+    buff = yed_get_buffer_by_path(err_file);
+
+    if (event->buffer != buff) { return; }
+
+    builder_draw_error_message(0);
+
+    yed_delete_event_handler(line_handler);
+    yed_delete_event_handler(buff_post_mod_handler);
+    yed_delete_event_handler(buff_post_write_handler);
     yed_delete_event_handler(cursor_moved_handler);
 
     has_err    = 0;
@@ -334,6 +357,7 @@ static void builder_set_err(char *file, int line, int col, char *msg) {
     if (!has_err) {
         yed_plugin_add_event_handler(Self, line_handler);
         yed_plugin_add_event_handler(Self, buff_post_mod_handler);
+        yed_plugin_add_event_handler(Self, buff_post_write_handler);
         yed_plugin_add_event_handler(Self, cursor_moved_handler);
     }
 
@@ -562,6 +586,8 @@ static void * builder_thread_fn(void *arg) {
 
 static void builder_cleanup(void) {
     if (builder_run_before) {
+        notif_stop();
+
         free(build_cmd);
 
         if (build_output) {
