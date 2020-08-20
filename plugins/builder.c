@@ -184,7 +184,7 @@ static void builder_write_output_to_tmp_file(void) {
 
     LOG_FN_ENTER();
 
-    sprintf(path_buff, "/tmp/yed_builder_output_%lx", (u64)Self);
+    sprintf(path_buff, "/tmp/yed_builder_output_%llx", (u64)Self);
 
     if (!(f = fopen(path_buff, "w"))) {
         yed_cerr("failed to open output file");
@@ -421,7 +421,7 @@ static void builder_jump_to_error_location(int n_args, char **args) {
                         "'";
     }
 
-    sprintf(cmd_buff, "(%s | head -n1) < '/tmp/yed_builder_output_%lx' 2>&1", err_parse_cmd, (u64)Self);
+    sprintf(cmd_buff, "(%s | head -n1) < '/tmp/yed_builder_output_%llx' 2>&1", err_parse_cmd, (u64)Self);
 
     parse_output     = yed_run_subproc(cmd_buff, &parse_output_len, &parse_status);
     parse_output_cpy = NULL;
@@ -533,7 +533,7 @@ static void builder_view_output(int n_args, char **args) {
 
     notif_stop();
 
-    sprintf(cmd_buff, "less -c '/tmp/yed_builder_output_%lx' 2>&1", (u64)Self);
+    sprintf(cmd_buff, "less -c '/tmp/yed_builder_output_%llx' 2>&1", (u64)Self);
 
     printf(TERM_STD_SCREEN);
     fflush(stdout);
