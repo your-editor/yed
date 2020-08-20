@@ -272,7 +272,6 @@ int yed_unload_plugin_libs(void) {
         }
 
         yed_plugin_force_lib_unload(plug);
-        yed_plugin_uninstall_features(plug);
     }
 
     return 0;
