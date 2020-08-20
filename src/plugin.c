@@ -170,7 +170,7 @@ int yed_load_plugin(char *plug_name) {
     return YED_PLUG_SUCCESS;
 }
 
-static void yed_plugin_uninstall_features(yed_plugin *plug) {
+void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
             yed_command)          cmd_it;
     char                        **cmd_name_it, **style_name_it;

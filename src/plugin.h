@@ -34,6 +34,7 @@ int yed_load_plugin(char *plug_name);
 int yed_unload_plugin(char *plug_name);
 
 int yed_unload_plugin_libs(void);
+void yed_plugin_uninstall_features(yed_plugin *plug);
 
 int yed_unload_plugins(void);
 int yed_reload_plugins(void);

@@ -189,6 +189,7 @@ static void write_status_bar(int key) {
 }
 
 void yed_service_reload(void) {
+    tree_it(yed_plugin_name_t, yed_plugin_ptr_t)  plug_it;
     tree_it(yed_command_name_t, yed_command)      cmd_it;
     tree_it(yed_var_name_t, yed_var_val_t)        var_it;
     tree_it(yed_style_name_t, yed_style_ptr_t)    style_it;
@@ -203,6 +204,10 @@ void yed_service_reload(void) {
     tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
     tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
+
+    tree_traverse(ys->plugins, plug_it) {
+        yed_plugin_uninstall_features(tree_it_val(plug_it));
+    }
 
     /*
      * Clear out all of the old vars.
