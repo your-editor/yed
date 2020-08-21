@@ -131,6 +131,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("styles-list",            styles_list);
     SET_DEFAULT_COMMAND("undo",                   undo);
     SET_DEFAULT_COMMAND("redo",                   redo);
+    SET_DEFAULT_COMMAND("bind",                   bind);
+    SET_DEFAULT_COMMAND("unbind",                 unbind);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -3532,6 +3534,147 @@ void yed_default_command_redo(int n_args, char **args) {
 
     if (!yed_redo(frame, buffer)) {
         yed_cerr("nothing to redo");
+    }
+}
+
+void yed_default_command_bind(int n_args, char **args) {
+    char            *key_str, *cmd, **cmd_args;
+    int              i, cmd_delim, n_keys, key_i, keys[MAX_SEQ_LEN], n_cmd_args;
+    char             key_c;
+    int              seq_key;
+    yed_key_binding  binding;
+
+    if (n_args == 0) {
+        yed_cerr("missing 'keys' as first argument until 'CMD'");
+        return;
+    }
+
+    cmd_delim = -1;
+    for (i = 1; i < n_args; i += 1) {
+        if (strcmp(args[i], "CMD") == 0) {
+            cmd_delim = i;
+            break;
+        }
+    }
+
+    if (cmd_delim == -1) {
+        yed_cerr("missing 'CMD'");
+        return;
+    }
+
+    if (cmd_delim == n_args - 1) {
+        yed_cerr("missing command name as argument after 'CMD'");
+        return;
+    }
+
+    n_keys = cmd_delim;
+    for (i = 0; i < n_keys; i += 1) {
+        key_str = args[i];
+        key_c   = key_i = -1;
+        if (strlen(key_str) == 1) {
+            sscanf(key_str, "%c", &key_c);
+            key_i = key_c;
+        } else if (strcmp(key_str, "tab") == 0) {
+            key_i = TAB;
+        } else if (strcmp(key_str, "enter") == 0) {
+            key_i = ENTER;
+        } else if (strcmp(key_str, "esc") == 0) {
+            key_i = ESC;
+        } else if (strcmp(key_str, "spc") == 0) {
+            key_i = ' ';
+        } else if (strcmp(key_str, "bsp") == 0) {
+            key_i = BACKSPACE;
+        } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
+            if (key_c != -1) {
+                if (key_c == '/') {
+                    key_i = CTRL_FS;
+                } else {
+                    key_i = CTRL_KEY(key_c);
+                }
+            }
+        }
+
+        if (key_i == -1) {
+            yed_cerr("invalid key '%s'", key_str);
+            return;
+        }
+
+        keys[i] = key_i;
+    }
+
+    cmd        = args[cmd_delim + 1];
+    n_cmd_args = n_args - (cmd_delim + 2);
+    cmd_args   = args + cmd_delim + 2;
+
+    if (n_keys > 1) {
+        seq_key = yed_add_key_sequence(n_keys, keys);
+    } else {
+        seq_key = keys[0];
+    }
+
+    binding.key    = seq_key;
+    binding.cmd    = cmd;
+    binding.n_args = n_cmd_args;
+    binding.args   = cmd_args;
+    yed_bind_key(binding);
+}
+
+void yed_default_command_unbind(int n_args, char **args) {
+    char            *key_str;
+    int              i, n_keys, key_i, keys[MAX_SEQ_LEN];
+    char             key_c;
+    int              seq_key;
+
+    if (n_args == 0) {
+        yed_cerr("missing 'keys' as first argument until 'CMD'");
+        return;
+    }
+
+    n_keys = n_args;
+    for (i = 0; i < n_keys; i += 1) {
+        key_str = args[i];
+        key_c   = key_i = -1;
+        if (strlen(key_str) == 1) {
+            sscanf(key_str, "%c", &key_c);
+            key_i = key_c;
+        } else if (strcmp(key_str, "tab") == 0) {
+            key_i = TAB;
+        } else if (strcmp(key_str, "enter") == 0) {
+            key_i = ENTER;
+        } else if (strcmp(key_str, "esc") == 0) {
+            key_i = ESC;
+        } else if (strcmp(key_str, "spc") == 0) {
+            key_i = ' ';
+        } else if (strcmp(key_str, "bsp") == 0) {
+            key_i = BACKSPACE;
+        } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
+            if (key_c != -1) {
+                if (key_c == '/') {
+                    key_i = CTRL_FS;
+                } else {
+                    key_i = CTRL_KEY(key_c);
+                }
+            }
+        }
+
+        if (key_i == -1) {
+            yed_cerr("invalid key '%s'", key_str);
+            return;
+        }
+
+        keys[i] = key_i;
+    }
+
+    if (n_keys > 1) {
+        seq_key = yed_get_key_sequence(n_keys, keys);
+    } else {
+        seq_key = keys[0];
+    }
+
+    yed_unbind_key(seq_key);
+
+    if (n_keys > 1) {
+        yed_delete_key_sequence(seq_key);
     }
 }
 

@@ -274,10 +274,12 @@ void vimish_bind(int n_args, char **args) {
         } else if (strcmp(key_str, "bsp") == 0) {
             key_i = BACKSPACE;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
-            if (key_c == '/') {
-                key_i = CTRL_FS;
-            } else {
-                key_i = CTRL_KEY(key_c);
+            if (key_c != -1) {
+                if (key_c == '/') {
+                    key_i = CTRL_FS;
+                } else {
+                    key_i = CTRL_KEY(key_c);
+                }
             }
         }
 
