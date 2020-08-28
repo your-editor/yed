@@ -66,6 +66,9 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     LIMIT(height_f, 0.0, 1.0 - top_f);
     LIMIT(width_f, 0.0, 1.0 - left_f);
 
+    height_f = roundf(height_f * (float)(ys->term_cols - 2)) / (float)(ys->term_cols - 2);
+    width_f  = roundf(width_f * (float)ys->term_cols) / (float)ys->term_cols;
+
     frame = malloc(sizeof(*frame));
 
     frame->v_link          = NULL;
