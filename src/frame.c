@@ -107,7 +107,7 @@ void yed_delete_frame(yed_frame *frame) {
 
     yed_trigger_event(&event);
 
-    if (event->cancel) { return; }
+    if (event.cancel) { return; }
 
     if (frame == ys->prev_active_frame) {
         ys->prev_active_frame = NULL;
