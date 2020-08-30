@@ -257,6 +257,10 @@ int handle_bracketed_paste(int key) {
     int   key_ch;
     int   i;
 
+    if (!yed_var_is_truthy("bracketed-paste-mode")) {
+        return 0;
+    }
+
     if (key == _BRACKETED_PASTE_BEGIN) {
         ys->doing_bracketed_paste = 1;
         return 1;
