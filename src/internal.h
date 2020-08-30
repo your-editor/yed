@@ -232,6 +232,8 @@ typedef struct yed_state_t {
 
     array_t                      direct_draws;
     char                        *working_dir;
+    int                          doing_bracketed_paste;
+    array_t                      bracketed_paste_buff;
 } yed_state;
 
 extern yed_state *ys;

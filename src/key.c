@@ -1,9 +1,10 @@
 static int ctrl_h_is_bs;
 
 void yed_init_keys(void) {
-    ys->vkey_binding_map   = tree_make(int, yed_key_binding_ptr_t);
-    ys->key_sequences      = array_make(yed_key_sequence);
-    ys->released_virt_keys = array_make(int);
+    ys->vkey_binding_map     = tree_make(int, yed_key_binding_ptr_t);
+    ys->key_sequences        = array_make(yed_key_sequence);
+    ys->released_virt_keys   = array_make(int);
+    ys->bracketed_paste_buff = array_make(char);
 
     yed_set_default_key_bindings();
 }
@@ -52,6 +53,29 @@ int esc_sequence(int *input) {
             /* Extended escape, read additional byte. */
             if (read(0, &c, 1) == 0) {
                 return 3;
+            } else if (input[2] == '2') {
+                if (c == '0') {
+                    input[3] = c;
+
+                    if (read(0, &c, 1) == 0) { return 4; }
+
+                    if (c == '0') {
+                        input[4] = c;
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        if (c == '~') { input[0] = _BRACKETED_PASTE_BEGIN; return 1; }
+                        input[5] = c;
+                        return 6;
+                    } else if (c == '1') {
+                        input[4] = c;
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        if (c == '~') { input[0] = _BRACKETED_PASTE_END; return 1; }
+                        input[5] = c;
+                        return 6;
+                    }
+
+                    return 5;
+                }
+                return 4;
             }
 
             if (c == '~') {
@@ -211,7 +235,7 @@ int yed_read_keys(int *input) {
 
         len = esc_timeout(input);
 
-        if (len == 3) {
+        if (len >= 3) {
             return esc_sequence(input);
         }
 
@@ -228,11 +252,51 @@ int yed_read_keys(int *input) {
     return 0;
 }
 
+int handle_bracketed_paste(int key) {
+    char *str;
+    int   key_ch;
+    int   i;
+
+    if (key == _BRACKETED_PASTE_BEGIN) {
+        ys->doing_bracketed_paste = 1;
+        return 1;
+    } else if (key == _BRACKETED_PASTE_END) {
+        array_zero_term(ys->bracketed_paste_buff);
+
+        str = array_data(ys->bracketed_paste_buff);
+        yed_execute_command("simple-insert-string", 1, &str);
+
+        ys->doing_bracketed_paste = 0;
+        array_clear(ys->bracketed_paste_buff);
+        return 1;
+    } else if (ys->doing_bracketed_paste) {
+        if (key < REAL_KEY_MAX
+        &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
+            if (key == MBYTE) {
+                for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
+                    array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
+                }
+            } else {
+                if (key == NEWLINE) { key = ENTER; }
+                key_ch = (char)key;
+                array_push(ys->bracketed_paste_buff, key_ch);
+            }
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
 void yed_take_key(int key) {
     yed_key_binding *binding;
     char             key_str_buff[32];
     char            *key_str;
     yed_event        event;
+
+    if (handle_bracketed_paste(key)) {
+        return;
+    }
 
     event.kind = EVENT_KEY_PRESSED;
     event.key  = key;

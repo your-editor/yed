@@ -8,6 +8,7 @@ void yed_set_default_vars(void) {
     yed_set_var("ctrl-h-is-backspace",       "yes");
     yed_set_var("enable-search-cursor-move", "yes");
     yed_set_var("buffer-load-mode",          "map");
+    yed_set_var("bracketed-paste-mode",      "on");
     /* indent-c-disable-bs is not set by default */
 }
 
@@ -96,6 +97,9 @@ int yed_var_is_truthy(char *var) {
 
     if (strlen(val)          == 0
     ||  strcmp(val, "0")     == 0
+    ||  strcmp(val, "off")   == 0
+    ||  strcmp(val, "Off")   == 0
+    ||  strcmp(val, "OFF")   == 0
     ||  strcmp(val, "no")    == 0
     ||  strcmp(val, "No")    == 0
     ||  strcmp(val, "NO")    == 0

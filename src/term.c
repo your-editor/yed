@@ -34,6 +34,7 @@ int yed_term_enter(void) {
     yed_register_sigwinch_handler();
 
     printf(TERM_ALT_SCREEN);
+    printf(TERM_ENABLE_BRACKETED_PASTE);
 
     return 0;
 }
@@ -67,6 +68,7 @@ int yed_term_exit(void) {
         return 0;
     }
 
+    printf(TERM_DISABLE_BRACKETED_PASTE);
     printf(TERM_STD_SCREEN);
     printf(TERM_CURSOR_SHOW);
 

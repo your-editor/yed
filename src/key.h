@@ -17,6 +17,7 @@ enum KEY_ACTION {
     CTRL_H    = 8,    /* Ctrl-h    */
     TAB       = 9,    /* Tab       */
     CTRL_J    = 10,   /* Ctrl-j    */
+    NEWLINE   = 10,   /* Newline   */
     CTRL_K    = 11,   /* Ctrl-k    */
     CTRL_L    = 12,   /* Ctrl-l    */
     ENTER     = 13,   /* Enter     */
@@ -49,6 +50,8 @@ enum KEY_ACTION {
     PAGE_UP,
     PAGE_DOWN,
     SHIFT_TAB,
+    _BRACKETED_PASTE_BEGIN,
+    _BRACKETED_PASTE_END,
 
     /* If we have received a multi-byte character as input,
      * this virtual key will be returned and the character

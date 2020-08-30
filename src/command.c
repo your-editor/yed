@@ -108,6 +108,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-move",             frame_move);
     SET_DEFAULT_COMMAND("frame-resize",           frame_resize);
     SET_DEFAULT_COMMAND("insert",                 insert);
+    SET_DEFAULT_COMMAND("simple-insert-string",   simple_insert_string);
     SET_DEFAULT_COMMAND("delete-back",            delete_back);
     SET_DEFAULT_COMMAND("delete-forward",         delete_forward);
     SET_DEFAULT_COMMAND("delete-line",            delete_line);
@@ -2236,6 +2237,79 @@ void yed_default_command_insert(int n_args, char **args) {
     yed_trigger_event(&event);
 }
 
+void yed_default_command_simple_insert_string(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+    yed_event   event;
+    int         row, col;
+    int         tabw;
+    char       *git;
+    yed_glyph   g;
+    int         i;
+
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    buff = frame->buffer;
+
+    if (buff->flags & BUFF_RD_ONLY) {
+        yed_cerr("buffer is read-only");
+        return;
+    }
+
+    event.kind = EVENT_BUFFER_PRE_MOD;
+    event.frame = frame;
+
+    yed_trigger_event(&event);
+    if (event.cancel) { return; }
+
+    row  = frame->cursor_line;
+    col  = frame->cursor_col;
+    tabw = yed_get_tab_width();
+    git  = args[0];
+
+    yed_start_undo_record(frame, buff);
+    while (*git) {
+        g = *(yed_glyph*)git;
+        switch (*git) {
+            case ENTER:
+                yed_buff_insert_line(buff, row + 1);
+                row += 1;
+                col  = 1;
+                break;
+            case TAB:
+                g.c = ' ';
+                for (i = 0; i < tabw; i += 1) {
+                    yed_insert_into_line(buff, row, col, g);
+                    col += 1;
+                }
+                break;
+            default:
+                yed_insert_into_line(buff, row, col, g);
+                col += 1;
+        }
+        git += yed_get_glyph_len(g);
+    }
+    yed_end_undo_record(frame, buff);
+
+    event.kind = EVENT_BUFFER_POST_MOD;
+    yed_trigger_event(&event);
+}
+
 void yed_default_command_delete_back(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line,
@@ -2904,6 +2978,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
     event.frame = frame;
 
     yed_trigger_event(&event);
+    if (event.cancel) { return; }
 
     yed_start_undo_record(frame, frame->buffer);
 
