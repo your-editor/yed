@@ -186,9 +186,13 @@ void yed_vcprint(char *fmt, va_list args) {
 
     va_copy(args_copy, args);
 
-    should_clear    = yed_vlog(fmt, args);
+    should_clear = yed_vlog(fmt, args);
+
+    if (ys->interactive_command) { return; }
+
     current_command = *(char**)array_last(ys->log_name_stack);
-    if (should_clear && !ys->interactive_command) {
+
+    if (should_clear) {
         yed_clear_cmd_buff();
         ys->cmd_prompt = YED_CMD_PROMPT;
         yed_append_text_to_cmd_buff("(");
@@ -238,9 +242,13 @@ void yed_vcerr(char *fmt, va_list args) {
 
     va_copy(args_copy, args);
 
-    should_clear    = yed_vlog(fmt, args);
+    should_clear = yed_vlog(fmt, args);
+
+    if (ys->interactive_command) { return; }
+
     current_command = *(char**)array_last(ys->log_name_stack);
-    if (should_clear && !ys->interactive_command) {
+
+    if (should_clear) {
         yed_clear_cmd_buff();
         ys->cmd_prompt = YED_CMD_PROMPT;
         yed_append_text_to_cmd_buff("(");
