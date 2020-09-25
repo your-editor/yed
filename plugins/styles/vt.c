@@ -24,6 +24,9 @@ PACKABLE_STYLE(vt) {
     s.code_keyword.flags  = ATTR_16;
     s.code_keyword.fg     = ATTR_16_BLUE;
 
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor   = s.code_keyword;
 
     s.code_number.flags   = ATTR_16;

@@ -186,6 +186,9 @@ void yed_set_default_styles(void) {
     s.code_keyword.flags  = ATTR_16 | ATTR_BOLD;
     s.code_keyword.fg     = ATTR_16_RED;
 
+    s.code_control_flow   =
+    s.code_typename       = s.code_keyword;
+
     s.code_preprocessor   = s.code_keyword;
 
     s.code_fn_call.flags  = ATTR_16;

@@ -30,6 +30,9 @@ PACKABLE_STYLE(elise) {
     s.code_keyword.flags = ATTR_RGB | ATTR_BOLD;
     s.code_keyword.fg    = RGB_32(175, 89, 122);
 
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor = s.code_keyword;
 
     s.code_number.flags = ATTR_RGB;

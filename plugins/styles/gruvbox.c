@@ -80,6 +80,9 @@ PACKABLE_STYLE(gruvbox) {
     s.code_keyword.flags  = attr_kind | ATTR_BOLD;
     s.code_keyword.fg     = base08;
 
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor.flags  = attr_kind | ATTR_BOLD;
     s.code_preprocessor.fg     = base09;
 

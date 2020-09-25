@@ -17,6 +17,8 @@
     __SCOMP(command_line)      \
     __SCOMP(code_comment)      \
     __SCOMP(code_keyword)      \
+    __SCOMP(code_control_flow) \
+    __SCOMP(code_typename)     \
     __SCOMP(code_preprocessor) \
     __SCOMP(code_fn_call)      \
     __SCOMP(code_number)       \

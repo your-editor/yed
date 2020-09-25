@@ -32,8 +32,10 @@
 #define status_bg       deep_space
 #define sel_color       deep_space
 #define comment         medium_gray
-#define keyword         yellow
-#define pp_keyword      red
+#define keyword         red
+#define pp_keyword      dark_purple
+#define control_flow    yellow
+#define typename        purple
 #define call            blue
 #define constant        dark_yellow
 #define number          dark_yellow
@@ -96,6 +98,12 @@ PACKABLE_STYLE(embark) {
 
     s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
     s.code_preprocessor.fg    = pp_keyword;
+
+    s.code_control_flow.flags = attr_kind | ATTR_BOLD;
+    s.code_control_flow.fg    = control_flow;
+
+    s.code_typename.flags     = attr_kind | ATTR_BOLD;
+    s.code_typename.fg        = typename;
 
     s.code_fn_call.flags      = attr_kind;
     s.code_fn_call.fg         = call;

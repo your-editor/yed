@@ -24,12 +24,14 @@ void syntax_sh_highlight_strings_and_expansions(yed_line *line, array_t line_att
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler frame, line, buff_mod_pre, buff_mod_post;
     char              *kwds[] = {
-        "if",       "fi",       "do",       "in",
-        "for",
-        "done",     "else",     "elif",     "then",     "wait",   "case",   "esac",   "time",
-        "while",    "until",    "shift",    "break",
+        "time", "shift",
         "source",   "select",   "export",
-        "continue", "function",
+        "function",
+    };
+    char              *control_flow[] = {
+        "if",       "fi",       "do",       "in",
+        "for", "done",     "else",     "elif",     "then",     "wait",   "case",   "esac",
+        "while",    "until", "break", "continue",
     };
     char              *builtins[] = {
         "bg",        "cd",       "fc",       "fg",
@@ -64,6 +66,8 @@ int yed_plugin_boot(yed_plugin *self) {
 
     ARRAY_LOOP(kwds)
         highlight_add_kwd(&hinfo1, *it, HL_KEY);
+    ARRAY_LOOP(control_flow)
+        highlight_add_kwd(&hinfo1, *it, HL_CF);
     ARRAY_LOOP(builtins)
         highlight_add_kwd(&hinfo1, *it, HL_CALL);
     highlight_numbers(&hinfo1);

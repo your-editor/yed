@@ -51,6 +51,9 @@ PACKABLE_STYLE(book) {
     s.code_keyword.flags  = ATTR_16 | ATTR_16_LIGHT_FG ;
     s.code_keyword.fg     = ATTR_16_MAGENTA;
 
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor   = s.code_keyword;
 
     s.code_fn_call.flags  = ATTR_16;

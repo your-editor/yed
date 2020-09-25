@@ -59,6 +59,9 @@ PACKABLE_STYLE(first) {
     s.code_keyword.flags  = attr_kind | ATTR_BOLD;
     s.code_keyword.fg     = MAYBE_CONVERT(RGB_32(216, 30, 91));
 
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor   = s.code_keyword;
 
     s.code_fn_call.flags  = attr_kind;

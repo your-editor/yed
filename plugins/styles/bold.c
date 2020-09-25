@@ -59,6 +59,10 @@ PACKABLE_STYLE(bold) {
     s.code_comment.fg         = comm;
 
     s.code_keyword.flags      = attr_kind | ATTR_BOLD;
+
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
 
     s.code_number.flags       = attr_kind;

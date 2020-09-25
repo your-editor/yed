@@ -7,6 +7,8 @@
 #define HL_CHAR    (7)
 #define HL_COMMENT (8)
 #define HL_ATTN    (9)
+#define HL_CF      (10)
+#define HL_TYPE    (11)
 
 #define HL_IGNORE  (100)
 
@@ -19,7 +21,9 @@ typedef struct {
               st,
               ch,
               com,
-              atn;
+              atn,
+              cf,
+              ty;
 } attrs_set;
 
 static inline void get_attrs(attrs_set *set) {
@@ -32,6 +36,8 @@ static inline void get_attrs(attrs_set *set) {
     set->ch  = yed_active_style_get_code_character();
     set->com = yed_active_style_get_code_comment();
     set->atn = yed_active_style_get_attention();
+    set->cf  = yed_active_style_get_code_control_flow();
+    set->ty  = yed_active_style_get_code_typename();
 }
 
 typedef struct {
@@ -424,6 +430,8 @@ static inline yed_attrs * _kind_to_attrs(attrs_set *set, int kind) {
         case HL_PP:      return &set->pp;
         case HL_CALL:    return &set->cal;
         case HL_ATTN:    return &set->atn;
+        case HL_CF:      return &set->cf;
+        case HL_TYPE:    return &set->ty;
         case HL_IGNORE:  return NULL;
     }
 

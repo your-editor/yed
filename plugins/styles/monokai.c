@@ -53,6 +53,9 @@ PACKABLE_STYLE(monokai) {
     s.code_keyword.flags  = ATTR_256 | ATTR_BOLD;
     s.code_keyword.fg     = 197;
 
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
     s.code_preprocessor   = s.code_keyword;
 
     s.code_fn_call.flags  = ATTR_256;

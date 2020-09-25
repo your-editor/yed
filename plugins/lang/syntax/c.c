@@ -16,20 +16,14 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler frame, line, buff_mod_pre, buff_mod_post;
     char              *kwds[] = {
         "__asm__",  "asm",
-        "bool",     "break",
-        "case",     "char",     "const",  "continue",
-        "default",  "do",       "double",
-        "else",     "enum",     "extern",
-        "float",    "for",
-        "goto",
-        "if",       "inline",   "int",
-        "long",
-        "restrict", "return",
-        "short",    "size_t",   "sizeof", "ssize_t",  "static", "struct", "switch",
+        "const",
+        "enum",     "extern",
+        "inline",
+        "restrict",
+        "sizeof", "static", "struct",
         "typedef",
-        "union",    "unsigned",
-        "void",     "volatile",
-        "while",
+        "union",
+        "volatile",
     };
     char              *pp_kwds[] = {
         "define",
@@ -39,6 +33,18 @@ int yed_plugin_boot(yed_plugin *self) {
         "pragma",
         "undef",
         "warning",
+    };
+    char              *control_flow[] = {
+        "break", "case", "continue", "default", "do", "else", "for",
+        "goto", "if", "return", "switch",
+        "while",
+    };
+    char              *typenames[] = {
+        "bool", "char",
+        "double",
+        "float",
+        "long", "int",
+        "short", "size_t", "ssize_t", "unsigned", "void",
     };
 
     yed_plugin_set_unload_fn(self, unload);
@@ -65,6 +71,10 @@ int yed_plugin_boot(yed_plugin *self) {
         highlight_add_kwd(&hinfo, *it, HL_KEY);
     ARRAY_LOOP(pp_kwds)
         highlight_add_prefixed_kwd(&hinfo, '#', *it, HL_PP);
+    ARRAY_LOOP(control_flow)
+        highlight_add_kwd(&hinfo, *it, HL_CF);
+    ARRAY_LOOP(typenames)
+        highlight_add_kwd(&hinfo, *it, HL_TYPE);
     highlight_add_kwd(&hinfo, "__VA_ARGS__", HL_PP);
     highlight_add_kwd(&hinfo, "__FILE__", HL_PP);
     highlight_add_kwd(&hinfo, "__func__", HL_PP);

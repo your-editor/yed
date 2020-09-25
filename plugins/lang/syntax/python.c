@@ -15,13 +15,16 @@ void syntax_python_buff_mod_post_handler(yed_event *event);
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler frame, line, buff_mod_pre, buff_mod_post;
     char              *kwds[] = {
-        "as",       "if",       "in",     "is",     "or",
-        "and",      "def",      "del",    "for",    "not",    "try",
-        "elif",     "else",     "from",   "pass",   "with",
-        "async",    "await",    "break",  "class",  "raise",  "while",  "yield",
-        "assert",   "except",   "global", "import", "lambda", "return",
-        "finally",
-        "continue", "nonlocal",
+        "as",       "in",       "is",     "or",
+        "and",      "def",      "del",    "not",
+        "from",
+        "async",    "await",    "class",
+        "assert",   "global", "import", "lambda",
+        "nonlocal",
+    };
+    char              *control_flow[] = {
+        "if", "for", "try", "elif", "else", "pass", "with", "break", "raise", "while",
+        "yield", "except", "return", "finally", "continue",
     };
 
     yed_plugin_set_unload_fn(self, unload);
@@ -46,6 +49,8 @@ int yed_plugin_boot(yed_plugin *self) {
 
     ARRAY_LOOP(kwds)
         highlight_add_kwd(&hinfo, *it, HL_KEY);
+    ARRAY_LOOP(control_flow)
+        highlight_add_kwd(&hinfo, *it, HL_CF);
     highlight_suffixed_words(&hinfo, '(', HL_CALL);
     highlight_numbers(&hinfo);
     highlight_within_multiline(&hinfo, "\"\"\"", "\"\"\"", 0, HL_STR);
