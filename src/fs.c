@@ -32,6 +32,8 @@ int yed_get_ft(char *path) {
         } else if (strcmp(ext, "gl")   == 0
         ||         strcmp(ext, "glsl") == 0) {
             ft = FT_GLSL;
+        } else if (strcmp(ext, "si") == 0) {
+            ft = FT_SIMON;
         }
     } else {
         if (strcmp(base, "yedrc") == 0) {

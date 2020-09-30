@@ -6,28 +6,23 @@
 highlight_info hinfo;
 
 void unload(yed_plugin *self);
-void syntax_bjou_line_handler(yed_event *event);
-void syntax_bjou_frame_handler(yed_event *event);
-void syntax_bjou_buff_mod_pre_handler(yed_event *event);
-void syntax_bjou_buff_mod_post_handler(yed_event *event);
+void syntax_simon_line_handler(yed_event *event);
+void syntax_simon_frame_handler(yed_event *event);
+void syntax_simon_buff_mod_pre_handler(yed_event *event);
+void syntax_simon_buff_mod_post_handler(yed_event *event);
 
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler frame, line, buff_mod_pre, buff_mod_post;
     char              *kwds[] = {
-        "as",            "or",
-        "and",           "bor",      "new",     "not",     "ref",
-        "Type",          "band",     "bneg",    "bshl",    "bshr",   "bxor",   "enum",   "proc", "some", "this", "type",
-        "const",         "print",    "using",
-        "delete",        "extern",   "import",  "module",  "sizeof",
-        "extends",       "include",
-        "abstract",
-        "__inline__",
-        "__no_mangle__",
+        "or",
+        "and",           "bor",      "not",
+        "band",          "bneg",     "bshl",    "bshr",   "bxor",    "proc", "type",
+        "extern",        "module",   "sizeof",  "struct",
     };
 
     char              *control_flow[] = {
-        "do", "if", "in", "for", "else", "break", "while", "return", "foreach", "continue",
+        "do", "if", "for", "else", "break", "while", "return", "continue",
     };
 
     char              *typenames[] = {
@@ -39,13 +34,13 @@ int yed_plugin_boot(yed_plugin *self) {
 
 
     frame.kind          = EVENT_FRAME_PRE_BUFF_DRAW;
-    frame.fn            = syntax_bjou_frame_handler;
+    frame.fn            = syntax_simon_frame_handler;
     line.kind           = EVENT_LINE_PRE_DRAW;
-    line.fn             = syntax_bjou_line_handler;
+    line.fn             = syntax_simon_line_handler;
     buff_mod_pre.kind   = EVENT_BUFFER_PRE_MOD;
-    buff_mod_pre.fn     = syntax_bjou_buff_mod_pre_handler;
+    buff_mod_pre.fn     = syntax_simon_buff_mod_pre_handler;
     buff_mod_post.kind  = EVENT_BUFFER_POST_MOD;
-    buff_mod_post.fn    = syntax_bjou_buff_mod_post_handler;
+    buff_mod_post.fn    = syntax_simon_buff_mod_post_handler;
 
     yed_plugin_add_event_handler(self, frame);
     yed_plugin_add_event_handler(self, line);
@@ -66,11 +61,11 @@ int yed_plugin_boot(yed_plugin *self) {
     highlight_add_kwd(&hinfo, "true", HL_CON);
     highlight_add_kwd(&hinfo, "false", HL_CON);
     highlight_suffixed_words(&hinfo, '(', HL_CALL);
-    highlight_prefixed_words_inclusive(&hinfo, '\\', HL_PP);
     highlight_numbers(&hinfo);
-    highlight_within_multiline(&hinfo, "\"", "\"", '\\', HL_STR);
+    highlight_within(&hinfo, "\"", "\"", '\\', -1, HL_STR);
     highlight_within(&hinfo, "'", "'", '\\', 1, HL_CHAR);
-    highlight_to_eol_from(&hinfo, "#", HL_COMMENT);
+    highlight_within(&hinfo, "[[", "]]", 0, -1, HL_PP);
+    highlight_to_eol_from(&hinfo, ";", HL_COMMENT);
 
     ys->redraw = 1;
 
@@ -82,7 +77,7 @@ void unload(yed_plugin *self) {
     ys->redraw = 1;
 }
 
-void syntax_bjou_frame_handler(yed_event *event) {
+void syntax_simon_frame_handler(yed_event *event) {
     yed_frame *frame;
 
     frame = event->frame;
@@ -90,14 +85,14 @@ void syntax_bjou_frame_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_BJOU) {
+    ||  frame->buffer->file.ft != FT_SIMON) {
         return;
     }
 
     highlight_frame_pre_draw_update(&hinfo, event);
 }
 
-void syntax_bjou_line_handler(yed_event *event) {
+void syntax_simon_line_handler(yed_event *event) {
     yed_frame *frame;
 
     frame = event->frame;
@@ -105,14 +100,14 @@ void syntax_bjou_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_BJOU) {
+    ||  frame->buffer->file.ft != FT_SIMON) {
         return;
     }
 
     highlight_line(&hinfo, event);
 }
 
-void syntax_bjou_buff_mod_pre_handler(yed_event *event) {
+void syntax_simon_buff_mod_pre_handler(yed_event *event) {
     yed_frame *frame;
 
     frame = event->frame;
@@ -120,14 +115,14 @@ void syntax_bjou_buff_mod_pre_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_BJOU) {
+    ||  frame->buffer->file.ft != FT_SIMON) {
         return;
     }
 
     highlight_buffer_pre_mod_update(&hinfo, event);
 }
 
-void syntax_bjou_buff_mod_post_handler(yed_event *event) {
+void syntax_simon_buff_mod_post_handler(yed_event *event) {
     yed_frame *frame;
 
     frame = event->frame;
@@ -135,7 +130,7 @@ void syntax_bjou_buff_mod_post_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_BJOU) {
+    ||  frame->buffer->file.ft != FT_SIMON) {
         return;
     }
 
