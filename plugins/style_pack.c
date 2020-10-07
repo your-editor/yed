@@ -52,6 +52,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, bold);
     PACK_STYLE(self, doug);
     PACK_STYLE(self, acme);
+    PACK_STYLE(self, disco);
     PACK_STYLE(self, dalton);
     PACK_STYLE(self, embark);
 
