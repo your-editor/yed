@@ -33,11 +33,12 @@
 #define comment         grey_1
 #define keyword         light_blue
 #define pp_keyword      dark_orange
+#define control_flow    light_green
 #define call            orange
 #define constant        light_yellow
 #define number          light_yellow
 #define string          green
-#define character       light_green
+#define character       green
 
 PACKABLE_STYLE(dalton) {
     yed_style s;
@@ -93,7 +94,9 @@ PACKABLE_STYLE(dalton) {
     s.code_keyword.flags      = attr_kind | ATTR_BOLD;
     s.code_keyword.fg         = keyword;
 
-    s.code_control_flow       =
+    s.code_control_flow.flags = attr_kind | ATTR_BOLD;
+    s.code_control_flow.fg    = control_flow;
+
     s.code_typename           = s.code_keyword;
 
     s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
