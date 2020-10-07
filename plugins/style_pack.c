@@ -27,6 +27,7 @@
 #include "styles/disco.c"
 #include "styles/dalton.c"
 #include "styles/embark.c"
+#include "styles/bullet.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, lab);
@@ -55,6 +56,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, disco);
     PACK_STYLE(self, dalton);
     PACK_STYLE(self, embark);
+    PACK_STYLE(self, bullet);
 
     return 0;
 }
