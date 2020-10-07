@@ -2,7 +2,7 @@
 
 #define MAYBE_CONVERT(rgb) (tc ? (rgb) : rgb_to_256(rgb))
 
-#define deep_space  MAYBE_CONVERT(0x100E23)
+#define deep_space  MAYBE_CONVERT(0x0E0B1C)
 #define space       MAYBE_CONVERT(0x1e1c31)
 #define eclipse     MAYBE_CONVERT(0x585273)
 #define stardust    MAYBE_CONVERT(0xcbe3e7)
@@ -20,8 +20,6 @@
 #define cyan        MAYBE_CONVERT(0x87DFEB)
 #define dark_cyan   MAYBE_CONVERT(0x63f2f1)
 #define medium_gray MAYBE_CONVERT(0x767676)
-
-#define foo 0x00FF00
 
 #define background      space
 #define foreground      stardust
