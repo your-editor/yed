@@ -2236,6 +2236,8 @@ void yed_default_command_insert(int n_args, char **args) {
 
     yed_end_undo_record(frame, frame->buffer);
 
+    frame->cursor_line_is_dirty = 1;
+
     event.row  = frame->cursor_line;
     event.col  = frame->cursor_col;
     event.kind = EVENT_BUFFER_POST_MOD;
@@ -2313,6 +2315,8 @@ void yed_default_command_simple_insert_string(int n_args, char **args) {
         git += yed_get_glyph_len(g);
     }
     yed_end_undo_record(frame, buff);
+
+    frame->cursor_line_is_dirty = 1;
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
@@ -2415,6 +2419,8 @@ void yed_default_command_delete_back(int n_args, char **args) {
 
     yed_end_undo_record(frame, frame->buffer);
 
+    frame->cursor_line_is_dirty = 1;
+
     event.kind  = EVENT_BUFFER_POST_DELETE_BACK;
     yed_trigger_event(&event);
 
@@ -2512,6 +2518,8 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     yed_end_undo_record(frame, frame->buffer);
 
+    frame->cursor_line_is_dirty = 1;
+
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
 }
@@ -2580,6 +2588,8 @@ void yed_default_command_delete_line(int n_args, char **args) {
     yed_frame_hard_reset_cursor_x(frame);
 
     yed_end_undo_record(frame, frame->buffer);
+
+    frame->cursor_line_is_dirty = 1;
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);

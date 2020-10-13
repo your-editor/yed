@@ -81,18 +81,19 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
 
     FRAME_RESET_RECT(frame);
 
-    frame->cursor_line     = 1;
-    frame->last_cursor_line= 1;
-    frame->dirty_line      = frame->cursor_line;
-    frame->cursor_col      = 1;
-    frame->buffer_y_offset = 0;
-    frame->buffer_x_offset = 0;
-    frame->cur_x           = frame->left;
-    frame->cur_y           = frame->top;
-    frame->desired_x       = 1;
-    frame->dirty           = 1;
-    frame->scroll_off      = 5;
-    frame->line_attrs      = array_make(yed_attrs);
+    frame->cursor_line          = 1;
+    frame->last_cursor_line     = 1;
+    frame->dirty_line           = frame->cursor_line;
+    frame->cursor_line_is_dirty = 1;
+    frame->cursor_col           = 1;
+    frame->buffer_y_offset      = 0;
+    frame->buffer_x_offset      = 0;
+    frame->cur_x                = frame->left;
+    frame->cur_y                = frame->top;
+    frame->desired_x            = 1;
+    frame->dirty                = 1;
+    frame->scroll_off           = 5;
+    frame->line_attrs           = array_make(yed_attrs);
 
     return frame;
 }
@@ -799,7 +800,8 @@ void yed_frame_update(yed_frame *frame) {
         } else {
             yed_frame_update_dirty_line(frame);
             if (frame == ys->active_frame
-            &&  frame->cursor_line != frame->dirty_line) {
+            &&  frame->cursor_line != frame->dirty_line
+            &&  frame->cursor_line_is_dirty) {
                 yed_frame_update_cursor_line(frame);
             }
         }
@@ -815,7 +817,7 @@ void yed_frame_update(yed_frame *frame) {
         memset(cell_row, 1, frame->bwidth);
     }
 
-    frame->dirty = frame->dirty_line = 0;
+    frame->dirty = frame->dirty_line = frame->cursor_line_is_dirty = 0;
     frame->last_cursor_line = frame->cursor_line;
 }
 
@@ -985,7 +987,8 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
     }
 
     if (save_cursor_line != f->cursor_line) {
-        f->dirty_line = save_cursor_line;
+        f->dirty_line           = save_cursor_line;
+        f->cursor_line_is_dirty = 1;
     }
 
     line             = yed_buff_get_line(f->buffer, f->cursor_line);
@@ -1019,6 +1022,7 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
     dir = glyph > 0 ? 1 : -1;
     for (i = 0; i < dir * glyph; i += 1) {
         yed_move_cursor_once_x_within_frame(f, dir, line_width);
+        f->cursor_line_is_dirty = 1;
     }
 
 
@@ -1190,7 +1194,7 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
     yed_line *line;
     int       y;
 
-    if (!frame->cursor_line) {
+    if (!frame->cursor_line || !frame->cursor_line_is_dirty) {
         return;
     }
 
@@ -1244,7 +1248,15 @@ void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
 
     array_traverse(ys->frames, frame) {
         if ((*frame)->buffer == buff) {
-            (*frame)->dirty_line = dirty_row;
+            if (dirty_row == (*frame)->cursor_line) {
+                (*frame)->cursor_line_is_dirty = 1;
+            } else if ((*frame)->dirty_line) {
+                if ((*frame)->dirty_line != dirty_row) {
+                    (*frame)->dirty = 1;
+                }
+            } else {
+                (*frame)->dirty_line = dirty_row;
+            }
         }
     }
 }
