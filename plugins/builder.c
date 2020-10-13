@@ -556,9 +556,7 @@ static void builder_echo_status(int n_args, char **args) {
         return;
     }
 
-    if (!builder_run_before) {
-        yed_cprint("builder has not been run");
-    } else if (build_is_running) {
+    if (build_is_running) {
         yed_cprint("a build is currently running");
     } else if (build_is_finished) {
         if (build_failed) {
@@ -566,6 +564,8 @@ static void builder_echo_status(int n_args, char **args) {
         } else {
             yed_cprint("the build SUCCEEDED");
         }
+    } else {
+        yed_cprint("a build has not been started");
     }
 }
 
