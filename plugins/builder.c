@@ -28,6 +28,8 @@ static char               err_file[512];
 static int                err_line;
 static int                err_col;
 static pthread_mutex_t    mtx = PTHREAD_MUTEX_INITIALIZER;
+static char               builder_notif_cmd[1024];
+static int                builder_notif_cmd_status;
 
 #define LOCKED(_m)                                 \
 for (int _foozle = (pthread_mutex_lock(&(_m)), 1); \
@@ -170,11 +172,61 @@ static void notif_stop(void) {
     array_clear(dd_lines);
 }
 
+static const char * builder_get_status_string(void) {
+    if (build_is_running) {
+        return "a build is currently running";
+    } else if (build_is_finished) {
+        if (build_failed) {
+            return "the build FAILED";
+        }
+        return "the build SUCCEEDED";
+    }
+
+    return "a build has not been started";
+}
+
+static void * builder_bg_cmd_thread_fn(void *arg) {
+    char *notif_cmd;
+    char  message_buff[512];
+    char  expand_buff[1024];
+    char  cmd_buff[1200];
+    char *output;
+    int   output_len;
+    int   status;
+
+
+    notif_cmd = arg;
+    snprintf(message_buff, sizeof(message_buff), "%s (builder-build-command: %s)",
+             builder_get_status_string(), build_cmd);
+
+    perc_subst(notif_cmd, message_buff, expand_buff, sizeof(expand_buff));
+
+    sprintf(cmd_buff, "(%s) 2>&1", expand_buff);
+
+    output = yed_run_subproc(cmd_buff, &output_len, &status);
+
+    if (output) { free(output); }
+
+    builder_notif_cmd_status = status;
+
+    return NULL;
+}
+
 static void builder_report(void) {
+    char      *notif_cmd;
+    pthread_t  p;
+
     if (notif_up) {
         notif_stop();
     }
-    notif_start();
+
+    if ((notif_cmd = yed_get_var("builder-notify-command"))) {
+        strncpy(builder_notif_cmd, notif_cmd, sizeof(builder_notif_cmd));
+        pthread_create(&p, NULL, builder_bg_cmd_thread_fn, notif_cmd);
+    } else {
+        notif_start();
+    }
+
     YEXE("builder-echo-status");
 }
 
@@ -252,6 +304,8 @@ static void builder_draw_error_message(int do_draw) {
 }
 
 void builder_pump_handler(yed_event *event) {
+    LOG_FN_ENTER();
+
     u64 now_ms;
 
     if (build_is_running) {
@@ -270,7 +324,12 @@ void builder_pump_handler(yed_event *event) {
         if (now_ms - notif_start_ms >= notif_stay_ms) {
             notif_stop();
         }
+    } else if (builder_notif_cmd_status != 0) {
+        yed_cerr("builder-notify-command '%s' failed with error code %d", builder_notif_cmd, builder_notif_cmd_status);
+        builder_notif_cmd_status = 0;
     }
+
+    LOG_EXIT();
 }
 
 void builder_line_handler(yed_event *event) {
@@ -556,17 +615,7 @@ static void builder_echo_status(int n_args, char **args) {
         return;
     }
 
-    if (build_is_running) {
-        yed_cprint("a build is currently running");
-    } else if (build_is_finished) {
-        if (build_failed) {
-            yed_cprint("the build FAILED");
-        } else {
-            yed_cprint("the build SUCCEEDED");
-        }
-    } else {
-        yed_cprint("a build has not been started");
-    }
+    yed_cprint((char*)builder_get_status_string());
 }
 
 static void * builder_thread_fn(void *arg) {
