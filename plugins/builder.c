@@ -196,7 +196,7 @@ static void * builder_bg_cmd_thread_fn(void *arg) {
 
 
     notif_cmd = arg;
-    snprintf(message_buff, sizeof(message_buff), "%s (builder-build-command: %s)",
+    snprintf(message_buff, sizeof(message_buff), "'%s (builder-build-command: %s)'",
              builder_get_status_string(), build_cmd);
 
     perc_subst(notif_cmd, message_buff, expand_buff, sizeof(expand_buff));
