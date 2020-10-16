@@ -135,6 +135,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("bind",                   bind);
     SET_DEFAULT_COMMAND("unbind",                 unbind);
     SET_DEFAULT_COMMAND("multi",                  multi);
+    SET_DEFAULT_COMMAND("if",                     if);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -3778,7 +3779,32 @@ void yed_default_command_multi(int n_args, char **args) {
 
     for (i = 0; i < n_args; i += 1) {
         split = sh_split(args[i]);
-        yed_execute_command_from_split(split);
+        if (array_len(split)) {
+            yed_execute_command_from_split(split);
+        }
+        free_string_array(split);
+    }
+}
+
+void yed_default_command_if(int n_args, char **args) {
+    array_t split;
+
+    if (n_args < 2 || n_args > 3) {
+        yed_cerr("expected 2 or 3 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (yed_var_is_truthy(args[0])) {
+        split = sh_split(args[1]);
+        if (array_len(split)) {
+            yed_execute_command_from_split(split);
+        }
+        free_string_array(split);
+    } else if (n_args == 3) {
+        split = sh_split(args[2]);
+        if (array_len(split)) {
+            yed_execute_command_from_split(split);
+        }
         free_string_array(split);
     }
 }
