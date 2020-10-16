@@ -134,6 +134,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("redo",                   redo);
     SET_DEFAULT_COMMAND("bind",                   bind);
     SET_DEFAULT_COMMAND("unbind",                 unbind);
+    SET_DEFAULT_COMMAND("multi",                  multi);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -3768,6 +3769,17 @@ void yed_default_command_unbind(int n_args, char **args) {
 
     if (n_keys > 1) {
         yed_delete_key_sequence(seq_key);
+    }
+}
+
+void yed_default_command_multi(int n_args, char **args) {
+    int     i;
+    array_t split;
+
+    for (i = 0; i < n_args; i += 1) {
+        split = sh_split(args[i]);
+        yed_execute_command_from_split(split);
+        free_string_array(split);
     }
 }
 
