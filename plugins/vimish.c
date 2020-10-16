@@ -854,6 +854,9 @@ void enter_insert(void) {
     &&  yed_get_var("cursor-line")) {
         restore_cursor_line = 1;
         yed_unset_var("cursor-line");
+        if (frame) {
+            frame->cursor_line_is_dirty = 1;
+        }
     }
 }
 
@@ -878,6 +881,9 @@ void exit_insert(void) {
     &&  yed_get_var("vimish-insert-no-cursor-line")) {
         yed_set_var("cursor-line", "yes");
         restore_cursor_line = 0;
+        if (frame) {
+            frame->cursor_line_is_dirty = 1;
+        }
     }
 }
 
