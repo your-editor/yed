@@ -45,7 +45,8 @@ PACKABLE_STYLE(first) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = MAYBE_CONVERT(RGB_32(255, 0, 0));
 
-    s.associate.flags     = ATTR_BOLD;
+    s.associate.flags     = attr_kind | ATTR_BOLD;
+    s.associate.bg        = MAYBE_CONVERT(s.selection.bg + RGB_32(0, 0, 60));
 
     s.command_line        = s.active;
 
@@ -59,8 +60,10 @@ PACKABLE_STYLE(first) {
     s.code_keyword.flags  = attr_kind | ATTR_BOLD;
     s.code_keyword.fg     = MAYBE_CONVERT(RGB_32(216, 30, 91));
 
-    s.code_control_flow       =
-    s.code_typename           = s.code_keyword;
+    s.code_control_flow   = s.code_keyword;
+
+    s.code_typename.flags = attr_kind | ATTR_BOLD;
+    s.code_typename.fg    = MAYBE_CONVERT(RGB_32_hex(87B38D));
 
     s.code_preprocessor   = s.code_keyword;
 
@@ -116,7 +119,8 @@ PACKABLE_STYLE(first) {
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = MAYBE_CONVERT(RGB_32(255, 0, 0));
 
-    s.associate.flags     = ATTR_BOLD;
+    s.associate.flags     = attr_kind | ATTR_BOLD;
+    s.associate.bg        = MAYBE_CONVERT(s.selection.bg - RGB_32(0, 0, 60));
 
     s.command_line        = s.active;
 
@@ -129,6 +133,11 @@ PACKABLE_STYLE(first) {
 
     s.code_keyword.flags  = attr_kind | ATTR_BOLD;
     s.code_keyword.fg     = MAYBE_CONVERT(RGB_32(216, 30, 91));
+
+    s.code_control_flow   = s.code_keyword;
+
+    s.code_typename.flags = attr_kind | ATTR_BOLD;
+    s.code_typename.fg    = MAYBE_CONVERT(RGB_32_hex(87B38D));
 
     s.code_preprocessor   = s.code_keyword;
 
