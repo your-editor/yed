@@ -132,7 +132,7 @@ use_tree(str_t, empty_t);
 int mk_wcwidth(wchar_t ucs);
 #include "utf8.h"
 #include "key.h"
-#include "fs.h"
+#include "ft.h"
 #include "undo.h"
 #include "buffer.h"
 #include "attrs.h"
@@ -234,6 +234,7 @@ typedef struct yed_state_t {
     char                        *working_dir;
     int                          doing_bracketed_paste;
     array_t                      bracketed_paste_buff;
+    array_t                      ft_array;
 } yed_state;
 
 extern yed_state *ys;

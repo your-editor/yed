@@ -40,7 +40,7 @@ typedef struct {
 typedef struct yed_buffer_t {
     int                   kind;
     int                   flags;
-    yed_file              file;
+    int                   ft;
     char                 *name;
     char                 *path;
     bucket_array_t        lines;
@@ -67,6 +67,8 @@ yed_buffer * yed_create_buffer(char *name);
 yed_buffer * yed_get_buffer(char *name);
 yed_buffer * yed_get_buffer_by_path(char *path);
 void yed_free_buffer(yed_buffer *buffer);
+
+void yed_buffer_set_ft(yed_buffer *buffer, int ft);
 
 int yed_line_idx_to_col(yed_line *line, int idx);
 int yed_line_col_to_idx(yed_line *line, int col);

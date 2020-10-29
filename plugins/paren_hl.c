@@ -34,9 +34,7 @@ void paren_hl_cursor_moved_handler(yed_event *event) {
 
     if (!frame
     ||  !frame->buffer
-    ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  (frame->buffer->file.ft != FT_C
-      && frame->buffer->file.ft != FT_BJOU)) {
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
         return;
     }
 
@@ -60,9 +58,7 @@ void paren_hl_line_handler(yed_event *event) {
     if (!frame
     ||  frame != ys->active_frame
     ||  !frame->buffer
-    ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  (frame->buffer->file.ft != FT_C
-      && frame->buffer->file.ft != FT_BJOU)) {
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
         return;
     }
 
@@ -78,9 +74,7 @@ void paren_hl_buff_mod_handler(yed_event *event) {
     if (!frame
     ||  frame != ys->active_frame
     ||  !frame->buffer
-    ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  (frame->buffer->file.ft != FT_C
-      && frame->buffer->file.ft != FT_BJOU)) {
+    ||  frame->buffer->kind != BUFF_KIND_FILE) {
         return;
     }
 

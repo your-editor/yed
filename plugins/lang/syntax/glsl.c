@@ -101,7 +101,7 @@ void syntax_glsl_frame_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    || (frame->buffer->file.ft != FT_GLSL)) {
+    || (frame->buffer->ft != yed_get_ft("GL Shader"))) {
         return;
     }
 
@@ -116,7 +116,7 @@ void syntax_glsl_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    || (frame->buffer->file.ft != FT_GLSL)) {
+    || (frame->buffer->ft != yed_get_ft("GL Shader"))) {
         return;
     }
 
@@ -131,7 +131,7 @@ void syntax_glsl_buff_mod_pre_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    || (frame->buffer->file.ft != FT_GLSL)) {
+    || (frame->buffer->ft != yed_get_ft("GL Shader"))) {
         return;
     }
 
@@ -146,7 +146,7 @@ void syntax_glsl_buff_mod_post_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    || (frame->buffer->file.ft != FT_GLSL)) {
+    || (frame->buffer->ft != yed_get_ft("GL Shader"))) {
         return;
     }
 

@@ -42,7 +42,7 @@ void syntax_yedrc_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_YEDRC) {
+    ||  frame->buffer->ft != yed_get_ft("yedrc")) {
         return;
     }
 

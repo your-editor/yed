@@ -123,6 +123,7 @@ yed_buffer yed_new_buff(void) {
     buff.undo_history         = yed_new_undo_history();
     buff.last_cursor_row      = 1;
     buff.last_cursor_col      = 1;
+    buff.ft                   = FT_UNKNOWN;
 
     yed_buffer_add_line_no_undo(&buff);
 
@@ -208,6 +209,19 @@ void yed_free_buffer(yed_buffer *buffer) {
 }
 
 
+
+
+
+void yed_buffer_set_ft(yed_buffer *buffer, int ft) {
+    yed_event event;
+
+    event.kind   = EVENT_BUFFER_PRE_SET_FT;
+    event.buffer = buffer;
+    yed_trigger_event(&event);
+    buffer->ft = ft;
+    event.kind = EVENT_BUFFER_POST_SET_FT;
+    yed_trigger_event(&event);
+}
 
 
 
@@ -644,7 +658,6 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
     struct stat  fs;
     int          fd;
     int          status;
-    yed_event    event;
     char         a_path[4096];
 
     status = BUFF_FILL_STATUS_SUCCESS;
@@ -697,14 +710,9 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
         buff->path = strdup(path);
     }
 
-    event.kind = EVENT_BUFFER_PRE_SET_FT;
-    event.buffer = buff;
-    yed_trigger_event(&event);
-    buff->file.ft = yed_get_ft(path);
-    event.kind = EVENT_BUFFER_POST_SET_FT;
-    yed_trigger_event(&event);
+    yed_buffer_set_ft(buff, FT_UNKNOWN);
 
-    buff->kind    = BUFF_KIND_FILE;
+    buff->kind = BUFF_KIND_FILE;
     yed_mark_dirty_frames(buff);
 
 cleanup:
@@ -890,12 +898,6 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
         } else {
             buff->path = strdup(path);
         }
-
-        event.kind = EVENT_BUFFER_PRE_SET_FT;
-        yed_trigger_event(&event);
-        buff->file.ft = yed_get_ft(path);
-        event.kind = EVENT_BUFFER_POST_SET_FT;
-        yed_trigger_event(&event);
     }
 
     if (!(buff->flags & BUFF_SPECIAL)) {

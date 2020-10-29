@@ -1503,15 +1503,9 @@ void yed_default_command_buffer(int n_args, char **args) {
                 event.buffer = buffer;
 
                 if (status == BUFF_FILL_STATUS_ERR_NOF) {
-                    buffer->path    = strdup(path);
-
-                    event.kind = EVENT_BUFFER_PRE_SET_FT;
-                    yed_trigger_event(&event);
-                    buffer->file.ft = yed_get_ft(path);
-                    event.kind = EVENT_BUFFER_POST_SET_FT;
-                    yed_trigger_event(&event);
-
+                    buffer->path = strdup(path);
                     buffer->kind = BUFF_KIND_FILE;
+                    yed_buffer_set_ft(buffer, FT_UNKNOWN);
                     yed_cprint(" (new file)");
                 }
 
@@ -1759,7 +1753,6 @@ void yed_default_command_buffer_set_ft(int n_args, char **args) {
     yed_frame  *frame;
     char       *ft_str;
     int         ft_new;
-    yed_event   event;
 
     if (n_args != 1) {
         yed_cerr("expected 1 argument, but got %d", n_args);
@@ -1781,17 +1774,12 @@ void yed_default_command_buffer_set_ft(int n_args, char **args) {
     ft_str  = args[0];
     ft_new  = yed_get_ft(ft_str);
 
-    if (ft_new == FT_UNKNOWN) {
-        yed_cerr("invalid file type extension string '%s'", args[0]);
+    if (ft_new == FT_ERR_NOT_FOUND) {
+        yed_cerr("invalid file type name '%s'", args[0]);
         return;
     }
 
-    event.kind = EVENT_BUFFER_PRE_SET_FT;
-    event.buffer = buffer;
-    yed_trigger_event(&event);
-    buffer->file.ft = ft_new;
-    event.kind = EVENT_BUFFER_POST_SET_FT;
-    yed_trigger_event(&event);
+    yed_buffer_set_ft(buffer, ft_new);
 
     ys->redraw = 1;
 }

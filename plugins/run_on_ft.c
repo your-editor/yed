@@ -1,5 +1,15 @@
 #include <yed/plugin.h>
 
+
+int yed_plugin_boot(yed_plugin *self) {
+LOG_FN_ENTER();
+    yed_cerr("run_on_ft: This plugin needs to be revised due to changes in how file types are handled. It has been disabled.");
+LOG_EXIT();
+    return 0;
+}
+
+#if 0
+
 typedef struct {
     char *cmd;
     char **args;
@@ -149,3 +159,4 @@ void run_on_ft_cmd(int n_args, char **args) {
     }
 
 }
+#endif

@@ -34,8 +34,17 @@ int yed_vlog(char *fmt, va_list args) {
     log_name   = *(char**)array_last(ys->log_name_stack);
     new_header = 0;
 
-    if (!log_name || !ys->cur_log_name || strcmp(log_name, ys->cur_log_name) != 0) {
+    /* If we don't have the names, do the new header. */
+    if (!log_name || !ys->cur_log_name) {
         new_header = 1;
+    }
+
+    /* Or if there's a mismatch. */
+    if (!new_header && strcmp(log_name, ys->cur_log_name) == 0) {
+        new_header = 1;
+    }
+
+    if (new_header) {
         ys->cur_log_name = log_name;
 
         if (!log_name) { log_name = "???"; }

@@ -206,6 +206,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_vars();
     ys->tabw = yed_get_tab_width(); /* Set again after plugins are loaded. */
     yed_init_styles();
+    yed_init_ft();
     yed_init_buffers();
     yed_init_log();
     yed_init_frames();

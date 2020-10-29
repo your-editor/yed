@@ -1,5 +1,13 @@
 #include <yed/plugin.h>
 
+int yed_plugin_boot(yed_plugin *self) {
+LOG_FN_ENTER();
+    yed_cerr("lazy_plug: This plugin needs to be revised due to changes in how file types are handled. It has been disabled.");
+LOG_EXIT();
+    return 0;
+}
+
+#if 0
 array_t ft_plugs[NUM_FT];
 
 void unload(yed_plugin *self);
@@ -109,3 +117,4 @@ void lazy_plug_ft_cmd(int n_args, char **args) {
 
     yed_cprint("plugin '%s' will be loaded when a %s ft buffer is loaded", plug_name, ext);
 }
+#endif

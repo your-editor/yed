@@ -80,19 +80,20 @@ void comment_toggle(int n_args, char **args) {
 }
 
 int comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
-    switch (frame->buffer->file.ft) {
-        case FT_C:
-        case FT_CXX:    comment_toggle_line_c(frame, line, row);     break;
+    if (       frame->buffer->ft == yed_get_ft("C/C++")) {
+        comment_toggle_line_c(frame, line, row);
 
-        case FT_SH:
-        case FT_BJOU:
-        case FT_PYTHON:
-        case FT_YEDRC:  comment_toggle_line_hash(frame, line, row);  break;
+    } else if (frame->buffer->ft == yed_get_ft("Shell")  ||
+               frame->buffer->ft == yed_get_ft("bJou")   ||
+               frame->buffer->ft == yed_get_ft("Python") ||
+               frame->buffer->ft == yed_get_ft("yedrc")) {
+        comment_toggle_line_hash(frame, line, row);
 
-        case FT_LATEX:  comment_toggle_line_latex(frame, line, row); break;
+    } else if (frame->buffer->ft == yed_get_ft("LaTeX")) {
+        comment_toggle_line_latex(frame, line, row);
 
-        default:
-            return 0;
+    } else {
+        return 0;
     }
 
     return 1;

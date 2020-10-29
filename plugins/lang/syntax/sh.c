@@ -98,7 +98,7 @@ void syntax_sh_frame_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_SH) {
+    ||  frame->buffer->ft != yed_get_ft("Shell")) {
         return;
     }
 
@@ -114,7 +114,7 @@ void syntax_sh_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_SH) {
+    ||  frame->buffer->ft != yed_get_ft("Shell")) {
         return;
     }
 
@@ -134,7 +134,7 @@ void syntax_sh_buff_mod_pre_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_SH) {
+    ||  frame->buffer->ft != yed_get_ft("Shell")) {
         return;
     }
 
@@ -149,7 +149,7 @@ void syntax_sh_buff_mod_post_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_SH) {
+    ||  frame->buffer->ft != yed_get_ft("Shell")) {
         return;
     }
 

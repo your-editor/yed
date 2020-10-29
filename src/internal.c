@@ -130,6 +130,8 @@ static void write_status_bar(int key) {
     int   sav_x, sav_y;
     char *path;
     char *status_line_var;
+    char  right_side_buff[256];
+    char *ft_name;
 
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
@@ -143,24 +145,26 @@ static void write_status_bar(int key) {
     append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
 
     if (ys->active_frame) {
+        ft_name = NULL;
         if (ys->active_frame->buffer) {
             yed_set_cursor(1, ys->term_rows - 1);
             path     = ys->active_frame->buffer->name;
             append_to_output_buff(path);
+            ft_name = yed_get_ft_name(ys->active_frame->buffer->ft);
         }
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
-        append_n_to_output_buff("                    ", 20);
-        yed_set_cursor(ys->term_cols - 20, ys->term_rows - 1);
-        append_int_to_output_buff(ys->active_frame->cursor_line);
-        append_to_output_buff(" :: ");
-        append_int_to_output_buff(ys->active_frame->cursor_col);
+        if (ft_name == NULL) {
+            ft_name = "<unknown file type>";
+        }
+
+        snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)),
+                 "%s  %7d :: %-3d  %3d",
+                 ft_name, ys->active_frame->cursor_line, ys->active_frame->cursor_col, key);
+    } else {
+        snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)), "%d", key);
     }
 
-    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
-    append_n_to_output_buff("     ", 5);
-    yed_set_cursor(ys->term_cols - 5, ys->term_rows - 1);
-    append_int_to_output_buff(key);
-
+    yed_set_cursor(ys->term_cols - strlen(right_side_buff) - 2, ys->term_rows - 1);
+    append_to_output_buff(right_side_buff);
 
 
     if ((status_line_var = yed_get_var("status-line-var"))) {
@@ -204,6 +208,8 @@ void yed_service_reload(void) {
     tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
     tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
     tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
+
+    ys->cur_log_name = NULL; /* This could be memory from a plugin that got unloaded. */
 
     tree_traverse(ys->plugins, plug_it) {
         yed_plugin_uninstall_features(tree_it_val(plug_it));
@@ -304,7 +310,7 @@ int s_to_i(const char *s) {
 #include "undo.c"
 #include "buffer.c"
 #include "attrs.c"
-#include "fs.c"
+#include "ft.c"
 #include "frame.c"
 #include "log.c"
 #include "command.c"

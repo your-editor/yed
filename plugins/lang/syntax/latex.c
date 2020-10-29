@@ -47,7 +47,7 @@ void syntax_latex_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->file.ft != FT_LATEX) {
+    ||  frame->buffer->ft != yed_get_ft("LaTeX")) {
         return;
     }
 
