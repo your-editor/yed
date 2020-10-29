@@ -37,15 +37,19 @@ void unload(yed_plugin *self) {
 
 void maybe_change_ft(yed_event *event) {
     char *ext;
+    char *base;
 
     if (event->buffer->path == NULL) {
         return;
     }
-    if ((ext = get_path_ext(event->buffer->path)) == NULL) {
-        return;
+    if ((ext = get_path_ext(event->buffer->path)) != NULL) {
+        if (strcmp(ext, "yedrc") == 0) {
+            yed_buffer_set_ft(event->buffer, yed_get_ft("yedrc"));
+        }
     }
-
-    if (strcmp(ext, "yedrc") == 0) {
-        yed_buffer_set_ft(event->buffer, yed_get_ft("yedrc"));
+    if ((base = get_path_basename(event->buffer->path)) != NULL) {
+        if (strcmp(base, "yedrc") == 0) {
+            yed_buffer_set_ft(event->buffer, yed_get_ft("yedrc"));
+        }
     }
 }

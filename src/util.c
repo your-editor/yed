@@ -160,6 +160,20 @@ char * get_path_ext(char *path) {
     return ext;
 }
 
+char * get_path_basename(char *path) {
+    char *slash;
+
+    slash = strrchr(path, '/');
+
+    if (!slash) {
+        return path;
+    } else {
+        slash += 1;
+    }
+
+    return slash;
+}
+
 char * path_without_ext(char *path) {
     char *ext;
     char *cpy;
