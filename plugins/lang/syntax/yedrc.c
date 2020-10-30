@@ -53,7 +53,7 @@ void syntax_yedrc_line_handler(yed_event *event) {
 void syntax_yedrc_highlight(yed_event *event) {
     yed_frame *frame;
     yed_line  *line;
-    yed_attrs *attr, key;
+    yed_attrs *attr, key, ty;
     int        col, old_col, word_len, i;
     char       c, *word, *word_cpy;
 
@@ -63,6 +63,7 @@ void syntax_yedrc_highlight(yed_event *event) {
     if (!line->visual_width) { return; }
 
     key = yed_active_style_get_code_keyword();
+    ty  = yed_active_style_get_code_typename();
 
     col = 1;
 
@@ -123,6 +124,11 @@ void syntax_yedrc_highlight(yed_event *event) {
             for (i = 0; i < word_len; i += 1) {
                 attr = array_item(event->line_attrs, old_col + i - 1);
                 yed_combine_attrs(attr, &key);
+            }
+        } else if (yed_get_ft(word_cpy) != FT_ERR_NOT_FOUND) {
+            for (i = 0; i < word_len; i += 1) {
+                attr = array_item(event->line_attrs, old_col + i - 1);
+                yed_combine_attrs(attr, &ty);
             }
         }
         free(word_cpy);
