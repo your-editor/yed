@@ -215,6 +215,11 @@ void yed_free_buffer(yed_buffer *buffer) {
 void yed_buffer_set_ft(yed_buffer *buffer, int ft) {
     yed_event event;
 
+    if (buffer->kind != BUFF_KIND_FILE
+    ||  buffer->flags & BUFF_SPECIAL) {
+        return;
+    }
+
     event.kind   = EVENT_BUFFER_PRE_SET_FT;
     event.buffer = buffer;
     yed_trigger_event(&event);

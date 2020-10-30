@@ -146,16 +146,22 @@ static void write_status_bar(int key) {
     }
     append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
 
+    right_side_buff[0] = 0;
+
     if (ys->active_frame) {
-        ft_name = NULL;
+        ft_name = "";
         if (ys->active_frame->buffer) {
             yed_set_cursor(1, ys->term_rows - 1);
             path     = ys->active_frame->buffer->name;
             append_to_output_buff(path);
-            ft_name = yed_get_ft_name(ys->active_frame->buffer->ft);
-        }
-        if (ft_name == NULL) {
-            ft_name = "<unknown file type>";
+            if (ys->active_frame->buffer->flags & BUFF_SPECIAL) {
+                ft_name = "<special>";
+            } else {
+                ft_name = yed_get_ft_name(ys->active_frame->buffer->ft);
+                if (ft_name == NULL) {
+                    ft_name = "<unknown file type>";
+                }
+            }
         }
 
         snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)),

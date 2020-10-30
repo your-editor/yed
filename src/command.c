@@ -1770,9 +1770,16 @@ void yed_default_command_buffer_set_ft(int n_args, char **args) {
         return;
     }
 
-    buffer  = frame->buffer;
-    ft_str  = args[0];
-    ft_new  = yed_get_ft(ft_str);
+    buffer = frame->buffer;
+
+    if (buffer->kind != BUFF_KIND_FILE
+    ||  buffer->flags & BUFF_SPECIAL) {
+        yed_cerr("can't change the file type of this buffer");
+        return;
+    }
+
+    ft_str = args[0];
+    ft_new = yed_get_ft(ft_str);
 
     if (ft_new == FT_ERR_NOT_FOUND) {
         yed_cerr("invalid file type name '%s'", args[0]);
