@@ -40,7 +40,7 @@ int yed_vlog(char *fmt, va_list args) {
     }
 
     /* Or if there's a mismatch. */
-    if (!new_header && strcmp(log_name, ys->cur_log_name) == 0) {
+    if (!new_header && strcmp(log_name, ys->cur_log_name) != 0) {
         new_header = 1;
     }
 
