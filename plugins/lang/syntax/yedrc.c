@@ -5,7 +5,8 @@ void unload(yed_plugin *self);
 void syntax_yedrc_line_handler(yed_event *event);
 void syntax_yedrc_highlight(yed_event *event);
 
-highlight_info hinfo;
+highlight_info comment_hinfo;
+highlight_info strings_and_numbers_hinfo;
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
@@ -17,12 +18,13 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_add_event_handler(self, h);
 
-    highlight_info_make(&hinfo);
+    highlight_info_make(&comment_hinfo);
+    highlight_info_make(&strings_and_numbers_hinfo);
 
-    highlight_numbers(&hinfo);
-    highlight_to_eol_from(&hinfo, "#", HL_COMMENT);
-    highlight_within(&hinfo, "\"", "\"", '\\', -1, HL_STR);
-    highlight_within(&hinfo, "'", "'", '\\', -1, HL_STR);
+    highlight_to_eol_from(&comment_hinfo, "#", HL_COMMENT);
+    highlight_numbers(&strings_and_numbers_hinfo);
+    highlight_within(&strings_and_numbers_hinfo, "\"", "\"", '\\', -1, HL_STR);
+    highlight_within(&strings_and_numbers_hinfo, "'", "'", '\\', -1, HL_STR);
 
     ys->redraw = 1;
 
@@ -30,7 +32,8 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void unload(yed_plugin *self) {
-    highlight_info_free(&hinfo);
+    highlight_info_free(&strings_and_numbers_hinfo);
+    highlight_info_free(&comment_hinfo);
     ys->redraw = 1;
 }
 
@@ -46,8 +49,9 @@ void syntax_yedrc_line_handler(yed_event *event) {
         return;
     }
 
+    highlight_line(&strings_and_numbers_hinfo, event);
     syntax_yedrc_highlight(event);
-    highlight_line(&hinfo, event);
+    highlight_line(&comment_hinfo, event);
 }
 
 void syntax_yedrc_highlight(yed_event *event) {
