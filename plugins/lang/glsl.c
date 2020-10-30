@@ -12,7 +12,7 @@ int yed_plugin_boot(yed_plugin *self) {
 LOG_FN_ENTER();
     yed_plugin_set_unload_fn(self, unload);
 
-    if (yed_make_ft("GL Shader") == FT_ERR_TAKEN) {
+    if (yed_make_ft("GLSL") == FT_ERR_TAKEN) {
         yed_cerr("lang/glsl: unable to create file type name");
         LOG_EXIT();
         return 1;
@@ -38,7 +38,7 @@ LOG_EXIT();
 
 void unload(yed_plugin *self) {
     YEXE("plugin-unload", "lang/syntax/glsl");
-    yed_delete_ft("GL Shader");
+    yed_delete_ft("GLSL");
 }
 
 void maybe_change_ft(yed_buffer *buff) {
@@ -55,7 +55,7 @@ void maybe_change_ft(yed_buffer *buff) {
     }
 
     if (strcmp(ext, "glsl") == 0) {
-        yed_buffer_set_ft(buff, yed_get_ft("GL Shader"));
+        yed_buffer_set_ft(buff, yed_get_ft("GLSL"));
     }
 }
 
