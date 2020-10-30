@@ -133,6 +133,8 @@ static void write_status_bar(int key) {
     char  right_side_buff[256];
     char *ft_name;
 
+    (void)key; /* We don't show this on the status bar any more. */
+
     sav_x = ys->cur_x;
     sav_y = ys->cur_y;
 
@@ -157,10 +159,8 @@ static void write_status_bar(int key) {
         }
 
         snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)),
-                 "%s  %7d :: %-3d  %3d",
-                 ft_name, ys->active_frame->cursor_line, ys->active_frame->cursor_col, key);
-    } else {
-        snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)), "%d", key);
+                 "%s  %7d :: %-3d",
+                 ft_name, ys->active_frame->cursor_line, ys->active_frame->cursor_col);
     }
 
     yed_set_cursor(ys->term_cols - strlen(right_side_buff) - 2, ys->term_rows - 1);
