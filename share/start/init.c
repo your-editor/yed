@@ -113,7 +113,6 @@ int yed_plugin_boot(yed_plugin *self) {
     /* YEXE("plugin-load", "lang/c"); */
 
     /* These other language plugins are available: */
-    /* YEXE("plugin-load", "lang/bjou"); */
     /* YEXE("plugin-load", "lang/jgraph"); */
     /* YEXE("plugin-load", "lang/latex"); */
     /* YEXE("plugin-load", "lang/python"); */

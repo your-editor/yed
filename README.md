@@ -184,13 +184,11 @@ For more examples of configurations and plugins, see the C files in `plugins/`.
 | man               | Provides the `man-word` command that opens the `man` page for the word under the cursor in a buffer in a floating frame.                                      |
 | grep              | Provides the `grep` command that interactively greps for a pattern in the current directory and allows you to instantly jump to matches.                      |
 | find_file         | Provides the `find-file` command that interactively searches for files in the current directory and allows you to instantly jump to them.                     |
-| lang/bjou         | Loads `lang/syntax/bjou`.                                                                                                                                     |
 | lang/c            | Loads `lang/syntax/c`.                                                                                                                                        |
 | lang/sh           | Loads `lang/syntax/sh`.                                                                                                                                       |
 | lang/python       | Loads `lang/syntax/python`.                                                                                                                                   |
 | lang/latex        | Loads `lang/syntax/latex` and `lang/tools/latex`.                                                                                                             |
 | lang/yedrc        | Loads `lang/syntax/yedrc`.                                                                                                                                    |
-| lang/syntax/bjou  | Provides syntax highlighting for bJou.                                                                                                                        |
 | lang/syntax/c     | Provides syntax highlighting for C. Active on C++ buffers.                                                                                                    |
 | lang/syntax/sh    | Provides syntax highlighting for SHELL and BASH.                                                                                                              |
 | lang/syntax/latex | Provides (_very basic_) syntax highlighting for LaTeX.                                                                                                        |
