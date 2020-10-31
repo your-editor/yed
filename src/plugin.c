@@ -75,12 +75,10 @@ void yed_init_plugins(void) {
     ys->plugin_dirs = array_make(char*);
     ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
 
-#ifdef DEFAULT_PLUG_DIR
     LOG_FN_ENTER();
-    yed_log("adding default plugin directory '%s'", XSTR(DEFAULT_PLUG_DIR));
-    yed_add_plugin_dir(XSTR(DEFAULT_PLUG_DIR));
+    yed_log("adding default plugin directory '%s'", default_plug_dir);
+    yed_add_plugin_dir(default_plug_dir);
     LOG_EXIT();
-#endif
 
     if (!ys->options.no_init) {
         if (ys->options.init) {

@@ -1,19 +1,19 @@
-# lib_dir needs to be visible to dlopen().
-# /usr/lib and friends are the best bet, but any path can be used if it is
-# added to LD_LIBRARY_PATH.
-if [ -d "/usr/lib64" ]; then
-    lib_dir="/usr/lib64"
-else
-    lib_dir="/usr/lib"
-fi
+# install.options
 
+# Don't touch this unless your system is super weird and you know what you're doing.
+ld_conf="/etc/ld.so.conf.d/yed.conf"
+
+# If this is a system installation, ld will be configured accordingly.
+# If you would like to install yed privately (perhaps you don't have root
+# permissions on the machine and just want to install to your home directory),
+# then change this to "no" and then change the other variables below.
+is_system_install="yes"
+
+# Put these things wherever you'd like.
+prefix="/usr"
+
+lib_dir="${prefix}/lib"
 plug_dir="${lib_dir}/yed/plugins"
-bin_dir="/usr/bin"
-inc_dir="/usr/include"
-share_dir="/usr/share"
-
-# This will force us to get the home directory of the
-# user even when `sudo` is being used.
-eval HOME_DIR=$(echo ~$(logname))
-
-user_dir="${HOME_DIR}/.yed"
+bin_dir="${prefix}/bin"
+inc_dir="${prefix}/include"
+share_dir="${prefix}/share"

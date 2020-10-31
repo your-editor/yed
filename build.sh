@@ -9,9 +9,8 @@ function corecount {
 }
 
 source build.options
-source install.options
 
-export LIB_C_FLAGS="-DDEFAULT_PLUG_DIR=\"${lib_dir}/yed/plugins\" -shared -fPIC -ldl -lm -lpthread"
+export LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
 export DRIVER_C_FLAGS="-ldl -lm -lpthread"
 export PLUGIN_C_FLAGS="-shared -fPIC -I${DIR}/include -L${DIR} -lyed"
 

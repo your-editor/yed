@@ -323,6 +323,7 @@ int s_to_i(const char *s) {
 #include "getRSS.c"
 #include "measure_time.c"
 #include "event.c"
+#include "default_plug_dir.c"
 #include "plugin.c"
 #include "find.c"
 #include "var.c"
