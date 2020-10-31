@@ -14,7 +14,7 @@ source install.options
 function uninstall {
     yes | rm ${bin_dir}/yed || exit 1
     echo "Uninstalled ${bin_dir}/yed"
-    yes | rm ${bin_dir}/yed || exit 1
+    yes | rm ${bin_dir}/yedconf || exit 1
     echo "Uninstalled ${bin_dir}/yedconf"
     yes | rm ${lib_dir}/libyed.so || exit 1
     echo "Uninstalled ${lib_dir}/libyed.so"
