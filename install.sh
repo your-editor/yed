@@ -27,7 +27,8 @@ echo "Installed 'yed':                 ${bin_dir}"
 cp libyed.so ${lib_dir} || exit 1
 echo "Installed 'libyed.so':           ${lib_dir}"
 
-sed -i "s#qrsnhyg_cyht_qve#${plug_dir}#" ${lib_dir}/libyed.so || exit 1
+patch_offset=$(strings -t d ${lib_dir}/libyed.so | grep qrsnhyg_cyht_qve | awk '{ print $1; }')
+dd if=<(printf "${plug_dir}") of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc status=none || exit 1
 echo "    patched default plugin path"
 
 mkdir -p ${inc_dir}/yed || exit 1
