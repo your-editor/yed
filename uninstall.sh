@@ -14,6 +14,8 @@ source install.options
 function uninstall {
     yes | rm ${bin_dir}/yed || exit 1
     echo "Uninstalled ${bin_dir}/yed"
+    yes | rm ${bin_dir}/yed || exit 1
+    echo "Uninstalled ${bin_dir}/yedconf"
     yes | rm ${lib_dir}/libyed.so || exit 1
     echo "Uninstalled ${lib_dir}/libyed.so"
     yes | rm -rf ${inc_dir}/yed || exit 1
@@ -35,6 +37,7 @@ function confirm {
     if [ "${is_system_install}x" = "yesx" ]; then
         echo "The following files/directories will be removed:
 ${bin_dir}/yed
+${bin_dir}/yedconf
 ${lib_dir}/libyed.so
 ${inc_dir}/yed
 ${share_dir}/yed
@@ -44,6 +47,7 @@ ${ld_conf}
     else
         echo "The following files/directories will be removed:
 ${bin_dir}/yed
+${bin_dir}/yedconf
 ${lib_dir}/libyed.so
 ${inc_dir}/yed
 ${share_dir}/yed
