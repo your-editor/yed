@@ -1,16 +1,7 @@
 # install.options
 
-# Don't touch this unless your system is super weird and you know what you're doing.
-ld_conf="/etc/ld.so.conf.d/yed.conf"
-
-# If this is a system installation, ld will be configured accordingly.
-# If you would like to install yed privately (perhaps you don't have root
-# permissions on the machine and just want to install to your home directory),
-# then change this to "no" and then change the other variables below.
-is_system_install="yes"
-
-# Put these things wherever you'd like.
-prefix="/usr"
+prefix=/usr # typical system install
+# prefix=~/.local # typical local user install
 
 lib_dir="${prefix}/lib"
 plug_dir="${lib_dir}/yed/plugins"

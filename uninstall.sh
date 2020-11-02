@@ -24,28 +24,10 @@ function uninstall {
     echo "Uninstalled ${share_dir}/yed"
     yes | rm -rf ${plug_dir} || exit 1
     echo "Uninstalled ${plug_dir}"
-
-    if [ "${is_system_install}x" = "yesx" ]; then
-        yes | rm ${ld_conf} || exit 1
-        echo "Uninstalled ${ld_conf}"
-        ldconfig || exit 1
-        echo "Ran ldconfig"
-    fi
 }
 
 function confirm {
-    if [ "${is_system_install}x" = "yesx" ]; then
-        echo "The following files/directories will be removed:
-${bin_dir}/yed
-${bin_dir}/yedconf
-${lib_dir}/libyed.so
-${inc_dir}/yed
-${share_dir}/yed
-${plug_dir}
-${ld_conf}
-"
-    else
-        echo "The following files/directories will be removed:
+    echo "The following files/directories will be removed:
 ${bin_dir}/yed
 ${bin_dir}/yedconf
 ${lib_dir}/libyed.so
@@ -53,7 +35,6 @@ ${inc_dir}/yed
 ${share_dir}/yed
 ${plug_dir}
 "
-    fi
 
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response

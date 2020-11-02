@@ -9,16 +9,38 @@ if ! [ -f install.options ]; then
     exit 1
 fi
 
+if ! [ -f _yed ] || ! [ -f libyed.so ]; then
+    echo "install.sh: [!] yed has not been built. Run build.sh first."
+    exit 1
+fi
+
 source install.options
 
-if [ "${is_system_install}x" = "yesx" ]; then
-    echo "${lib_dir}" > ${ld_conf} || exit 1
-    echo "Created LD conf file:  ${ld_conf}"
-    ldconfig || exit 1
-    echo "Ran ldconfig."
-else
-    echo "NOTE: is_system_install=no"
-    echo "    You may need to set PATH and/or LD_LIBRARY_PATH to run yed."
+mkdir -p ${prefix} || exit 1
+
+cur_run_path=$(readelf -d _yed | sed -e '/RUNPATH/{s~.*\[\(.*\)\]~\1~;n};d')
+if [ "$cur_run_path" != "${lib_dir}" ]; then
+    echo "RUNPATH of currently built yed does not match \$lib_dir from install.options..."
+
+    if which patchelf > /dev/null 2>&1; then
+        echo "    Found patchelf executable."
+        read -r -p "${1:-    Use patchelf to change the current RUNPATH to \$lib_dir? [Y/n]} " response
+        case "$response" in
+            [nN])
+                echo "    RUNPATH NOT patched."
+                echo "    Rebuild yed to use the current \$lib_dir as its RUNPATH."
+                exit 1
+                ;;
+            *)
+                patchelf --set-rpath "${lib_dir}" _yed || exit 1
+                echo "    RUNPATH patched and is not ${lib_dir}."
+                ;;
+        esac
+    else
+        echo "    Can't use patchelf to change RUNPATH because patchelf wasn't found."
+        echo "    Rebuild yed to use the current \$lib_dir as its RUNPATH."
+        exit 1
+    fi
 fi
 
 cp _yed ${bin_dir}/yed || exit 1
