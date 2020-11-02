@@ -38,7 +38,7 @@ if [ "$cur_run_path" != "${lib_dir}" ]; then
         esac
     else
         echo "    Can't use patchelf to change RUNPATH because patchelf wasn't found."
-        echo "    Rebuild yed to use the current \$lib_dir as its RUNPATH."
+        echo "    Rebuild yed to use the current \$lib_dir as its RUNPATH or install patchelf."
         exit 1
     fi
 fi
@@ -66,7 +66,11 @@ echo "Installed share items:           ${share_dir}/yed"
 mkdir -p ${plug_dir} || exit 1
 
 for plug in $(find plugins -name "*.so" | grep -v "dSYM"); do
-    the_plug=""
+    # Don't install example init config.
+    if [ "$(basename $plug)" = "init.so" ]; then
+        continue
+    fi
+
     dst_dir="${plug_dir}/$(dirname "${plug#plugins/}")"
     mkdir -p ${dst_dir} || exit 1
     cp ${plug} ${dst_dir} || exit 1
