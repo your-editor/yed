@@ -391,14 +391,14 @@ void yed_pop_from_line(yed_buffer *buff, int row) {
 void yed_line_clear(yed_buffer *buff, int row) {
     yed_line        *line;
     yed_undo_action  uact;
-    int              i;
+    yed_glyph       *git;
 
     line = yed_buff_get_line(buff, row);
 
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
-    for (i = line->visual_width; i >= 1; i -= 1) {
-        uact.g = *yed_line_col_to_glyph(line, i);
+    yed_line_glyph_rtraverse(*line, git) {
+        uact.g = *git;
         yed_push_undo_action(buff, &uact);
     }
 
@@ -421,21 +421,21 @@ int yed_buffer_add_line(yed_buffer *buff) {
 void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line) {
     yed_line        *old_line;
     yed_undo_action  uact;
-    int              i;
+    yed_glyph       *git;
 
     old_line = yed_buff_get_line(buff, row);
 
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
-    for (i = old_line->visual_width; i >= 1; i -= 1) {
-        uact.g = *yed_line_col_to_glyph(old_line, i);
+    yed_line_glyph_rtraverse(*old_line, git) {
+        uact.g = *git;
         yed_push_undo_action(buff, &uact);
     }
 
     uact.kind = UNDO_GLYPH_PUSH;
     uact.row  = row;
-    for (i = 1; i <= line->visual_width; i += 1) {
-        uact.g = *yed_line_col_to_glyph(line, i);
+    yed_line_glyph_traverse(*line, git) {
+        uact.g = *git;
         yed_push_undo_action(buff, &uact);
     }
 
@@ -460,14 +460,14 @@ yed_line * yed_buff_insert_line(yed_buffer *buff, int row) {
 void yed_buff_delete_line(yed_buffer *buff, int row) {
     yed_undo_action  uact;
     yed_line        *line;
-    int              i;
+    yed_glyph       *git;
 
     line = yed_buff_get_line(buff, row);
 
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
-    for (i = line->visual_width; i >= 1; i -= 1) {
-        uact.g = *yed_line_col_to_glyph(line, i);
+    yed_line_glyph_rtraverse(*line, git) {
+        uact.g = *git;
         yed_push_undo_action(buff, &uact);
     }
 
@@ -508,17 +508,18 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
 }
 
 void yed_buff_clear(yed_buffer *buff) {
-    int              row, col;
+    int              row;
     yed_line        *line;
     yed_undo_action  uact;
+    yed_glyph       *git;
 
     for (row = bucket_array_len(buff->lines); row >= 1; row -= 1) {
         line = yed_buff_get_line(buff, row);
 
         uact.kind = UNDO_GLYPH_POP;
         uact.row  = row;
-        for (col = line->visual_width; col >= 1; col -= 1) {
-            uact.g = *yed_line_col_to_glyph(line, col);
+        yed_line_glyph_rtraverse(*line, git) {
+            uact.g = *git;
             yed_push_undo_action(buff, &uact);
         }
 
@@ -979,8 +980,8 @@ void yed_buff_delete_selection(yed_buffer *buff) {
     yed_line  *line1,
               *line2;
     yed_glyph *g;
-    int        r1, c1, r2, c2,
-               n, i;
+    int        r1, c1, r2, c2, ctmp,
+               n, i, width;
 
     r1 = c1 = r2 = c2 = 0;
 
@@ -993,13 +994,24 @@ void yed_buff_delete_selection(yed_buffer *buff) {
             yed_buff_delete_line(buff, r1);
         }
     } else if (r1 == r2) {
-        for (i = c1; i < c2; i += 1) {
+        line1 = yed_buff_get_line(buff, r1);
+        ctmp = c1;
+        while (ctmp < c2) {
+            g     = yed_line_col_to_glyph(line1, c1);
+            width = yed_get_glyph_width(*g);
             yed_delete_from_line(buff, r1, c1);
+            ctmp += width;
         }
     } else {
         line1 = yed_buff_get_line(buff, r1);
         ASSERT(line1, "didn't get line1 in yed_buff_delete_selection()");
-        n = line1->visual_width - c1 + 1;
+        n = 0;
+        while (c1 <= line1->visual_width) {
+            g      = yed_line_col_to_glyph(line1, c1);
+            width  = yed_get_glyph_width(*g);
+            c1    += width;
+            n     += 1;
+        }
         for (i = 0; i < n; i += 1) {
             yed_pop_from_line(buff, r1);
         }
@@ -1008,13 +1020,11 @@ void yed_buff_delete_selection(yed_buffer *buff) {
         }
         line2 = yed_buff_get_line(buff, r1 + 1);
         ASSERT(line2, "didn't get line2 in yed_buff_delete_selection()");
-        n = line2->visual_width - c2 + 1;
-        for (i = 0; i < n; i += 1) {
-            g = yed_line_col_to_glyph(line2, c2 + i);
+        ctmp = c2;
+        while (ctmp <= line2->visual_width) {
+            g = yed_line_col_to_glyph(line2, ctmp);
             yed_append_to_line(buff, r1, *g);
-        }
-        for (i = c2 - 1; i < n; i += 1) {
-            yed_delete_from_line(buff, r1 + 1, 1);
+            ctmp += yed_get_glyph_width(*g);
         }
         yed_buff_delete_line(buff, r1 + 1);
     }

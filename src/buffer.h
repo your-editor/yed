@@ -133,4 +133,15 @@ void yed_update_line_visual_widths(void);
          (void*)it < ((array).chars.data + ((array).chars.used * (array).chars.elem_size)); \
          it = ((void*)it) + yed_get_glyph_len(*it))
 
+/*
+ * NOTE: This is an O(n^2) traversal, so avoid if possible.
+ */
+#define yed_line_glyph_rtraverse(array, it)                                               \
+    for (it = yed_line_last_glyph(&(array));                                              \
+         (it) != NULL && (void*)it >= (array).chars.data;                                 \
+         it = ((((void*)it) - (array).chars.data - 1) >= 0                                \
+                 ? yed_line_col_to_glyph(&(array),                                        \
+                     yed_line_idx_to_col(&(array), ((void*)it) - (array).chars.data - 1)) \
+                 : NULL))
+
 #endif

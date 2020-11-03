@@ -3405,11 +3405,12 @@ void yed_replace_current_search_take_key(int key) {
 }
 
 void replace_add_line(yed_buffer *buff, int row, int len) {
-    yed_line *line,
-             *save_line,
-             *working_line;
-    int       i, j;
-    array_t   markers;
+    yed_line  *line,
+              *save_line,
+              *working_line;
+    int        idx, col, j;
+    array_t    markers;
+    yed_glyph *git;
 
     line      = yed_buff_get_line(buff, row);
     markers   = array_make(int);
@@ -3418,15 +3419,16 @@ void replace_add_line(yed_buffer *buff, int row, int len) {
     array_push(ys->replace_save_lines, save_line);
 
     while (1) {
-        for (i = 1; i + len - 1 <= array_len(line->chars); i += 1) {
-            if (strncmp(array_data(line->chars) + i - 1,
-                        ys->current_search, len) == 0) {
-
-                array_push(markers, i);
+        yed_line_glyph_traverse(*line, git) {
+            if (strncmp(&git->c, ys->current_search, len) == 0) {
+                idx = ((void*)git - line->chars.data);
+                col = yed_line_idx_to_col(line, idx);
+                array_push(markers, col);
                 ys->replace_count += 1;
 
+
                 for (j = 0; j < len; j += 1) {
-                    yed_delete_from_line(buff, row, i);
+                    yed_delete_from_line(buff, row, col);
                 }
 
                 goto cont;
