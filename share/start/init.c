@@ -19,14 +19,16 @@
  *     Undo:                                          ctrl-u
  *     Redo:                                          ctrl-r
  *     Search for and jump to a string in the buffer: ctrl-f
+ *     Jump to the next match in the buffer:          ctrl-n
+ *     Jump to the previous match in the buffer:      ctrl-p
  *     Write the buffer to disk:                      ctrl-w
- *     Run a command:                                 ctrl-p
+ *     Run a command:                                 ctrl-y
  *     Quit:                                          run the command 'quit'
  */
 
 /*
  * Let's get familiar with running a command in yed.
- * To access the command prompt, use the default keybinding ctrl-p.
+ * To access the command prompt, use the default keybinding ctrl-y.
  * A colon (:) should appear at the bottom of the screen (the command line).
  *
  * Try typing "style" into the command prompt and hit ENTER.
