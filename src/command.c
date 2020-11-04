@@ -2242,6 +2242,11 @@ void yed_default_command_insert(int n_args, char **args) {
 
     event.kind = EVENT_BUFFER_POST_INSERT;
     yed_trigger_event(&event);
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
 }
 
 void yed_default_command_simple_insert_string(int n_args, char **args) {
@@ -2317,6 +2322,11 @@ void yed_default_command_simple_insert_string(int n_args, char **args) {
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
 }
 
 void yed_default_command_delete_back(int n_args, char **args) {
@@ -2423,6 +2433,11 @@ void yed_default_command_delete_back(int n_args, char **args) {
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
 }
 
 void yed_default_command_delete_forward(int n_args, char **args) {
@@ -2519,6 +2534,11 @@ void yed_default_command_delete_forward(int n_args, char **args) {
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
 }
 
 void yed_default_command_delete_line(int n_args, char **args) {
@@ -2590,6 +2610,11 @@ void yed_default_command_delete_line(int n_args, char **args) {
 
     event.kind = EVENT_BUFFER_POST_MOD;
     yed_trigger_event(&event);
+
+    if (ys->current_search) {
+        ys->current_search = NULL;
+        frame->dirty = 1;
+    }
 }
 
 void yed_default_command_write_buffer(int n_args, char **args) {
