@@ -455,6 +455,7 @@ static void vimish_do_till_bw(int key, int stop_before) {
                                         f->cursor_line);
             break;
         }
+        if (col == 1) { break; } /* Didn't find it. Prevent endless loop. */
         col = yed_line_idx_to_col(line, yed_line_col_to_idx(line, col - 1));
     }
 
