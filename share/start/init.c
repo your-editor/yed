@@ -3,7 +3,7 @@
  * This file is meant to guide you through the process of using yed and
  * creating/managing your own yed configuration.
  *
- * If you need to quit, press ctrl-p, type "quit", and hit ENTER.
+ * If you need to quit, press ctrl-y, type "quit", and hit ENTER.
  *
  * Right now, you are using yed without any configuration or plugins.
  * To navigate and edit this file in yed's basic state, use the
