@@ -52,6 +52,7 @@ mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
 echo "Installed 'libyed.so':           ${lib_dir}"
 
 patch_offset=$(strings -t d ${lib_dir}/libyed.so | grep qrsnhyg_cyht_qve | awk '{ print $1; }')
+dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc status=none || exit 1
 dd if=<(printf "${plug_dir}") of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc status=none || exit 1
 echo "    patched default plugin path"
 
