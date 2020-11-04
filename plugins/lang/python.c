@@ -38,7 +38,6 @@ LOG_EXIT();
 
 void unload(yed_plugin *self) {
     YEXE("plugin-unload", "lang/syntax/python");
-    yed_delete_ft("Python");
 }
 
 void maybe_change_ft(yed_buffer *buff) {

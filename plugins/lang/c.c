@@ -38,7 +38,6 @@ LOG_EXIT();
 
 void unload(yed_plugin *self) {
     YEXE("plugin-unload", "lang/syntax/c");
-    yed_delete_ft("C/C++");
 }
 
 void maybe_change_ft(yed_buffer *buff) {

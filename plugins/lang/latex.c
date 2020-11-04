@@ -40,7 +40,6 @@ LOG_EXIT();
 void unload(yed_plugin *self) {
     YEXE("plugin-unload", "lang/tools/latex");
     YEXE("plugin-unload", "lang/syntax/latex");
-    yed_delete_ft("LaTeX");
 }
 
 void maybe_change_ft(yed_buffer *buff) {
