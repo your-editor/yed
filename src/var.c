@@ -8,6 +8,7 @@ void yed_set_default_vars(void) {
     yed_set_var("ctrl-h-is-backspace",       "yes");
     yed_set_var("buffer-load-mode",          "map");
     yed_set_var("bracketed-paste-mode",      "on");
+    yed_set_var("enable-search-cursor-move", "yes");
 }
 
 void yed_set_var(char *var, char *val) {
