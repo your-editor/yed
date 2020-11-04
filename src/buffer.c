@@ -551,7 +551,7 @@ int yed_buff_n_lines(yed_buffer *buff) {
 
 int yed_line_idx_to_col(yed_line *line, int idx) {
     yed_glyph *g;
-    int        i, col, len;
+    int        i, col, len, n_bytes;
 
     len = array_len(line->chars);
 
@@ -562,9 +562,13 @@ int yed_line_idx_to_col(yed_line *line, int idx) {
 
     col = 1;
     for (i = 0; i < idx && i < len;) {
-        g    = array_item(line->chars, i);
+        g       = array_item(line->chars, i);
+        n_bytes = yed_get_glyph_len(*g);
+
+        if (i + n_bytes > idx) { break; }
+
         col += yed_get_glyph_width(*g);
-        i   += yed_get_glyph_len(*g);
+        i   += n_bytes;
     }
 
     return col;
