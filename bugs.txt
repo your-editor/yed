@@ -1,5 +1,1 @@
-- replace-current-search is broken for buffers with multi-column glyphs
-- deleting selected ranges (I guess not line ranges) with multi-col chars is busted
-    - yanking seems to work
-    - try deleting the whitespace range before the word 'foozle'
-		foozle
+
