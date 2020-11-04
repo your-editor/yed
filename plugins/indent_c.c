@@ -25,20 +25,7 @@ int yed_plugin_boot(yed_plugin *self) {
     return 0;
 }
 
-static int get_tabw(void) {
-    char *tabw_str;
-    int   tabw;
-
-    tabw_str = yed_get_var("tab-width");
-
-    if (tabw_str) {
-        sscanf(tabw_str, "%d", &tabw);
-    } else {
-        tabw = 4;
-    }
-
-    return tabw;
-}
+static int get_tabw(void) { return ys->tabw; }
 
 static void do_indent(yed_frame *frame) {
     yed_line  *prev_line;
