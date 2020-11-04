@@ -14,6 +14,7 @@ void align(int n_args, char **args) {
     char       *pattern;
     int         pattern_len;
     int         save_col, r1, c1, r2, c2, row, col, max_col, i;
+    yed_glyph  *git;
     char       *line_data;
     yed_line   *line;
 
@@ -53,11 +54,11 @@ void align(int n_args, char **args) {
         line = yed_buff_get_line(buff, row);
         array_zero_term(line->chars);
 
-        for (col = 1; col <= line->visual_width; col += 1) {
-            line_data = array_data(line->chars) + col - 1;
+        yed_line_glyph_traverse(*line, git) {
+            line_data = &git->c;
             if (strncmp(line_data, pattern, pattern_len) == 0) {
-                max_col  = MAX(max_col, col);
-                col     += pattern_len;
+                col     = yed_line_idx_to_col(line, ((void*)git) - line->chars.data);
+                max_col = MAX(max_col, col);
                 break;
             }
         }
@@ -71,9 +72,10 @@ void align(int n_args, char **args) {
         for (row = r1; row <= r2; row += 1) {
             line = yed_buff_get_line(buff, row);
 
-            for (col = 1; col <= line->visual_width; col += 1) {
-                line_data = array_data(line->chars) + col - 1;
+            yed_line_glyph_traverse(*line, git) {
+                line_data = &git->c;
                 if (strncmp(line_data, pattern, pattern_len) == 0) {
+                    col = yed_line_idx_to_col(line, ((void*)git) - line->chars.data);
                     for (i = 0; i < max_col - col; i += 1) {
                         yed_insert_into_line(buff, row, col, G(' '));
                     }
