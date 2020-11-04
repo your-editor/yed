@@ -16,12 +16,19 @@ int yed_make_ft(char *name) {
 }
 
 void yed_delete_ft(char *name) {
-    int ft;
+    int                                          ft;
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t) bit;
 
     ft = yed_get_ft(name);
 
     if (ft == FT_ERR_NOT_FOUND) {
         return;
+    }
+
+    tree_traverse(ys->buffers, bit) {
+        if (tree_it_val(bit)->ft == ft) {
+            tree_it_val(bit)->ft = FT_UNKNOWN;
+        }
     }
 
     free(*(char**)array_item(ys->ft_array, ft));

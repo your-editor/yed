@@ -12,7 +12,7 @@ int yed_plugin_boot(yed_plugin *self) {
 LOG_FN_ENTER();
     yed_plugin_set_unload_fn(self, unload);
 
-    if (yed_make_ft("Python") == FT_ERR_TAKEN) {
+    if (yed_plugin_make_ft(self, "Python") == FT_ERR_TAKEN) {
         yed_cerr("lang/python: unable to create file type name");
         LOG_EXIT();
         return 1;

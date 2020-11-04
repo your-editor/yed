@@ -134,6 +134,7 @@ int yed_load_plugin(char *plug_name) {
     plug->added_key_sequences  = array_make(int);
     plug->added_event_handlers = array_make(yed_event_handler);
     plug->added_styles         = array_make(char*);
+    plug->added_fts            = array_make(char*);
 
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
@@ -144,6 +145,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_key_sequences);
         array_free(plug->added_event_handlers);
         array_free(plug->added_styles);
+        array_free(plug->added_fts);
         free(plug);
         return YED_PLUG_NO_BOOT;
     }
@@ -159,6 +161,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_key_sequences);
         array_free(plug->added_event_handlers);
         array_free(plug->added_styles);
+        array_free(plug->added_fts);
         free(plug);
         return YED_PLUG_BOOT_FAIL;
     }
@@ -171,7 +174,7 @@ int yed_load_plugin(char *plug_name) {
 void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
             yed_command)          cmd_it;
-    char                        **cmd_name_it, **style_name_it;
+    char                        **cmd_name_it, **style_name_it, **ft_name_it;
     int                          *key_it;
     yed_event_handler            *handler_it;
 
@@ -210,6 +213,11 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
         yed_remove_style(*style_name_it);
     }
     array_free(plug->added_styles);
+
+    array_traverse(plug->added_fts, ft_name_it) {
+        yed_delete_ft(*ft_name_it);
+    }
+    array_free(plug->added_fts);
 }
 
 int yed_unload_plugin(char *plug_name) {
@@ -378,6 +386,17 @@ void yed_plugin_set_style(yed_plugin *plug, char *name, yed_style *style) {
     name_dup = strdup(name);
     yed_set_style(name, style);
     array_push(plug->added_styles, name_dup);
+}
+
+int yed_plugin_make_ft(yed_plugin *plug, const char *ft_name) {
+    char *name_dup;
+    int   result;
+
+    name_dup = strdup(ft_name);
+    result = yed_make_ft((char*)ft_name);
+    array_push(plug->added_fts, name_dup);
+
+    return result;
 }
 
 void yed_add_plugin_dir(char *s) {
