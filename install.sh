@@ -14,20 +14,6 @@ if ! [ -f _yed ] || ! [ -f libyed.so ]; then
     exit 1
 fi
 
-if pgrep yed > /dev/null 2>&1; then
-    echo "install.sh: [!] It appears that yed is currently running."
-    echo "                Installing will crash existing instances."
-    read -r -p "${1:-                Install anyway? [y/N]} " response
-    case "$response" in
-        [yY][eE][sS]|[yY])
-            ;;
-        *)
-            echo "                Install CANCELLLED."
-            exit 1
-            ;;
-    esac
-fi
-
 source install.options
 
 mkdir -p ${prefix} || exit 1
@@ -57,10 +43,12 @@ if [ "$cur_run_path" != "${lib_dir}" ]; then
     fi
 fi
 
-cp -f _yed ${bin_dir}/yed || exit 1
+cp _yed ${bin_dir}/yed.new || exit 1
+mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
 echo "Installed 'yed':                 ${bin_dir}"
 
-cp -f libyed.so ${lib_dir} || exit 1
+cp libyed.so ${lib_dir}/libyed.so.new || exit 1
+mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
 echo "Installed 'libyed.so':           ${lib_dir}"
 
 patch_offset=$(strings -t d ${lib_dir}/libyed.so | grep qrsnhyg_cyht_qve | awk '{ print $1; }')
@@ -81,13 +69,14 @@ mkdir -p ${plug_dir} || exit 1
 
 for plug in $(find plugins -name "*.so" | grep -v "dSYM"); do
     # Don't install example init config.
-    if [ "$(basename $plug)" = "init.so" ]; then
+    if [ "$(basename ${plug})" = "init.so" ]; then
         continue
     fi
 
     dst_dir="${plug_dir}/$(dirname "${plug#plugins/}")"
     mkdir -p ${dst_dir} || exit 1
-    cp -f ${plug} ${dst_dir} || exit 1
+    cp ${plug} ${dst_dir}/$(basename ${plug}).new || exit 1
+    mv ${dst_dir}/$(basename ${plug}).new ${dst_dir}/$(basename ${plug}) || exit 1
 done
 echo "Installed plugins:               ${plug_dir}"
 
