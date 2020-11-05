@@ -15,8 +15,10 @@ int _yed_get_mbyte_width(yed_glyph g);
     (unlikely((g).c == '\t')            \
         ? ys->tabw                      \
         : (likely((g).u_c <= 127)       \
-            ? 1                         \
-            : _yed_get_mbyte_width(g))) \
+            ? (likely(isprint((g).c))   \
+                ? 1                     \
+                : 2)                    \
+            : _yed_get_mbyte_width(g)))
 
 /*
  * This is what the length table would look like:

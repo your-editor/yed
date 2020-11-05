@@ -368,9 +368,26 @@ void yed_undraw_frame(yed_frame *frame) {
     yed_set_cursor(x, y);
 }
 
+char _get_nprint_char(unsigned char nprint) {
+    char c;
+
+    if (nprint <= 0x1F) {
+        c = nprint | 0x40;
+        goto out;
+    }
+
+    switch (nprint) {
+        case 0x7F: c = '?'; break;
+    }
+
+out:
+    return c;
+}
+
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
     yed_attrs  cur_attr, base_attr, sel_attr, tmp_attr, *attr_it;
-    int        col, n_col, first_idx, first_col, width_skip, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible;
+    int        col, n_col, first_idx, first_col, width_skip, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible, nprint_glyph_pos;
+    char       nprint_chars[2] = { '^', '?' };
     char      *cell, *bytes, *run_start;
     yed_event  event;
 
@@ -499,6 +516,32 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
                     append_n_to_output_buff(" ", 1);
                 }
                 col_off += 1;
+            }
+
+            /* Skip it so it's not in the next run. */
+            bytes += n_bytes;
+
+            NEXT_RUN();
+        } else if (n_bytes == 1 && !isprint(*bytes)) {
+            DUMP_RUN();
+
+            nprint_chars[1] = _get_nprint_char(*(unsigned char*)bytes);
+
+            nprint_glyph_pos = 0;
+
+            for (i = width_skip; i < width && col_off < n_col; i += 1) {
+                cell = FRAME_CELL(frame, y_offset, col_off);
+                if (!*cell) {
+                    tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                    if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+                        yed_set_attr(tmp_attr);
+                        cur_attr = tmp_attr;
+                    }
+                    yed_set_cursor(frame->left + col_off, frame->top + y_offset);
+                    append_n_to_output_buff(nprint_chars + nprint_glyph_pos, 1);
+                }
+                col_off          += 1;
+                nprint_glyph_pos += 1;
             }
 
             /* Skip it so it's not in the next run. */
