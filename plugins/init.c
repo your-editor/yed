@@ -8,7 +8,7 @@ int yed_plugin_boot(yed_plugin *self) {
     char *plugins[] = {
         "yedrc",
         "vimish",
-        "brace_hl", "tag_hl", "cursor_word_hl", "log_hl",
+        "brace_hl", "cursor_word_hl", "log_hl",
         "lang/c", "lang/sh", "lang/latex", "lang/python", "lang/yedrc", "lang/jgraph", "lang/glsl",
         "indent_c", "comment", "align",
         "autotrim", "completer",
