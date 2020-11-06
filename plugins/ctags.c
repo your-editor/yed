@@ -236,6 +236,8 @@ void ctags_find_filter(void) {
 
     yed_buff_clear_no_undo(find_buff);
 
+    if (strlen(tag_start) == 0) { return; }
+
     /* Try with binary search flag first. */
     sprintf(cmd_buff, "look -b '%s' tags 2>/dev/null", tag_start);
     stream = popen(cmd_buff, "r");
@@ -290,7 +292,9 @@ void ctags_find_filter(void) {
     }
 }
 
-int ctags_find_start(void) {
+int ctags_find_start(char *start) {
+    int i;
+
     ys->interactive_command = "ctags-find";
     ctags_find_set_prompt("(ctags-find) ", NULL);
     ctags_find_make_frame();
@@ -299,6 +303,13 @@ int ctags_find_start(void) {
     }
     yed_frame_set_buff(frame, find_buff);
     yed_clear_cmd_buff();
+
+    if (start != NULL) {
+        for (i = 0; i < strlen(start); i += 1) {
+            yed_cmd_buff_push(start[i]);
+        }
+    }
+
     ctags_find_filter();
 
     return 1;
@@ -307,12 +318,10 @@ int ctags_find_start(void) {
 void ctags_find_take_key(int key) {
     if (key == CTRL_C) {
         ys->interactive_command = NULL;
-        ys->current_search      = NULL;
         yed_clear_cmd_buff();
         ctags_find_cleanup();
     } else if (key == ENTER) {
         ys->interactive_command = NULL;
-        ys->current_search      = NULL;
         frame->dirty            = 1;
         yed_clear_cmd_buff();
         if (yed_buff_n_lines(find_buff) == 1) {
@@ -343,9 +352,18 @@ void ctags_find(int n_args, char **args) {
             return;
         }
 
-        if (!ctags_find_start()) {
+        if (!ctags_find_start(n_args ? args[0] : NULL)) {
             ys->interactive_command = NULL;
             yed_cerr("error opening tags file (have you run 'ctags-gen'?)");
+        }
+
+        if (n_args) {
+            ys->interactive_command = NULL;
+            frame->dirty            = 1;
+            yed_clear_cmd_buff();
+            if (yed_buff_n_lines(find_buff) == 1) {
+                ctag_find_select();
+            }
         }
     } else {
         sscanf(args[0], "%d", &key);
