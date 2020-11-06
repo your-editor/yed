@@ -1,7 +1,6 @@
 #include <yed/plugin.h>
 
 static yed_frame  *frame;
-static yed_buffer *list_buff;
 static yed_buffer *find_buff;
 static char        prompt_buff[512];
 
@@ -45,9 +44,6 @@ void ctags_find_frame_delete_handler(yed_event *event) {
         if (find_buff) {
             yed_free_buffer(find_buff);
         }
-        if (list_buff) {
-            yed_free_buffer(list_buff);
-        }
 
         frame = NULL;
     }
@@ -56,17 +52,12 @@ void ctags_find_frame_delete_handler(yed_event *event) {
 void ctags_find_buffer_delete_handler(yed_event *event) {
     if (event->buffer == find_buff) {
         find_buff = NULL;
-    } else if (event->buffer == list_buff) {
-        list_buff = NULL;
     }
 }
 
 void ctags_find_cleanup(void) {
     if (frame) {
         yed_delete_frame(frame);
-    }
-    if (list_buff) {
-        yed_free_buffer(list_buff);
     }
     if (find_buff) {
         yed_free_buffer(find_buff);
@@ -210,20 +201,6 @@ void ctags_find_set_prompt(char *p, char *attr) {
 }
 
 int ctags_find_make_buffers(void) {
-    list_buff = yed_get_buffer("*ctags-list");
-
-    if (!list_buff) {
-        list_buff = yed_create_buffer("*ctags-list");
-        list_buff->flags |= BUFF_RD_ONLY;
-    } else {
-        yed_buff_clear_no_undo(list_buff);
-    }
-
-    if (yed_fill_buff_from_file(list_buff, "tags")) {
-        ctags_find_cleanup();
-        return 0;
-    }
-
     if (!find_buff) {
         find_buff = yed_create_buffer("*ctags-find-list");
         find_buff->flags |= BUFF_RD_ONLY;
@@ -242,25 +219,46 @@ void ctags_find_make_frame(void) {
 
 void ctags_find_filter(void) {
     char      *tag_start;
-    int        len;
+    char       cmd_buff[1024];
+    FILE      *stream;
+    int        status;
+    int        exit_code;
     yed_line  *line;
     yed_glyph *git;
     int        max_tag_len;
     int        tag_len;
     int        row;
-    yed_line  *new_line;
     int        col;
     int        i;
 
     array_zero_term(ys->cmd_buff);
     tag_start = array_data(ys->cmd_buff);
-    len       = strlen(tag_start);
 
     yed_buff_clear_no_undo(find_buff);
-    yed_buff_delete_line_no_undo(find_buff, 1);
 
+    /* Try with binary search flag first. */
+    sprintf(cmd_buff, "look -b '%s' tags 2>/dev/null", tag_start);
+    stream = popen(cmd_buff, "r");
+    if (stream == NULL) { return; }
+    status = yed_fill_buff_from_file_stream(find_buff, stream);
+    if (status != BUFF_FILL_STATUS_SUCCESS) { return; }
+    exit_code = pclose(stream);
+
+    if (exit_code) {
+        /* Failed.. so try without the flag. */
+        sprintf(cmd_buff, "look '%s' tags 2>/dev/null", tag_start);
+        stream = popen(cmd_buff, "r");
+        if (stream == NULL) { return; }
+        status = yed_fill_buff_from_file_stream(find_buff, stream);
+        if (status != BUFF_FILL_STATUS_SUCCESS) { return; }
+        exit_code = pclose(stream);
+        if (exit_code) { return; }
+    }
+
+
+    /* Do some formatting. */
     max_tag_len = 0;
-    bucket_array_traverse(list_buff->lines, line) {
+    bucket_array_traverse(find_buff->lines, line) {
         tag_len = 0;
         yed_line_glyph_traverse(*line, git) {
             if (git->c == '\t') { break; }
@@ -271,34 +269,24 @@ void ctags_find_filter(void) {
         }
     }
 
-    bucket_array_traverse(list_buff->lines, line) {
-        if (array_len(line->chars) > 0
-        &&  yed_line_col_to_glyph(line, 1)->c == '!') {
-            continue;
-        }
-
+    row = 1;
+    bucket_array_traverse(find_buff->lines, line) {
         array_zero_term(line->chars);
 
-        if (strncmp(line->chars.data, tag_start, len) == 0) {
-            yed_buffer_add_line_no_undo(find_buff);
-            row = yed_buff_n_lines(find_buff);
-            yed_buff_set_line_no_undo(find_buff, row, line);
-            new_line = yed_buff_get_line(find_buff, row);
-            for (col = 1; col <= new_line->visual_width;) {
-                git = yed_line_col_to_glyph(new_line, col);
-                if (git->c == '\t') {
-                    for (i = 0; i < max_tag_len - col + 1; i += 1) {
-                        yed_insert_into_line_no_undo(find_buff, row, col, G(' '));
-                    }
-                    break;
-                }
-                col += yed_get_glyph_width(*git);
-            }
-        }
-    }
+        line = yed_buff_get_line(find_buff, row);
 
-    if (yed_buff_n_lines(find_buff) == 0) {
-        yed_buffer_add_line_no_undo(find_buff);
+        for (col = 1; col <= line->visual_width;) {
+            git = yed_line_col_to_glyph(line, col);
+            if (git->c == '\t') {
+                for (i = 0; i < max_tag_len - col + 1; i += 1) {
+                    yed_insert_into_line_no_undo(find_buff, row, col, G(' '));
+                }
+                break;
+            }
+            col += yed_get_glyph_width(*git);
+        }
+
+        row += 1;
     }
 }
 
@@ -344,9 +332,17 @@ void ctags_find_take_key(int key) {
 }
 
 void ctags_find(int n_args, char **args) {
-    int key;
+    FILE *check;
+    int   key;
 
     if (!ys->interactive_command) {
+        if ((check = fopen("tags", "r"))) {
+            fclose(check);
+        } else {
+            yed_cerr("error opening tags file (have you run 'ctags-gen'?)");
+            return;
+        }
+
         if (!ctags_find_start()) {
             ys->interactive_command = NULL;
             yed_cerr("error opening tags file (have you run 'ctags-gen'?)");
@@ -358,14 +354,19 @@ void ctags_find(int n_args, char **args) {
 }
 
 void ctags_jump_to_definition(int n_args, char **args) {
+    FILE       *check;
     char       *word;
     int         word_len;
-    yed_line   *line;
+    char        cmd_buff[1024];
+    int         output_len;
+    int         exit_code;
     char       *text;
     char        path[4096];
     int         row;
 
-    if (!ctags_find_make_buffers()) {
+    if ((check = fopen("tags", "r"))) {
+        fclose(check);
+    } else {
         yed_cerr("error opening tags file (have you run 'ctags-gen'?)");
         goto out;
     }
@@ -377,27 +378,54 @@ void ctags_jump_to_definition(int n_args, char **args) {
 
     word_len = strlen(word);
 
-    bucket_array_traverse(list_buff->lines, line) {
-        array_zero_term(line->chars);
-        text = array_data(line->chars);
-
-        if (array_len(line->chars) <= word_len) { continue; }
-        if (strncmp(text, word, word_len))      { continue; }
-        if (*(char*)(text + word_len) != '\t')  { continue; }
-
-        if (!ctag_parse_path_and_line(text, path, &row)) {
-            yed_cerr("error parsing location from tag line");
-            goto out;
+    snprintf(cmd_buff, sizeof(cmd_buff),
+             "look -b '%s' tags 2>&1", word);
+    text = yed_run_subproc(cmd_buff, &output_len, &exit_code);
+    if (text) {
+        if (exit_code == 0) {
+            goto select;
         }
 
-        YEXE("buffer", path);
-        yed_set_cursor_within_frame(ys->active_frame, 1, row);
+        if (strlen(text) != 0) {
+            /* Failed because -b not supported. Try without. */
+            free(text);
+        } else {
+            yed_cerr("tag '%s' not found", word);
+            goto out;
+        }
+    }
 
+    snprintf(cmd_buff, sizeof(cmd_buff),
+             "look '%s' tags 2>/dev/null", word);
+    text = yed_run_subproc(cmd_buff, &output_len, &exit_code);
+    if (text) {
+        if (exit_code == 0) {
+            goto select;
+        }
+        yed_cerr("tag '%s' not found", word);
         goto out;
     }
 
-    yed_cerr("not found");
+    yed_cerr("failed to run 'look'");
+    goto out;
+
+select:
+    if (strlen(text) <= word_len
+    ||  strncmp(text, word, word_len)
+    ||  *(char*)(text + word_len) != '\t')  {
+
+        yed_cerr("tag '%s' not found", word);
+        goto out;
+    }
+
+    if (!ctag_parse_path_and_line(text, path, &row)) {
+        yed_cerr("error parsing location from tag line");
+        goto out;
+    }
+
+    YEXE("buffer", path);
+    yed_set_cursor_within_frame(ys->active_frame, 1, row);
 
 out:
-    ctags_find_cleanup();
+    if (text) { free(text); }
 }
