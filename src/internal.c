@@ -127,11 +127,13 @@ void yed_set_small_message(char *msg) {
 }
 
 static void write_status_bar(int key) {
-    int   sav_x, sav_y;
-    char *path;
-    char *status_line_var;
-    char  right_side_buff[256];
-    char *ft_name;
+    int         sav_x, sav_y;
+    char       *path;
+    char       *status_line_var;
+    char        right_side_buff[256];
+    char       *ft_name;
+    int         i;
+    yed_frame **fit;
 
     (void)key; /* We don't show this on the status bar any more. */
 
@@ -149,11 +151,29 @@ static void write_status_bar(int key) {
     right_side_buff[0] = 0;
 
     if (ys->active_frame) {
+        yed_set_cursor(1, ys->term_rows - 1);
+        append_n_to_output_buff(" ", 1);
+
+        i = 0;
+        array_traverse(ys->frames, fit) {
+            if (*fit == ys->active_frame) {
+                append_n_to_output_buff("[", 1);
+                append_int_to_output_buff(i);
+                append_n_to_output_buff("]", 2);
+            } else {
+                append_n_to_output_buff(" ", 1);
+                append_int_to_output_buff(i);
+                append_n_to_output_buff(" ", 1);
+            }
+            i += 1;
+        }
+        append_n_to_output_buff(" ", 1);
+
         ft_name = "";
         if (ys->active_frame->buffer) {
-            yed_set_cursor(1, ys->term_rows - 1);
             path     = ys->active_frame->buffer->name;
             append_to_output_buff(path);
+
             if (ys->active_frame->buffer->flags & BUFF_SPECIAL) {
                 ft_name = "<special>";
             } else {
