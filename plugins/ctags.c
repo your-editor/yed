@@ -36,6 +36,10 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "ctags-find", ctags_find);
     yed_plugin_set_command(self, "ctags-jump-to-definition", ctags_jump_to_definition);
 
+    if (!yed_get_var("ctags-formatting-limit")) {
+        yed_set_var("ctags-formatting-limit", "10000");
+    }
+
     return 0;
 }
 
@@ -230,6 +234,8 @@ void ctags_find_filter(void) {
     int        exit_code;
     yed_line  *line;
     yed_glyph *git;
+    int        formatting_limit;
+    char      *ctags_formatting_limit;
     int        max_tag_len;
     int        tag_len;
     int        row;
@@ -262,7 +268,15 @@ void ctags_find_filter(void) {
         if (exit_code) { return; }
     }
 
-    if (yed_var_is_truthy("ctags-skip-formatting")) { goto out; }
+    formatting_limit = INT32_MAX;
+    if ((ctags_formatting_limit = yed_get_var("ctags-formatting-limit"))) {
+        sscanf(ctags_formatting_limit, "%d", &formatting_limit);
+        if (formatting_limit < 0) {
+            formatting_limit = INT32_MAX;
+        }
+    }
+
+    if (yed_buff_n_lines(find_buff) > formatting_limit) { goto out; }
 
     /* Do some formatting. */
     max_tag_len = 0;
