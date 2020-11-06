@@ -206,6 +206,7 @@ void yed_service_reload(void) {
     char                                         *key,
                                                  *val;
     yed_style                                    *style;
+    char                                        **ft_name_it;
 
     tree_reset_fns(yed_style_name_t,   yed_style_ptr_t,       ys->styles,           strcmp);
     tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);
@@ -220,6 +221,11 @@ void yed_service_reload(void) {
     tree_traverse(ys->plugins, plug_it) {
         yed_plugin_uninstall_features(tree_it_val(plug_it));
     }
+
+    array_traverse(ys->ft_array, ft_name_it) {
+        free(ft_name_it);
+    }
+    array_clear(ys->ft_array);
 
     /*
      * Clear out all of the old vars.
