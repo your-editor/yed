@@ -98,6 +98,9 @@ void ctag_find_select(void) {
 
     if (!ctag_parse_path_and_line(line->chars.data, path, &row)) {
         ctags_find_cleanup();
+LOG_CMD_ENTER("ctags-find");
+        yed_cerr("unable to parse tag location (if you didn't use 'ctags-gen', make sure ctags is run with the -n option)");
+LOG_EXIT();
         return;
     }
 
@@ -122,6 +125,8 @@ void ctags_find_key_pressed_handler(yed_event *event) {
     }
 
     ctag_find_select();
+
+    event->cancel = 1;
 }
 
 void ctags_find_line_handler(yed_event *event) {
@@ -257,6 +262,7 @@ void ctags_find_filter(void) {
         if (exit_code) { return; }
     }
 
+    if (yed_var_is_truthy("ctags-skip-formatting")) { goto out; }
 
     /* Do some formatting. */
     max_tag_len = 0;
@@ -290,6 +296,8 @@ void ctags_find_filter(void) {
 
         row += 1;
     }
+
+out:;
 }
 
 int ctags_find_start(char *start) {
