@@ -1,7 +1,7 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-char * yed_word_under_cursor(void);
+char * yed_word_under_cursor(void); /* DO free result. */
 
 char * abs_path(char *path, char *buff);
 char * relative_path_if_subtree(char *path, char *buff);

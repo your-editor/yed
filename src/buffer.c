@@ -180,7 +180,12 @@ yed_buffer * yed_get_buffer_by_path(char *path) {
 }
 
 void yed_free_buffer(yed_buffer *buffer) {
-    yed_line *line;
+    yed_event  event;
+    yed_line  *line;
+
+    event.kind   = EVENT_BUFFER_PRE_DELETE;
+    event.buffer = buffer;
+    yed_trigger_event(&event);
 
     yed_frames_remove_buffer(buffer);
 
