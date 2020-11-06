@@ -111,6 +111,9 @@ LOG_EXIT();
     ctags_find_cleanup();
 
     YEXE("buffer", path);
+
+    /* This will help keep the destination near the top of the buffer. */
+    YEXE("cursor-buffer-end");
     yed_set_cursor_within_frame(ys->active_frame, 1, row);
 }
 
@@ -464,6 +467,9 @@ select:
     }
 
     YEXE("buffer", path);
+
+    /* This will help keep the destination near the top of the buffer. */
+    YEXE("cursor-buffer-end");
     yed_set_cursor_within_frame(ys->active_frame, 1, row);
 
 out:
