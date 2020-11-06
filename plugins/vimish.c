@@ -825,10 +825,22 @@ void vimish_write(int n_args, char **args) {
 }
 
 void vimish_quit(int n_args, char **args) {
+    yed_frame *frame;
+
     if (array_len(ys->frames) > 1) {
         YEXE("frame-delete");
     } else {
-        YEXE("quit");
+        if (array_len(ys->frames) == 1) {
+            frame = *(yed_frame**)array_item(ys->frames, 0);
+            if (frame->top == 1 && frame->left == 1 &&
+                frame->height == ys->term_rows - 2 && frame->width == ys->term_cols) {
+                YEXE("quit");
+            } else {
+                YEXE("frame-delete");
+            }
+        } else {
+            YEXE("quit");
+        }
     }
 }
 
