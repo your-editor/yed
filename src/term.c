@@ -185,7 +185,7 @@ void sigwinch_handler(int sig) {
 }
 
 void sigstop_handler(int sig) {
-    struct sigaction act, oact;
+    struct sigaction act;
 
     if (ys->stopped) { return; }
 
@@ -193,7 +193,7 @@ void sigstop_handler(int sig) {
     act.sa_handler = SIG_DFL;
     act.sa_flags = 0;
     sigemptyset (&act.sa_mask);
-    sigaction(SIGTSTP, &act, &oact);
+    sigaction(SIGTSTP, &act, NULL);
 
     /* Stop the writer thread. */
     pthread_mutex_lock(&ys->write_mtx);
@@ -204,13 +204,13 @@ void sigstop_handler(int sig) {
 
     /* Do the real suspend */
     kill(0, SIGTSTP);
-
-    /* Restore our handler. */
-    sigaction(SIGTSTP, &oact, NULL);
 }
 
-void sigstart_handler(int sig) {
+void sigcont_handler(int sig) {
     if (ys->stopped) {
+        /* Restore our SIGTSTP handler. */
+        yed_register_sigstop_handler();
+
         ys->stopped = 0;
         yed_term_enter();
         pthread_mutex_unlock(&ys->write_mtx);
@@ -245,7 +245,7 @@ void yed_register_sigcont_handler(void) {
 
     sigemptyset(&sa.sa_mask);
     sa.sa_flags   = 0;
-    sa.sa_handler = sigstart_handler;
+    sa.sa_handler = sigcont_handler;
     if (sigaction(SIGCONT, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGCONT");
     }
