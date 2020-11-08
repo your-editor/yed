@@ -723,6 +723,10 @@ enter_insert:
             YEXE("select-off");
             break;
 
+        case CTRL_Z:
+            YEXE("suspend");
+            break;
+
         default:
             yed_cerr("[NORMAL] unhandled key %d", key);
     }

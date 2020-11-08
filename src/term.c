@@ -5,10 +5,12 @@ static int yed_term_has_exited;
 int yed_term_enter(void) {
     struct termios raw_term;
 
+    yed_term_has_exited = 0;
+
 /*     printf("[yed] entering raw terminal mode\n"); */
 
     tcgetattr(0, &ys->sav_term);
-    raw_term          = ys->sav_term;
+    raw_term = ys->sav_term;
 
     raw_term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
     /* output modes - disable post processing */
@@ -32,9 +34,13 @@ int yed_term_enter(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
 
     yed_register_sigwinch_handler();
+    yed_register_sigstop_handler();
+    yed_register_sigcont_handler();
 
     printf(TERM_ALT_SCREEN);
     printf(TERM_ENABLE_BRACKETED_PASTE);
+
+    fflush(stdout);
 
     return 0;
 }
@@ -74,9 +80,9 @@ int yed_term_exit(void) {
 
     tcsetattr(0, TCSAFLUSH, &ys->sav_term);
 
-/*     printf("[yed] exited raw terminal mode\n"); */
-
     yed_term_has_exited = 1;
+
+    fflush(stdout);
 
     return 0;
 }
@@ -163,11 +169,52 @@ void yed_set_cursor(int col, int row) {
 }
 
 void sigwinch_handler(int sig) {
+    if (yed_check_for_resize()) {
+        pthread_mutex_lock(&ys->write_mtx);
+        yed_handle_resize();
+        pthread_mutex_unlock(&ys->write_mtx);
+    }
+#if 0
     if (pthread_mutex_trylock(&ys->write_mtx) == 0) {
         if (yed_check_for_resize()) {
             yed_handle_resize();
         }
         pthread_mutex_unlock(&ys->write_mtx);
+    }
+#endif
+}
+
+void sigstop_handler(int sig) {
+    struct sigaction act, oact;
+
+    if (ys->stopped) { return; }
+
+    /* Save the old handlers and install the default action handler. */
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGTSTP, &act, &oact);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    ys->stopped = 1;
+    yed_term_exit();
+
+    /* Do the real suspend */
+    kill(0, SIGTSTP);
+
+    /* Restore our handler. */
+    sigaction(SIGTSTP, &oact, NULL);
+}
+
+void sigstart_handler(int sig) {
+    if (ys->stopped) {
+        ys->stopped = 0;
+        yed_term_enter();
+        pthread_mutex_unlock(&ys->write_mtx);
+        ys->redraw = ys->redraw_cls = 1;
     }
 }
 
@@ -179,6 +226,28 @@ void yed_register_sigwinch_handler(void) {
     sa.sa_handler = sigwinch_handler;
     if (sigaction(SIGWINCH, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGWINCH");
+    }
+}
+
+void yed_register_sigstop_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigstop_handler;
+    if (sigaction(SIGTSTP, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGTSTP");
+    }
+}
+
+void yed_register_sigcont_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigstart_handler;
+    if (sigaction(SIGCONT, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGCONT");
     }
 }
 
@@ -223,7 +292,7 @@ void yed_handle_resize(void) {
         FRAME_RESET_RECT(*frame_it);
     }
 
-    ys->redraw = 1;
+    ys->redraw = ys->redraw_cls = 1;
     yed_clear_screen();
 
     if (af) {
@@ -231,6 +300,6 @@ void yed_handle_resize(void) {
     }
 
     yed_update_frames();
-    yed_draw_command_line();
     write_status_bar(0);
+    yed_draw_command_line();
 }

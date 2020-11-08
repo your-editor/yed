@@ -183,6 +183,7 @@ typedef struct yed_state_t {
                                 *log_buff;
     array_t                      log_name_stack;
     char                        *cur_log_name;
+    int                          clear_cmd_output;
     array_t                      frames;
     yed_frame                   *active_frame,
                                 *prev_active_frame;
@@ -235,6 +236,7 @@ typedef struct yed_state_t {
     int                          doing_bracketed_paste;
     array_t                      bracketed_paste_buff;
     array_t                      ft_array;
+    int                          stopped;
 } yed_state;
 
 extern yed_state *ys;

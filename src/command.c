@@ -136,6 +136,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("unbind",                 unbind);
     SET_DEFAULT_COMMAND("multi",                  multi);
     SET_DEFAULT_COMMAND("if",                     if);
+    SET_DEFAULT_COMMAND("suspend",                suspend);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -188,7 +189,8 @@ void yed_vcprint(char *fmt, va_list args) {
 
     va_copy(args_copy, args);
 
-    should_clear = yed_vlog(fmt, args);
+    should_clear = yed_vlog(fmt, args) || ys->clear_cmd_output;
+    if (should_clear) { ys->clear_cmd_output = 0; }
 
     if (ys->interactive_command) { return; }
 
@@ -244,7 +246,8 @@ void yed_vcerr(char *fmt, va_list args) {
 
     va_copy(args_copy, args);
 
-    should_clear = yed_vlog(fmt, args);
+    should_clear = yed_vlog(fmt, args) || ys->clear_cmd_output;
+    if (should_clear) { ys->clear_cmd_output = 0; }
 
     if (ys->interactive_command) { return; }
 
@@ -321,6 +324,8 @@ void yed_cerr(char *fmt, ...) {
     yed_vcerr(fmt, va);
     va_end(va);
 }
+
+void yed_cprint_clear(void) { ys->clear_cmd_output = 1; }
 
 void yed_cmd_buff_push(char c) {
     array_push(ys->cmd_buff, c);
@@ -3829,6 +3834,14 @@ void yed_default_command_if(int n_args, char **args) {
         }
         free_string_array(split);
     }
+}
+
+void yed_default_command_suspend(int n_args, char **args) {
+    yed_cprint("suspending yed..\n");
+    ys->redraw = ys->redraw_cls = 1;
+    kill(0, SIGTSTP);
+    yed_cprint_clear();
+    yed_cprint("continuing from suspend");
 }
 
 

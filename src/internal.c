@@ -301,6 +301,8 @@ void yed_service_reload(void) {
     yed_reload_plugins();
 
     yed_register_sigwinch_handler();
+    yed_register_sigstop_handler();
+    yed_register_sigcont_handler();
 
     ys->redraw = ys->redraw_cls = 1;
     append_to_output_buff(TERM_CURSOR_HIDE);

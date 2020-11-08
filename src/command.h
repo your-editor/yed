@@ -22,6 +22,7 @@ void yed_append_int_to_cmd_buff(int i);
 
 void yed_cprint(char *fmt, ...);
 void yed_cerr(char *fmt, ...);
+void yed_cprint_clear(void);
 
 void yed_draw_command_line(void);
 void yed_do_command(void);
@@ -108,5 +109,6 @@ DEF_DEFAULT_COMMAND(bind);
 DEF_DEFAULT_COMMAND(unbind);
 DEF_DEFAULT_COMMAND(multi);
 DEF_DEFAULT_COMMAND(if);
+DEF_DEFAULT_COMMAND(suspend);
 
 #endif
