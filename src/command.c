@@ -145,7 +145,7 @@ void yed_clear_cmd_buff(void) {
     ys->cmd_cursor_x = 1;
 
     if (ys->cmd_prompt) {
-        ys->cmd_cursor_x += strlen(ys->cmd_prompt);
+        ys->cmd_cursor_x += yed_get_string_width(ys->cmd_prompt);
     }
 }
 
@@ -161,7 +161,7 @@ void yed_append_to_cmd_buff(char *s) {
 void yed_append_text_to_cmd_buff(char *s) {
     if (s) {
         yed_append_to_cmd_buff(s);
-        ys->cmd_cursor_x += strlen(s);
+        ys->cmd_cursor_x += yed_get_string_width(s);
     }
 }
 
@@ -217,6 +217,11 @@ void yed_vcprint(char *fmt, va_list args) {
     for (i = 0; i < len && cprinted_len < ys->term_cols - 3; i += 1) {
         if (buff[i] == '\n') {
             for (j = 0; j < 4 && cprinted_len < ys->term_cols - 3; j += 1) {
+                array_push(ys->cmd_buff, spc);
+                cprinted_len += 1;
+            }
+        } else if (buff[i] == '\t') {
+            for (j = 0; j < ys->tabw && cprinted_len < ys->term_cols - 3; j += 1) {
                 array_push(ys->cmd_buff, spc);
                 cprinted_len += 1;
             }
@@ -284,6 +289,11 @@ void yed_vcerr(char *fmt, va_list args) {
                 array_push(ys->cmd_buff, spc);
                 cprinted_len += 1;
             }
+        } else if (buff[i] == '\t') {
+            for (j = 0; j < ys->tabw && cprinted_len < ys->term_cols - 3; j += 1) {
+                array_push(ys->cmd_buff, spc);
+                cprinted_len += 1;
+            }
         } else {
             array_push(ys->cmd_buff, buff[i]);
             cprinted_len += 1;
@@ -329,25 +339,42 @@ void yed_cprint_clear(void) { ys->clear_cmd_output = 1; }
 
 void yed_cmd_buff_push(char c) {
     array_push(ys->cmd_buff, c);
-    ys->cmd_cursor_x += 1;
+    ys->cmd_cursor_x += yed_get_glyph_width(G(c));
 }
 
 void yed_cmd_buff_pop(void) {
+    char *c_p;
+
+    c_p = array_last(ys->cmd_buff);
+    ys->cmd_cursor_x -= yed_get_glyph_width(G(*c_p));
     array_pop(ys->cmd_buff);
-    ys->cmd_cursor_x -= 1;
 }
 
 void yed_draw_command_line() {
+    int i;
+    int j;
+
     yed_set_cursor(1, ys->term_rows);
     yed_set_attr(yed_active_style_get_command_line());
     append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
     yed_set_cursor(1, ys->term_rows);
+
     if (ys->interactive_command) {
         if (ys->cmd_prompt) {
             append_to_output_buff(ys->cmd_prompt);
         }
     }
-    append_n_to_output_buff(array_data(ys->cmd_buff), array_len(ys->cmd_buff));
+
+    for (i = 0; i < array_len(ys->cmd_buff); i += 1) {
+        if (*(char*)(array_data(ys->cmd_buff) + i) == '\t') {
+            for (j = 0; j < ys->tabw; j += 1) {
+                append_n_to_output_buff(" ", 1);
+            }
+        } else {
+            append_n_to_output_buff(array_data(ys->cmd_buff) + i, 1);
+        }
+    }
+
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
 }
@@ -3154,6 +3181,8 @@ void yed_find_in_buffer_take_key(int key) {
             if (array_len(ys->cmd_buff)) {
                 yed_cmd_buff_pop();
             }
+        } else if (key == SHIFT_TAB) {
+            yed_cmd_buff_push('\t');
         } else if (!iscntrl(key)) {
             yed_cmd_buff_push(key);
         }

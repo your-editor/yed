@@ -59,3 +59,15 @@ void yed_get_string_info(char *bytes, int len, int *n_glyphs, int *width) {
     *n_glyphs = _n_glyphs;
     *width    = _width;
 }
+
+int yed_get_string_width(const char *s) {
+    int len;
+    int n_glyphs;
+    int width;
+
+    len = strlen(s);
+
+    yed_get_string_info((char*)s, len, &n_glyphs, &width);
+
+    return width;
+}

@@ -14,6 +14,7 @@ void yed_search_line_handler(yed_event *event) {
                *scan;
     int         i, idx, col,
                 search_len,
+                search_width,
                 data_len;
 
     if (!ys->current_search) {
@@ -34,10 +35,11 @@ void yed_search_line_handler(yed_event *event) {
         return;
     }
 
-    buff       = frame->buffer;
-    line       = yed_buff_get_line(buff, event->row);
-    data_len   = array_len(line->chars);
-    search_len = strlen(ys->current_search);
+    buff         = frame->buffer;
+    line         = yed_buff_get_line(buff, event->row);
+    data_len     = array_len(line->chars);
+    search_len   = strlen(ys->current_search);
+    search_width = yed_get_string_width(ys->current_search);
 
     if (!line->visual_width || !search_len)    { return; }
 
@@ -60,7 +62,7 @@ void yed_search_line_handler(yed_event *event) {
                     ? &search_cursor
                     : &search;
 
-        for (i = 0; i < search_len; i += 1) {
+        for (i = 0; i < search_width; i += 1) {
             attr = array_item(event->line_attrs, col + i - 1);
             if (ys->active_style) {
                 yed_combine_attrs(attr, set);
