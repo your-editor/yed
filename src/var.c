@@ -4,7 +4,7 @@ void yed_init_vars(void) {
 }
 
 void yed_set_default_vars(void) {
-    yed_set_var("tab-width",                 "4");
+    yed_set_var("tab-width",                 XSTR(DEFAULT_TABW));
     yed_set_var("ctrl-h-is-backspace",       "yes");
     yed_set_var("buffer-load-mode",          "map");
     yed_set_var("bracketed-paste-mode",      "on");
@@ -80,6 +80,10 @@ int yed_get_tab_width(void) {
 
     if (tabw_var) {
         sscanf(tabw_var, "%d", &tabw);
+
+        if (tabw <= 0) {
+            tabw = DEFAULT_TABW;
+        }
     } else {
         tabw = DEFAULT_TABW;
     }
