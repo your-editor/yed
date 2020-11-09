@@ -220,7 +220,7 @@ void ctags_gen(int n_args, char **args) {
     }
 
     cmd_buff[0] = 0;
-    strcat(cmd_buff, "ctags -n");
+    strcat(cmd_buff, "ctags ");
     for (i = 0; i < n_args; i += 1) {
         strcat(cmd_buff, " ");
         strcat(cmd_buff, args[i]);
