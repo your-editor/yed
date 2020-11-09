@@ -68,25 +68,46 @@ void ctags_find_cleanup(void) {
     }
 }
 
-int ctag_parse_path_and_line(const char *text, char *path_buff, int *row) {
+int ctag_parse_path_and_search(const char *text, char *path_buff, char *search_buff) {
     char *path_start;
-    char *line_start;
+    char *search_start;
 
     if (!(path_start = strchr(text, '\t'))) {
         return 0;
     }
     path_start += 1;
 
-    if (!(line_start = strchr(path_start, '\t'))) {
+    if (!(search_start = strchr(path_start, '\t'))) {
         return 0;
     }
 
-    *line_start = 0;
+    *search_start = 0;
     strcpy(path_buff, path_start);
-    *line_start = '\t';
+    *search_start = '\t';
 
-    if (sscanf(line_start, "%d", row) != 1) {
+    search_start += 1;
+    if (*search_start != '/') {
         return 0;
+    }
+
+    search_start += 1;
+    if (*search_start == '^') {
+        search_start += 1;
+    }
+
+    while (*search_start != '/') {
+        if (*search_start == '\\') {
+            search_start += 1;
+        }
+        *search_buff  = *search_start;
+        search_buff  += 1;
+        search_start += 1;
+    }
+
+    if (*(search_buff - 1) == '$') {
+        *(search_buff - 1) = 0;
+    } else {
+        *search_buff = 0;
     }
 
     return 1;
@@ -95,15 +116,18 @@ int ctag_parse_path_and_line(const char *text, char *path_buff, int *row) {
 void ctag_find_select(void) {
     yed_line *line;
     char      path[4096];
+    char      search[4096];
+    char     *save_cur_search;
     int       row;
+    int       col;
 
     line = yed_buff_get_line(find_buff, frame->cursor_line);
     array_zero_term(line->chars);
 
-    if (!ctag_parse_path_and_line(line->chars.data, path, &row)) {
+    if (!ctag_parse_path_and_search(line->chars.data, path, search)) {
         ctags_find_cleanup();
 LOG_CMD_ENTER("ctags-find");
-        yed_cerr("unable to parse tag location (if you didn't use 'ctags-gen', make sure ctags is run with the -n option)");
+        yed_cerr("unable to parse tag location");
 LOG_EXIT();
         return;
     }
@@ -114,7 +138,18 @@ LOG_EXIT();
 
     /* This will help keep the destination near the top of the buffer. */
     YEXE("cursor-buffer-end");
-    yed_set_cursor_within_frame(ys->active_frame, 1, row);
+
+    save_cur_search = ys->current_search;
+
+    ys->current_search = search;
+    if (yed_find_next(1, 1, &row, &col)) {
+        yed_set_cursor_within_frame(ys->active_frame, col, row);
+    } else {
+        YEXE("cursor-buffer-begin");
+        yed_cerr("could not find pattern from tag file");
+    }
+
+    ys->current_search = save_cur_search;
 }
 
 void ctags_find_key_pressed_handler(yed_event *event) {
@@ -405,7 +440,10 @@ void ctags_jump_to_definition(int n_args, char **args) {
     int         exit_code;
     char       *text;
     char        path[4096];
+    char        search[4096];
+    char       *save_cur_search;
     int         row;
+    int         col;
 
     if ((check = fopen("tags", "r"))) {
         fclose(check);
@@ -461,7 +499,7 @@ select:
         goto out;
     }
 
-    if (!ctag_parse_path_and_line(text, path, &row)) {
+    if (!ctag_parse_path_and_search(text, path, search)) {
         yed_cerr("error parsing location from tag line");
         goto out;
     }
@@ -470,7 +508,18 @@ select:
 
     /* This will help keep the destination near the top of the buffer. */
     YEXE("cursor-buffer-end");
-    yed_set_cursor_within_frame(ys->active_frame, 1, row);
+
+    save_cur_search = ys->current_search;
+
+    ys->current_search = search;
+    if (yed_find_next(1, 1, &row, &col)) {
+        yed_set_cursor_within_frame(ys->active_frame, col, row);
+    } else {
+        YEXE("cursor-buffer-begin");
+        yed_cerr("could not find pattern from tag file");
+    }
+
+    ys->current_search = save_cur_search;
 
 out:
     if (text) { free(text); }
