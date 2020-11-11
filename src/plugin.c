@@ -240,8 +240,8 @@ int yed_unload_plugin(char *plug_name) {
             old_plug->unload(old_plug);
         }
 
-        yed_plugin_force_lib_unload(old_plug);
         yed_plugin_uninstall_features(old_plug);
+        yed_plugin_force_lib_unload(old_plug);
 
         free(old_plug->path);
         free(old_plug);
@@ -268,6 +268,17 @@ int yed_unload_plugin_libs(void) {
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)   it;
     yed_plugin                 *plug;
+
+    /*
+     * First uninstall every plugin feature.
+     * We don't want to trigger any events or otherwise
+     * get into plugin code that won't exist when we start
+     * to unload the libraries.
+     */
+    tree_traverse(ys->plugins, it) {
+        plug = tree_it_val(it);
+        yed_plugin_uninstall_features(plug);
+    }
 
     tree_traverse(ys->plugins, it) {
         plug = tree_it_val(it);
