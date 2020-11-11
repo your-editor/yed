@@ -169,19 +169,7 @@ void yed_set_cursor(int col, int row) {
 }
 
 void sigwinch_handler(int sig) {
-    if (yed_check_for_resize()) {
-        pthread_mutex_lock(&ys->write_mtx);
-        yed_handle_resize();
-        pthread_mutex_unlock(&ys->write_mtx);
-    }
-#if 0
-    if (pthread_mutex_trylock(&ys->write_mtx) == 0) {
-        if (yed_check_for_resize()) {
-            yed_handle_resize();
-        }
-        pthread_mutex_unlock(&ys->write_mtx);
-    }
-#endif
+    yed_check_for_resize();
 }
 
 void sigstop_handler(int sig) {
@@ -254,6 +242,9 @@ void yed_register_sigcont_handler(void) {
 int yed_check_for_resize(void) {
     int       save_rows, save_cols;
     yed_event event;
+    int       ret;
+
+    ret = 0;
 
     save_rows = ys->term_rows;
     save_cols = ys->term_cols;
@@ -266,10 +257,11 @@ int yed_check_for_resize(void) {
         event.kind = EVENT_TERMINAL_RESIZED;
         yed_trigger_event(&event);
 
-        return 1;
+        ret = 1;
     }
 
-    return 0;
+    ys->has_resized = ret;
+    return ret;
 }
 
 void yed_handle_resize(void) {
@@ -302,4 +294,6 @@ void yed_handle_resize(void) {
     yed_update_frames();
     write_status_bar(0);
     yed_draw_command_line();
+
+    ys->has_resized = 0;
 }

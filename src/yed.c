@@ -220,6 +220,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
+
     pthread_mutex_init(&ys->write_mtx, NULL);
     pthread_mutex_init(&ys->write_ready_mtx, NULL);
     pthread_mutex_lock(&ys->write_ready_mtx);
@@ -343,8 +344,12 @@ int yed_pump(void) {
 
     ys->status = YED_NORMAL;
 
-    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
-    memset(keys, 0, sizeof(keys));
+    if (ys->has_resized) {
+        yed_handle_resize();
+    } else {
+        memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
+        memset(keys, 0, sizeof(keys));
+    }
 
     /*
      * Wait for the writer thread to signal that it
@@ -369,7 +374,6 @@ int yed_pump(void) {
     pthread_mutex_unlock(&ys->write_ready_mtx);
 
     append_to_output_buff(TERM_CURSOR_HIDE);
-
 
 
 
@@ -400,9 +404,6 @@ int yed_pump(void) {
     start_us = measure_time_now_us();
 
     if (ys->redraw) {
-        if (yed_check_for_resize()) {
-            yed_handle_resize();
-        }
         if (ys->redraw_cls) {
             append_to_output_buff(TERM_CURSOR_HIDE);
             yed_set_attr(yed_active_style_get_active());
