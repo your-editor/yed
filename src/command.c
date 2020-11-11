@@ -1535,10 +1535,10 @@ void yed_default_command_buffer(int n_args, char **args) {
                 event.buffer = buffer;
 
                 if (status == BUFF_FILL_STATUS_ERR_NOF) {
+                    yed_cprint(" (new file)");
                     buffer->path = strdup(path);
                     buffer->kind = BUFF_KIND_FILE;
                     yed_buffer_set_ft(buffer, FT_UNKNOWN);
-                    yed_cprint(" (new file)");
                 }
 
                 event.kind = EVENT_BUFFER_POST_LOAD;
