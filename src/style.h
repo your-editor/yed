@@ -7,6 +7,8 @@
     __SCOMP(inactive)          \
     __SCOMP(active_border)     \
     __SCOMP(inactive_border)   \
+    __SCOMP(active_gutter)     \
+    __SCOMP(inactive_gutter)   \
     __SCOMP(cursor_line)       \
     __SCOMP(selection)         \
     __SCOMP(search)            \

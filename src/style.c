@@ -149,6 +149,12 @@ void yed_set_default_styles(void) {
 
     s.inactive_border     = s.inactive;
 
+    s.active_gutter.flags = ATTR_16;
+    s.active_gutter.fg    = ATTR_16_BLACK;
+    s.active_gutter.bg    = ATTR_16_BLUE;
+
+    s.inactive_gutter     = s.active_gutter;
+
     s.cursor_line         = s.active;
 /*     s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG; */
 /*     s.cursor_line.fg        = ATTR_16_GREY; */

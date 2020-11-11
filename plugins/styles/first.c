@@ -25,6 +25,12 @@ PACKABLE_STYLE(first) {
     s.inactive_border     = s.inactive;
     s.inactive_border.fg  = MAYBE_CONVERT(RGB_32(64, 121, 140));
 
+    s.active_gutter.flags = attr_kind | ATTR_BOLD;
+    s.active_gutter.fg    = MAYBE_CONVERT(RGB_32(246, 241, 209));
+    s.active_gutter.bg    = MAYBE_CONVERT(RGB_32(64, 121, 140));
+
+    s.inactive_gutter     = s.active_gutter;
+
     s.cursor_line.flags   = attr_kind;
     s.cursor_line.fg      = MAYBE_CONVERT(RGB_32(246, 241, 209));
     s.cursor_line.bg      = MAYBE_CONVERT(RGB_32(21, 42, 49));

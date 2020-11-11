@@ -37,6 +37,7 @@ typedef struct {
     yed_buffer       *buffer;
     int               row, col;
     array_t           line_attrs;
+    array_t           gutter_glyphs;
     int               key;
     char             *glyph;
     int               cancel;

@@ -78,8 +78,10 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     frame->left_f          = left_f;
     frame->height_f        = height_f;
     frame->width_f         = width_f;
+    frame->gutter_width    = 0;
 
     FRAME_RESET_RECT(frame);
+
 
     frame->cursor_line          = 1;
     frame->last_cursor_line     = 1;
@@ -88,12 +90,13 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     frame->cursor_col           = 1;
     frame->buffer_y_offset      = 0;
     frame->buffer_x_offset      = 0;
-    frame->cur_x                = frame->left;
+    frame->cur_x                = frame->left + frame->gutter_width;
     frame->cur_y                = frame->top;
-    frame->desired_x            = 1;
+    frame->desired_col          = 1;
     frame->dirty                = 1;
     frame->scroll_off           = 5;
     frame->line_attrs           = array_make(yed_attrs);
+    frame->gutter_glyphs        = array_make(char);
 
     return frame;
 }
@@ -181,6 +184,10 @@ void yed_delete_frame(yed_frame *frame) {
     array_free(frame->line_attrs);
 
     free(frame);
+
+    if (array_len(ys->frames) == 0) {
+        ys->active_frame = ys->prev_active_frame = NULL;
+    }
 }
 
 yed_frame * yed_vsplit_frame(yed_frame *frame) {
@@ -390,12 +397,14 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     char       nprint_chars[2] = { '^', '?' };
     char      *cell, *bytes, *run_start;
     yed_event  event;
+    yed_glyph *git;
 
 
     /* Helper macros */
     #define DUMP_RUN()                                                    \
     do {                                                                  \
-        yed_set_cursor(frame->left + run_col_off, frame->top + y_offset); \
+        yed_set_cursor(frame->left + run_col_off + frame->gutter_width,   \
+                       frame->top + y_offset);                            \
         yed_set_attr(cur_attr);                                           \
         append_n_to_output_buff(run_start, run_len);                      \
     } while (0)
@@ -434,6 +443,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         array_push(frame->line_attrs, base_attr);
     }
 
+    array_clear(frame->gutter_glyphs);
+
     /*
      * Find out if there are any columns that are in a selection.
      * If there are, apply the selection attributes to them in the
@@ -460,19 +471,23 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * We're about to start drawing.
      * Do the pre-draw event.
      */
-    event.kind       = EVENT_LINE_PRE_DRAW;
-    event.frame      = frame;
-    event.row        = row;
-    event.line_attrs = frame->line_attrs;
+    event.kind          = EVENT_LINE_PRE_DRAW;
+    event.frame         = frame;
+    event.row           = row;
+    event.line_attrs    = frame->line_attrs;
+    event.gutter_glyphs = frame->gutter_glyphs;
 
     yed_trigger_event(&event);
+
+    frame->line_attrs    = event.line_attrs;
+    frame->gutter_glyphs = event.gutter_glyphs;
 
     /*
      * Compute how many columns we're actually going to draw.
      * This is NOT necessarily just the line length or the
      * frame width.
      */
-    n_col = MIN(MAX(line->visual_width - x_offset, 0), frame->width);
+    n_col  = MIN(MAX(line->visual_width - x_offset, 0), frame->width - frame->gutter_width);
 
     first_col = (line->visual_width < x_offset) ? line->visual_width : x_offset + 1;
     first_idx = yed_line_col_to_idx(line, first_col);
@@ -484,6 +499,49 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     run_len     = 0;
     run_col_off = 0;
 
+    /*
+     * Okay, let's draw..
+     */
+
+    /*
+     * First, draw the gutter.
+     */
+    if (frame->gutter_width > 0) {
+        yed_set_attr(frame == ys->active_frame
+                        ? yed_active_style_get_active_gutter()
+                        : yed_active_style_get_inactive_gutter());
+
+        col_off = 0;
+        for (git = event.gutter_glyphs.data;
+            (void*)git < (event.gutter_glyphs.data + (event.gutter_glyphs.used * event.gutter_glyphs.elem_size));
+            git = ((void*)git) + yed_get_glyph_len(*git)) {
+
+            width = yed_get_glyph_width(*git);
+            if (col_off + width > frame->gutter_width) { break; }
+
+            all_cols_visible = 1;
+
+            for (i = 0; i < width; i += 1) {
+                all_cols_visible &= !*FRAME_CELL(frame, y_offset, col_off + i);
+            }
+
+            if (all_cols_visible) {
+                yed_set_cursor(frame->left + col_off, frame->top + y_offset);
+                append_n_to_output_buff((char*)git, yed_get_glyph_len(*git));
+            }
+
+            col_off += width;
+        }
+
+        for (; col_off <= frame->gutter_width; col_off += 1) {
+            cell = FRAME_CELL(frame, y_offset, col_off);
+            if (!*cell) {
+                yed_set_cursor(frame->left + col_off, frame->top + y_offset);
+                append_n_to_output_buff(" ", 1);
+            }
+        }
+    }
+
     /* Set the initial attrs. */
     if (line->visual_width) {
         cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
@@ -494,7 +552,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     }
 
     /*
-     * Okay, let's draw.
+     * Now draw the rest of the line.
      */
     for (col_off = 0; col_off < n_col;) {
         width            = yed_get_glyph_width(*(yed_glyph*)bytes);
@@ -505,14 +563,14 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             DUMP_RUN();
 
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
-                cell = FRAME_CELL(frame, y_offset, col_off);
+                cell = FRAME_CELL(frame, y_offset, col_off + frame->gutter_width);
                 if (!*cell) {
                     tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
                     if (!yed_attrs_eq(tmp_attr, cur_attr)) {
                         yed_set_attr(tmp_attr);
                         cur_attr = tmp_attr;
                     }
-                    yed_set_cursor(frame->left + col_off, frame->top + y_offset);
+                    yed_set_cursor(frame->left + frame->gutter_width + col_off, frame->top + y_offset);
                     append_n_to_output_buff(" ", 1);
                 }
                 col_off += 1;
@@ -530,14 +588,14 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             nprint_glyph_pos = 0;
 
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
-                cell = FRAME_CELL(frame, y_offset, col_off);
+                cell = FRAME_CELL(frame, y_offset, col_off + frame->gutter_width);
                 if (!*cell) {
                     tmp_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
                     if (!yed_attrs_eq(tmp_attr, cur_attr)) {
                         yed_set_attr(tmp_attr);
                         cur_attr = tmp_attr;
                     }
-                    yed_set_cursor(frame->left + col_off, frame->top + y_offset);
+                    yed_set_cursor(frame->left + frame->gutter_width + col_off, frame->top + y_offset);
                     append_n_to_output_buff(nprint_chars + nprint_glyph_pos, 1);
                 }
                 col_off          += 1;
@@ -550,7 +608,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             NEXT_RUN();
         } else {
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
-                cell = FRAME_CELL(frame, y_offset, col_off);
+                cell = FRAME_CELL(frame, y_offset, col_off + frame->gutter_width);
                 if (*cell) {
                     all_cols_visible = 0;
                     break;
@@ -586,8 +644,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     cur_attr = base_attr;
     NEXT_RUN();
 
-    for (; col_off < frame->width;) {
-        cell = FRAME_CELL(frame, y_offset, col_off);
+    for (; col_off < frame->width - frame->gutter_width;) {
+        cell = FRAME_CELL(frame, y_offset, col_off + frame->gutter_width);
 
         if (*cell) {
             DUMP_RUN();
@@ -606,34 +664,45 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 }
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
-    int i, n, run_len, run_start_n;
+    int i, j, n, run_len, run_start_n;
     yed_attrs base_attr;
+    yed_attrs gut_attr;
     char *cell;
 
     if (frame == ys->active_frame) {
         base_attr = yed_active_style_get_active();
+        gut_attr  = yed_active_style_get_active_gutter();
     } else {
         base_attr = yed_active_style_get_inactive();
+        gut_attr  = yed_active_style_get_inactive_gutter();
     }
 
     yed_set_cursor(frame->left, frame->top + y_offset);
+
+    if (frame->gutter_width > 0) {
+        yed_set_attr(gut_attr);
+    }
+
+    for (i = 0; i < frame->height - y_offset; i += 1) {
+        for (j = 0; j < frame->gutter_width; j += 1) {
+            cell = FRAME_CELL(frame, y_offset + i, j);
+            if (!*cell) {
+                yed_set_cursor(frame->left + j, frame->top + y_offset + i);
+                append_n_to_output_buff(" ", 1);
+            }
+        }
+    }
+
     yed_set_attr(base_attr);
 
     for (i = 0; i < frame->height - y_offset; i += 1) {
         cell = FRAME_CELL(frame, y_offset + i, 0);
 
-        if (*cell) {
-            yed_set_cursor(frame->left + 1, frame->top + y_offset + i);
-        } else {
-            yed_set_cursor(frame->left, frame->top + y_offset + i);
-            append_n_to_output_buff("~", 1);
-        }
-
         yed_set_cursor(frame->left, frame->top + i);
 
         run_len     = 0;
-        run_start_n = 1;
-        for (n = 1; n < frame->width; n += 1) {
+        run_start_n = frame->gutter_width;
+        for (n = frame->gutter_width; n < frame->width; n += 1) {
             cell = FRAME_CELL(frame, y_offset + i, n);
 
             if (*cell) {
@@ -648,6 +717,14 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
 
         yed_set_cursor(frame->left + run_start_n, frame->top + y_offset + i);
         append_n_to_output_buff(ys->_4096_spaces, run_len);
+    }
+
+    for (i = 0; i < frame->height - y_offset; i += 1) {
+        cell = FRAME_CELL(frame, y_offset + i, frame->gutter_width);
+        if (!*cell) {
+            yed_set_cursor(frame->left + frame->gutter_width, frame->top + y_offset + i);
+            append_n_to_output_buff("~", 1);
+        }
     }
 
     append_to_output_buff(TERM_RESET);
@@ -682,6 +759,20 @@ void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
     frame->left_f = left_f;
 
     FRAME_RESET_RECT(frame);
+
+    yed_frame_reset_cursor(frame);
+}
+
+void yed_frame_set_gutter_width(yed_frame *frame, int width) {
+    if (width < 0) {
+        width = 0;
+    }
+
+    frame->gutter_width = width;
+
+    yed_frame_reset_cursor(frame);
+
+    frame->dirty = 1;
 }
 
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
@@ -938,11 +1029,11 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
         new_x = f->cur_x + dir;
 
         if (new_x >= f->left + f->width) {
-            if (f->buffer_x_offset <= line_width - f->width) {
+            if (f->buffer_x_offset <= line_width - f->width + f->gutter_width) {
                 f->buffer_x_offset += dir;
                 f->dirty            = 1;
             }
-        } else if (new_x < f->left) {
+        } else if (new_x < f->left + f->gutter_width) {
             if (f->buffer_x_offset >= 1) {
                 f->buffer_x_offset += dir;
                 f->dirty            = 1;
@@ -957,10 +1048,10 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
     if (width > 1) {
         f->cur_x += f->buffer_x_offset - old_x_off;
     }
-    LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
+    LIMIT(f->cur_x, f->left + f->gutter_width, f->left + f->gutter_width + line_width - f->buffer_x_offset);
 
-    f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
-    f->desired_x  = f->cursor_col;
+    f->cursor_col  = f->buffer_x_offset + (f->cur_x - (f->left + f->gutter_width) + 1);
+    f->desired_col = f->cursor_col;
 }
 
 void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
@@ -1041,25 +1132,25 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
         /*
          * Update x values tied y.
          */
-        potential_new_x  = f->desired_x;
+        potential_new_x = f->desired_col;
 
-        if (f->desired_x > line_width) {
+        if (f->desired_col > line_width) {
             potential_new_x = line_width + 1;
         }
 
         if (potential_new_x <= f->buffer_x_offset) {
             f->buffer_x_offset = MAX(0, potential_new_x - f->width);
-            f->desired_x       = potential_new_x;
+            f->desired_col     = potential_new_x;
             f->dirty           = 1;
         }
 
-        if (f->desired_x <= line->visual_width) {
-            f->desired_x = yed_line_idx_to_col(line, yed_line_col_to_idx(line, f->desired_x));
+        if (f->desired_col <= line->visual_width) {
+            f->desired_col = yed_line_idx_to_col(line, yed_line_col_to_idx(line, f->desired_col));
         }
 
-        f->cur_x = MIN(f->desired_x - 1, line_width) + f->left - f->buffer_x_offset;
+        f->cur_x = MIN(f->desired_col - 1, line_width) + f->left + f->gutter_width - f->buffer_x_offset;
 
-        f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
+        f->cursor_col = f->buffer_x_offset + (f->cur_x - (f->left + f->gutter_width) + 1);
     }
 
     dir = glyph > 0 ? 1 : -1;
@@ -1079,9 +1170,9 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
      * happens and yed_move_cursor_once_x_within_frame() never gets
      * called, but the cursor still isn't in the right place.
      */
-    LIMIT(f->cur_x, f->left, f->left + line_width - f->buffer_x_offset);
+    LIMIT(f->cur_x, f->left + f->gutter_width, f->left + f->gutter_width + line_width - f->buffer_x_offset);
 
-    f->cursor_col = f->buffer_x_offset + (f->cur_x - f->left + 1);
+    f->cursor_col = f->buffer_x_offset + (f->cur_x - (f->left + f->gutter_width) + 1);
 
     if (row > 1 || row < -1) {
         f->dirty = 1;
@@ -1105,8 +1196,8 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
 
             frame->buffer_x_offset = 0;
             frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
-            frame->desired_x       = 1;
-            frame->cur_x           = frame->left;
+            frame->desired_col     = 1;
+            frame->cur_x           = frame->left + frame->gutter_width;
             frame->cur_y           = frame->top + frame->scroll_off;
             LIMIT(frame->cur_y,
                     frame->top,
@@ -1125,18 +1216,18 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
 void yed_frame_reset_cursor(yed_frame *frame) {
     if (frame->cur_y < frame->top
     ||  frame->cur_y >= frame->top + frame->height
-    ||  frame->cur_x < frame->left
+    ||  frame->cur_x < frame->left + frame->gutter_width
     ||  frame->cur_x >= frame->left + frame->width) {
 
         frame->cur_y = frame->top;
-        frame->cur_x = frame->left;
+        frame->cur_x = frame->left + frame->gutter_width;
     }
 
     if (frame->buffer) {
         yed_set_cursor_far_within_frame(frame, frame->cursor_col, frame->cursor_line);
     } else {
         frame->cur_y = frame->top;
-        frame->cur_x = frame->left;
+        frame->cur_x = frame->left + frame->gutter_width;
     }
 }
 
@@ -1146,12 +1237,12 @@ void yed_frame_hard_reset_cursor_x(yed_frame *frame) {
     if (frame->buffer) {
         dst_x = frame->cursor_col;
         frame->buffer_x_offset = 0;
-        frame->cur_x = frame->left;
+        frame->cur_x = frame->left + frame->gutter_width;
         frame->cursor_col = 1;
         yed_set_cursor_within_frame(frame, dst_x, frame->cursor_line);
     } else {
         frame->cur_y = frame->top;
-        frame->cur_x = frame->left;
+        frame->cur_x = frame->left + frame->gutter_width;
     }
 }
 

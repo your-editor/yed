@@ -14,6 +14,7 @@ typedef struct yed_frame_t {
                         height,
                         width;
     int                 btop, bleft, bheight, bwidth;
+    int                 gutter_width;
     int                 cursor_line,
                         cursor_col,
                         last_cursor_line,
@@ -23,10 +24,11 @@ typedef struct yed_frame_t {
                         buffer_x_offset;
     int                 cur_x,
                         cur_y;
-    int                 desired_x;
+    int                 desired_col;
     int                 dirty;
     int                 scroll_off;
     array_t             line_attrs;
+    array_t             gutter_glyphs;
 } yed_frame;
 
 void yed_init_frames(void);
@@ -42,6 +44,7 @@ void yed_undraw_frame(yed_frame *frame);
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset);
 void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f);
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff);
+void yed_frame_set_gutter_width(yed_frame *frame, int width);
 void yed_frame_update(yed_frame *frame);
 void yed_move_cursor_within_frame(yed_frame *f, int col, int row);
 void yed_move_cursor_within_active_frame(int col, int row);
