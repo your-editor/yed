@@ -237,6 +237,7 @@ typedef struct yed_state_t {
     array_t                      bracketed_paste_buff;
     array_t                      ft_array;
     int                          stopped;
+    int                          has_resized;
 } yed_state;
 
 extern yed_state *ys;
