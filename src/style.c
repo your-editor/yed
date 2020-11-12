@@ -1,6 +1,27 @@
 void yed_init_styles(void) {
+    int   i, j;
+    char *s;
+    int   len;
+
+    ys->scomp_strings = array_make(char*);
+
+#define __SCOMP(comp) { s = strdup(#comp); array_push(ys->scomp_strings, s); }
+    __STYLE_COMPONENTS
+#undef __SCOMP
+
+    for (i = 0; i < N_SCOMPS; i += 1) {
+        s = *(char**)array_item(ys->scomp_strings, i);
+        len = strlen(s);
+        for (j = 0; j < len; j += 1) {
+            if (s[j] == '_') {
+                s[j] = '-';
+            }
+        }
+    }
+
     ys->styles = tree_make_c(yed_style_name_t, yed_style_ptr_t, strcmp);
     yed_set_default_styles();
+
 }
 
 void yed_set_style(char *name, yed_style *style) {
@@ -128,6 +149,23 @@ fail:
     return ZERO_ATTR;
 }
 
+int yed_get_active_style_scomp_nr_by_name(const char *name) {
+    int    i;
+    char **it;
+
+    if (name == NULL) { return -1; }
+
+    i = 0;
+    array_traverse(ys->scomp_strings, it) {
+        if (strcmp(*it, name) == 0) {
+            return i;
+        }
+        i += 1;
+    }
+
+    return -1;
+}
+
 void yed_set_default_styles(void) {
     yed_style s;
 
@@ -149,11 +187,8 @@ void yed_set_default_styles(void) {
 
     s.inactive_border     = s.inactive;
 
-    s.active_gutter.flags = ATTR_16;
-    s.active_gutter.fg    = ATTR_16_BLACK;
-    s.active_gutter.bg    = ATTR_16_BLUE;
-
-    s.inactive_gutter     = s.active_gutter;
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
 
     s.cursor_line         = s.active;
 /*     s.cursor_line.flags     = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_16_LIGHT_BG; */

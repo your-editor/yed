@@ -29,6 +29,7 @@ typedef struct yed_frame_t {
     int                 scroll_off;
     array_t             line_attrs;
     array_t             gutter_glyphs;
+    array_t             gutter_attrs;
 } yed_frame;
 
 void yed_init_frames(void);

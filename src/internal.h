@@ -225,6 +225,7 @@ typedef struct yed_state_t {
     tree(yed_style_name_t,
          yed_style_ptr_t)        styles;
     yed_style_ptr_t              active_style;
+    array_t                      scomp_strings;
     options_t                    options;
     unsigned long long           start_time_ms;
     unsigned long long           n_pumps;
@@ -238,6 +239,7 @@ typedef struct yed_state_t {
     array_t                      ft_array;
     int                          stopped;
     int                          has_resized;
+    int                          new_term_cols, new_term_rows;
 } yed_state;
 
 extern yed_state *ys;

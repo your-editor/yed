@@ -137,6 +137,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("multi",                  multi);
     SET_DEFAULT_COMMAND("if",                     if);
     SET_DEFAULT_COMMAND("suspend",                suspend);
+    SET_DEFAULT_COMMAND("scomps-list",            scomps_list);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -3871,6 +3872,21 @@ void yed_default_command_suspend(int n_args, char **args) {
     kill(0, SIGTSTP);
     yed_cprint_clear();
     yed_cprint("continuing from suspend");
+}
+
+
+void yed_default_command_scomps_list(int n_args, char **args) {
+    char **it;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    yed_cprint("");
+    array_traverse(ys->scomp_strings, it) {
+        yed_cprint("\n%s", *it);
+    }
 }
 
 

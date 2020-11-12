@@ -32,6 +32,8 @@ enum {
     #define __SCOMP(comp) STYLE_##comp,
     __STYLE_COMPONENTS
     #undef __SCOMP
+
+    N_SCOMPS
 };
 
 typedef struct yed_style_t {
@@ -48,6 +50,7 @@ yed_style * yed_get_style(char *name);
 int yed_activate_style(char *name);
 yed_style * yed_get_active_style(void);
 yed_attrs yed_get_active_style_scomp(int scomp);
+int yed_get_active_style_scomp_nr_by_name(const char *name);
 
 #define __SCOMP(comp) yed_attrs yed_active_style_get_##comp(void);
 __STYLE_COMPONENTS

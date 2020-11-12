@@ -97,6 +97,7 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     frame->scroll_off           = 5;
     frame->line_attrs           = array_make(yed_attrs);
     frame->gutter_glyphs        = array_make(char);
+    frame->gutter_attrs         = array_make(yed_attrs);
 
     return frame;
 }
@@ -398,6 +399,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     char      *cell, *bytes, *run_start;
     yed_event  event;
     yed_glyph *git;
+    int        save_gutter_width;
 
 
     /* Helper macros */
@@ -443,8 +445,6 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         array_push(frame->line_attrs, base_attr);
     }
 
-    array_clear(frame->gutter_glyphs);
-
     /*
      * Find out if there are any columns that are in a selection.
      * If there are, apply the selection attributes to them in the
@@ -467,6 +467,21 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         }
     }
 
+again_gutter:
+
+    array_clear(frame->gutter_glyphs);
+    array_clear(frame->gutter_attrs);
+    if (frame == ys->active_frame) {
+        cur_attr = yed_active_style_get_active_gutter();
+    } else {
+        cur_attr = yed_active_style_get_inactive_gutter();
+    }
+    for (col = 1; col <= frame->gutter_width; col += 1) {
+        array_push(frame->gutter_attrs, cur_attr);
+    }
+
+    save_gutter_width = frame->gutter_width;
+
     /*
      * We're about to start drawing.
      * Do the pre-draw event.
@@ -476,11 +491,15 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     event.row           = row;
     event.line_attrs    = frame->line_attrs;
     event.gutter_glyphs = frame->gutter_glyphs;
+    event.gutter_attrs  = frame->gutter_attrs;
 
     yed_trigger_event(&event);
 
+    if (frame->gutter_width != save_gutter_width) { goto again_gutter; }
+
     frame->line_attrs    = event.line_attrs;
     frame->gutter_glyphs = event.gutter_glyphs;
+    frame->gutter_attrs  = event.gutter_attrs;
 
     /*
      * Compute how many columns we're actually going to draw.
@@ -506,10 +525,9 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     /*
      * First, draw the gutter.
      */
-    if (frame->gutter_width > 0) {
-        yed_set_attr(frame == ys->active_frame
-                        ? yed_active_style_get_active_gutter()
-                        : yed_active_style_get_inactive_gutter());
+    if (save_gutter_width > 0) {
+        cur_attr = *(yed_attrs*)array_item(frame->gutter_attrs, 0);
+        yed_set_attr(cur_attr);
 
         col_off = 0;
         for (git = event.gutter_glyphs.data;
@@ -518,6 +536,12 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
             width = yed_get_glyph_width(*git);
             if (col_off + width > frame->gutter_width) { break; }
+
+            tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
+            if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+                yed_set_attr(tmp_attr);
+                cur_attr = tmp_attr;
+            }
 
             all_cols_visible = 1;
 
@@ -536,6 +560,12 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
         for (; col_off <= frame->gutter_width; col_off += 1) {
             cell = FRAME_CELL(frame, y_offset, col_off);
             if (!*cell) {
+                tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
+                if (!yed_attrs_eq(tmp_attr, cur_attr)) {
+                    yed_set_attr(tmp_attr);
+                    cur_attr = tmp_attr;
+                }
+
                 yed_set_cursor(frame->left + col_off, frame->top + y_offset);
                 append_n_to_output_buff(" ", 1);
             }
