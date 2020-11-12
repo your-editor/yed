@@ -1215,11 +1215,11 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
 
 void yed_frame_reset_cursor(yed_frame *frame) {
     if (frame->cur_y < frame->top
-    ||  frame->cur_y >= frame->top + frame->height
-    ||  frame->cur_x < frame->left + frame->gutter_width
-    ||  frame->cur_x >= frame->left + frame->width) {
-
+    ||  frame->cur_y >= frame->top + frame->height) {
         frame->cur_y = frame->top;
+    }
+    if (frame->cur_x < frame->left + frame->gutter_width
+    ||  frame->cur_x >= frame->left + frame->width) {
         frame->cur_x = frame->left + frame->gutter_width;
     }
 
