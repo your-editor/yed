@@ -77,6 +77,9 @@ PACKABLE_STYLE(doug) {
     s.status_line.fg          = background;
     s.status_line.bg          = foreground;
 
+    s.active_gutter           = s.active;
+    s.inactive_gutter         = s.inactive;
+
     s.code_comment.flags      = attr_kind | ATTR_BOLD;
     s.code_comment.fg         = comment;
 

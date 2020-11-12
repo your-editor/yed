@@ -72,6 +72,9 @@ PACKABLE_STYLE(nord) {
     s.status_line.fg      = s.active.fg;
     s.status_line.bg      = nord3;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind;
     s.code_comment.fg     = nord3_but_brighter;
 

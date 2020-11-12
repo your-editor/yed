@@ -77,6 +77,9 @@ PACKABLE_STYLE(tempus_future) {
     s.status_line.fg      = foreground;
     s.status_line.bg      = maroon;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind | ATTR_BOLD;
     s.code_comment.fg     = lavender;
 

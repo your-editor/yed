@@ -69,6 +69,9 @@ PACKABLE_STYLE(casey) {
     s.status_line.fg      = color_bg_2;
     s.status_line.bg      = color_pp;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind | ATTR_BOLD;
     s.code_comment.fg     = color_comment;
 

@@ -86,6 +86,9 @@ PACKABLE_STYLE(papercolor) {
     s.status_line.bg      = statusbg;
 
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind;
     s.code_comment.fg     = color05;
 

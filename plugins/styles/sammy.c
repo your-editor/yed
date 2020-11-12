@@ -66,6 +66,9 @@ PACKABLE_STYLE(sammy) {
     s.status_line.fg      = foreground;
     s.status_line.bg      = magenta;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind | ATTR_BOLD;
     s.code_comment.fg     = yellow;
 

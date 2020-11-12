@@ -44,6 +44,8 @@ PACKABLE_STYLE(book) {
     s.status_line.fg      = ATTR_16_GREY;
     s.status_line.bg      = ATTR_16_BLUE;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
 
     s.code_comment.flags  = ATTR_16 | ATTR_16_LIGHT_FG | ATTR_BOLD;
     s.code_comment.fg     = ATTR_16_BLUE;

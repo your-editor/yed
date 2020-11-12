@@ -81,6 +81,9 @@ PACKABLE_STYLE(disco) {
     s.status_line.fg          = foreground;
     s.status_line.bg          = status_bg;
 
+    s.active_gutter           = s.active;
+    s.inactive_gutter         = s.inactive;
+
     s.code_comment.flags      = attr_kind;
     s.code_comment.fg         = comment;
 

@@ -47,6 +47,9 @@ PACKABLE_STYLE(monokai) {
     s.status_line.fg      = s.active.fg;
     s.status_line.bg      = 234;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = ATTR_256;
     s.code_comment.fg     = 242;
 

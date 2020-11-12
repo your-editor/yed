@@ -74,6 +74,9 @@ PACKABLE_STYLE(gruvbox) {
     s.status_line.bg      = base03;
 
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind;
     s.code_comment.fg     = base03;
 

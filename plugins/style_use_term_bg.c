@@ -7,11 +7,21 @@ void style_use_term_bg(int n_args, char **args) {
 
     if (!s) { return; }
 
-    if (s->command_line.bg == s->active.bg) {
+    if (s->command_line.bg == s->active.bg
+    ||  s->command_line.bg == s->inactive.bg) {
         s->command_line.bg = 0;
     }
-    if (s->cursor_line.bg == s->active.bg) {
+    if (s->cursor_line.bg == s->active.bg
+    ||  s->cursor_line.bg == s->inactive.bg) {
         s->cursor_line.bg = 0;
+    }
+    if (s->active_gutter.bg == s->active.bg
+    ||  s->active_gutter.bg == s->inactive.bg) {
+        s->active_gutter.bg = 0;
+    }
+    if (s->inactive_gutter.bg == s->active.bg
+    ||  s->inactive_gutter.bg == s->inactive.bg) {
+        s->inactive_gutter.bg = 0;
     }
     s->active.bg          = 0;
     s->active_border.bg   = 0;

@@ -24,6 +24,9 @@ PACKABLE_STYLE(elise) {
     s.search_cursor.fg    = RGB_32(48, 82, 82);
     s.search_cursor.bg    = RGB_32(126, 172, 119);
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags = ATTR_RGB | ATTR_BOLD;
     s.code_comment.fg    = RGB_32(232, 208, 58);
 

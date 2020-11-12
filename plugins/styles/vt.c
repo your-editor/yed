@@ -18,6 +18,9 @@ PACKABLE_STYLE(vt) {
 
     s.status_line.flags   = ATTR_INVERSE;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = ATTR_16;
     s.code_comment.fg     = ATTR_16_GREEN;
 

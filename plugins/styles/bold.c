@@ -55,6 +55,9 @@ PACKABLE_STYLE(bold) {
     s.status_line.fg          = s.active.bg;
     s.status_line.bg          = accent;
 
+    s.active_gutter           = s.active;
+    s.inactive_gutter         = s.inactive;
+
     s.code_comment.flags      = attr_kind;
     s.code_comment.fg         = comm;
 
@@ -138,6 +141,9 @@ PACKABLE_STYLE(bold) {
     s.status_line.flags       = attr_kind | ATTR_BOLD;
     s.status_line.fg          = s.active.bg;
     s.status_line.bg          = accent;
+
+    s.active_gutter           = s.active;
+    s.inactive_gutter         = s.inactive;
 
     s.code_comment.flags      = attr_kind;
     s.code_comment.fg         = comm;

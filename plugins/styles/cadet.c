@@ -65,6 +65,9 @@ PACKABLE_STYLE(cadet) {
     s.status_line.fg      = black;
     s.status_line.bg      = medium_blue;
 
+    s.active_gutter       = s.active;
+    s.inactive_gutter     = s.inactive;
+
     s.code_comment.flags  = attr_kind | ATTR_BOLD;
     s.code_comment.fg     = rust;
 
