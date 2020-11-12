@@ -557,7 +557,7 @@ again_gutter:
             col_off += width;
         }
 
-        for (; col_off <= frame->gutter_width; col_off += 1) {
+        for (; col_off < frame->gutter_width; col_off += 1) {
             cell = FRAME_CELL(frame, y_offset, col_off);
             if (!*cell) {
                 tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
