@@ -240,27 +240,20 @@ void yed_register_sigcont_handler(void) {
 }
 
 int yed_check_for_resize(void) {
-    int       save_rows, save_cols;
-    yed_event event;
-    int       ret;
+    int ret;
 
     ret = 0;
 
-    save_rows = ys->term_rows;
-    save_cols = ys->term_cols;
+    yed_term_get_dim(&ys->new_term_rows, &ys->new_term_cols);
 
-    yed_term_get_dim(&ys->term_rows, &ys->term_cols);
-
-    if (ys->term_rows != save_rows
-    ||  ys->term_cols != save_cols) {
-
-        event.kind = EVENT_TERMINAL_RESIZED;
-        yed_trigger_event(&event);
+    if (ys->new_term_rows != ys->term_rows
+    ||  ys->new_term_cols != ys->term_cols) {
 
         ret = 1;
     }
 
     ys->has_resized = ret;
+
     return ret;
 }
 
@@ -268,10 +261,17 @@ void yed_handle_resize(void) {
     yed_frame **frame_it;
     int save_row, save_col;
     yed_frame *af;
+    yed_event  event;
 
-    free(ys->written_cells);
-    ys->written_cells = malloc(ys->term_rows * ys->term_cols);
-    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
+    if (!ys->has_resized) {
+        return;
+    }
+
+    ys->written_cells = realloc(ys->written_cells, ys->new_term_rows * ys->new_term_cols);
+    memset(ys->written_cells, 0, ys->new_term_rows * ys->new_term_cols);
+
+    ys->term_cols = ys->new_term_cols;
+    ys->term_rows = ys->new_term_rows;
 
     af = ys->active_frame;
     if (af) {
@@ -291,9 +291,14 @@ void yed_handle_resize(void) {
         yed_set_cursor_far_within_frame(af, save_col, save_row);
     }
 
+#if 0
     yed_update_frames();
     write_status_bar(0);
     yed_draw_command_line();
+#endif
 
     ys->has_resized = 0;
+
+    event.kind = EVENT_TERMINAL_RESIZED;
+    yed_trigger_event(&event);
 }

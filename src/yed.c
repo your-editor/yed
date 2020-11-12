@@ -326,6 +326,7 @@ int yed_pump(void) {
     unsigned long long   start_us;
     yed_frame          **frame;
     yed_event            event;
+    int                  skip_keys;
 
     if (ys->status == YED_QUIT) {
         return YED_QUIT;
@@ -344,6 +345,7 @@ int yed_pump(void) {
 
     ys->status = YED_NORMAL;
 
+    skip_keys = ys->has_resized;
     if (ys->has_resized) {
         yed_handle_resize();
     } else {
@@ -380,7 +382,9 @@ int yed_pump(void) {
     event.kind = EVENT_PRE_PUMP;
     yed_trigger_event(&event);
 
-    n_keys = yed_read_keys(keys);
+    n_keys = skip_keys
+                ? 0
+                : yed_read_keys(keys);
 
     for (i = 0; i < n_keys; i += 1) {
         yed_take_key(keys[i]);
@@ -409,7 +413,7 @@ int yed_pump(void) {
             yed_set_attr(yed_active_style_get_active());
             yed_clear_screen();
             yed_cursor_home();
-            yed_write_welcome();
+/*             yed_write_welcome(); */
             append_to_output_buff(TERM_RESET);
             yed_draw_command_line();
             write_status_bar(keys[0]);
