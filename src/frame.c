@@ -348,9 +348,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     yed_attrs  cur_attr, base_attr, sel_attr, tmp_attr, *attr_it;
     int        col, n_col, first_idx, first_col, width_skip, col_off, run_col_off, run_len, width, n_bytes, i, all_cols_visible, nprint_glyph_pos;
     char       nprint_chars[2] = { '^', '?' };
-    char      *cell, *bytes, *run_start;
+    char      *cell, *bytes, *gutter_bytes, *run_start;
     yed_event  event;
-    yed_glyph *git;
     int        save_gutter_width;
 
 
@@ -366,6 +365,21 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     #define NEXT_RUN()                                                    \
     do {                                                                  \
         run_start    = bytes;                                             \
+        run_len      = 0;                                                 \
+        run_col_off  = col_off;                                           \
+    } while (0)
+
+    #define DUMP_RUN_GUTTER()                                             \
+    do {                                                                  \
+        yed_set_cursor(frame->left + run_col_off,                         \
+                       frame->top + y_offset);                            \
+        yed_set_attr(cur_attr);                                           \
+        append_n_to_output_buff(run_start, run_len);                      \
+    } while (0)
+
+    #define NEXT_RUN_GUTTER()                                             \
+    do {                                                                  \
+        run_start    = gutter_bytes;                                      \
         run_len      = 0;                                                 \
         run_col_off  = col_off;                                           \
     } while (0)
@@ -454,6 +468,105 @@ again_gutter:
     frame->gutter_attrs  = event.gutter_attrs;
 
     /*
+     * Okay, let's draw..
+     */
+
+    /*
+     * First, draw the gutter.
+     */
+    if (frame->gutter_width > 0) {
+        array_zero_term(frame->gutter_glyphs);
+        gutter_bytes = array_data(frame->gutter_glyphs);
+
+        /* Set up first run. */
+        run_start   = gutter_bytes;
+        run_len     = 0;
+        run_col_off = 0;
+
+        cur_attr = *(yed_attrs*)array_item(frame->gutter_attrs, 0);
+        yed_set_attr(cur_attr);
+
+        col_off = 0;
+        for (gutter_bytes = event.gutter_glyphs.data;
+            (void*)gutter_bytes < (event.gutter_glyphs.data + (event.gutter_glyphs.used * event.gutter_glyphs.elem_size)); ) {
+
+            width = yed_get_glyph_width(*(yed_glyph*)gutter_bytes);
+            if (col_off + width > frame->gutter_width) { break; }
+
+            n_bytes = yed_get_glyph_len(*(yed_glyph*)gutter_bytes);
+
+            all_cols_visible = 1;
+
+            for (i = 0; i < width; i += 1) {
+                all_cols_visible &= !*FRAME_CELL(frame, y_offset, col_off + i);
+            }
+
+            if (all_cols_visible) {
+                tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
+                if (yed_attrs_eq(tmp_attr, cur_attr)) {
+                    run_len += n_bytes;
+                } else {
+                    DUMP_RUN_GUTTER();
+                    cur_attr = tmp_attr;
+                    NEXT_RUN_GUTTER();
+                    run_len += n_bytes;
+                }
+                col_off      += width;
+                gutter_bytes += n_bytes;
+            } else {
+                DUMP_RUN_GUTTER();
+                col_off      += width;
+                gutter_bytes += n_bytes;
+                NEXT_RUN_GUTTER();
+            }
+        }
+
+        if (run_len) {
+            DUMP_RUN_GUTTER();
+        }
+
+        gutter_bytes = ys->_4096_spaces;
+
+        run_start   = gutter_bytes;
+        run_len     = 0;
+        run_col_off = col_off;
+        for (; col_off < frame->gutter_width;) {
+            cell = FRAME_CELL(frame, y_offset, col_off);
+            if (!*cell) {
+                tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
+
+                if (yed_attrs_eq(tmp_attr, cur_attr)) {
+                    run_len += 1;
+                } else {
+                    DUMP_RUN_GUTTER();
+                    cur_attr = tmp_attr;
+                    NEXT_RUN_GUTTER();
+                    run_len += 1;
+                }
+
+                col_off += 1;
+            } else {
+                DUMP_RUN_GUTTER();
+                col_off += 1;
+                NEXT_RUN_GUTTER();
+            }
+        }
+
+        if (run_len > 0) {
+            DUMP_RUN_GUTTER();
+        }
+    }
+
+    /* Set the initial attrs. */
+    if (line->visual_width) {
+        cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
+        yed_set_attr(cur_attr);
+    } else {
+        cur_attr = base_attr;
+        yed_set_attr(cur_attr);
+    }
+
+    /*
      * Compute how many columns we're actually going to draw.
      * This is NOT necessarily just the line length or the
      * frame width.
@@ -469,69 +582,6 @@ again_gutter:
     run_start   = bytes;
     run_len     = 0;
     run_col_off = 0;
-
-    /*
-     * Okay, let's draw..
-     */
-
-    /*
-     * First, draw the gutter.
-     */
-    if (save_gutter_width > 0) {
-        cur_attr = *(yed_attrs*)array_item(frame->gutter_attrs, 0);
-        yed_set_attr(cur_attr);
-
-        col_off = 0;
-        for (git = event.gutter_glyphs.data;
-            (void*)git < (event.gutter_glyphs.data + (event.gutter_glyphs.used * event.gutter_glyphs.elem_size));
-            git = ((void*)git) + yed_get_glyph_len(*git)) {
-
-            width = yed_get_glyph_width(*git);
-            if (col_off + width > frame->gutter_width) { break; }
-
-            tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
-            if (!yed_attrs_eq(tmp_attr, cur_attr)) {
-                yed_set_attr(tmp_attr);
-                cur_attr = tmp_attr;
-            }
-
-            all_cols_visible = 1;
-
-            for (i = 0; i < width; i += 1) {
-                all_cols_visible &= !*FRAME_CELL(frame, y_offset, col_off + i);
-            }
-
-            if (all_cols_visible) {
-                yed_set_cursor(frame->left + col_off, frame->top + y_offset);
-                append_n_to_output_buff((char*)git, yed_get_glyph_len(*git));
-            }
-
-            col_off += width;
-        }
-
-        for (; col_off < frame->gutter_width; col_off += 1) {
-            cell = FRAME_CELL(frame, y_offset, col_off);
-            if (!*cell) {
-                tmp_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
-                if (!yed_attrs_eq(tmp_attr, cur_attr)) {
-                    yed_set_attr(tmp_attr);
-                    cur_attr = tmp_attr;
-                }
-
-                yed_set_cursor(frame->left + col_off, frame->top + y_offset);
-                append_n_to_output_buff(" ", 1);
-            }
-        }
-    }
-
-    /* Set the initial attrs. */
-    if (line->visual_width) {
-        cur_attr = *(yed_attrs*)array_item(frame->line_attrs, 0);
-        yed_set_attr(cur_attr);
-    } else {
-        cur_attr = base_attr;
-        yed_set_attr(cur_attr);
-    }
 
     /*
      * Now draw the rest of the line.
