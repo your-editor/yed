@@ -187,6 +187,7 @@ typedef struct yed_state_t {
     array_t                      frames;
     yed_frame                   *active_frame,
                                 *prev_active_frame;
+    array_t                      frame_trees;
     yed_command_name_t           interactive_command;
     char                        *cmd_prompt;
     char                        *current_search;

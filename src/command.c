@@ -2061,8 +2061,8 @@ void yed_default_command_frame_move(int n_args, char **args) {
     frame = ys->active_frame;
 
     if (!ys->interactive_command) {
-        if (frame->v_link || frame->h_link) {
-            yed_cerr("frame is linked to another -- can't move");
+        if (!yed_frame_is_tree_root(frame)) {
+            yed_cerr("frame is part of a split tree -- can't move");
             return;
         }
 
@@ -2156,8 +2156,8 @@ void yed_default_command_frame_resize(int n_args, char **args) {
     frame = ys->active_frame;
 
     if (!ys->interactive_command) {
-        if (frame->v_link || frame->h_link) {
-            yed_cerr("frame is linked to another -- can't resize");
+        if (!yed_frame_is_tree_root(frame)) {
+            yed_cerr("frame part of a split tree -- can't resize");
             return;
         }
 

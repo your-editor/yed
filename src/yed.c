@@ -210,6 +210,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_buffers();
     yed_init_log();
     yed_init_frames();
+    yed_init_frame_trees();
     yed_init_direct_draw();
 
     yed_term_enter();

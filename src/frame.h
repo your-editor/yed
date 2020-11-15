@@ -1,9 +1,10 @@
 #ifndef __FRAME_H__
 #define __FRAME_H__
 
+#include "frame_tree.h"
 
 typedef struct yed_frame_t {
-    struct yed_frame_t *v_link, *h_link;
+    yed_frame_tree     *tree;
     yed_buffer         *buffer;
     float               top_f,
                         left_f,
@@ -69,5 +70,7 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame);
 
 int yed_frame_line_to_y(yed_frame *frame, int row);
+
+int yed_frame_is_tree_root(yed_frame *frame);
 
 #endif

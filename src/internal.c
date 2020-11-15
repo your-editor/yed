@@ -360,3 +360,4 @@ int s_to_i(const char *s) {
 #include "subproc.c"
 #include "complete.c"
 #include "direct_draw.c"
+#include "frame_tree.c"

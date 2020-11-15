@@ -25,37 +25,35 @@ yed_frame * yed_add_new_frame_full(void) {
 
 void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
                                       int *btop, int *bleft, int *bheight, int *bwidth) {
-    int fix_h, fix_w;
 
-    fix_h = fix_w = 0;
+    /* Use of -2 below is to account for command + status lines. */
 
-    *top  = 1 + (int)(frame->top_f * (ys->term_rows));
-    *btop = *top;
-    if (*top > 1) {
-        *top += 1;
-        fix_h = 1;
-    }
+    /* Measurements including possible borders. */
+    *btop    = 1 + (int)(roundf(frame->top_f    * (ys->term_rows - 2)));
+    *bleft   = 1 + (int)(roundf(frame->left_f   * ys->term_cols));
+    *bheight =     (int)(roundf(frame->height_f * (ys->term_rows - 2)));
+    *bwidth  =     (int)(roundf(frame->width_f  * ys->term_cols));
 
-    *left  = 1 + (int)(frame->left_f * ys->term_cols);
-    *bleft = *left;
-    if (*left > 1) {
-        *left += 1;
-        fix_w  = 1;
-    }
+    if (!(*bleft & 1)) { *bwidth += 1; }
 
-    *bheight  = (int)(frame->height_f * (ys->term_rows - 2)); /* -2 for command + status line */
-    *height   = *bheight;
-    if (*btop + *bheight - fix_h < (ys->term_rows - 2)) {
-        *height -= 1;
-    }
-    *height -= fix_h;
+    /* Sanity checks and limitations. */
+    LIMIT(*btop,    1, ys->term_rows - 2);
+    LIMIT(*bheight, 1, ys->term_rows - 2);
+    LIMIT(*bleft,   1, ys->term_cols);
+    LIMIT(*bwidth,  1, ys->term_cols);
 
-    *bwidth  = (int)(frame->width_f * ys->term_cols);
-    *width   = *bwidth;
-    if (*bleft + *bwidth - 1 < (ys->term_cols)) {
-        *width -= 1;
-    }
-    *width -= fix_w;
+    while (*btop + *bheight - 1 > (ys->term_rows - 2)) { *bheight -= 1; }
+    while (*bleft + *bwidth - 1 > ys->term_cols)       { *bwidth  -= 1; }
+
+    /* Now the area inside any possible borders. */
+    *top    = *btop  + (*btop > 1);  /* When btop is 1, so is top.   */
+    *left   = *bleft + (*bleft > 1); /* When bleft is 1, so is left. */
+    *height = *bheight
+                - (*top != *btop)                                /* 1 shorter if there's a border row on the top... */
+                - ((*btop + *bheight - 1) != ys->term_rows - 2); /* ... or the bottom.                              */
+    *width  = *bwidth
+                - (*left != *bleft)                              /* 1 shorter if there's a border row on the left... */
+                - ((*bleft + *bwidth - 1) != ys->term_cols);     /* ... or the right.                                */
 }
 
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
@@ -71,14 +69,12 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
 
     frame = malloc(sizeof(*frame));
 
-    frame->v_link          = NULL;
-    frame->h_link          = NULL;
-    frame->buffer          = NULL;
-    frame->top_f           = top_f;
-    frame->left_f          = left_f;
-    frame->height_f        = height_f;
-    frame->width_f         = width_f;
-    frame->gutter_width    = 0;
+    frame->buffer       = NULL;
+    frame->top_f        = top_f;
+    frame->left_f       = left_f;
+    frame->height_f     = height_f;
+    frame->width_f      = width_f;
+    frame->gutter_width = 0;
 
     FRAME_RESET_RECT(frame);
 
@@ -99,13 +95,16 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     frame->gutter_glyphs        = array_make(char);
     frame->gutter_attrs         = array_make(yed_attrs);
 
+    frame->tree = yed_frame_tree_add_root(frame);
+
     return frame;
 }
 
 void yed_delete_frame(yed_frame *frame) {
-    int        i, save_cursor_row, save_cursor_col;
-    yed_frame *new_active_frame, **frame_it;
-    yed_event  event;
+    int             i;
+    yed_frame      *new_active_frame, **frame_it;
+    yed_event       event;
+    yed_frame_tree *next_leaf;
 
     event.kind  = EVENT_FRAME_PRE_DELETE;
     event.frame = frame;
@@ -120,29 +119,14 @@ void yed_delete_frame(yed_frame *frame) {
 
     new_active_frame = NULL;
 
-    if (frame->v_link) {
-        if (frame->v_link->left > frame->left) {
-            frame->v_link->left_f = frame->left_f;
+    if (frame->tree) {
+        if (!yed_frame_tree_is_root(frame->tree)) {
+            next_leaf = yed_frame_tree_find_next_leaf(frame->tree);
+            if (next_leaf) {
+                new_active_frame = next_leaf->frame;
+            }
         }
-        frame->v_link->width_f += frame->width_f;
-        LIMIT(frame->v_link->width_f, 0.1, 1.0);
-        frame->v_link->v_link = NULL;
-        FRAME_RESET_RECT(frame->v_link);
-        yed_frame_hard_reset_cursor_x(frame->v_link);
-        new_active_frame = frame->v_link;
-    } else if (frame->h_link) {
-        save_cursor_row = frame->h_link->cursor_line;
-        save_cursor_col = frame->h_link->cursor_col;
-        if (frame->h_link->top > frame->top) {
-            frame->h_link->top_f = frame->top_f;
-        }
-        frame->h_link->height_f += frame->height_f;
-        LIMIT(frame->h_link->height_f, 0.1, 1.0);
-        frame->h_link->height += frame->height;
-        frame->h_link->h_link = NULL;
-        FRAME_RESET_RECT(frame->h_link);
-        yed_set_cursor_far_within_frame(frame->h_link, save_cursor_col, save_cursor_row);
-        new_active_frame = frame->h_link;
+        yed_frame_tree_delete_leaf(frame->tree);
     }
 
     i = 0;
@@ -192,33 +176,17 @@ void yed_delete_frame(yed_frame *frame) {
 }
 
 yed_frame * yed_vsplit_frame(yed_frame *frame) {
+    int        save_cursor_row, save_cursor_col;
     yed_frame *new_frame;
-    int        orig_width, save_cursor_row, save_cursor_col, new_left_i, new_width_i;
-    float      new_left_f, new_width_f;
 
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
     yed_set_cursor_far_within_frame(frame, 1, save_cursor_row);
 
-    orig_width = frame->width;
+    yed_frame_tree_leaf_vsplit(frame->tree);
 
-    frame->width_f /= 2.0;
-    FRAME_RESET_RECT(frame);
-
-    new_left_i  = frame->left + frame->width - 1;
-    new_width_i = orig_width - frame->width;
-
-    new_left_f   = (float)new_left_i    / (float)(ys->term_cols);
-    new_width_f  = (float)new_width_i / (float)(ys->term_cols - 1);
-
-    new_frame = yed_add_new_frame(frame->top_f,
-                                  new_left_f,
-                                  frame->height_f,
-                                  new_width_f);
-
-    frame->v_link     = new_frame;
-    new_frame->v_link = frame;
+    new_frame = frame->tree->parent->child_trees[1]->frame;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_col, save_cursor_row);
 
@@ -226,33 +194,17 @@ yed_frame * yed_vsplit_frame(yed_frame *frame) {
 }
 
 yed_frame * yed_hsplit_frame(yed_frame *frame) {
+    int        save_cursor_row, save_cursor_col;
     yed_frame *new_frame;
-    int        orig_height, save_cursor_row, save_cursor_col, new_top_i, new_height_i;
-    float      new_top_f, new_height_f;
 
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
-    yed_set_cursor_far_within_frame(frame, 1, 1);
+    yed_set_cursor_far_within_frame(frame, 1, save_cursor_row);
 
-    orig_height  = frame->height;
+    yed_frame_tree_leaf_hsplit(frame->tree);
 
-    frame->height_f /= 2.0;
-    FRAME_RESET_RECT(frame);
-
-    new_top_i    = frame->top + frame->height - 1;
-    new_height_i = orig_height - frame->height;
-
-    new_top_f     = (float)new_top_i    / (float)(ys->term_rows);
-    new_height_f  = (float)new_height_i / (float)(ys->term_rows - 2); /* -2 for command + status line */
-
-    new_frame = yed_add_new_frame(new_top_f,
-                                  frame->left_f,
-                                  new_height_f,
-                                  frame->width_f);
-
-    frame->h_link     = new_frame;
-    new_frame->h_link = frame;
+    new_frame = frame->tree->parent->child_trees[1]->frame;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_col, save_cursor_row);
 
@@ -1428,4 +1380,12 @@ void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame) {
     return    (row >= frame->top  && row <= frame->top  + frame->height - 1)
            || (col >= frame->left && col <= frame->left + frame->width  - 1);
+}
+
+int yed_frame_is_tree_root(yed_frame *frame) {
+    if (frame->tree == NULL) {
+        return 0;
+    }
+
+    return !frame->tree->parent;
 }

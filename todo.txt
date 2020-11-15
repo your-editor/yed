@@ -1,4 +1,3 @@
-* line numbers
 * some kind of version checker for plugins so that
   plugins compiled with an older version of yed
   don't cause crashes

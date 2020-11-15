@@ -280,8 +280,18 @@ void yed_handle_resize(void) {
         yed_set_cursor_far_within_frame(af, 1, 1);
     }
 
+    /*
+     * Should keep this just in case someone is naughty and the frame
+     * doesn't have a tree.
+     */
     array_traverse(ys->frames, frame_it) {
         FRAME_RESET_RECT(*frame_it);
+    }
+
+    array_traverse(ys->frames, frame_it) {
+        if ((*frame_it)->tree) {
+            yed_frame_tree_recursive_readjust((*frame_it)->tree);
+        }
     }
 
     ys->redraw = ys->redraw_cls = 1;
