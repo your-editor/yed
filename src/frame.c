@@ -121,7 +121,7 @@ void yed_delete_frame(yed_frame *frame) {
 
     if (frame->tree) {
         if (!yed_frame_tree_is_root(frame->tree)) {
-            next_leaf = yed_frame_tree_find_next_leaf(frame->tree);
+            next_leaf = yed_frame_tree_get_split_leaf_prefer_left_or_topmost(frame->tree);
             if (next_leaf) {
                 new_active_frame = next_leaf->frame;
             }

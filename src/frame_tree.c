@@ -231,6 +231,7 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
     float           new_height;
     float           new_width;
     yed_frame_tree *other;
+    yed_frame_tree *other_leaf;
 
     if (tree->parent) {
         new_top    = atop + (tree->top * aheight);
@@ -246,17 +247,33 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
 
     /* Sneaky hacks to make the borders merge. */
     if (tree->parent && tree == tree->parent->child_trees[1]) {
-        other = tree->parent->child_trees[0];
-        if (other->is_leaf) {
+        other      = tree->parent->child_trees[0];
+        other_leaf = yed_frame_tree_get_split_leaf_prefer_right_or_bottommost(tree);
+
+        ASSERT(other_leaf->is_leaf, "failed to find other leaf");
+
+        if (other == other_leaf) {
             if (tree->parent->split_kind == FTREE_VSPLIT) {
-                new_left  = (float)(other->frame->left + other->frame->width - 1)
+                new_left  = (float)(other_leaf->frame->left + other_leaf->frame->width - 1)
                                 / (float)(ys->term_cols);
-                new_width = (float)(((int)(awidth * ys->term_cols)) - other->frame->width)
+                new_width = (float)(((int)(awidth * ys->term_cols)) - other_leaf->frame->width)
                                 / (float)(ys->term_cols);
             } else if (tree->parent->split_kind == FTREE_HSPLIT) {
-                new_top    = (float)(other->frame->top + other->frame->height - 1)
+                new_top    = (float)(other_leaf->frame->top + other_leaf->frame->height - 1)
                                 / (float)(ys->term_rows - 2);
-                new_height = (float)(((int)(aheight * (ys->term_rows - 2))) - other->frame->height)
+                new_height = (float)(((int)(aheight * (ys->term_rows - 2))) - other_leaf->frame->height)
+                                / (float)(ys->term_rows - 2);
+            }
+        } else {
+            if (tree->parent->split_kind == FTREE_VSPLIT) {
+                new_left  = (float)(other_leaf->frame->left + other_leaf->frame->width - 1)
+                                / (float)(ys->term_cols);
+                new_width = (float)(((int)(awidth * ys->term_cols)) - ((int)(awidth * other->width * ys->term_cols)))
+                                / (float)(ys->term_cols);
+            } else if (tree->parent->split_kind == FTREE_HSPLIT) {
+                new_top    = (float)(other_leaf->frame->top + other_leaf->frame->height - 1)
+                                / (float)(ys->term_rows - 2);
+                new_height = (float)(((int)(aheight * (ys->term_rows - 2))) - ((int)(aheight * other->height * (ys->term_rows - 2))))
                                 / (float)(ys->term_rows - 2);
             }
         }
@@ -283,7 +300,7 @@ void yed_frame_tree_recursive_readjust(yed_frame_tree *tree) {
     _yed_frame_tree_recursive_readjust(root, root->top, root->left, root->height, root->width);
 }
 
-yed_frame_tree *yed_frame_tree_find_next_leaf(yed_frame_tree *tree) {
+yed_frame_tree *yed_frame_tree_get_split_leaf_prefer_left_or_topmost(yed_frame_tree *tree) {
     if (tree->parent == NULL) {
         return NULL;
     }
@@ -292,6 +309,20 @@ yed_frame_tree *yed_frame_tree_find_next_leaf(yed_frame_tree *tree) {
 
     while (!tree->is_leaf) {
         tree = tree->child_trees[0];
+    }
+
+    return tree;
+}
+
+yed_frame_tree *yed_frame_tree_get_split_leaf_prefer_right_or_bottommost(yed_frame_tree *tree) {
+    if (tree->parent == NULL) {
+        return NULL;
+    }
+
+    tree = tree->parent->child_trees[tree->parent->child_trees[0] == tree];
+
+    while (!tree->is_leaf) {
+        tree = tree->child_trees[1];
     }
 
     return tree;
