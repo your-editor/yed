@@ -198,8 +198,10 @@ static void write_status_bar(int key) {
         if (status_line_var) {
             yed_set_small_message(status_line_var);
         } else {
-            yed_set_small_message("<undefined>");
+            yed_set_small_message(NULL);
         }
+    } else {
+        yed_set_small_message(NULL);
     }
 
     if (ys->small_message) {
