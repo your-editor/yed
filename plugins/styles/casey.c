@@ -2,19 +2,20 @@
 
 #define MAYBE_CONVERT(rgb) (tc ? (rgb) : rgb_to_256(rgb))
 
-#define color_white   MAYBE_CONVERT(RGB_32(255, 255, 255))
-#define color_bg      MAYBE_CONVERT(RGB_32(40, 40, 40))
-#define color_bg_1    MAYBE_CONVERT(RGB_32(30, 30, 30))
-#define color_bg_2    MAYBE_CONVERT(RGB_32(20, 20, 20))
-#define color_fg      MAYBE_CONVERT(RGB_32(170, 170, 160))
-#define color_search  MAYBE_CONVERT(RGB_32(73, 212, 92))
-#define color_attent  MAYBE_CONVERT(RGB_32(244, 91, 83))
-#define color_assoc   MAYBE_CONVERT(RGB_32(40, 40, 53))
-#define color_comment MAYBE_CONVERT(RGB_32(80, 80, 80))
-#define color_keyword MAYBE_CONVERT(RGB_32(185, 150, 84))
-#define color_pp      MAYBE_CONVERT(RGB_32(70, 120, 130))
-#define color_fn      MAYBE_CONVERT(RGB_32(150, 90, 80))
-#define color_num     MAYBE_CONVERT(RGB_32(110, 150, 100))
+#define color_white         MAYBE_CONVERT(RGB_32(255, 255, 255))
+#define color_bg            MAYBE_CONVERT(RGB_32(40, 40, 40))
+#define color_bg_1          MAYBE_CONVERT(RGB_32(30, 30, 30))
+#define color_bg_2          MAYBE_CONVERT(RGB_32(20, 20, 20))
+#define color_fg            MAYBE_CONVERT(RGB_32(170, 170, 160))
+#define color_search        MAYBE_CONVERT(RGB_32(73, 212, 92))
+#define color_search_cursor MAYBE_CONVERT(RGB_32(212, 73, 92))
+#define color_attent        MAYBE_CONVERT(RGB_32(244, 91, 83))
+#define color_assoc         MAYBE_CONVERT(RGB_32(40, 40, 53))
+#define color_comment       MAYBE_CONVERT(RGB_32(80, 80, 80))
+#define color_keyword       MAYBE_CONVERT(RGB_32(185, 150, 84))
+#define color_pp            MAYBE_CONVERT(RGB_32(70, 120, 130))
+#define color_fn            MAYBE_CONVERT(RGB_32(150, 90, 80))
+#define color_num           MAYBE_CONVERT(RGB_32(110, 150, 100))
 
 PACKABLE_STYLE(casey) {
     yed_style s;
@@ -55,7 +56,7 @@ PACKABLE_STYLE(casey) {
 
     s.search_cursor.flags = attr_kind | ATTR_BOLD;
     s.search_cursor.fg    = color_bg;
-    s.search_cursor.bg    = color_search;
+    s.search_cursor.bg    = color_search_cursor;
 
     s.attention.flags     = attr_kind | ATTR_BOLD;
     s.attention.fg        = color_attent;
