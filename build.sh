@@ -11,6 +11,7 @@ function corecount {
 source build.options
 source install.options
 
+export CC=${CC}
 export LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
 export DRIVER_C_FLAGS="-ldl -lm -lpthread -Wl,--enable-new-dtags,-rpath,${lib_dir}"
 export PLUGIN_C_FLAGS="-shared -fPIC -I${DIR}/include -L${DIR} -lyed"
