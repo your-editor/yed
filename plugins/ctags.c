@@ -445,6 +445,8 @@ void ctags_jump_to_definition(int n_args, char **args) {
     int         row;
     int         col;
 
+    text = NULL;
+
     if ((check = fopen("tags", "r"))) {
         fclose(check);
     } else {
