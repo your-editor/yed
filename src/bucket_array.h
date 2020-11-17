@@ -72,28 +72,15 @@ void * _bucket_array_iter_item(bucket_array_iter_t *it);
 void _bucket_array_iter_next(bucket_array_iter_t *it);
 
 #define bucket_array_traverse(array, it)                                   \
-    for (bucket_array_iter_t __ba_iter = _bucket_array_iter_make(&(array)); \
-         !_bucket_array_iter_is_end(&__ba_iter)                            \
-             && (((it) = _bucket_array_iter_item(&__ba_iter)), 1);         \
-         _bucket_array_iter_next(&__ba_iter))
+    for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make(&(array)); \
+         !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                            \
+             && (((it) = _bucket_array_iter_item(&__ba_iter##__LINE__)), 1);         \
+         _bucket_array_iter_next(&__ba_iter##__LINE__))
 
 #define bucket_array_traverse_from(array, it, starting_idx)                                   \
-    for (bucket_array_iter_t __ba_iter = _bucket_array_iter_make_at(&(array), (starting_idx)); \
-         !_bucket_array_iter_is_end(&__ba_iter)                            \
-             && (((it) = _bucket_array_iter_item(&__ba_iter)), 1);         \
-         _bucket_array_iter_next(&__ba_iter))
-
-
-#if 0
-#define bucket_array_traverse(array, it)                                              \
-    for (int __idx = 0;                                                               \
-         (__idx < (array).used) && (((it) = _bucket_array_item(&(array), __idx)), 1); \
-         __idx += 1)
-
-#define bucket_array_traverse_from(array, it, starting_idx)                           \
-    for (int __idx = starting_idx;                                                    \
-         (__idx < (array).used) && (((it) = _bucket_array_item(&(array), __idx)), 1); \
-         __idx += 1)
-#endif
+    for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make_at(&(array), (starting_idx)); \
+         !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                            \
+             && (((it) = _bucket_array_iter_item(&__ba_iter##__LINE__)), 1);         \
+         _bucket_array_iter_next(&__ba_iter##__LINE__))
 
 #endif
