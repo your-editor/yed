@@ -42,10 +42,13 @@ void _bucket_array_free(bucket_array_t *array) {
     array_free(array->buckets);
 }
 
+#define GET_BUCKET(a, i) \
+    ((bucket_t*)array_item((a)->buckets, (i)))
+
 #define BUCKET_ITEM(b, idx, elem_size) \
     ((b)->data + ((elem_size) * (idx)))
 
-int get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
+int _get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
     int       b_idx;
     bucket_t *b;
 
@@ -99,7 +102,7 @@ void * _bucket_array_item(bucket_array_t *array, int idx) {
     bucket_t *b;
     int       b_idx;
 
-    b_idx = get_bucket_and_elem_idx_for_idx(array, &idx);
+    b_idx = _get_bucket_and_elem_idx_for_idx(array, &idx);
     ASSERT(b_idx >= 0, "index out of bounds in _bucket_array_item()");
 
     b = array_item(array->buckets, b_idx);
@@ -154,7 +157,7 @@ void _bucket_array_delete(bucket_array_t *array, int idx) {
         return;
     }
 
-    b_idx = get_bucket_and_elem_idx_for_idx(array, &idx);
+    b_idx = _get_bucket_and_elem_idx_for_idx(array, &idx);
     ASSERT(b_idx >= 0, "index out of bounds in _bucket_array_delete()");
 
     bucket_delete(array, b_idx, idx, array->elem_size);
@@ -292,4 +295,68 @@ void _bucket_array_clear(bucket_array_t *array) {
     array_clear(array->buckets);
 
     array->used = 0;
+}
+
+
+bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx) {
+    bucket_array_iter_t iter;
+
+    iter.array = array;
+
+    iter.elem_idx = idx;
+    iter.bucket_idx = _get_bucket_and_elem_idx_for_idx(array, &iter.elem_idx);
+
+    if (iter.elem_idx   == -1
+    ||  iter.bucket_idx == -1) {
+
+        iter.bucket_idx = iter.elem_idx = 0;
+    }
+
+    return iter;
+}
+
+bucket_array_iter_t _bucket_array_iter_make(bucket_array_t *array) {
+    bucket_array_iter_t iter;
+
+    iter.array = array;
+    iter.bucket_idx = iter.elem_idx = 0;
+
+    return iter;
+}
+
+int _bucket_array_iter_is_end(bucket_array_iter_t *it) {
+    int n_buckets;
+
+    n_buckets = array_len(it->array->buckets);
+
+    if (it->bucket_idx >= n_buckets) { return 1; }
+
+    if (it->bucket_idx == n_buckets - 1) {
+        return (it->elem_idx
+                    >= GET_BUCKET(it->array, it->bucket_idx)->used);
+    }
+
+    return 0;
+}
+
+void * _bucket_array_iter_item(bucket_array_iter_t *it) {
+    bucket_t *bucket;
+
+    bucket = GET_BUCKET(it->array, it->bucket_idx);
+
+    return BUCKET_ITEM(bucket, it->elem_idx, it->array->elem_size);
+}
+
+void _bucket_array_iter_next(bucket_array_iter_t *it) {
+    bucket_t *bucket;
+
+    bucket = GET_BUCKET(it->array, it->bucket_idx);
+
+    if (bucket->used == 0
+    ||  it->elem_idx == bucket->used - 1) {
+        it->bucket_idx += 1;
+        it->elem_idx    = 0;
+    } else {
+        it->elem_idx += 1;
+    }
 }

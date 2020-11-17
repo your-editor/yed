@@ -355,6 +355,7 @@ int s_to_i(const char *s) {
 #include "event.c"
 #include "default_plug_dir.c"
 #include "plugin.c"
+#include "boyer_moore.c"
 #include "find.c"
 #include "var.c"
 #include "util.c"
