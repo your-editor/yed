@@ -259,14 +259,18 @@ int handle_bracketed_paste(int key) {
     char  key_str_buff[32];
     char *key_str;
 
-    if (!yed_var_is_truthy("bracketed-paste-mode")) {
-        return 0;
-    }
-
     if (key == _BRACKETED_PASTE_BEGIN) {
+        if (!yed_var_is_truthy("bracketed-paste-mode")) {
+            return 1;
+        }
+
         ys->doing_bracketed_paste = 1;
         return 1;
     } else if (key == _BRACKETED_PASTE_END) {
+        if (!yed_var_is_truthy("bracketed-paste-mode")) {
+            return 1;
+        }
+
         if (!ys->interactive_command) {
             array_zero_term(ys->bracketed_paste_buff);
             str = array_data(ys->bracketed_paste_buff);
