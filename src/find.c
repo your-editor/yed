@@ -1,5 +1,3 @@
-/* #define USE_BOYER_MOORE */
-
 void yed_init_search(void) {
     ys->replace_markers       = array_make(array_t);
     ys->replace_save_lines    = array_make(yed_line*);
@@ -137,40 +135,40 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
             scan += yed_line_col_to_idx(line, col + 1);
         }
 
-#ifdef USE_BOYER_MOORE
-        while (scan < line_data_end) {
-            idx = yed_boyer_moore(scan, line_data_end - scan,
-                              ys->current_search, search_len);
-            if (idx >= 0) {
-                c = yed_line_idx_to_col(line, scan - line_data + idx);
-                if (r != row || c != col) {
-                    *row_out = r;
-                    *col_out = c;
-                    return 1;
+        if (yed_var_is_truthy("use-boyer-moore")) {
+            while (scan < line_data_end) {
+                idx = yed_boyer_moore(scan, line_data_end - scan,
+                                ys->current_search, search_len);
+                if (idx >= 0) {
+                    c = yed_line_idx_to_col(line, scan - line_data + idx);
+                    if (r != row || c != col) {
+                        *row_out = r;
+                        *col_out = c;
+                        return 1;
+                    }
+                    scan += idx + 1;
+                } else {
+                    break;
                 }
-                scan += idx + 1;
-            } else {
-                break;
+            }
+        } else {
+            while (scan < line_data_end) {
+                if ((scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
+                    idx = scan - line_data;
+                    c   = yed_line_idx_to_col(line, idx);
+
+                    if (r != row || c != col) {
+                        *row_out = r;
+                        *col_out = c;
+                        return 1;
+                    }
+
+                    scan += 1;
+                } else {
+                    break;
+                }
             }
         }
-#else
-        while (scan < line_data_end) {
-            if ((scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
-                idx = scan - line_data;
-                c   = yed_line_idx_to_col(line, idx);
-
-                if (r != row || c != col) {
-                    *row_out = r;
-                    *col_out = c;
-                    return 1;
-                }
-
-                scan += 1;
-            } else {
-                break;
-            }
-        }
-#endif
 
         r += 1;
     }
@@ -191,40 +189,40 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
             line_data_end = line_data + yed_line_col_to_idx(line, col);
         }
 
-#ifdef USE_BOYER_MOORE
-        while (scan < line_data_end) {
-            idx = yed_boyer_moore(scan, line_data_end - scan,
-                              ys->current_search, search_len);
-            if (idx >= 0) {
-                c = yed_line_idx_to_col(line, scan - line_data + idx);
-                if (r != row || c != col) {
-                    *row_out = r;
-                    *col_out = c;
-                    return 1;
+        if (yed_var_is_truthy("use-boyer-moore")) {
+            while (scan < line_data_end) {
+                idx = yed_boyer_moore(scan, line_data_end - scan,
+                                ys->current_search, search_len);
+                if (idx >= 0) {
+                    c = yed_line_idx_to_col(line, scan - line_data + idx);
+                    if (r != row || c != col) {
+                        *row_out = r;
+                        *col_out = c;
+                        return 1;
+                    }
+                    scan += idx + 1;
+                } else {
+                    break;
                 }
-                scan += idx + 1;
-            } else {
-                break;
+            }
+        } else {
+            while (scan < line_data_end) {
+                if ((scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
+                    idx = scan - line_data;
+                    c   = yed_line_idx_to_col(line, idx);
+
+                    if (r != row || c != col) {
+                        *row_out = r;
+                        *col_out = c;
+                        return 1;
+                    }
+
+                    scan += 1;
+                } else {
+                    break;
+                }
             }
         }
-#else
-        while (scan < line_data_end) {
-            if ((scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
-                idx = scan - line_data;
-                c   = yed_line_idx_to_col(line, idx);
-
-                if (r != row || c != col) {
-                    *row_out = r;
-                    *col_out = c;
-                    return 1;
-                }
-
-                scan += 1;
-            } else {
-                break;
-            }
-        }
-#endif
 
         r += 1;
     }
