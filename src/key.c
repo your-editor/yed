@@ -256,6 +256,8 @@ int handle_bracketed_paste(int key) {
     char *str;
     int   key_ch;
     int   i;
+    char  key_str_buff[32];
+    char *key_str;
 
     if (!yed_var_is_truthy("bracketed-paste-mode")) {
         return 0;
@@ -265,10 +267,11 @@ int handle_bracketed_paste(int key) {
         ys->doing_bracketed_paste = 1;
         return 1;
     } else if (key == _BRACKETED_PASTE_END) {
-        array_zero_term(ys->bracketed_paste_buff);
-
-        str = array_data(ys->bracketed_paste_buff);
-        yed_execute_command("simple-insert-string", 1, &str);
+        if (!ys->interactive_command) {
+            array_zero_term(ys->bracketed_paste_buff);
+            str = array_data(ys->bracketed_paste_buff);
+            yed_execute_command("simple-insert-string", 1, &str);
+        }
 
         ys->doing_bracketed_paste = 0;
         array_clear(ys->bracketed_paste_buff);
@@ -276,14 +279,21 @@ int handle_bracketed_paste(int key) {
     } else if (ys->doing_bracketed_paste) {
         if (key < REAL_KEY_MAX
         &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
-            if (key == MBYTE) {
-                for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
-                    array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
-                }
+            if (ys->interactive_command) {
+                sprintf(key_str_buff, "%d", key);
+                key_str = key_str_buff;
+
+                yed_execute_command(ys->interactive_command, 1, &key_str);
             } else {
-                if (key == NEWLINE) { key = ENTER; }
-                key_ch = (char)key;
-                array_push(ys->bracketed_paste_buff, key_ch);
+                if (key == MBYTE) {
+                    for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
+                        array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
+                    }
+                } else {
+                    if (key == NEWLINE) { key = ENTER; }
+                    key_ch = (char)key;
+                    array_push(ys->bracketed_paste_buff, key_ch);
+                }
             }
         }
         return 1;
