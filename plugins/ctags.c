@@ -68,10 +68,11 @@ void ctags_find_cleanup(void) {
     }
 }
 
-int ctag_parse_path_and_search(const char *text, char *path_buff, char *search_buff) {
+int ctag_parse_path_and_search(const char *text, char *path_buff, char *search_buff, int *line_nr) {
     char *path_start;
     char *search_start;
 
+    *line_nr = -1;
     if (!(path_start = strchr(text, '\t'))) {
         return 0;
     }
@@ -86,8 +87,12 @@ int ctag_parse_path_and_search(const char *text, char *path_buff, char *search_b
     *search_start = '\t';
 
     search_start += 1;
+
     if (*search_start != '/') {
-        return 0;
+        if (sscanf(search_start, "%d", line_nr) == 0) {
+            return 0;
+        }
+        return 1;
     }
 
     search_start += 1;
@@ -124,7 +129,7 @@ void ctag_find_select(void) {
     line = yed_buff_get_line(find_buff, frame->cursor_line);
     array_zero_term(line->chars);
 
-    if (!ctag_parse_path_and_search(line->chars.data, path, search)) {
+    if (!ctag_parse_path_and_search(line->chars.data, path, search, &row)) {
         ctags_find_cleanup();
 LOG_CMD_ENTER("ctags-find");
         yed_cerr("unable to parse tag location");
@@ -139,17 +144,21 @@ LOG_EXIT();
     /* This will help keep the destination near the top of the buffer. */
     YEXE("cursor-buffer-end");
 
-    save_cur_search = ys->current_search;
-
-    ys->current_search = search;
-    if (yed_find_next(1, 1, &row, &col)) {
-        yed_set_cursor_within_frame(ys->active_frame, col, row);
+    if (row > 0) {
+        yed_set_cursor_within_frame(ys->active_frame, 1, row);
     } else {
-        YEXE("cursor-buffer-begin");
-        yed_cerr("could not find pattern from tag file");
-    }
+        save_cur_search = ys->current_search;
 
-    ys->current_search = save_cur_search;
+        ys->current_search = search;
+        if (yed_find_next(1, 1, &row, &col)) {
+            yed_set_cursor_within_frame(ys->active_frame, col, row);
+        } else {
+            YEXE("cursor-buffer-begin");
+            yed_cerr("could not find pattern from tag file");
+        }
+
+        ys->current_search = save_cur_search;
+    }
 }
 
 void ctags_find_key_pressed_handler(yed_event *event) {
@@ -501,7 +510,7 @@ select:
         goto out;
     }
 
-    if (!ctag_parse_path_and_search(text, path, search)) {
+    if (!ctag_parse_path_and_search(text, path, search, &row)) {
         yed_cerr("error parsing location from tag line");
         goto out;
     }
@@ -511,17 +520,21 @@ select:
     /* This will help keep the destination near the top of the buffer. */
     YEXE("cursor-buffer-end");
 
-    save_cur_search = ys->current_search;
-
-    ys->current_search = search;
-    if (yed_find_next(1, 1, &row, &col)) {
-        yed_set_cursor_within_frame(ys->active_frame, col, row);
+    if (row > 0) {
+        yed_set_cursor_within_frame(ys->active_frame, 1, row);
     } else {
-        YEXE("cursor-buffer-begin");
-        yed_cerr("could not find pattern from tag file");
-    }
+        save_cur_search = ys->current_search;
 
-    ys->current_search = save_cur_search;
+        ys->current_search = search;
+        if (yed_find_next(1, 1, &row, &col)) {
+            yed_set_cursor_within_frame(ys->active_frame, col, row);
+        } else {
+            YEXE("cursor-buffer-begin");
+            yed_cerr("could not find pattern from tag file");
+        }
+
+        ys->current_search = save_cur_search;
+    }
 
 out:
     if (text) { free(text); }
