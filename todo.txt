@@ -6,4 +6,22 @@
       versions
 * greedy key sequences reading instead of eager
 * compose key sequences
-* catch SIGTERM -- exit gracefully (don't leave the terminal messed up)
+* catch SIGTERM
+    * exit gracefully (don't leave the terminal messed up)
+* macro plugin
+* revamped command line
+    * history (generalize)
+    * more advanced editing with arrow keys, etc.
+* more completion (generalize)
+    * command line
+    * commands: buffer, plugin stuff, style stuff
+    * files (for use in command line and completer plugin)
+* buffer-mod changes
+    * event trigger moved to the actual buffer
+      modification functions
+    * default event handler that sets "modified" flag on
+      buffers
+    * make 'quit' check the flags and ask
+      if you really want to quit without saving
+* meta keys in core (fn keys too?)
+* OSC 52
