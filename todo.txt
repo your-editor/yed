@@ -12,6 +12,9 @@
 * revamped command line
     * history (generalize)
     * more advanced editing with arrow keys, etc.
+* only "live" update replace visible lines
+    * maybe this can be done in a line draw event handler
+      where we change the contents?
 * more completion (generalize)
     * command line
     * commands: buffer, plugin stuff, style stuff
@@ -25,3 +28,5 @@
       if you really want to quit without saving
 * meta keys in core (fn keys too?)
 * OSC 52
+* bucket_array_rtraverse{_from}
+    * use in yed_find_prev()

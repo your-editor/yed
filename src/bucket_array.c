@@ -309,7 +309,9 @@ bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx) {
     if (iter.elem_idx   == -1
     ||  iter.bucket_idx == -1) {
 
-        iter.bucket_idx = iter.elem_idx = 0;
+        /* _bucket_array_iter_is_end() should return true. */
+        iter.bucket_idx = array_len(array->buckets);
+        iter.elem_idx   = INT32_MAX;
     }
 
     return iter;

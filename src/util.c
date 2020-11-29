@@ -491,7 +491,7 @@ char * last_strnstr(const char *haystack, const char *needle, size_t len) {
     result = NULL;
     end    = (char*)haystack + len;
 
-    for (;;) {
+    while (end - haystack) {
         p = strnstr(haystack, needle, end - haystack);
 
         if (p == NULL) { break; }
