@@ -143,26 +143,35 @@ static void print_usage(void) {
 
 static int parse_options(int argc, char **argv) {
     int i;
+    int seen_double_dash;
+
+    seen_double_dash = 0;
 
     ys->options.files = array_make(char*);
 
     for (i = 1; i < argc; i += 1) {
-        if (strcmp(argv[i], "--instrument") == 0) {
-            ys->options.instrument = 1;
-        } else if (strcmp(argv[i], "--no-init") == 0) {
-            ys->options.no_init = 1;
-        } else if (strcmp(argv[i], "-i") == 0) {
-            if (i == argc - 1)    { return 0; }
-            ys->options.init = argv[i + 1];
-            i += 1;
-        } else if (strncmp(argv[i], "--init=", 7) == 0) {
-            ys->options.init = argv[i] + 7;
-        } else if (strcmp(argv[i], "--help") == 0) {
-            ys->options.help = 1;
-        } else if (strncmp(argv[i], "-", 1) == 0 || strncmp(argv[i], "--", 2) == 0) {
-            return 0;
-        } else {
+        if (seen_double_dash) {
             array_push(ys->options.files, argv[i]);
+        } else {
+            if (strcmp(argv[i], "--") == 0) {
+                seen_double_dash = 1;
+            } else if (strcmp(argv[i], "--instrument") == 0) {
+                ys->options.instrument = 1;
+            } else if (strcmp(argv[i], "--no-init") == 0) {
+                ys->options.no_init = 1;
+            } else if (strcmp(argv[i], "-i") == 0) {
+                if (i == argc - 1)    { return 0; }
+                ys->options.init = argv[i + 1];
+                i += 1;
+            } else if (strncmp(argv[i], "--init=", 7) == 0) {
+                ys->options.init = argv[i] + 7;
+            } else if (strcmp(argv[i], "--help") == 0) {
+                ys->options.help = 1;
+            } else if (strncmp(argv[i], "-", 1) == 0) {
+                return 0;
+            } else {
+                array_push(ys->options.files, argv[i]);
+            }
         }
     }
 
