@@ -76,7 +76,7 @@ void syntax_python_frame_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("Pyhon")) {
+    ||  frame->buffer->ft != yed_get_ft("Python")) {
         return;
     }
 
@@ -91,7 +91,7 @@ void syntax_python_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("Pyhon")) {
+    ||  frame->buffer->ft != yed_get_ft("Python")) {
         return;
     }
 
@@ -106,7 +106,7 @@ void syntax_python_buff_mod_pre_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("Pyhon")) {
+    ||  frame->buffer->ft != yed_get_ft("Python")) {
         return;
     }
 
@@ -121,7 +121,7 @@ void syntax_python_buff_mod_post_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("Pyhon")) {
+    ||  frame->buffer->ft != yed_get_ft("Python")) {
         return;
     }
 
