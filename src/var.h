@@ -12,7 +12,10 @@ void yed_unset_var(char *var);
 
 #define DEFAULT_TABW 4
 int yed_get_tab_width(void);
+#define DEFAULT_SCROLL_OFF 5
+int yed_get_default_scroll_offset(void);
 
 int yed_var_is_truthy(char *var);
+int yed_get_var_as_int(char *var, int *out);
 
 #endif

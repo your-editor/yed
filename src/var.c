@@ -9,6 +9,7 @@ void yed_set_default_vars(void) {
     yed_set_var("buffer-load-mode",          "map");
     yed_set_var("bracketed-paste-mode",      "on");
     yed_set_var("enable-search-cursor-move", "yes");
+    yed_set_var("default-scroll-offset",     XSTR(DEFAULT_SCROLL_OFF));
 }
 
 void yed_set_var(char *var, char *val) {
@@ -72,25 +73,6 @@ void yed_unset_var(char *var) {
     free(old_val);
 }
 
-int yed_get_tab_width(void) {
-    char *tabw_var;
-    int   tabw;
-
-    tabw_var = yed_get_var("tab-width");
-
-    if (tabw_var) {
-        sscanf(tabw_var, "%d", &tabw);
-
-        if (tabw <= 0) {
-            tabw = DEFAULT_TABW;
-        }
-    } else {
-        tabw = DEFAULT_TABW;
-    }
-
-    return tabw;
-}
-
 int yed_var_is_truthy(char *var) {
     char *val;
 
@@ -113,4 +95,38 @@ int yed_var_is_truthy(char *var) {
     }
 
     return 1;
+}
+
+int yed_get_var_as_int(char *var, int *out) {
+    char *val;
+
+    if (!(val = yed_get_var(var))) {
+        return 0;
+    }
+
+    sscanf(val, "%d", out);
+
+    return 1;
+}
+
+int yed_get_tab_width(void) {
+    int tabw;
+
+    if (!yed_get_var_as_int("tab-width", &tabw)
+    ||  tabw <= 0) {
+        tabw = DEFAULT_TABW;
+    }
+
+    return tabw;
+}
+
+int yed_get_default_scroll_offset(void) {
+    int scroll_off;
+
+    if (!yed_get_var_as_int("default-scroll-offset", &scroll_off)
+    ||  scroll_off < 0) {
+        scroll_off = DEFAULT_SCROLL_OFF;
+    }
+
+    return scroll_off;
 }

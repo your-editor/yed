@@ -90,7 +90,7 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     frame->cur_y                = frame->top;
     frame->desired_col          = 1;
     frame->dirty                = 1;
-    frame->scroll_off           = 5;
+    frame->scroll_off           = yed_get_default_scroll_offset();
     frame->line_attrs           = array_make(yed_attrs);
     frame->gutter_glyphs        = array_make(char);
     frame->gutter_attrs         = array_make(yed_attrs);
@@ -987,9 +987,12 @@ void yed_frame_update(yed_frame *frame) {
     frame->last_cursor_line = frame->cursor_line;
 }
 
+#define NORM_SCROLL_OFF(f) (MIN((f)->scroll_off, (f)->height / 2))
+
 void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines, int buff_big_enough_to_scroll) {
     int new_y,
-        bot;
+        bot,
+        scroll_off;
 
     if (dir > 0) {
         dir = 1;
@@ -1000,16 +1003,17 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
     bot = f->top + f->height;
 
     if (dir) {
-        new_y = f->cur_y + dir;
+        scroll_off = NORM_SCROLL_OFF(f);
+        new_y      = f->cur_y + dir;
 
         if (buff_big_enough_to_scroll) {
             if (f->buffer_y_offset < buff_n_lines - f->height
-            && new_y >= bot - f->scroll_off) {
+            && new_y >= bot - scroll_off) {
 
                 f->buffer_y_offset += dir;
                 f->dirty            = 1;
             } else if (f->buffer_y_offset >= 1
-                   &&  new_y < f->top + f->scroll_off) {
+                   &&  new_y < f->top + scroll_off) {
 
                 f->buffer_y_offset += dir;
                 f->dirty            = 1;
@@ -1143,7 +1147,7 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
     yed_event event;
 
     buff_n_lines              = bucket_array_len(f->buffer->lines);
-    buff_big_enough_to_scroll = buff_n_lines > 2 * f->scroll_off;
+    buff_big_enough_to_scroll = buff_n_lines > 2 * NORM_SCROLL_OFF(f);
 
     save_cursor_line = f->cursor_line;
 
@@ -1230,7 +1234,7 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
             frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
             frame->desired_col     = 1;
             frame->cur_x           = frame->left + frame->gutter_width;
-            frame->cur_y           = frame->top + frame->scroll_off;
+            frame->cur_y           = frame->top  + NORM_SCROLL_OFF(frame);
             LIMIT(frame->cur_y,
                     frame->top,
                     MIN(frame->top + frame->height - 1,
