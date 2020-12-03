@@ -30,3 +30,6 @@
 * OSC 52
 * bucket_array_rtraverse{_from}
     * use in yed_find_prev()
+* macOS compatibility
+    * installation uses some stuff that macOS doesn't have (readelf, different dd flags)
+    * I think I encountered a crash... not sure
