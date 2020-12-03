@@ -49,7 +49,7 @@ void yed_search_line_handler(yed_event *event) {
     search        = yed_active_style_get_search();
     search_cursor = yed_active_style_get_search_cursor();
 
-    while (scan < line_data_end) {
+    while (scan < line_data_end && line_data_end - scan >= search_len) {
         if (!(scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
             break;
         }
@@ -152,7 +152,7 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
                 }
             }
         } else {
-            while (scan < line_data_end) {
+            while (scan < line_data_end && line_data_end - scan >= search_len) {
                 if ((scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
                     idx = scan - line_data;
                     c   = yed_line_idx_to_col(line, idx);
@@ -206,7 +206,7 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
                 }
             }
         } else {
-            while (scan < line_data_end) {
+            while (scan < line_data_end && line_data_end - scan >= search_len) {
                 if ((scan = strnstr(scan, ys->current_search, line_data_end - scan))) {
                     idx = scan - line_data;
                     c   = yed_line_idx_to_col(line, idx);
@@ -284,7 +284,7 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
             line_data_end = line_data + yed_line_col_to_idx(line, col - 1);
         }
 
-        while (line_data < line_data_end) {
+        while (line_data < line_data_end && line_data_end - line_data >= search_len) {
             if ((scan = last_strnstr(line_data, ys->current_search, line_data_end - line_data))) {
                 idx = scan - line_data;
                 c   = yed_line_idx_to_col(line, idx);
@@ -314,7 +314,7 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
         line_data     = array_data(line->chars);
         line_data_end = line_data + data_len;
 
-        while (line_data < line_data_end) {
+        while (line_data < line_data_end && line_data_end - line_data >= search_len) {
             if ((scan = last_strnstr(line_data, ys->current_search, line_data_end - line_data))) {
                 idx = scan - line_data;
                 c   = yed_line_idx_to_col(line, idx);

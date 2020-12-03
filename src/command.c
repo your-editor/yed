@@ -3293,6 +3293,10 @@ int yed_inc_find_prev_in_buffer(void) {
 
 void yed_default_command_find_prev_in_buffer(int n_args, char **args) {
     yed_frame *frame;
+    yed_attrs  cmd_attr;
+    yed_attrs  attn_attr;
+    yed_attrs  err_attr;
+    char       attr_buff[128];
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -3321,6 +3325,13 @@ void yed_default_command_find_prev_in_buffer(int n_args, char **args) {
     ys->search_save_col = ys->active_frame->cursor_col;
 
     if (!yed_inc_find_prev_in_buffer()) {
+        cmd_attr    = yed_active_style_get_command_line();
+        attn_attr   = yed_active_style_get_attention();
+        err_attr    = cmd_attr;
+        err_attr.fg = attn_attr.fg;
+        yed_get_attr_str(err_attr, attr_buff);
+
+        yed_append_non_text_to_cmd_buff(attr_buff);
         yed_append_text_to_cmd_buff("[!] '");
         yed_append_text_to_cmd_buff(ys->current_search);
         yed_append_text_to_cmd_buff("' not found");
