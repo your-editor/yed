@@ -27,6 +27,7 @@ static yed_direct_draw_t *err_dd;
 static char               err_file[512];
 static int                err_line;
 static int                err_col;
+static int                err_has_loc;
 static pthread_mutex_t    mtx = PTHREAD_MUTEX_INITIALIZER;
 static char               builder_notif_cmd[1024];
 static int                builder_notif_cmd_status;
@@ -289,14 +290,16 @@ static void builder_draw_error_message(int do_draw) {
     }
 
     if (do_draw) {
-        sprintf(line_buff, "  %s  ", err_msg);
-        line_len = strlen(line_buff);
-        yed_get_string_info(line_buff, line_len, &n_glyphs, &line_width);
+        if (err_has_loc) {
+            sprintf(line_buff, "  %s  ", err_msg);
+            line_len = strlen(line_buff);
+            yed_get_string_info(line_buff, line_len, &n_glyphs, &line_width);
 
-        err_dd = yed_direct_draw(ys->term_rows - 3,
-                                 ys->term_cols - line_width,
-                                 get_err_attrs(),
-                                 line_buff);
+            err_dd = yed_direct_draw(ys->term_rows - 3,
+                                     ys->term_cols - line_width,
+                                     get_err_attrs(),
+                                     line_buff);
+        }
     } else {
         yed_kill_direct_draw(err_dd);
         err_dd = 0;
@@ -410,10 +413,10 @@ static void builder_style_handler(yed_event *event) {
     }
 }
 
-static void builder_set_err(char *file, int line, int col, char *msg) {
+static void builder_set_err(int has_loc, char *file, int line, int col, char *msg) {
     int max_err_len;
 
-    if (!has_err) {
+    if (!has_err && has_loc) {
         yed_plugin_add_event_handler(Self, line_handler);
         yed_plugin_add_event_handler(Self, buff_post_mod_handler);
         yed_plugin_add_event_handler(Self, buff_post_write_handler);
@@ -422,10 +425,13 @@ static void builder_set_err(char *file, int line, int col, char *msg) {
 
     has_err      = 1;
 
+    err_has_loc = has_loc;
     err_file[0] = 0;
-    strcat(err_file, file);
-    err_line    = line;
-    err_col     = MAX(col, 1);
+    if (err_has_loc) {
+        strcat(err_file, file);
+        err_line    = line;
+        err_col     = MAX(col, 1);
+    }
     err_fixed   = 0;
     err_msg[0]  = 0;
 
@@ -473,7 +479,6 @@ static void builder_jump_to_error_location(int n_args, char **args) {
     notif_stop();
 
     if (!(err_parse_cmd = yed_get_var("builder-error-parse-command"))) {
-/*         err_parse_cmd = "grep ': error:'"; */
         err_parse_cmd = "awk -F':' '"
                         "    /:( fatal)? error:/ { print $0; }"
                         "    /: undefined reference/ { printf(\"%s:%s:1:%s\\n\", $1, $2, $3); }"
@@ -542,7 +547,7 @@ done:;
         YEXE("buffer", file_buff);
     }
 
-    builder_set_err(file_buff, line, col, scan);
+    builder_set_err(1, file_buff, line, col, scan);
 
     yed_set_cursor_far_within_frame(ys->active_frame, col, line);
 
@@ -552,6 +557,7 @@ done:;
 
 invalid:
     yed_cerr("Couldn't parse location from \"%s\"", parse_output_cpy);
+    builder_set_err(0, "", 0, 0, parse_output_cpy);
 
 out:
     if (parse_output) {
@@ -563,17 +569,49 @@ out:
 }
 
 static void builder_print_error(int n_args, char **args) {
+    char *err_parse_cmd;
+    char  cmd_buff[512];
+    char *parse_output;
+    int   parse_output_len;
+    int   parse_status;
+
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
         return;
     }
 
-    if (!has_err || err_fixed) {
+    if (!builder_run_before) {
+        yed_cerr("builder has not been run!");
+        return;
+    }
+
+    if (!build_failed || err_fixed) {
         yed_cerr("no errors to report");
         return;
     }
 
-    yed_cprint("%s", err_msg);
+    if (err_has_loc) {
+        yed_cprint("%s:%d:%d: %s", err_file, err_line, err_col, err_msg);
+        return;
+    }
+
+    if (!(err_parse_cmd = yed_get_var("builder-error-parse-command"))) {
+        err_parse_cmd = "awk -F':' '"
+                        "    /:( fatal)? error:/ { print $0; }"
+                        "    /: undefined reference/ { printf(\"%s:%s:1:%s\\n\", $1, $2, $3); }"
+                        "'";
+    }
+
+    sprintf(cmd_buff, "(%s | head -n1) < '/tmp/yed_builder_output_%llx' 2>&1", err_parse_cmd, (unsigned long long)Self);
+
+    parse_output     = yed_run_subproc(cmd_buff, &parse_output_len, &parse_status);
+
+    if (parse_status != 0) {
+        yed_cerr("'%s' exited with non-zero status %d", cmd_buff, parse_status);
+        return;
+    }
+
+    yed_cprint("%s", parse_output);
 }
 
 static void builder_view_output(int n_args, char **args) {
@@ -673,5 +711,7 @@ static void builder_start(int n_args, char **args) {
 
     build_is_finished = 0;
     build_is_running  = 1;
+    has_err           = 0;
+    err_fixed         = 1;
     pthread_create(&tid, NULL, builder_thread_fn, NULL);
 }
