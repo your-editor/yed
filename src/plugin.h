@@ -4,10 +4,11 @@
 /* This will make everything available to plugins if they include yed/plugin.h */
 #include "internal.h"
 
-#define YED_PLUG_SUCCESS   (0x0)
-#define YED_PLUG_NOT_FOUND (0x1)
-#define YED_PLUG_NO_BOOT   (0x2)
-#define YED_PLUG_BOOT_FAIL (0x3)
+#define YED_PLUG_SUCCESS    (0x0)
+#define YED_PLUG_NOT_FOUND  (0x1)
+#define YED_PLUG_NO_BOOT    (0x2)
+#define YED_PLUG_BOOT_FAIL  (0x3)
+#define YED_PLUG_DLOAD_FAIL (0x4)
 
 typedef void *yed_plugin_handle_t;
 typedef int (*yed_plugin_boot_t)(struct yed_plugin_t*);

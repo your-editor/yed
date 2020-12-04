@@ -1,20 +1,13 @@
 #include "internal.h" /* include here so that plugins can see everything. */
 
-static void * yed_get_handle_for_plug_if_in_dir(char *plug_name, char *dir_name) {
-    char buff[256];
-
-    buff[0] = 0;
-    strcat(buff, dir_name);
-    strcat(buff, "/");
-    strcat(buff, plug_name);
-    strcat(buff, ".so");
-
-    return dlopen(buff, RTLD_NOW | RTLD_LOCAL);
+static void * yed_get_handle_for_plug(char *plug_path) {
+    return dlopen(plug_path, RTLD_NOW | RTLD_LOCAL);
 }
 
 void load_init(char *path) {
     int   err;
-    void *handle;
+    char  full_path[4096];
+    char *dlerr;
 
     LOG_FN_ENTER();
 
@@ -22,11 +15,8 @@ void load_init(char *path) {
 
     yed_log("attempting to load init plugin from '%s'", path);
 
-    if (access(path, F_OK) != -1) {
-        handle = yed_get_handle_for_plug_if_in_dir("init", path);
-
-        if (!handle) { goto not_found;}
-
+    snprintf(full_path, sizeof(full_path), "%s/init.so", path);
+    if (access(full_path, F_OK) != -1) {
         yed_add_plugin_dir(path);
 
         err = yed_load_plugin("init");
@@ -34,6 +24,14 @@ void load_init(char *path) {
         switch (err) {
             case YED_PLUG_NOT_FOUND:
                 goto not_found;
+            case YED_PLUG_DLOAD_FAIL:
+                dlerr = dlerror();
+                if (dlerr) {
+                    yed_log("\n%s", dlerr);
+                } else {
+                    yed_log("\nfailed to load init plugin for unknown reason");
+                }
+                break;
             case YED_PLUG_SUCCESS:
                 yed_log("\nloaded init");
                 break;
@@ -45,7 +43,7 @@ void load_init(char *path) {
                 break;
         }
     } else {
-not_found:
+not_found:;
         yed_log("\n[!] init plugin not found");
     }
 
@@ -100,7 +98,7 @@ void yed_plugin_force_lib_unload(yed_plugin *plug) {
 
 int yed_load_plugin(char *plug_name) {
     int                         err;
-    char                        buff[256];
+    char                        path_buff[4096];
     char                      **dir_it;
     yed_plugin                 *plug;
     tree_it(yed_plugin_name_t,
@@ -113,12 +111,16 @@ int yed_load_plugin(char *plug_name) {
     }
 
     plug = malloc(sizeof(*plug));
+    memset(plug, 0, sizeof(*plug));
 
     array_traverse(ys->plugin_dirs, dir_it) {
-        if ((plug->handle = yed_get_handle_for_plug_if_in_dir(plug_name, *dir_it))) {
-            buff[0] = 0;
-            sprintf(buff, "%s/%s.so", *dir_it, plug_name);
-            break;
+        snprintf(path_buff, sizeof(path_buff), "%s/%s.so", *dir_it, plug_name);
+
+        if (access(path_buff, F_OK) == -1)                       { continue; }
+        if ((plug->handle = yed_get_handle_for_plug(path_buff))) { break;    }
+        else {
+            free(plug);
+            return YED_PLUG_DLOAD_FAIL;
         }
     }
 
@@ -127,7 +129,7 @@ int yed_load_plugin(char *plug_name) {
         return YED_PLUG_NOT_FOUND;
     }
 
-    plug->path                 = strdup(buff);
+    plug->path                 = strdup(path_buff);
     plug->added_cmds           = array_make(char*);
     plug->acquired_keys        = array_make(int);
     plug->added_bindings       = array_make(int);

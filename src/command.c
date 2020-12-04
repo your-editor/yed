@@ -2729,12 +2729,14 @@ void yed_default_command_plugin_load(int n_args, char **args) {
 
         switch (err) {
             case YED_PLUG_NOT_FOUND:
+                sprintf(err_buff + strlen(err_buff), "could not find plugin");
+                break;
+            case YED_PLUG_DLOAD_FAIL:
                 dlerr = dlerror();
                 if (dlerr) {
-                    sprintf(err_buff + strlen(err_buff), "could not find plugin -- ");
-                    sprintf(err_buff + strlen(err_buff), "%s", dlerr);
+                    sprintf(err_buff + strlen(err_buff), "%s\nthe plugin failed to load due to dynamic-loading errors", dlerr);
                 } else {
-                    sprintf(err_buff + strlen(err_buff), "could not find plugin");
+                    sprintf(err_buff + strlen(err_buff), "failed to load plugin for unknown reason");
                 }
                 break;
             case YED_PLUG_NO_BOOT:
