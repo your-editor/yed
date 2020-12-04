@@ -5,13 +5,17 @@
 void cursor_word_hl_line_handler(yed_event *event);
 void cursor_word_hl_cursor_moved_handler(yed_event *event);
 void cursor_word_hl_delete_back_handler(yed_event *event);
+void cursor_word_hl_pump_handler(yed_event *event);
 void cursor_word_hl_hl_word(yed_event *event);
 
-static char *the_word;
-static int   the_word_len;
+#define DEFAULT_THRESHOLD  (1000)
+static unsigned long long  cursor_idle_start_ms;
+static int                 cursor_is_idle;
+static char               *the_word;
+static int                 the_word_len;
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler line, cursor_moved, delete_back;
+    yed_event_handler line, cursor_moved, delete_back, pump;
 
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = cursor_word_hl_line_handler;
@@ -19,10 +23,18 @@ int yed_plugin_boot(yed_plugin *self) {
     cursor_moved.fn    = cursor_word_hl_cursor_moved_handler;
     delete_back.kind   = EVENT_BUFFER_POST_DELETE_BACK;
     delete_back.fn     = cursor_word_hl_delete_back_handler;
+    pump.kind          = EVENT_POST_PUMP;
+    pump.fn            = cursor_word_hl_pump_handler;
 
     yed_plugin_add_event_handler(self, line);
     yed_plugin_add_event_handler(self, cursor_moved);
     yed_plugin_add_event_handler(self, delete_back);
+    yed_plugin_add_event_handler(self, pump);
+
+    cursor_idle_start_ms = measure_time_now_ms();
+
+    /* Fake cursor move so that it works on startup/reload. */
+    yed_move_cursor_within_active_frame(0, 0);
 
     return 0;
 }
@@ -33,14 +45,14 @@ void cursor_word_hl_line_handler(yed_event *event) {
     frame = event->frame;
 
     if (!frame
-    ||   frame != ys->active_frame
+    ||  frame != ys->active_frame
     ||  !frame->buffer
     ||  frame->buffer->has_selection
     ||  frame->buffer->kind != BUFF_KIND_FILE) {
         return;
     }
 
-    if (the_word && !ys->current_search) {
+    if (cursor_is_idle && the_word && !ys->current_search) {
         cursor_word_hl_hl_word(event);
     }
 }
@@ -48,6 +60,7 @@ void cursor_word_hl_line_handler(yed_event *event) {
 void cursor_word_hl_cursor_moved_handler(yed_event *event) {
     yed_frame *frame;
     char      *word;
+    int        cursor_was_idle;
 
     frame = event->frame;
 
@@ -57,6 +70,15 @@ void cursor_word_hl_cursor_moved_handler(yed_event *event) {
         return;
     }
 
+    cursor_was_idle      = cursor_is_idle;
+    cursor_is_idle       = 0;
+    cursor_idle_start_ms = measure_time_now_ms();
+
+    /* Clear old word. */
+    if (cursor_was_idle && the_word) {
+        frame->dirty = 1;
+    }
+
     word = yed_word_under_cursor();
 
     if (!word) {
@@ -64,7 +86,6 @@ void cursor_word_hl_cursor_moved_handler(yed_event *event) {
             free(the_word);
             the_word     = NULL;
             the_word_len = 0;
-            frame->dirty = 1;
         }
         return;
     }
@@ -79,7 +100,6 @@ void cursor_word_hl_cursor_moved_handler(yed_event *event) {
 
     the_word     = word;
     the_word_len = strlen(the_word);
-    frame->dirty = 1;
 }
 
 void cursor_word_hl_delete_back_handler(yed_event *event) {
@@ -117,6 +137,31 @@ void cursor_word_hl_delete_back_handler(yed_event *event) {
     the_word     = word;
     the_word_len = strlen(the_word);
     frame->dirty = 1;
+}
+
+void cursor_word_hl_pump_handler(yed_event *event) {
+    unsigned long long cursor_idle_now_ms;
+    int                cursor_idle_threshold_ms;
+    int                cursor_was_moving;
+
+    cursor_was_moving  = !cursor_is_idle;
+    cursor_idle_now_ms = measure_time_now_ms();
+
+    if (!yed_get_var_as_int("cursor-word-hl-idle-threshold-ms", &cursor_idle_threshold_ms)) {
+        cursor_idle_threshold_ms = DEFAULT_THRESHOLD;
+    }
+
+    if (cursor_idle_now_ms - cursor_idle_start_ms >= cursor_idle_threshold_ms) {
+        cursor_is_idle = 1;
+
+        if (cursor_was_moving) {
+            if (the_word) {
+                if (ys->active_frame) {
+                    ys->active_frame->dirty = 1;
+                }
+            }
+        }
+    }
 }
 
 void cursor_word_hl_hl_word(yed_event *event) {
