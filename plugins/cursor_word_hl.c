@@ -136,7 +136,6 @@ void cursor_word_hl_delete_back_handler(yed_event *event) {
 
     the_word     = word;
     the_word_len = strlen(the_word);
-    frame->dirty = 1;
 }
 
 void cursor_word_hl_pump_handler(yed_event *event) {
