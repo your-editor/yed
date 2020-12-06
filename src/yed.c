@@ -425,7 +425,6 @@ int yed_pump(void) {
             yed_cursor_home();
 /*             yed_write_welcome(); */
             append_to_output_buff(TERM_RESET);
-            yed_draw_command_line();
             write_status_bar(keys[0]);
         }
         yed_mark_direct_draws_as_dirty();
@@ -437,6 +436,8 @@ int yed_pump(void) {
 
     ys->draw_accum_us += measure_time_now_us() - start_us;
     ys->n_pumps       += 1;
+
+    yed_draw_command_line();
 
     if (ys->interactive_command) {
         write_status_bar(keys[0]);
