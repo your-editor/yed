@@ -1,23 +1,54 @@
 #include <yed/plugin.h>
+#include <yed/highlight.h>
 
-static yed_frame  *frame;
-static yed_buffer *find_buff;
-static char        prompt_buff[512];
+#define inline static inline
+#include <yed/tree.h>
+typedef char *ctags_str_t;
+use_tree(ctags_str_t, int);
+#undef inline
+
+#define TAG_KIND_MACRO      (1)
+#define TAG_KIND_TYPE       (2)
+#define TAG_KIND_ENUMERATOR (3)
+
+static yed_frame       *frame;
+static yed_buffer      *find_buff;
+static char             prompt_buff[512];
+
+int                     gen_thread_started;
+int                     gen_thread_finished;
+int                     gen_thread_exit_status;
+int                     should_reparse;
+
+int                     has_parsed;
+tree(ctags_str_t, int)  tags;
+
+highlight_info          hinfo;
+
+void ensure_parsed(void);
 
 void ctags_gen(int n_args, char **args);
 void ctags_find(int n_args, char **args);
 void ctags_jump_to_definition(int n_args, char **args);
+void ctags_hl_reparse(int n_args, char **args);
 
+void unload(yed_plugin *self);
 void ctags_find_frame_delete_handler(yed_event *event);
 void ctags_find_buffer_delete_handler(yed_event *event);
 void ctags_find_key_pressed_handler(yed_event *event);
 void ctags_find_line_handler(yed_event *event);
+void ctags_hl_line_handler(yed_event *event);
+void ctags_pump_handler(yed_event *event);
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler frame_delete;
     yed_event_handler buffer_delete;
     yed_event_handler key_pressed;
-    yed_event_handler line;
+    yed_event_handler find_line;
+    yed_event_handler hl_line;
+    yed_event_handler pump;
+
+    yed_plugin_set_unload_fn(self, unload);
 
     frame_delete.kind  = EVENT_FRAME_PRE_DELETE;
     frame_delete.fn    = ctags_find_frame_delete_handler;
@@ -25,22 +56,160 @@ int yed_plugin_boot(yed_plugin *self) {
     buffer_delete.fn   = ctags_find_buffer_delete_handler;
     key_pressed.kind   = EVENT_KEY_PRESSED;
     key_pressed.fn     = ctags_find_key_pressed_handler;
-    line.kind          = EVENT_LINE_PRE_DRAW;
-    line.fn            = ctags_find_line_handler;
+    find_line.kind     = EVENT_LINE_PRE_DRAW;
+    find_line.fn       = ctags_find_line_handler;
+    hl_line.kind       = EVENT_LINE_PRE_DRAW;
+    hl_line.fn         = ctags_hl_line_handler;
+    pump.kind          = EVENT_PRE_PUMP;
+    pump.fn            = ctags_pump_handler;
     yed_plugin_add_event_handler(self, frame_delete);
     yed_plugin_add_event_handler(self, buffer_delete);
     yed_plugin_add_event_handler(self, key_pressed);
-    yed_plugin_add_event_handler(self, line);
+    yed_plugin_add_event_handler(self, find_line);
+    yed_plugin_add_event_handler(self, hl_line);
+    yed_plugin_add_event_handler(self, pump);
 
-    yed_plugin_set_command(self, "ctags-gen",  ctags_gen);
-    yed_plugin_set_command(self, "ctags-find", ctags_find);
+    yed_plugin_set_command(self, "ctags-gen",                ctags_gen);
+    yed_plugin_set_command(self, "ctags-find",               ctags_find);
     yed_plugin_set_command(self, "ctags-jump-to-definition", ctags_jump_to_definition);
+    yed_plugin_set_command(self, "ctags-hl-reparse",         ctags_hl_reparse);
 
     if (!yed_get_var("ctags-formatting-limit")) {
         yed_set_var("ctags-formatting-limit", "10000");
     }
 
+    if (!yed_var_is_truthy("ctags-disable-extra-highlighting")) {
+        ensure_parsed();
+        ys->redraw = 1;
+    }
+
     return 0;
+}
+
+int parse_tag_line(char *line, char **tag, char **file, char **kind) {
+    char *scan;
+
+    if (*line == '!') { return 0; }
+
+    scan = line;
+    *tag = scan;
+
+    /* Scan to file start. */
+    if (!(scan = strchr(scan, '\t'))) { return 0; }
+    *scan  = 0;
+    scan  += 1;
+    *file  = scan;
+
+    /* Scan to search start. */
+    if (!(scan = strchr(scan, '\t'))) { return 0; }
+    *scan  = 0;
+    scan  += 1;
+    /* Scan to kind start. */
+    if (!(scan = strchr(scan, '\t'))) { return 0; }
+    *scan  = 0;
+    scan  += 1;
+    *kind  = scan;
+
+    /* If there's more, chop it off. */
+    if ((scan = strchr(scan, '\t'))) {
+        *scan = 0;
+    }
+
+    return 1;
+}
+
+void parse_tags(void) {
+    FILE *f;
+    char  line[4096];
+    char *tag;
+    char *file;
+    char *kind;
+    int   k;
+
+LOG_FN_ENTER();
+
+    tags = tree_make_c(ctags_str_t, int, strcmp);
+
+    f = fopen("tags", "r");
+    if (f == NULL) {
+        yed_log("[!] (ctags.c:" STR(__LINE__) ") could not open tags file");
+        goto out;
+    }
+
+    while (fgets(line, sizeof(line), f)) {
+        if (parse_tag_line(line, &tag, &file, &kind)) {
+            switch (*kind) {
+                case 'd':
+                    k = TAG_KIND_MACRO;
+                    break;
+                case 'g':
+                case 's':
+                case 't':
+                case 'u':
+                    k = TAG_KIND_TYPE;
+                    break;
+                case 'e':
+                    k = TAG_KIND_ENUMERATOR;
+                    break;
+                default:
+                    k = 0;
+            }
+
+            tree_insert(tags, strdup(tag), k);
+        }
+    }
+
+out:;
+LOG_EXIT();
+}
+
+void ctags_hl_parse(void) {
+    tree_it(ctags_str_t, int) it;
+
+    parse_tags();
+    highlight_info_make(&hinfo);
+
+    tree_traverse(tags, it) {
+        switch (tree_it_val(it)) {
+            case TAG_KIND_MACRO:
+                highlight_add_kwd(&hinfo, tree_it_key(it), HL_PP);
+                break;
+            case TAG_KIND_TYPE:
+                highlight_add_kwd(&hinfo, tree_it_key(it), HL_TYPE);
+                break;
+            case TAG_KIND_ENUMERATOR:
+                highlight_add_kwd(&hinfo, tree_it_key(it), HL_CON);
+                break;
+        }
+    }
+
+    has_parsed = 1;
+}
+
+void ensure_parsed(void) {
+    if (!has_parsed) {
+        ctags_hl_parse();
+    }
+}
+
+void ctags_hl_cleanup(void) {
+    tree_it(ctags_str_t, int) it;
+
+    if (has_parsed) {
+        tree_traverse(tags, it) {
+            free(tree_it_key(it));
+        }
+        tree_free(tags);
+
+        highlight_info_free(&hinfo);
+        ys->redraw = 1;
+    }
+
+    has_parsed = 0;
+}
+
+void unload(yed_plugin *self) {
+    ctags_hl_cleanup();
 }
 
 void ctags_find_frame_delete_handler(yed_event *event) {
@@ -180,6 +349,36 @@ void ctags_find_key_pressed_handler(yed_event *event) {
     event->cancel = 1;
 }
 
+void ctags_hl_line_handler(yed_event *event) {
+    if (yed_var_is_truthy("ctags-disable-extra-highlighting")) { return; }
+
+    ensure_parsed();
+
+    highlight_line(&hinfo, event);
+}
+
+void ctags_pump_handler(yed_event *event) {
+LOG_CMD_ENTER("ctags-gen");
+
+    if (gen_thread_started && gen_thread_finished) {
+        if (gen_thread_exit_status) {
+            yed_cerr("ctags failed with exit status %d", gen_thread_exit_status);
+        } else {
+            yed_cprint("ctags has completed");
+        }
+        gen_thread_started = gen_thread_finished = gen_thread_exit_status = 0;
+    }
+
+    if (should_reparse && !gen_thread_started) {
+        ctags_hl_cleanup();
+        ctags_hl_parse();
+        ys->redraw     = 1;
+        should_reparse = 0;
+    }
+
+LOG_EXIT();
+}
+
 void ctags_find_line_handler(yed_event *event) {
     yed_buffer *buff;
     yed_line   *line;
@@ -218,30 +417,46 @@ void ctags_find_line_handler(yed_event *event) {
     }
 }
 
+void *ctags_gen_thread(void *arg) {
+    char *cmd;
+
+    cmd = arg;
+
+    gen_thread_exit_status = system(cmd);
+
+    free(cmd);
+    gen_thread_finished = 1;
+
+    return NULL;
+}
+
 void ctags_gen(int n_args, char **args) {
-    char cmd_buff[1024];
-    int  i;
-    int  status;
+    char       cmd_buff[1024];
+    char      *ctags_flags;
+    pthread_t  p;
 
-    if (n_args == 0) {
-        yed_cerr("expected 1 or more arguments");
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments but got %d -- set cflags options in 'ctags-flags'", n_args);
         return;
     }
 
-    cmd_buff[0] = 0;
-    strcat(cmd_buff, "ctags ");
-    for (i = 0; i < n_args; i += 1) {
-        strcat(cmd_buff, " ");
-        strcat(cmd_buff, args[i]);
-    }
-    strcat(cmd_buff, " > /dev/null 2>&1");
-
-    status = system(cmd_buff);
-    if (status) {
-        yed_cerr("ctags failed with exit status %d", status);
+    if (gen_thread_started) {
+        yed_cerr("ctags is currently running");
         return;
     }
-    yed_cprint("ctags has completed");
+
+    ctags_flags = yed_get_var("ctags-flags");
+    if (ctags_flags == NULL) {
+        yed_cerr("'ctags-flags' is unset");
+        return;
+    }
+
+    snprintf(cmd_buff, sizeof(cmd_buff), "ctags %s > /dev/null 2>&1", ctags_flags);
+
+    yed_cprint("running 'ctags %s' in background...", ctags_flags);
+    gen_thread_finished = 0;
+    gen_thread_started  = 1;
+    pthread_create(&p, NULL, ctags_gen_thread, strdup(cmd_buff));
 }
 
 void ctags_find_set_prompt(char *p, char *attr) {
@@ -538,4 +753,8 @@ select:
 
 out:
     if (text) { free(text); }
+}
+
+void ctags_hl_reparse(int n_args, char **args) {
+    should_reparse = 1;
 }
