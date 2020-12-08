@@ -78,7 +78,7 @@ int yed_plugin_boot(yed_plugin *self) {
         yed_set_var("ctags-formatting-limit", "10000");
     }
 
-    if (!yed_var_is_truthy("ctags-disable-extra-highlighting")) {
+    if (yed_var_is_truthy("ctags-enable-extra-highlighting")) {
         ensure_parsed();
         ys->redraw = 1;
     }
@@ -350,7 +350,7 @@ void ctags_find_key_pressed_handler(yed_event *event) {
 }
 
 void ctags_hl_line_handler(yed_event *event) {
-    if (yed_var_is_truthy("ctags-disable-extra-highlighting")) { return; }
+    if (!yed_var_is_truthy("ctags-enable-extra-highlighting")) { return; }
 
     ensure_parsed();
 
