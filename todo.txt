@@ -6,6 +6,7 @@
       versions
 * greedy key sequences reading instead of eager
 * compose key sequences
+    * seems like if you have greedy, you don't need to compose?
 * catch SIGTERM
     * exit gracefully (don't leave the terminal messed up)
 * macro plugin
@@ -33,3 +34,5 @@
 * macOS compatibility
     * installation uses some stuff that macOS doesn't have (readelf, different dd flags)
     * I think I encountered a crash... not sure
+* regex support
+    * use POSIX stuff for now; maybe write our own in the future
