@@ -36,3 +36,8 @@
     * I think I encountered a crash... not sure
 * regex support
     * use POSIX stuff for now; maybe write our own in the future
+* separate C and C++ ft plugins
+    * C++ scanner to look for certain keywords
+* actually accurate vim emulation plugin (vym)
+* cleanup grep and find_file plugins to behave more like the ctags plugin wrt frame/buffer management
+    * maybe turn this into something easier to manage for future plugins?
