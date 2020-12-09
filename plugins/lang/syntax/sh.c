@@ -44,6 +44,8 @@ int yed_plugin_boot(yed_plugin *self) {
         "readarray",
     };
 
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_unload_fn(self, unload);
 
 

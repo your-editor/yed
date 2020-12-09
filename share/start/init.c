@@ -62,6 +62,14 @@ void compile_this_file(int n_args, char **args);
 
 /* This is the entry point for this file when yed loads it. */
 int yed_plugin_boot(yed_plugin *self) {
+    /*
+     * This macro ensures that our init plugin isn't loaded into an
+     * incompatible version of yed.
+     * All it does is return an error code back to yed if the versions
+     * don't look right.
+     */
+    YED_PLUG_VERSION_CHECK();
+
     /* This makes the compile_this_file function available as a command. */
     yed_plugin_set_command(self, "compile-this-file", compile_this_file);
 

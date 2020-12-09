@@ -8,6 +8,8 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler line;
     yed_event_handler frame_pre_update;
 
+    YED_PLUG_VERSION_CHECK();
+
     line.kind             = EVENT_LINE_PRE_DRAW;
     line.fn               = line_numbers_line_handler;
     frame_pre_update.kind = EVENT_FRAME_PRE_UPDATE;

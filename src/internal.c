@@ -220,6 +220,50 @@ static void write_status_bar(int key) {
     yed_set_cursor(sav_x, sav_y);
 }
 
+int yed_check_version_breaking(void) {
+    int   breaks;
+    char *env;
+    char  cmd_buff[1024];
+    FILE *p;
+    char  ver_buff[32];
+    int   encoded_new_ver;
+    int   new_ver;
+    int   new_ver_is_breaking;
+
+    breaks = 1;
+
+    if ((env = getenv("LD_LIBRARY_PATH"))) {
+        snprintf(cmd_buff, sizeof(cmd_buff),
+                 "LD_LIBRARY_PATH='%s' %s --no-init --dump-encoded-version",
+                 env, ys->argv0);
+    } else if ((env = getenv("DYLD_LIBRARY_PATH"))) {
+        snprintf(cmd_buff, sizeof(cmd_buff),
+                 "DYLD_LIBRARY_PATH='%s' %s --no-init --dump-encoded-version",
+                 env, ys->argv0);
+    } else {
+        snprintf(cmd_buff, sizeof(cmd_buff),
+                 "%s --dump-encoded-version",
+                 ys->argv0);
+    }
+
+    p = popen(cmd_buff, "r");
+    if (p == NULL) { goto out; }
+
+    if (fgets(ver_buff, sizeof(ver_buff), p) == NULL) { goto out; }
+
+    pclose(p);
+
+    sscanf(ver_buff, "%d", &encoded_new_ver);
+
+    new_ver             = encoded_new_ver >> 1;
+    new_ver_is_breaking = encoded_new_ver & 1;
+
+    breaks = new_ver > yed_version && new_ver_is_breaking;
+
+out:;
+    return breaks;
+}
+
 void yed_service_reload(void) {
     tree_it(yed_plugin_name_t, yed_plugin_ptr_t)  plug_it;
     tree_it(yed_command_name_t, yed_command)      cmd_it;
@@ -364,3 +408,4 @@ int s_to_i(const char *s) {
 #include "complete.c"
 #include "direct_draw.c"
 #include "frame_tree.c"
+#include "version.c"

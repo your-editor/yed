@@ -138,6 +138,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("if",                     if);
     SET_DEFAULT_COMMAND("suspend",                suspend);
     SET_DEFAULT_COMMAND("scomps-list",            scomps_list);
+    SET_DEFAULT_COMMAND("version",                version);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -2745,6 +2746,9 @@ void yed_default_command_plugin_load(int n_args, char **args) {
             case YED_PLUG_BOOT_FAIL:
                 sprintf(err_buff + strlen(err_buff), "'yed_plugin_boot' failed");
                 break;
+            case YED_PLUG_VER_MIS:
+                yed_log("\n[!] the plugin was rejected because it was compiled against an older version of yed and is not compatible with this version");
+                break;
         }
 
         yed_cerr("%s", err_buff);
@@ -3900,6 +3904,15 @@ void yed_default_command_scomps_list(int n_args, char **args) {
     array_traverse(ys->scomp_strings, it) {
         yed_cprint("\n%s", *it);
     }
+}
+
+void yed_default_command_version(int n_args, char **args) {
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    yed_cprint("%d", YED_VERSION);
 }
 
 

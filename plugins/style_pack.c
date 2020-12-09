@@ -31,6 +31,8 @@
 #include "styles/mrjantz.c"
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     PACK_STYLE(self, lab);
     PACK_STYLE(self, book);
     PACK_STYLE(self, blue);

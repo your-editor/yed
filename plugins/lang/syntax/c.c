@@ -47,6 +47,8 @@ int yed_plugin_boot(yed_plugin *self) {
         "short", "size_t", "ssize_t", "unsigned", "void",
     };
 
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_unload_fn(self, unload);
 
 

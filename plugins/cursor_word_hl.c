@@ -17,6 +17,8 @@ static int                 the_word_len;
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler line, cursor_moved, delete_back, pump;
 
+    YED_PLUG_VERSION_CHECK();
+
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = cursor_word_hl_line_handler;
     cursor_moved.kind  = EVENT_CURSOR_MOVED;

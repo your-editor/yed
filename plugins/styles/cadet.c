@@ -19,6 +19,8 @@ PACKABLE_STYLE(cadet) {
     int       tc,
               attr_kind;
 
+    YED_PLUG_VERSION_CHECK();
+
     tc        = !!yed_get_var("truecolor");
     attr_kind = tc ? ATTR_RGB : ATTR_256;
 

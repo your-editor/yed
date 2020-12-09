@@ -21,6 +21,8 @@ static char        prompt_buff[256];
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
+    YED_PLUG_VERSION_CHECK();
+
     h.kind = EVENT_KEY_PRESSED;
     h.fn   = find_file_key_pressed_handler;
 

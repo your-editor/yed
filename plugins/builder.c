@@ -56,6 +56,8 @@ static void builder_start(int n_args, char **args);
 int yed_plugin_boot(yed_plugin *self) {
     Self = self;
 
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_unload_fn(self, builder_unload);
 
     yed_plugin_set_command(self, "builder-start",         builder_start);

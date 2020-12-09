@@ -10,6 +10,8 @@ void syntax_latex_line_handler(yed_event *event);
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler  line;
 
+    YED_PLUG_VERSION_CHECK();
+
     line.kind = EVENT_LINE_PRE_DRAW;
     line.fn   = syntax_latex_line_handler;
 

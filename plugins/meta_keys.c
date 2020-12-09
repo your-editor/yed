@@ -5,6 +5,8 @@ int yed_plugin_boot(yed_plugin *self) {
     char vkey_buff[32];
     char var_buff[64];
 
+    YED_PLUG_VERSION_CHECK();
+
     keys[0] = ESC;
 
     for (key = 1; key < REAL_KEY_MAX; key += 1) {

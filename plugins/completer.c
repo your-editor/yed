@@ -9,6 +9,8 @@ static char **compl_items     = NULL;
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
+    YED_PLUG_VERSION_CHECK();
+
     h.kind = EVENT_BUFFER_PRE_INSERT;
     h.fn   = completer_buff_pre_insert_handler;
 

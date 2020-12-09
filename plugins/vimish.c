@@ -61,6 +61,8 @@ void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_arg
 int yed_plugin_boot(yed_plugin *self) {
     int i;
 
+    YED_PLUG_VERSION_CHECK();
+
     Self = self;
 
     for (i = 0; i < N_MODES; i += 1) {

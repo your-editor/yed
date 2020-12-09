@@ -4,6 +4,8 @@ int meta_key(int key);
 void bind_keys(yed_plugin *self);
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     bind_keys(self);
 
     return 0;

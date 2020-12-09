@@ -11,6 +11,8 @@ highlight_info strings_and_numbers_hinfo;
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_unload_fn(self, unload);
 
     h.kind = EVENT_LINE_PRE_DRAW;

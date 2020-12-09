@@ -6,7 +6,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-static yed_lib_t yed_lib;
+static yed_lib_t           yed_lib;
 static struct yed_state_t *state;
 
 int load_yed_lib(void);
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 void call_yed_fini(void)    { yed_lib._fini(state); }
 
 /*
- * If some doofus decides to take load libyed.so from
+ * If some doofus decides to load libyed.so from
  * a plugin for some crazy reason, they will remove our
  * ability to do any dynamic reloading because they've
  * grabbed another reference to the library.
@@ -67,7 +67,6 @@ void force_yed_unload(void *handle) {
 }
 
 int load_yed_lib(void) {
-
 #define LOAD_YED_FN(fn) do {                                    \
     yed_lib._##fn = dlsym(yed_lib.handle, "yed_" #fn);          \
     if (yed_lib._##fn == NULL) {                                \

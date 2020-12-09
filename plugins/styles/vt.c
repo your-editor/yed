@@ -3,6 +3,8 @@
 PACKABLE_STYLE(vt) {
     yed_style s;
 
+    YED_PLUG_VERSION_CHECK();
+
     memset(&s, 0, sizeof(s));
 
     s.selection.flags     = ATTR_INVERSE;

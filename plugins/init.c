@@ -20,6 +20,8 @@ int yed_plugin_boot(yed_plugin *self) {
     };
 
 
+    YED_PLUG_VERSION_CHECK();
+
     /* Set variables before loading plugins. */
     get_env_info();
 

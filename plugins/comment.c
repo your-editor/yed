@@ -16,6 +16,8 @@ void comment_line_latex(yed_frame *frame, int row);
 void uncomment_line_latex(yed_frame *frame, int row);
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_command(self, "comment-toggle", comment_toggle);
     return 0;
 }

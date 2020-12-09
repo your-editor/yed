@@ -48,6 +48,8 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler hl_line;
     yed_event_handler pump;
 
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_unload_fn(self, unload);
 
     frame_delete.kind  = EVENT_FRAME_PRE_DELETE;

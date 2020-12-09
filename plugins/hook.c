@@ -20,6 +20,8 @@ void hook_list_events(int n_args, char **args);
 void hook(int n_args, char **args);
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     Self = self;
 
     hooks_by_event = tree_make(int, array_t);

@@ -22,6 +22,8 @@ static char       *save_current_search;
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
+    YED_PLUG_VERSION_CHECK();
+
     h.kind = EVENT_KEY_PRESSED;
     h.fn   = grep_key_pressed_handler;
 

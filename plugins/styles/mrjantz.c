@@ -36,6 +36,8 @@ PACKABLE_STYLE(mrjantz) {
     yed_style s;
     int       attr_kind;
 
+    YED_PLUG_VERSION_CHECK();
+
     attr_kind = ATTR_256;
 
     memset(&s, 0, sizeof(s));

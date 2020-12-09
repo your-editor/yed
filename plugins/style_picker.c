@@ -20,6 +20,8 @@ static char       *save;
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler key, move, del;
 
+    YED_PLUG_VERSION_CHECK();
+
     key.kind  = EVENT_KEY_PRESSED;
     key.fn    = style_picker_key_pressed_handler;
 

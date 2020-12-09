@@ -11,6 +11,8 @@ void unindent_line(yed_frame *frame, yed_line *line, int row, int tabw);
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler insert, delete_back;
 
+    YED_PLUG_VERSION_CHECK();
+
     insert.kind      = EVENT_BUFFER_POST_INSERT;
     insert.fn        = indent_c_post_insert_handler;
     delete_back.kind = EVENT_BUFFER_PRE_DELETE_BACK;

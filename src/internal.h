@@ -150,6 +150,7 @@ int mk_wcwidth(wchar_t ucs);
 #include "subproc.h"
 #include "complete.h"
 #include "direct_draw.h"
+#include "version.h"
 
 typedef struct {
     array_t  files;
@@ -161,6 +162,7 @@ typedef struct {
 
 typedef struct yed_state_t {
     yed_lib_t                   *yed_lib;
+    char                        *argv0;
     array_t                      output_buffer;
     array_t                      writer_buffer;
     pthread_mutex_t              write_mtx, write_ready_mtx;
@@ -258,6 +260,7 @@ void yed_set_small_message(char *msg);
 void yed_write_status_bar(int key);
 void yed_write_welcome(void);
 
+int yed_check_version_breaking(void);
 void yed_service_reload(void);
 
 int s_to_i(const char *s);
@@ -308,6 +311,13 @@ do {                                                    \
     yed_plugin_bind_key((plugin), (key), (cmd),         \
                  sizeof(__YPBIND_args) / sizeof(char*), \
                  __YPBIND_args);                        \
+} while (0)
+
+#define YED_PLUG_VERSION_CHECK()                                \
+do {                                                            \
+    if (yed_version > YED_VERSION && yed_version_is_breaking) { \
+        return YED_PLUG_VER_MIS;                                \
+    }                                                           \
 } while (0)
 
 #include "pack_styles.h"

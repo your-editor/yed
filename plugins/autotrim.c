@@ -5,6 +5,8 @@ void autotrim_pre_write_handler(yed_event *event);
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
+    YED_PLUG_VERSION_CHECK();
+
     h.kind = EVENT_BUFFER_PRE_WRITE;
     h.fn   = autotrim_pre_write_handler;
 

@@ -15,6 +15,8 @@ void update(yed_event *event) {
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
+    YED_PLUG_VERSION_CHECK();
+
     h.kind = EVENT_PRE_PUMP;
     h.fn   = update;
 

@@ -75,6 +75,8 @@ void yedrc_load(int n_args, char **args) {
 void unload(yed_plugin *self);
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_unload_fn(self, unload);
 
     loading = tree_make_c(yedrc_path_t, int, strcmp);

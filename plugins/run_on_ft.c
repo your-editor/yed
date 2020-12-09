@@ -2,6 +2,8 @@
 
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
 LOG_FN_ENTER();
     yed_cerr("run_on_ft: This plugin needs to be revised due to changes in how file types are handled. It has been disabled.");
 LOG_EXIT();

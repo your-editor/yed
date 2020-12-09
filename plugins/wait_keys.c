@@ -9,6 +9,8 @@ void wait_keys_unbind_start_key(int key);
 static yed_plugin *Self;
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     Self = self;
 
     yed_plugin_set_command(Self, "wait-keys-define",   wait_keys_define);

@@ -5,9 +5,13 @@ static void * yed_get_handle_for_plug(char *plug_path) {
 }
 
 void load_init(char *path) {
-    int   err;
-    char  full_path[4096];
-    char *dlerr;
+    int        err;
+    char       full_path[4096];
+    char      *msg;
+    yed_attrs  cmd_attr;
+    yed_attrs  attn_attr;
+    yed_attrs  err_attr;
+    char       attr_buff[128];
 
     LOG_FN_ENTER();
 
@@ -25,22 +29,37 @@ void load_init(char *path) {
             case YED_PLUG_NOT_FOUND:
                 goto not_found;
             case YED_PLUG_DLOAD_FAIL:
-                dlerr = dlerror();
-                if (dlerr) {
-                    yed_log("\n%s", dlerr);
-                } else {
-                    yed_log("\nfailed to load init plugin for unknown reason");
+                msg = dlerror();
+                if (msg == NULL) {
+                    msg = "[!] failed to load init plugin for unknown reason";
                 }
                 break;
             case YED_PLUG_SUCCESS:
-                yed_log("\nloaded init");
+                msg = "loaded init";
                 break;
             case YED_PLUG_NO_BOOT:
-                yed_log("\n[!] init missing 'yed_plugin_boot'");
+                msg = "[!] init missing 'yed_plugin_boot'";
                 break;
             case YED_PLUG_BOOT_FAIL:
-                yed_log("\n[!] init 'yed_plugin_boot' failed");
+                msg = "[!] init 'yed_plugin_boot' failed";
                 break;
+            case YED_PLUG_VER_MIS:
+                msg = "[!] init plugin was rejected because it was compiled against an older version of yed and is not compatible with this version";
+                break;
+        }
+
+        yed_log("\n%s", msg);
+
+        if (err != YED_PLUG_SUCCESS) {
+            cmd_attr    = yed_active_style_get_command_line();
+            attn_attr   = yed_active_style_get_attention();
+            err_attr    = cmd_attr;
+            err_attr.fg = attn_attr.fg;
+            yed_get_attr_str(err_attr, attr_buff);
+
+            yed_clear_cmd_buff();
+            yed_append_non_text_to_cmd_buff(attr_buff);
+            yed_append_text_to_cmd_buff(msg);
         }
     } else {
 not_found:;
@@ -165,6 +184,10 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_styles);
         array_free(plug->added_fts);
         free(plug);
+
+        if (err == YED_PLUG_VER_MIS) {
+            return YED_PLUG_VER_MIS;
+        }
         return YED_PLUG_BOOT_FAIL;
     }
 

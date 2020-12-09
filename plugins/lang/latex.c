@@ -9,6 +9,8 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler                            buff_post_load_handler;
     yed_event_handler                            buff_pre_write_handler;
 
+    YED_PLUG_VERSION_CHECK();
+
 LOG_FN_ENTER();
     yed_plugin_set_unload_fn(self, unload);
 

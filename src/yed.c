@@ -144,6 +144,7 @@ static void print_usage(void) {
 static int parse_options(int argc, char **argv) {
     int i;
     int seen_double_dash;
+    int encoded_version;
 
     seen_double_dash = 0;
 
@@ -155,6 +156,10 @@ static int parse_options(int argc, char **argv) {
         } else {
             if (strcmp(argv[i], "--") == 0) {
                 seen_double_dash = 1;
+            } else if (strcmp(argv[i], "--dump-encoded-version") == 0) {
+                encoded_version = (yed_version << 1) | yed_version_is_breaking;
+                printf("%d\n", encoded_version);
+                exit(0);
             } else if (strcmp(argv[i], "--instrument") == 0) {
                 ys->options.instrument = 1;
             } else if (strcmp(argv[i], "--no-init") == 0) {
@@ -194,6 +199,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     memset(ys, 0, sizeof(*ys));
 
     ys->yed_lib = yed_lib;
+    ys->argv0   = strdup(argv[0]);
 
     if (!parse_options(argc, argv)
     ||  ys->options.help) {
@@ -454,8 +460,17 @@ int yed_pump(void) {
     yed_trigger_event(&event);
 
     if (ys->status == YED_RELOAD) {
-        yed_unload_plugin_libs();
-        kill_writer();
+
+        if (yed_check_version_breaking()) {
+LOG_CMD_ENTER("reload");
+            yed_cerr("Attempt to reload yed was rejected because the new version contains breaking changes.\n"
+                     "    yed was not reloaded and all shared libraries and internal state remain unchanged.");
+LOG_EXIT();
+            ys->status = YED_NORMAL;
+        } else {
+            yed_unload_plugin_libs();
+            kill_writer();
+        }
     }
 
     return ys->status;

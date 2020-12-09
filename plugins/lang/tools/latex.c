@@ -4,6 +4,8 @@ void latex_compile_current_file(int n_args, char **args);
 void latex_view_current_file(int n_args, char **args);
 
 int yed_plugin_boot(yed_plugin *self) {
+    YED_PLUG_VERSION_CHECK();
+
     yed_plugin_set_command(self, "latex-compile-current-file", latex_compile_current_file);
     yed_plugin_set_command(self, "latex-view-current-file",    latex_view_current_file);
 

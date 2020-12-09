@@ -15,6 +15,8 @@ static int end_col;
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler cursor_moved, line;
 
+    YED_PLUG_VERSION_CHECK();
+
     cursor_moved.kind  = EVENT_CURSOR_MOVED;
     cursor_moved.fn    = paren_hl_cursor_moved_handler;
     line.kind          = EVENT_LINE_PRE_DRAW;
