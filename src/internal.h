@@ -313,11 +313,11 @@ do {                                                    \
                  __YPBIND_args);                        \
 } while (0)
 
-#define YED_PLUG_VERSION_CHECK()                                \
-do {                                                            \
-    if (yed_version > YED_VERSION && yed_version_is_breaking) { \
-        return YED_PLUG_VER_MIS;                                \
-    }                                                           \
+#define YED_PLUG_VERSION_CHECK()                     \
+do {                                                 \
+    if ((yed_version / 100) > (YED_VERSION / 100)) { \
+        return YED_PLUG_VER_MIS;                     \
+    }                                                \
 } while (0)
 
 #include "pack_styles.h"

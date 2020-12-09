@@ -134,8 +134,10 @@ static void print_usage(void) {
 "    Load the init plugin from this path instead of finding one automatically.\n"
 "--instrument\n"
 "    Pause the editor at startup to allow an external tool to attach to it.\n"
+"--version\n"
+"    Print the version number and exit.\n"
 "--help\n"
-"    Show this information.\n"
+"    Show this information and exit.\n"
 "\n"
 ;
     fprintf(stderr, "%s", usage);
@@ -144,7 +146,6 @@ static void print_usage(void) {
 static int parse_options(int argc, char **argv) {
     int i;
     int seen_double_dash;
-    int encoded_version;
 
     seen_double_dash = 0;
 
@@ -156,9 +157,8 @@ static int parse_options(int argc, char **argv) {
         } else {
             if (strcmp(argv[i], "--") == 0) {
                 seen_double_dash = 1;
-            } else if (strcmp(argv[i], "--dump-encoded-version") == 0) {
-                encoded_version = (yed_version << 1) | yed_version_is_breaking;
-                printf("%d\n", encoded_version);
+            } else if (strcmp(argv[i], "--version") == 0) {
+                printf("%d\n", yed_version);
                 exit(0);
             } else if (strcmp(argv[i], "--instrument") == 0) {
                 ys->options.instrument = 1;
