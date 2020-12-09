@@ -45,14 +45,14 @@ fi
 
 export cfg=${cfg}
 
-make all -j$(corecount)
+make all -j$(corecount) || exit 1
 
 if [ "${strip}x" = "yesx" ]; then
     echo "Stripping binaries..."
     for f in $(find . -type f -name "*.so"); do
-        strip "$f"
+        strip "$f" || exit 1
     done
 
-    strip libyed.so
-    strip _yed
+    strip libyed.so || exit 1
+    strip _yed || exit 1
 fi
