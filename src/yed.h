@@ -14,7 +14,6 @@ typedef struct yed_lib {
     int                 (*_pump)(void);
     struct yed_state_t* (*_get_state)(void);
     void                (*_set_state)(struct yed_state_t*);
-    void                (*_set_version_breaking_reload)(void);
 } yed_lib_t;
 
 
@@ -23,6 +22,5 @@ void                yed_fini(struct yed_state_t *state);
 int                 yed_pump(void);
 void                yed_set_state(struct yed_state_t *state);
 struct yed_state_t* yed_get_state(void);
-void                yed_set_version_breaking_reload(void);
 
 #endif
