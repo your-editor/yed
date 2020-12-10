@@ -6,7 +6,6 @@ void find_file_cleanup(void);
 void find_file_take_key(int key);
 void find_file_make_buffer(void);
 void find_file_run(void);
-void find_file_update_buff(void);
 void find_file_select(void);
 void find_file_set_prompt(char *p, char *attr);
 
@@ -29,7 +28,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     if (!yed_get_var("find-file-prg")) {
         yed_set_var("find-file-prg",
-                    "find . -path ./.git -prune -o -type f -name \"*%*\" -print");
+                    "find . -path ./.git -prune -o -type f -name '*%*' -print");
     }
 
     return 0;
@@ -112,24 +111,17 @@ void find_file_make_buffer(void) {
     if (!buff) {
         buff = yed_create_buffer("*find-file-list");
         buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    } else {
-        yed_buff_clear_no_undo(buff);
     }
 
     ASSERT(buff, "did not create '*find-file-list' buffer");
 }
 
-void find_file_update_buff(void) {
-    yed_buff_clear_no_undo(buff);
-    yed_fill_buff_from_file(buff, "/tmp/find_file_list.yed");
-}
-
 void find_file_run(void) {
-    char       cmd_buff[512], *cmd_p;
+    char       cmd_buff[1024];
     yed_attrs  attr_cmd, attr_attn;
     char       attr_buff[128];
     char      *pattern;
-    int        len, err;
+    int        len, status;
 
     find_file_set_prompt("(find-file) ", NULL);
 
@@ -138,29 +130,26 @@ void find_file_run(void) {
 
     if (strlen(pattern) == 0)     { goto empty; }
 
-    strcat(cmd_buff, "bash -c '");
-
-    cmd_p = cmd_buff + strlen(cmd_buff);
-
-    len = perc_subst(prg, pattern, cmd_p, sizeof(cmd_buff) - strlen(cmd_buff));
+    len = perc_subst(prg, pattern, cmd_buff, sizeof(cmd_buff));
 
     ASSERT(len > 0, "buff too small for perc_subst");
 
-    strcat(cmd_buff, " 2>/dev/null > /tmp/find_file_list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+    strcat(cmd_buff, " 2>&1");
 
-    err = system(cmd_buff);
+    if (yed_read_subproc_into_buffer(cmd_buff, buff, &status) != 0) {
+        goto err;
+    }
 
-    if (err) {
+    if (status != 0) {
+err:;
         attr_cmd    = yed_active_style_get_command_line();
         attr_attn   = yed_active_style_get_attention();
         attr_cmd.fg = attr_attn.fg;
         yed_get_attr_str(attr_cmd, attr_buff);
 
         find_file_set_prompt("(find-file) ", attr_buff);
-empty:
+empty:;
         yed_buff_clear_no_undo(buff);
-    } else {
-        find_file_update_buff();
     }
 }
 

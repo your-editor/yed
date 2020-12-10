@@ -706,8 +706,6 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
         return status;
     }
 
-    yed_buff_clear_no_undo(buff);
-
     if ((mode = yed_get_var("buffer-load-mode"))
     && (strcmp(mode, "map") == 0)) {
         status = yed_fill_buff_from_file_map(buff, fd, fs.st_size);
@@ -743,6 +741,8 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
                  line;
     yed_glyph   *g;
 
+
+    yed_buff_clear_no_undo(buff);
 
     if (file_size == 0) {
         return BUFF_FILL_STATUS_SUCCESS;
@@ -828,6 +828,8 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
                  line;
     yed_glyph   *g;
     int          j;
+
+    yed_buff_clear_no_undo(buff);
 
     last_line = bucket_array_last(buff->lines);
     yed_free_line(last_line);

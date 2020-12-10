@@ -435,7 +435,7 @@ void ctags_gen(int n_args, char **args) {
         return;
     }
 
-    snprintf(cmd_buff, sizeof(cmd_buff), "ctags %s > /dev/null 2>&1", ctags_flags);
+    snprintf(cmd_buff, sizeof(cmd_buff), "ctags %s > /dev/null", ctags_flags);
 
     yed_cprint("running 'ctags %s' in background...", ctags_flags);
     gen_thread_finished = 0;
@@ -459,10 +459,7 @@ int ctags_find_make_buffers(void) {
     if (!find_buff) {
         find_buff = yed_create_buffer("*ctags-find-list");
         find_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    } else {
-        yed_buff_clear_no_undo(find_buff);
     }
-
     return 1;
 }
 
@@ -470,9 +467,7 @@ int ctags_find_make_buffers(void) {
 void ctags_find_filter(void) {
     char      *tag_start;
     char       cmd_buff[1024];
-    FILE      *stream;
     int        status;
-    int        exit_code;
     yed_line  *line;
     yed_glyph *git;
     int        formatting_limit;
@@ -486,27 +481,24 @@ void ctags_find_filter(void) {
     array_zero_term(ys->cmd_buff);
     tag_start = array_data(ys->cmd_buff);
 
-    yed_buff_clear_no_undo(find_buff);
-
     if (strlen(tag_start) == 0) { return; }
 
     /* Try with binary search flag first. */
-    sprintf(cmd_buff, "look -b '%s' tags 2>/dev/null", tag_start);
-    stream = popen(cmd_buff, "r");
-    if (stream == NULL) { return; }
-    status = yed_fill_buff_from_file_stream(find_buff, stream);
-    if (status != BUFF_FILL_STATUS_SUCCESS) { return; }
-    exit_code = pclose(stream);
+    sprintf(cmd_buff, "look -b '%s' tags", tag_start);
 
-    if (exit_code) {
+    if (yed_read_subproc_into_buffer(cmd_buff, find_buff, &status) != 0) {
+        return;
+    }
+
+    if (status != 0) {
         /* Failed.. so try without the flag. */
-        sprintf(cmd_buff, "look '%s' tags 2>/dev/null", tag_start);
-        stream = popen(cmd_buff, "r");
-        if (stream == NULL) { return; }
-        status = yed_fill_buff_from_file_stream(find_buff, stream);
-        if (status != BUFF_FILL_STATUS_SUCCESS) { return; }
-        exit_code = pclose(stream);
-        if (exit_code) { return; }
+        sprintf(cmd_buff, "look '%s' tags", tag_start);
+        if (yed_read_subproc_into_buffer(cmd_buff, find_buff, &status) != 0) {
+            return;
+        }
+        if (status != 0) {
+            return;
+        }
     }
 
     formatting_limit = INT32_MAX;

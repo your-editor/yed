@@ -213,6 +213,12 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     start_time = measure_time_now_ms();
 
+    /*
+    ** Close stderr so that we don't get all kinds of unintended output
+    ** when running subprocesses.
+    */
+    close(2);
+
     setlocale(LC_ALL, "en_US.utf8");
 
     getcwd(cwd, sizeof(cwd));

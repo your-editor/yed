@@ -15,6 +15,8 @@
 #include <termios.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdint.h>

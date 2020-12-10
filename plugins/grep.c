@@ -6,7 +6,6 @@ void grep_cleanup(void);
 void grep_take_key(int key);
 void grep_make_buffer(void);
 void grep_run(void);
-void grep_update_buff(void);
 void grep_select(void);
 void grep_set_prompt(char *p, char *attr);
 
@@ -29,7 +28,7 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "grep", grep);
 
     if (!yed_get_var("grep-prg")) {
-        yed_set_var("grep-prg", "grep --exclude-dir={.git} -RHnIs \"%\" .");
+        yed_set_var("grep-prg", "grep --exclude-dir={.git} -RHnIs '%' .");
     }
 
     return 0;
@@ -108,24 +107,17 @@ void grep_make_buffer(void) {
     if (!buff) {
         buff = yed_create_buffer("*grep-list");
         buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    } else {
-        yed_buff_clear_no_undo(buff);
     }
 
     ASSERT(buff, "did not create '*grep-list' buffer");
 }
 
-void grep_update_buff(void) {
-    yed_buff_clear_no_undo(buff);
-    yed_fill_buff_from_file(buff, "/tmp/grep_list.yed");
-}
-
 void grep_run(void) {
-    char       cmd_buff[512], *cmd_p;
+    char       cmd_buff[1024];
     yed_attrs  attr_cmd, attr_attn;
     char       attr_buff[128];
     char      *pattern;
-    int        len, err;
+    int        len, status;
 
     grep_set_prompt("(grep) ", NULL);
 
@@ -137,29 +129,26 @@ void grep_run(void) {
 
     if (strlen(pattern) == 0)     { goto empty; }
 
-    strcat(cmd_buff, "bash -c '");
-
-    cmd_p = cmd_buff + strlen(cmd_buff);
-
-    len = perc_subst(prg, pattern, cmd_p, sizeof(cmd_buff) - strlen(cmd_buff));
+    len = perc_subst(prg, pattern, cmd_buff, sizeof(cmd_buff));
 
     ASSERT(len > 0, "buff too small for perc_subst");
 
-    strcat(cmd_buff, " 2>/dev/null > /tmp/grep_list.yed && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+    strcat(cmd_buff, " 2>&1");
 
-    err = system(cmd_buff);
+    if (yed_read_subproc_into_buffer(cmd_buff, buff, &status) != 0) {
+        goto err;
+    }
 
-    if (err) {
+    if (status != 0) {
+err:;
         attr_cmd    = yed_active_style_get_command_line();
         attr_attn   = yed_active_style_get_attention();
         attr_cmd.fg = attr_attn.fg;
         yed_get_attr_str(attr_cmd, attr_buff);
 
         grep_set_prompt("(grep) ", attr_buff);
-empty:
+empty:;
         yed_buff_clear_no_undo(buff);
-    } else {
-        grep_update_buff();
     }
 }
 
