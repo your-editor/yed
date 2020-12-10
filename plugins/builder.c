@@ -617,8 +617,8 @@ static void builder_print_error(int n_args, char **args) {
 }
 
 static void builder_view_output(int n_args, char **args) {
-    char cmd_buff[512];
-    int  err;
+    char        path_buff[256];
+    yed_buffer *buff;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -632,21 +632,21 @@ static void builder_view_output(int n_args, char **args) {
 
     notif_stop();
 
-    sprintf(cmd_buff, "less -c '/tmp/yed_builder_output_%llx' 2>&1", (unsigned long long)Self);
-
-    printf(TERM_STD_SCREEN);
-    fflush(stdout);
-    err = system(cmd_buff);
-    printf(TERM_ALT_SCREEN);
-    fflush(stdout);
-
-    ys->redraw = 1;
-
-    if (err == 0) {
-        yed_cprint("%s", cmd_buff);
-    } else {
-        yed_cerr("'%s' exited with non-zero status %d", cmd_buff, err);
+    buff = yed_get_buffer("*builder-output");
+    if (buff == NULL) {
+        buff = yed_create_buffer("*builder-output");
+        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
     }
+
+    sprintf(path_buff, "/tmp/yed_builder_output_%llx", (unsigned long long)Self);
+    if (yed_fill_buff_from_file(buff, path_buff) != BUFF_FILL_STATUS_SUCCESS) {
+        yed_cerr("error loading *builder-output buffer");
+        return;
+    }
+
+    YEXE("special-buffer-prepare-focus", "*builder-output");
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
+    yed_frame_set_buff(ys->active_frame, buff);
 }
 
 static void builder_echo_status(int n_args, char **args) {
