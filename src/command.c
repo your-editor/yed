@@ -3939,6 +3939,13 @@ void yed_default_command_special_buffer_prepare_focus(int n_args, char **args) {
         return;
     }
 
+    if (ys->active_frame
+    &&  ys->active_frame->buffer
+    &&  strcmp(ys->active_frame->buffer->name, args[0]) == 0) {
+        /* It's already focused. Don't do anything. */
+        return;
+    }
+
     frame = yed_add_new_frame(0.15, 0.15, 0.7, 0.7);
     yed_clear_frame(frame);
     yed_activate_frame(frame);

@@ -61,16 +61,14 @@ void find_file_start(void) {
     ys->interactive_command = "find-file";
     find_file_set_prompt("(find-file) ", NULL);
 
-    if (ys->active_frame
-    &&  ys->active_frame->buffer
-    &&  ys->active_frame->buffer == buff) {
-        yed_buff_clear_no_undo(buff);
-    } else {
-        YEXE("special-buffer-prepare-focus", "*find-file-list");
+    if (buff == NULL) {
         find_file_make_buffer();
-        yed_frame_set_buff(ys->active_frame, buff);
+    } else {
+        yed_buff_clear_no_undo(buff);
     }
-
+    YEXE("special-buffer-prepare-focus", "*find-file-list");
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
+    yed_frame_set_buff(ys->active_frame, buff);
     yed_clear_cmd_buff();
 }
 

@@ -64,16 +64,14 @@ void grep_start(void) {
     grep_set_prompt("(grep) ", NULL);
     save_current_search = ys->current_search;
 
-    if (ys->active_frame
-    &&  ys->active_frame->buffer
-    &&  ys->active_frame->buffer == buff) {
-        yed_buff_clear_no_undo(buff);
-    } else {
-        YEXE("special-buffer-prepare-focus", "*grep-list");
+    if (buff == NULL) {
         grep_make_buffer();
-        yed_frame_set_buff(ys->active_frame, buff);
+    } else {
+        yed_buff_clear_no_undo(buff);
     }
-
+    YEXE("special-buffer-prepare-focus", "*grep-list");
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
+    yed_frame_set_buff(ys->active_frame, buff);
     yed_clear_cmd_buff();
 }
 

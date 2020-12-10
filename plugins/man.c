@@ -30,29 +30,17 @@ void man_word(int n_args, char **args) {
 }
 
 void man(int n_args, char **args) {
-    int        already_open;
-    yed_frame *save_active;
+    int        width;
     char       cmd_buff[1024];
     char       err_buff[1024];
-    int        width;
     int        i;
     FILE      *stream;
     int        status;
 
-    already_open = (   ys->active_frame
-                    && ys->active_frame->buffer
-                    && ys->active_frame->buffer == buff);
+    YEXE("special-buffer-prepare-focus", "*man-page");
 
-    save_active = ys->active_frame;
-    if (ys->active_frame) {
-        YEXE("special-buffer-prepare-focus", "*man-page");
-        if (ys->active_frame != NULL) {
-            width = ys->active_frame->width;
-        } else {
-            width = 80;
-        }
-        YEXE("special-buffer-prepare-unfocus", "*man-page");
-        yed_activate_frame(save_active);
+    if (ys->active_frame != NULL) {
+        width = ys->active_frame->width;
     } else {
         width = 80;
     }
@@ -72,6 +60,7 @@ void man(int n_args, char **args) {
 
     if ((stream = popen(cmd_buff, "r")) == NULL) {
         yed_cerr("failed to invoke '%s'", cmd_buff);
+        YEXE("special-buffer-prepare-unfocus", "*man-page");
         return;
     }
 
@@ -85,18 +74,17 @@ void man(int n_args, char **args) {
     status = yed_fill_buff_from_file_stream(buff, stream);
     if (status != BUFF_FILL_STATUS_SUCCESS) {
         yed_cerr("failed to create buffer *man-pages");
+        YEXE("special-buffer-prepare-unfocus", "*man-page");
         return;
     }
     status = pclose(stream);
 
     if (status) {
         yed_cerr("command '%s' failed", err_buff);
+        YEXE("special-buffer-prepare-unfocus", "*man-page");
         return;
     }
 
-    if (!already_open) {
-        YEXE("special-buffer-prepare-focus", "*man-page");
-    }
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     YEXE("buffer", "*man-page");
 }

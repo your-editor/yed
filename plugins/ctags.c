@@ -560,17 +560,17 @@ int ctags_find_start(char *start) {
 
     ys->interactive_command = "ctags-find";
     ctags_find_set_prompt("(ctags-find) ", NULL);
-    if (ys->active_frame
-    &&  ys->active_frame->buffer
-    &&  ys->active_frame->buffer == find_buff) {
-        yed_buff_clear_no_undo(find_buff);
-    } else {
-        YEXE("special-buffer-prepare-focus", "*ctags-find-list");
+
+    if (find_buff == NULL) {
         if (!ctags_find_make_buffers()) {
             return 0;
         }
-        yed_frame_set_buff(ys->active_frame, find_buff);
+    } else {
+        yed_buff_clear_no_undo(find_buff);
     }
+    YEXE("special-buffer-prepare-focus", "*ctags-find-list");
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
+    yed_frame_set_buff(ys->active_frame, find_buff);
     yed_clear_cmd_buff();
 
     if (start != NULL) {
