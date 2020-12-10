@@ -1,9 +1,20 @@
 #include <yed/plugin.h>
 
-static yed_buffer *buff;
-
 void man(int n_args, char **args);
 void man_word(int n_args, char **args);
+
+yed_buffer *get_or_make_buff(void) {
+    yed_buffer *buff;
+
+    buff = yed_get_buffer("*man-page");
+
+    if (buff == NULL) {
+        buff = yed_create_buffer("*man-page");
+        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
+    }
+
+    return buff;
+}
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
@@ -65,11 +76,6 @@ void man(int n_args, char **args) {
         return;
     }
 
-    if (buff == NULL) {
-        buff = yed_create_buffer("*man-page");
-        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    }
-
     YEXE("special-buffer-prepare-focus", "*man-page");
 
     if (ys->active_frame != NULL) {
@@ -83,7 +89,7 @@ void man(int n_args, char **args) {
     strcat(cmd_buff, pre_cmd_buff);
     strcat(cmd_buff, "'");
 
-    if (yed_read_subproc_into_buffer(cmd_buff, buff, &status) != 0) {
+    if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
         YEXE("special-buffer-prepare-unfocus", "*man-page");
         yed_cerr("failed to invoke '%s'", cmd_buff);
         return;

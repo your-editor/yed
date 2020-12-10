@@ -4,17 +4,28 @@ void grep(int n_args, char **args);
 void grep_start(void);
 void grep_cleanup(void);
 void grep_take_key(int key);
-void grep_make_buffer(void);
 void grep_run(void);
 void grep_select(void);
 void grep_set_prompt(char *p, char *attr);
 
 void grep_key_pressed_handler(yed_event *event);
 
-static char       *prg;
-static yed_buffer *buff;
-static char        prompt_buff[256];
-static char       *save_current_search;
+yed_buffer *get_or_make_buff(void) {
+    yed_buffer *buff;
+
+    buff = yed_get_buffer("*grep-list");
+
+    if (buff == NULL) {
+        buff = yed_create_buffer("*grep-list");
+        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
+    }
+
+    return buff;
+}
+
+static char *prg;
+static char  prompt_buff[256];
+static char *save_current_search;
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
@@ -51,10 +62,6 @@ void grep(int n_args, char **args) {
 }
 
 void grep_cleanup(void) {
-/*     yed_free_buffer(buff); */
-/*  */
-/*     buff  = NULL; */
-
     ys->save_search = save_current_search;
 }
 
@@ -63,14 +70,10 @@ void grep_start(void) {
     grep_set_prompt("(grep) ", NULL);
     save_current_search = ys->current_search;
 
-    if (buff == NULL) {
-        grep_make_buffer();
-    } else {
-        yed_buff_clear_no_undo(buff);
-    }
+    yed_buff_clear_no_undo(get_or_make_buff());
     YEXE("special-buffer-prepare-focus", "*grep-list");
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
-    yed_frame_set_buff(ys->active_frame, buff);
+    yed_frame_set_buff(ys->active_frame, get_or_make_buff());
     yed_clear_cmd_buff();
 }
 
@@ -101,17 +104,6 @@ void grep_take_key(int key) {
     }
 }
 
-void grep_make_buffer(void) {
-    buff = yed_get_buffer("*grep-list");
-
-    if (!buff) {
-        buff = yed_create_buffer("*grep-list");
-        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    }
-
-    ASSERT(buff, "did not create '*grep-list' buffer");
-}
-
 void grep_run(void) {
     char       cmd_buff[1024];
     yed_attrs  attr_cmd, attr_attn;
@@ -133,9 +125,9 @@ void grep_run(void) {
 
     ASSERT(len > 0, "buff too small for perc_subst");
 
-    strcat(cmd_buff, " 2>&1");
+    strcat(cmd_buff, " 2>/dev/null");
 
-    if (yed_read_subproc_into_buffer(cmd_buff, buff, &status) != 0) {
+    if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
         goto err;
     }
 
@@ -148,7 +140,7 @@ err:;
 
         grep_set_prompt("(grep) ", attr_buff);
 empty:;
-        yed_buff_clear_no_undo(buff);
+        yed_buff_clear_no_undo(get_or_make_buff());
     }
 }
 
@@ -161,7 +153,7 @@ void grep_select(void) {
               row_idx;
 
     path = _path;
-    line = yed_buff_get_line(buff, ys->active_frame->cursor_line);
+    line = yed_buff_get_line(get_or_make_buff(), ys->active_frame->cursor_line);
     array_zero_term(line->chars);
 
     row_idx = 0;
