@@ -55,6 +55,18 @@ void yed_set_default_command(char *name, yed_command command) {
     }
 }
 
+yed_command yed_get_default_command(char *name) {
+    tree_it(yed_command_name_t, yed_command) it;
+
+    it = tree_lookup(ys->default_commands, name);
+
+    if (!tree_it_good(it)) {
+        return NULL;
+    }
+
+    return tree_it_val(it);
+}
+
 void yed_set_default_commands(void) {
 #define SET_DEFAULT_COMMAND(name1, name2)                         \
 do {                                                              \

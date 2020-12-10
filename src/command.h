@@ -11,6 +11,7 @@ void yed_set_command(char *name, yed_command command);
 void yed_unset_command(char *name);
 
 void yed_set_default_command(char *name, yed_command command);
+yed_command yed_get_default_command(char *name);
 void yed_set_default_commands(void);
 
 void yed_clear_cmd_buff(void);
