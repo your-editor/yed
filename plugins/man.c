@@ -30,25 +30,32 @@ void man_word(int n_args, char **args) {
 }
 
 void man(int n_args, char **args) {
-    int   already_open;
-    char  cmd_buff[1024];
-    char  err_buff[1024];
-    int   width;
-    int   i;
-    FILE *stream;
-    int   status;
+    int        already_open;
+    yed_frame *save_active;
+    char       cmd_buff[1024];
+    char       err_buff[1024];
+    int        width;
+    int        i;
+    FILE      *stream;
+    int        status;
 
     already_open = (   ys->active_frame
                     && ys->active_frame->buffer
                     && ys->active_frame->buffer == buff);
 
-    YEXE("special-buffer-prepare-focus", "*man-page");
-    if (ys->active_frame != NULL) {
-        width = ys->active_frame->width;
+    save_active = ys->active_frame;
+    if (ys->active_frame) {
+        YEXE("special-buffer-prepare-focus", "*man-page");
+        if (ys->active_frame != NULL) {
+            width = ys->active_frame->width;
+        } else {
+            width = 80;
+        }
+        YEXE("special-buffer-prepare-unfocus", "*man-page");
+        yed_activate_frame(save_active);
     } else {
         width = 80;
     }
-    YEXE("special-buffer-prepare-unfocus", "*man-page");
 
     cmd_buff[0] = 0;
     err_buff[0] = 0;
@@ -90,5 +97,6 @@ void man(int n_args, char **args) {
     if (!already_open) {
         YEXE("special-buffer-prepare-focus", "*man-page");
     }
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     YEXE("buffer", "*man-page");
 }
