@@ -31,11 +31,39 @@ void man_word(int n_args, char **args) {
 
 void man(int n_args, char **args) {
     int        width;
+    char       pre_cmd_buff[1024];
     char       cmd_buff[1024];
     char       err_buff[1024];
     int        i;
-    FILE      *stream;
     int        status;
+    FILE      *stream;
+
+    pre_cmd_buff[0] = 0;
+    cmd_buff[0]     = 0;
+    err_buff[0]     = 0;
+
+    strcat(pre_cmd_buff, "man --ascii");
+    strcat(err_buff,     "man");
+    for (i = 0; i < n_args; i += 1) {
+        strcat(pre_cmd_buff, " ");
+        strcat(pre_cmd_buff, args[i]);
+        strcat(err_buff, " ");
+        strcat(err_buff, args[i]);
+    }
+    strcat(pre_cmd_buff, " 2>/dev/null");
+
+    strcat(cmd_buff, pre_cmd_buff);
+    strcat(cmd_buff, " >/dev/null");
+
+    if ((stream = popen(cmd_buff, "r")) == NULL) {
+        yed_cerr("failed to invoke '%s'", cmd_buff);
+        return;
+    }
+    status = pclose(stream);
+    if (status) {
+        yed_cerr("command '%s' failed", err_buff);
+        return;
+    }
 
     YEXE("special-buffer-prepare-focus", "*man-page");
 
@@ -45,22 +73,14 @@ void man(int n_args, char **args) {
         width = 80;
     }
 
-    cmd_buff[0] = 0;
-    err_buff[0] = 0;
     snprintf(cmd_buff, sizeof(cmd_buff),
-             "bash -c 'MANWIDTH=%d man --ascii", width);
-    strcat(err_buff, "man");
-    for (i = 0; i < n_args; i += 1) {
-        strcat(cmd_buff, " ");
-        strcat(cmd_buff, args[i]);
-        strcat(err_buff, " ");
-        strcat(err_buff, args[i]);
-    }
-    strcat(cmd_buff, " 2>/dev/null'");
+             "bash -c 'MANWIDTH=%d ", width);
+    strcat(cmd_buff, pre_cmd_buff);
+    strcat(cmd_buff, "'");
 
     if ((stream = popen(cmd_buff, "r")) == NULL) {
-        yed_cerr("failed to invoke '%s'", cmd_buff);
         YEXE("special-buffer-prepare-unfocus", "*man-page");
+        yed_cerr("failed to invoke '%s'", cmd_buff);
         return;
     }
 
@@ -73,15 +93,15 @@ void man(int n_args, char **args) {
 
     status = yed_fill_buff_from_file_stream(buff, stream);
     if (status != BUFF_FILL_STATUS_SUCCESS) {
-        yed_cerr("failed to create buffer *man-pages");
         YEXE("special-buffer-prepare-unfocus", "*man-page");
+        yed_cerr("failed to create buffer *man-pages");
         return;
     }
     status = pclose(stream);
 
     if (status) {
-        yed_cerr("command '%s' failed", err_buff);
         YEXE("special-buffer-prepare-unfocus", "*man-page");
+        yed_cerr("command '%s' failed", err_buff);
         return;
     }
 
