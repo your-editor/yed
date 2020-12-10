@@ -1,5 +1,7 @@
 #include <yed/plugin.h>
 
+static yed_buffer *buff;
+
 void man(int n_args, char **args);
 void man_word(int n_args, char **args);
 
@@ -28,41 +30,65 @@ void man_word(int n_args, char **args) {
 }
 
 void man(int n_args, char **args) {
-    char path_buff[128], cmd_buff[256], err_buff[256], width_buff[16];
-    int  i, err;
+    int   already_open;
+    char  cmd_buff[1024];
+    char  err_buff[1024];
+    int   width;
+    int   i;
+    FILE *stream;
+    int   status;
 
-    path_buff[0] = 0;
-    cmd_buff[0]  = 0;
-    err_buff[0]  = 0;
+    already_open = (   ys->active_frame
+                    && ys->active_frame->buffer
+                    && ys->active_frame->buffer == buff);
 
-    sprintf(width_buff, "%d", (int)(((float)ys->term_cols) * 0.7));
+    YEXE("special-buffer-prepare-focus", "*man-page");
+    if (ys->active_frame != NULL) {
+        width = ys->active_frame->width;
+    } else {
+        width = 80;
+    }
+    YEXE("special-buffer-prepare-unfocus", "*man-page");
 
-    strcat(cmd_buff, "bash -c 'MANWIDTH=");
-    strcat(cmd_buff, width_buff);
-    strcat(cmd_buff, " man --ascii ");
+    cmd_buff[0] = 0;
+    err_buff[0] = 0;
+    snprintf(cmd_buff, sizeof(cmd_buff),
+             "bash -c 'MANWIDTH=%d man --ascii", width);
     strcat(err_buff, "man");
-    strcat(path_buff, "/tmp/man");
-
     for (i = 0; i < n_args; i += 1) {
         strcat(cmd_buff, " ");
-        strcat(err_buff, " ");
-        strcat(path_buff, "_");
         strcat(cmd_buff, args[i]);
-        strcat(path_buff, args[i]);
+        strcat(err_buff, " ");
         strcat(err_buff, args[i]);
     }
-    strcat(path_buff, ".yed");
-    strcat(cmd_buff, " 2>/dev/null | col -bx > ");
-    strcat(cmd_buff, path_buff);
-    strcat(cmd_buff, " && test ${PIPESTATUS[0]} -eq 0' 2>/dev/null");
+    strcat(cmd_buff, " 2>/dev/null'");
 
-    err = system(cmd_buff);
+    if ((stream = popen(cmd_buff, "r")) == NULL) {
+        yed_cerr("failed to invoke '%s'", cmd_buff);
+        return;
+    }
 
-    if (err) {
+    if (buff == NULL) {
+        buff = yed_create_buffer("*man-page");
+        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
+    } else {
+        yed_buff_clear_no_undo(buff);
+    }
+
+    status = yed_fill_buff_from_file_stream(buff, stream);
+    if (status != BUFF_FILL_STATUS_SUCCESS) {
+        yed_cerr("failed to create buffer *man-pages");
+        return;
+    }
+    status = pclose(stream);
+
+    if (status) {
         yed_cerr("command '%s' failed", err_buff);
         return;
     }
 
-    YEXE("frame-new", "0.15", "0.15", "0.7", "0.7");
-    YEXE("buffer", path_buff);
+    if (!already_open) {
+        YEXE("special-buffer-prepare-focus", "*man-page");
+    }
+    YEXE("buffer", "*man-page");
 }

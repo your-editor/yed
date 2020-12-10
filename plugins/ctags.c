@@ -11,7 +11,6 @@ use_tree(ctags_str_t, int);
 #define TAG_KIND_TYPE       (2)
 #define TAG_KIND_ENUMERATOR (3)
 
-static yed_frame       *frame;
 static yed_buffer      *find_buff;
 static char             prompt_buff[512];
 
@@ -33,7 +32,6 @@ void ctags_jump_to_definition(int n_args, char **args);
 void ctags_hl_reparse(int n_args, char **args);
 
 void unload(yed_plugin *self);
-void ctags_find_frame_delete_handler(yed_event *event);
 void ctags_find_buffer_delete_handler(yed_event *event);
 void ctags_find_key_pressed_handler(yed_event *event);
 void ctags_find_line_handler(yed_event *event);
@@ -41,7 +39,6 @@ void ctags_hl_line_handler(yed_event *event);
 void ctags_pump_handler(yed_event *event);
 
 int yed_plugin_boot(yed_plugin *self) {
-    yed_event_handler frame_delete;
     yed_event_handler buffer_delete;
     yed_event_handler key_pressed;
     yed_event_handler find_line;
@@ -52,8 +49,6 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_unload_fn(self, unload);
 
-    frame_delete.kind  = EVENT_FRAME_PRE_DELETE;
-    frame_delete.fn    = ctags_find_frame_delete_handler;
     buffer_delete.kind = EVENT_BUFFER_PRE_DELETE;
     buffer_delete.fn   = ctags_find_buffer_delete_handler;
     key_pressed.kind   = EVENT_KEY_PRESSED;
@@ -64,7 +59,6 @@ int yed_plugin_boot(yed_plugin *self) {
     hl_line.fn         = ctags_hl_line_handler;
     pump.kind          = EVENT_PRE_PUMP;
     pump.fn            = ctags_pump_handler;
-    yed_plugin_add_event_handler(self, frame_delete);
     yed_plugin_add_event_handler(self, buffer_delete);
     yed_plugin_add_event_handler(self, key_pressed);
     yed_plugin_add_event_handler(self, find_line);
@@ -214,16 +208,6 @@ void unload(yed_plugin *self) {
     ctags_hl_cleanup();
 }
 
-void ctags_find_frame_delete_handler(yed_event *event) {
-    if (event->frame == frame) {
-        if (find_buff) {
-            yed_free_buffer(find_buff);
-        }
-
-        frame = NULL;
-    }
-}
-
 void ctags_find_buffer_delete_handler(yed_event *event) {
     if (event->buffer == find_buff) {
         find_buff = NULL;
@@ -231,12 +215,9 @@ void ctags_find_buffer_delete_handler(yed_event *event) {
 }
 
 void ctags_find_cleanup(void) {
-    if (frame) {
-        yed_delete_frame(frame);
-    }
-    if (find_buff) {
-        yed_free_buffer(find_buff);
-    }
+/*     if (find_buff) { */
+/*         yed_free_buffer(find_buff); */
+/*     } */
 }
 
 int ctag_parse_path_and_search(const char *text, char *path_buff, char *search_buff, int *line_nr) {
@@ -297,10 +278,11 @@ void ctag_find_select(void) {
     int       row;
     int       col;
 
-    line = yed_buff_get_line(find_buff, frame->cursor_line);
+    line = yed_buff_get_line(find_buff, ys->active_frame->cursor_line);
     array_zero_term(line->chars);
 
     if (!ctag_parse_path_and_search(line->chars.data, path, search, &row)) {
+        YEXE("special-buffer-prepare-unfocus", "*ctags-find-list");
         ctags_find_cleanup();
 LOG_CMD_ENTER("ctags-find");
         yed_cerr("unable to parse tag location");
@@ -308,6 +290,7 @@ LOG_EXIT();
         return;
     }
 
+    YEXE("special-buffer-prepare-jump-focus", "*ctags-find-list");
     ctags_find_cleanup();
 
     YEXE("buffer", path);
@@ -340,7 +323,6 @@ void ctags_find_key_pressed_handler(yed_event *event) {
     if (event->key != ENTER            /* not the key we want */
     ||  ys->interactive_command        /* still typing        */
     ||  !eframe                        /* no frame            */
-    ||  eframe != frame                /* not our frame       */
     ||  !eframe->buffer                /* no buffer           */
     ||  eframe->buffer != find_buff) { /* not our buffer      */
         return;
@@ -476,7 +458,7 @@ void ctags_find_set_prompt(char *p, char *attr) {
 int ctags_find_make_buffers(void) {
     if (!find_buff) {
         find_buff = yed_create_buffer("*ctags-find-list");
-        find_buff->flags |= BUFF_RD_ONLY;
+        find_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
     } else {
         yed_buff_clear_no_undo(find_buff);
     }
@@ -484,11 +466,6 @@ int ctags_find_make_buffers(void) {
     return 1;
 }
 
-void ctags_find_make_frame(void) {
-    frame = yed_add_new_frame(0.15, 0.15, 0.7, 0.7);
-    yed_clear_frame(frame);
-    yed_activate_frame(frame);
-}
 
 void ctags_find_filter(void) {
     char      *tag_start;
@@ -583,11 +560,17 @@ int ctags_find_start(char *start) {
 
     ys->interactive_command = "ctags-find";
     ctags_find_set_prompt("(ctags-find) ", NULL);
-    ctags_find_make_frame();
-    if (!ctags_find_make_buffers()) {
-        return 0;
+    if (ys->active_frame
+    &&  ys->active_frame->buffer
+    &&  ys->active_frame->buffer == find_buff) {
+        yed_buff_clear_no_undo(find_buff);
+    } else {
+        YEXE("special-buffer-prepare-focus", "*ctags-find-list");
+        if (!ctags_find_make_buffers()) {
+            return 0;
+        }
+        yed_frame_set_buff(ys->active_frame, find_buff);
     }
-    yed_frame_set_buff(frame, find_buff);
     yed_clear_cmd_buff();
 
     if (start != NULL) {
@@ -606,9 +589,10 @@ void ctags_find_take_key(int key) {
         ys->interactive_command = NULL;
         yed_clear_cmd_buff();
         ctags_find_cleanup();
+        YEXE("special-buffer-prepare-unfocus", "*ctags-find-list");
     } else if (key == ENTER) {
         ys->interactive_command = NULL;
-        frame->dirty            = 1;
+        ys->active_frame->dirty = 1;
         yed_clear_cmd_buff();
         if (yed_buff_n_lines(find_buff) == 1) {
             ctag_find_select();
@@ -645,7 +629,7 @@ void ctags_find(int n_args, char **args) {
 
         if (n_args) {
             ys->interactive_command = NULL;
-            frame->dirty            = 1;
+            ys->active_frame->dirty = 1;
             yed_clear_cmd_buff();
             if (yed_buff_n_lines(find_buff) == 1) {
                 ctag_find_select();

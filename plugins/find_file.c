@@ -4,7 +4,6 @@ void find_file(int n_args, char **args);
 void find_file_start(void);
 void find_file_cleanup(void);
 void find_file_take_key(int key);
-void find_file_make_frame(void);
 void find_file_make_buffer(void);
 void find_file_run(void);
 void find_file_update_buff(void);
@@ -14,7 +13,6 @@ void find_file_set_prompt(char *p, char *attr);
 void find_file_key_pressed_handler(yed_event *event);
 
 static char       *prg;
-static yed_frame  *frame;
 static yed_buffer *buff;
 static char        prompt_buff[256];
 
@@ -54,20 +52,25 @@ void find_file(int n_args, char **args) {
 }
 
 void find_file_cleanup(void) {
-    yed_frame_set_buff(frame, NULL);
-    yed_free_buffer(buff);
-    yed_delete_frame(frame);
-
-    frame = NULL;
-    buff  = NULL;
+/*     yed_free_buffer(buff); */
+/*  */
+/*     buff  = NULL; */
 }
 
 void find_file_start(void) {
     ys->interactive_command = "find-file";
     find_file_set_prompt("(find-file) ", NULL);
-    find_file_make_frame();
-    find_file_make_buffer();
-    yed_frame_set_buff(frame, buff);
+
+    if (ys->active_frame
+    &&  ys->active_frame->buffer
+    &&  ys->active_frame->buffer == buff) {
+        yed_buff_clear_no_undo(buff);
+    } else {
+        YEXE("special-buffer-prepare-focus", "*find-file-list");
+        find_file_make_buffer();
+        yed_frame_set_buff(ys->active_frame, buff);
+    }
+
     yed_clear_cmd_buff();
 }
 
@@ -78,6 +81,7 @@ void find_file_take_key(int key) {
         ys->interactive_command = NULL;
         ys->current_search      = NULL;
         yed_clear_cmd_buff();
+        YEXE("special-buffer-prepare-unfocus", "*find-file-list");
         find_file_cleanup();
     } else if (key == ENTER) {
         ys->interactive_command = NULL;
@@ -109,18 +113,12 @@ void find_file_make_buffer(void) {
 
     if (!buff) {
         buff = yed_create_buffer("*find-file-list");
-        buff->flags |= BUFF_RD_ONLY;
+        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
     } else {
         yed_buff_clear_no_undo(buff);
     }
 
     ASSERT(buff, "did not create '*find-file-list' buffer");
-}
-
-void find_file_make_frame(void) {
-    frame = yed_add_new_frame(0.15, 0.15, 0.7, 0.7);
-    yed_clear_frame(frame);
-    yed_activate_frame(frame);
 }
 
 void find_file_update_buff(void) {
@@ -172,7 +170,7 @@ void find_file_select(void) {
     yed_line *line;
     char     *_path, *path;
 
-    line = yed_buff_get_line(buff, frame->cursor_line);
+    line = yed_buff_get_line(buff, ys->active_frame->cursor_line);
     array_zero_term(line->chars);
     _path = path = strdup(array_data(line->chars));
 
@@ -182,14 +180,11 @@ void find_file_select(void) {
         }
     }
 
-    find_file_cleanup();
 
-    if (!ys->active_frame) {
-        YEXE("frame-new");
-    }
-
+    YEXE("special-buffer-prepare-jump-focus", "*grep-list");
     YEXE("buffer", path);
 
+    find_file_cleanup();
     free(_path);
 }
 
@@ -201,13 +196,14 @@ void find_file_key_pressed_handler(yed_event *event) {
     if (event->key != ENTER                                /* not the key we want */
     ||  ys->interactive_command                            /* still typing */
     ||  !eframe                                            /* no frame */
-    ||  eframe != frame                                    /* not our frame */
     ||  !eframe->buffer                                    /* no buffer */
     ||  strcmp(eframe->buffer->name, "*find-file-list")) { /* not our buffer */
         return;
     }
 
     find_file_select();
+
+    event->cancel = 1;
 }
 
 void find_file_set_prompt(char *p, char *attr) {

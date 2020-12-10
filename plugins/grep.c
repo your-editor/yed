@@ -4,7 +4,6 @@ void grep(int n_args, char **args);
 void grep_start(void);
 void grep_cleanup(void);
 void grep_take_key(int key);
-void grep_make_frame(void);
 void grep_make_buffer(void);
 void grep_run(void);
 void grep_update_buff(void);
@@ -14,7 +13,6 @@ void grep_set_prompt(char *p, char *attr);
 void grep_key_pressed_handler(yed_event *event);
 
 static char       *prg;
-static yed_frame  *frame;
 static yed_buffer *buff;
 static char        prompt_buff[256];
 static char       *save_current_search;
@@ -54,12 +52,9 @@ void grep(int n_args, char **args) {
 }
 
 void grep_cleanup(void) {
-    yed_frame_set_buff(frame, NULL);
-    yed_free_buffer(buff);
-    yed_delete_frame(frame);
-
-    frame = NULL;
-    buff  = NULL;
+/*     yed_free_buffer(buff); */
+/*  */
+/*     buff  = NULL; */
 
     ys->save_search = save_current_search;
 }
@@ -68,9 +63,17 @@ void grep_start(void) {
     ys->interactive_command = "grep";
     grep_set_prompt("(grep) ", NULL);
     save_current_search = ys->current_search;
-    grep_make_frame();
-    grep_make_buffer();
-    yed_frame_set_buff(frame, buff);
+
+    if (ys->active_frame
+    &&  ys->active_frame->buffer
+    &&  ys->active_frame->buffer == buff) {
+        yed_buff_clear_no_undo(buff);
+    } else {
+        YEXE("special-buffer-prepare-focus", "*grep-list");
+        grep_make_buffer();
+        yed_frame_set_buff(ys->active_frame, buff);
+    }
+
     yed_clear_cmd_buff();
 }
 
@@ -79,11 +82,12 @@ void grep_take_key(int key) {
         ys->interactive_command = NULL;
         ys->current_search      = NULL;
         yed_clear_cmd_buff();
+        YEXE("special-buffer-prepare-unfocus", "*grep-list");
         grep_cleanup();
     } else if (key == ENTER) {
         ys->interactive_command = NULL;
         ys->current_search      = NULL;
-        frame->dirty            = 1;
+        ys->active_frame->dirty = 1;
         yed_clear_cmd_buff();
     } else if (key == TAB) {
         grep_run();
@@ -105,18 +109,12 @@ void grep_make_buffer(void) {
 
     if (!buff) {
         buff = yed_create_buffer("*grep-list");
-        buff->flags |= BUFF_RD_ONLY;
+        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
     } else {
         yed_buff_clear_no_undo(buff);
     }
 
     ASSERT(buff, "did not create '*grep-list' buffer");
-}
-
-void grep_make_frame(void) {
-    frame = yed_add_new_frame(0.15, 0.15, 0.7, 0.7);
-    yed_clear_frame(frame);
-    yed_activate_frame(frame);
 }
 
 void grep_update_buff(void) {
@@ -176,7 +174,7 @@ void grep_select(void) {
               row_idx;
 
     path = _path;
-    line = yed_buff_get_line(buff, frame->cursor_line);
+    line = yed_buff_get_line(buff, ys->active_frame->cursor_line);
     array_zero_term(line->chars);
 
     row_idx = 0;
@@ -198,15 +196,10 @@ void grep_select(void) {
 
     sscanf(array_data(line->chars) + row_idx, "%d", &row);
 
-    grep_cleanup();
-
-    if (!ys->active_frame) {
-        YEXE("frame-new");
-    }
-
+    YEXE("special-buffer-prepare-jump-focus", "*grep-list");
     YEXE("buffer", path);
-
     yed_set_cursor_within_frame(ys->active_frame, 1, row);
+    grep_cleanup();
 }
 
 void grep_key_pressed_handler(yed_event *event) {
@@ -217,13 +210,14 @@ void grep_key_pressed_handler(yed_event *event) {
     if (event->key != ENTER                           /* not the key we want */
     ||  ys->interactive_command                       /* still typing        */
     ||  !eframe                                       /* no frame            */
-    ||  eframe != frame                               /* not our frame       */
     ||  !eframe->buffer                               /* no buffer           */
     ||  strcmp(eframe->buffer->name, "*grep-list")) { /* not our buffer      */
         return;
     }
 
     grep_select();
+
+    event->cancel = 1;
 }
 
 void grep_set_prompt(char *p, char *attr) {

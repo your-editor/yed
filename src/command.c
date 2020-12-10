@@ -62,83 +62,87 @@ do {                                                              \
     yed_set_default_command(name1, &yed_default_command_##name2); \
 } while (0)
 
-    SET_DEFAULT_COMMAND("command-prompt",         command_prompt);
-    SET_DEFAULT_COMMAND("fill-command-prompt",    fill_command_prompt);
-    SET_DEFAULT_COMMAND("quit",                   quit);
-    SET_DEFAULT_COMMAND("reload",                 reload);
-    SET_DEFAULT_COMMAND("redraw",                 redraw);
-    SET_DEFAULT_COMMAND("set",                    set);
-    SET_DEFAULT_COMMAND("get",                    get);
-    SET_DEFAULT_COMMAND("unset",                  unset);
-    SET_DEFAULT_COMMAND("sh",                     sh);
-    SET_DEFAULT_COMMAND("sh-silent",              sh_silent);
-    SET_DEFAULT_COMMAND("buff-sh",                buff_sh);
-    SET_DEFAULT_COMMAND("less",                   less);
-    SET_DEFAULT_COMMAND("echo",                   echo);
-    SET_DEFAULT_COMMAND("cursor-down",            cursor_down);
-    SET_DEFAULT_COMMAND("cursor-up",              cursor_up);
-    SET_DEFAULT_COMMAND("cursor-left",            cursor_left);
-    SET_DEFAULT_COMMAND("cursor-right",           cursor_right);
-    SET_DEFAULT_COMMAND("cursor-line-begin",      cursor_line_begin);
-    SET_DEFAULT_COMMAND("cursor-line-end",        cursor_line_end);
-    SET_DEFAULT_COMMAND("cursor-prev-word",       cursor_prev_word);
-    SET_DEFAULT_COMMAND("cursor-next-word",       cursor_next_word);
-    SET_DEFAULT_COMMAND("cursor-next-word",       cursor_next_word);
-    SET_DEFAULT_COMMAND("cursor-prev-paragraph",  cursor_prev_paragraph);
-    SET_DEFAULT_COMMAND("cursor-next-paragraph",  cursor_next_paragraph);
-    SET_DEFAULT_COMMAND("cursor-page-up",         cursor_page_up);
-    SET_DEFAULT_COMMAND("cursor-page-down",       cursor_page_down);
-    SET_DEFAULT_COMMAND("cursor-buffer-begin",    cursor_buffer_begin);
-    SET_DEFAULT_COMMAND("cursor-buffer-end",      cursor_buffer_end);
-    SET_DEFAULT_COMMAND("cursor-line",            cursor_line);
-    SET_DEFAULT_COMMAND("word-under-cursor",      word_under_cursor);
-    SET_DEFAULT_COMMAND("buffer",                 buffer);
-    SET_DEFAULT_COMMAND("buffer-delete",          buffer_delete);
-    SET_DEFAULT_COMMAND("buffer-next",            buffer_next);
-    SET_DEFAULT_COMMAND("buffer-prev",            buffer_prev);
-    SET_DEFAULT_COMMAND("buffer-name",            buffer_name);
-    SET_DEFAULT_COMMAND("buffer-path",            buffer_path);
-    SET_DEFAULT_COMMAND("buffer-set-ft",          buffer_set_ft);
-    SET_DEFAULT_COMMAND("frame-new",              frame_new);
-    SET_DEFAULT_COMMAND("frame-delete",           frame_delete);
-    SET_DEFAULT_COMMAND("frame-vsplit",           frame_vsplit);
-    SET_DEFAULT_COMMAND("frame-hsplit",           frame_hsplit);
-    SET_DEFAULT_COMMAND("frame-next",             frame_next);
-    SET_DEFAULT_COMMAND("frame-prev",             frame_prev);
-    SET_DEFAULT_COMMAND("frame-move",             frame_move);
-    SET_DEFAULT_COMMAND("frame-resize",           frame_resize);
-    SET_DEFAULT_COMMAND("insert",                 insert);
-    SET_DEFAULT_COMMAND("simple-insert-string",   simple_insert_string);
-    SET_DEFAULT_COMMAND("delete-back",            delete_back);
-    SET_DEFAULT_COMMAND("delete-forward",         delete_forward);
-    SET_DEFAULT_COMMAND("delete-line",            delete_line);
-    SET_DEFAULT_COMMAND("write-buffer",           write_buffer);
-    SET_DEFAULT_COMMAND("plugin-load",            plugin_load);
-    SET_DEFAULT_COMMAND("plugin-unload",          plugin_unload);
-    SET_DEFAULT_COMMAND("plugins-list",           plugins_list);
-    SET_DEFAULT_COMMAND("plugins-list-dirs",      plugins_list_dirs);
-    SET_DEFAULT_COMMAND("plugins-add-dir",        plugins_add_dir);
-    SET_DEFAULT_COMMAND("select",                 select);
-    SET_DEFAULT_COMMAND("select-lines",           select_lines);
-    SET_DEFAULT_COMMAND("select-off",             select_off);
-    SET_DEFAULT_COMMAND("yank-selection",         yank_selection);
-    SET_DEFAULT_COMMAND("paste-yank-buffer",      paste_yank_buffer);
-    SET_DEFAULT_COMMAND("find-in-buffer",         find_in_buffer);
-    SET_DEFAULT_COMMAND("find-next-in-buffer",    find_next_in_buffer);
-    SET_DEFAULT_COMMAND("find-prev-in-buffer",    find_prev_in_buffer);
-    SET_DEFAULT_COMMAND("replace-current-search", replace_current_search);
-    SET_DEFAULT_COMMAND("style",                  style);
-    SET_DEFAULT_COMMAND("style-off",              style_off);
-    SET_DEFAULT_COMMAND("styles-list",            styles_list);
-    SET_DEFAULT_COMMAND("undo",                   undo);
-    SET_DEFAULT_COMMAND("redo",                   redo);
-    SET_DEFAULT_COMMAND("bind",                   bind);
-    SET_DEFAULT_COMMAND("unbind",                 unbind);
-    SET_DEFAULT_COMMAND("multi",                  multi);
-    SET_DEFAULT_COMMAND("if",                     if);
-    SET_DEFAULT_COMMAND("suspend",                suspend);
-    SET_DEFAULT_COMMAND("scomps-list",            scomps_list);
-    SET_DEFAULT_COMMAND("version",                version);
+    SET_DEFAULT_COMMAND("command-prompt",                     command_prompt);
+    SET_DEFAULT_COMMAND("fill-command-prompt",                fill_command_prompt);
+    SET_DEFAULT_COMMAND("quit",                               quit);
+    SET_DEFAULT_COMMAND("reload",                             reload);
+    SET_DEFAULT_COMMAND("redraw",                             redraw);
+    SET_DEFAULT_COMMAND("set",                                set);
+    SET_DEFAULT_COMMAND("get",                                get);
+    SET_DEFAULT_COMMAND("unset",                              unset);
+    SET_DEFAULT_COMMAND("sh",                                 sh);
+    SET_DEFAULT_COMMAND("sh-silent",                          sh_silent);
+    SET_DEFAULT_COMMAND("buff-sh",                            buff_sh);
+    SET_DEFAULT_COMMAND("less",                               less);
+    SET_DEFAULT_COMMAND("echo",                               echo);
+    SET_DEFAULT_COMMAND("cursor-down",                        cursor_down);
+    SET_DEFAULT_COMMAND("cursor-up",                          cursor_up);
+    SET_DEFAULT_COMMAND("cursor-left",                        cursor_left);
+    SET_DEFAULT_COMMAND("cursor-right",                       cursor_right);
+    SET_DEFAULT_COMMAND("cursor-line-begin",                  cursor_line_begin);
+    SET_DEFAULT_COMMAND("cursor-line-end",                    cursor_line_end);
+    SET_DEFAULT_COMMAND("cursor-prev-word",                   cursor_prev_word);
+    SET_DEFAULT_COMMAND("cursor-next-word",                   cursor_next_word);
+    SET_DEFAULT_COMMAND("cursor-next-word",                   cursor_next_word);
+    SET_DEFAULT_COMMAND("cursor-prev-paragraph",              cursor_prev_paragraph);
+    SET_DEFAULT_COMMAND("cursor-next-paragraph",              cursor_next_paragraph);
+    SET_DEFAULT_COMMAND("cursor-page-up",                     cursor_page_up);
+    SET_DEFAULT_COMMAND("cursor-page-down",                   cursor_page_down);
+    SET_DEFAULT_COMMAND("cursor-buffer-begin",                cursor_buffer_begin);
+    SET_DEFAULT_COMMAND("cursor-buffer-end",                  cursor_buffer_end);
+    SET_DEFAULT_COMMAND("cursor-line",                        cursor_line);
+    SET_DEFAULT_COMMAND("word-under-cursor",                  word_under_cursor);
+    SET_DEFAULT_COMMAND("buffer",                             buffer);
+    SET_DEFAULT_COMMAND("buffer-delete",                      buffer_delete);
+    SET_DEFAULT_COMMAND("buffer-next",                        buffer_next);
+    SET_DEFAULT_COMMAND("buffer-prev",                        buffer_prev);
+    SET_DEFAULT_COMMAND("buffer-name",                        buffer_name);
+    SET_DEFAULT_COMMAND("buffer-path",                        buffer_path);
+    SET_DEFAULT_COMMAND("buffer-set-ft",                      buffer_set_ft);
+    SET_DEFAULT_COMMAND("frame-new",                          frame_new);
+    SET_DEFAULT_COMMAND("frame-delete",                       frame_delete);
+    SET_DEFAULT_COMMAND("frame-vsplit",                       frame_vsplit);
+    SET_DEFAULT_COMMAND("frame-hsplit",                       frame_hsplit);
+    SET_DEFAULT_COMMAND("frame-next",                         frame_next);
+    SET_DEFAULT_COMMAND("frame-prev",                         frame_prev);
+    SET_DEFAULT_COMMAND("frame-move",                         frame_move);
+    SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
+    SET_DEFAULT_COMMAND("insert",                             insert);
+    SET_DEFAULT_COMMAND("simple-insert-string",               simple_insert_string);
+    SET_DEFAULT_COMMAND("delete-back",                        delete_back);
+    SET_DEFAULT_COMMAND("delete-forward",                     delete_forward);
+    SET_DEFAULT_COMMAND("delete-line",                        delete_line);
+    SET_DEFAULT_COMMAND("write-buffer",                       write_buffer);
+    SET_DEFAULT_COMMAND("plugin-load",                        plugin_load);
+    SET_DEFAULT_COMMAND("plugin-unload",                      plugin_unload);
+    SET_DEFAULT_COMMAND("plugins-list",                       plugins_list);
+    SET_DEFAULT_COMMAND("plugins-list-dirs",                  plugins_list_dirs);
+    SET_DEFAULT_COMMAND("plugins-add-dir",                    plugins_add_dir);
+    SET_DEFAULT_COMMAND("select",                             select);
+    SET_DEFAULT_COMMAND("select-lines",                       select_lines);
+    SET_DEFAULT_COMMAND("select-off",                         select_off);
+    SET_DEFAULT_COMMAND("yank-selection",                     yank_selection);
+    SET_DEFAULT_COMMAND("paste-yank-buffer",                  paste_yank_buffer);
+    SET_DEFAULT_COMMAND("find-in-buffer",                     find_in_buffer);
+    SET_DEFAULT_COMMAND("find-next-in-buffer",                find_next_in_buffer);
+    SET_DEFAULT_COMMAND("find-prev-in-buffer",                find_prev_in_buffer);
+    SET_DEFAULT_COMMAND("replace-current-search",             replace_current_search);
+    SET_DEFAULT_COMMAND("style",                              style);
+    SET_DEFAULT_COMMAND("style-off",                          style_off);
+    SET_DEFAULT_COMMAND("styles-list",                        styles_list);
+    SET_DEFAULT_COMMAND("undo",                               undo);
+    SET_DEFAULT_COMMAND("redo",                               redo);
+    SET_DEFAULT_COMMAND("bind",                               bind);
+    SET_DEFAULT_COMMAND("unbind",                             unbind);
+    SET_DEFAULT_COMMAND("multi",                              multi);
+    SET_DEFAULT_COMMAND("if",                                 if);
+    SET_DEFAULT_COMMAND("suspend",                            suspend);
+    SET_DEFAULT_COMMAND("scomps-list",                        scomps_list);
+    SET_DEFAULT_COMMAND("version",                            version);
+    SET_DEFAULT_COMMAND("special-buffer-prepare-focus",       special_buffer_prepare_focus);
+    SET_DEFAULT_COMMAND("special-buffer-prepare-jump-focus",  special_buffer_prepare_jump_focus);
+    SET_DEFAULT_COMMAND("special-buffer-prepare-unfocus",     special_buffer_prepare_unfocus);
+    SET_DEFAULT_COMMAND("log",                                log);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -3915,6 +3919,54 @@ void yed_default_command_version(int n_args, char **args) {
     yed_cprint("%d", YED_VERSION);
 }
 
+void yed_default_command_special_buffer_prepare_focus(int n_args, char **args) {
+    yed_frame *frame;
+
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    frame = yed_add_new_frame(0.15, 0.15, 0.7, 0.7);
+    yed_clear_frame(frame);
+    yed_activate_frame(frame);
+}
+
+void yed_default_command_special_buffer_prepare_jump_focus(int n_args, char **args) {
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    if (ys->active_frame != NULL) {
+        yed_delete_frame(ys->active_frame);
+    }
+
+    if (array_len(ys->frames) == 0) {
+        YEXE("frame-new");
+    }
+}
+
+void yed_default_command_special_buffer_prepare_unfocus(int n_args, char **args) {
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    if (ys->active_frame != NULL) {
+        yed_delete_frame(ys->active_frame);
+    }
+}
+
+void yed_default_command_log(int n_args, char **args) {
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    YEXE("special-buffer-prepare-focus", "*log");
+    YEXE("buffer",                       "*log");
+}
 
 int yed_execute_command_from_split(array_t split) {
     char  *cmd_name,
