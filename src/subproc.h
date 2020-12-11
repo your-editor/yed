@@ -24,10 +24,14 @@ char * yed_run_subproc(char *cmd, int *output_len, int *status);
 **         printf("popen failed -- errno was %d\n", status);
 **     }
 */
+
+
 int yed_read_subproc_into_buffer(char *cmd, yed_buffer *buff, int *exit_status);
+
 /*
 ** If a non-null pointer is passed as 'output', then '*output' should be freed
 ** by the caller when appropriate.
 */
 int yed_write_buffer_to_subproc(yed_buffer *buff, char *cmd, int *exit_status, char **output);
+
 #endif
