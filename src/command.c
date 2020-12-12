@@ -95,7 +95,6 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-line-end",                    cursor_line_end);
     SET_DEFAULT_COMMAND("cursor-prev-word",                   cursor_prev_word);
     SET_DEFAULT_COMMAND("cursor-next-word",                   cursor_next_word);
-    SET_DEFAULT_COMMAND("cursor-next-word",                   cursor_next_word);
     SET_DEFAULT_COMMAND("cursor-prev-paragraph",              cursor_prev_paragraph);
     SET_DEFAULT_COMMAND("cursor-next-paragraph",              cursor_next_paragraph);
     SET_DEFAULT_COMMAND("cursor-page-up",                     cursor_page_up);
