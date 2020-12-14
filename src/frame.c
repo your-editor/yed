@@ -212,9 +212,9 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
 }
 
 void yed_activate_frame(yed_frame *frame) {
+    yed_event event;
     int       buff_n_lines;
     int       save_cursor_line;
-    yed_event event;
 
     event.kind  = EVENT_FRAME_ACTIVATED;
     event.frame = frame;
@@ -227,8 +227,7 @@ void yed_activate_frame(yed_frame *frame) {
     ys->active_frame = frame;
 
     /*
-     * Correct the cursor if the buffer has changed
-     * while this frame was inactive.
+     * Correct the cursor if the buffer has changed.
      */
     if (frame->buffer) {
         buff_n_lines = bucket_array_len(frame->buffer->lines);
@@ -941,9 +940,26 @@ void yed_frame_draw_border(yed_frame *frame) {
 }
 
 void yed_frame_update(yed_frame *frame) {
+    int        buff_n_lines;
+    int        save_cursor_line;
     int        i;
     char      *cell_row;
     yed_event  update_event, buff_draw_event;
+
+    /*
+     * Correct the cursor if the buffer has changed.
+     */
+    if (frame->buffer) {
+        buff_n_lines = bucket_array_len(frame->buffer->lines);
+        if (frame->cursor_line > buff_n_lines) {
+            save_cursor_line = frame->cursor_line;
+            yed_set_cursor_far_within_frame(frame, 1, 1);
+            yed_set_cursor_far_within_frame(frame, 1, save_cursor_line);
+        } else if (frame->buffer->kind == BUFF_KIND_YANK) {
+            yed_set_cursor_far_within_frame(frame, 1, 1);
+        }
+    }
+
 
     if (frame->last_cursor_line - frame->cursor_line > 1
     ||  frame->last_cursor_line - frame->cursor_line < -1) {
@@ -1155,6 +1171,8 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
               save_cursor_line;
     yed_line *line;
     yed_event event;
+
+    if (f->buffer == NULL) { return; }
 
     buff_n_lines              = bucket_array_len(f->buffer->lines);
     buff_big_enough_to_scroll = buff_n_lines > 2 * NORM_SCROLL_OFF(f);

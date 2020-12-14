@@ -33,13 +33,8 @@
 * separate C and C++ ft plugins
     * C++ scanner to look for certain keywords
 * actually accurate vim emulation plugin (vym)
-* cleanup grep and find_file plugins to behave more like the ctags plugin wrt frame/buffer management
-    * maybe turn this into something easier to manage for future plugins?
 * make style_picker use the new 'special-buffer-prepare-*' stuff
 * yedrc should be able to read multi-line strings with backslashed at the end
 * direct draws have a bug where if they are drawn over an area that doesn't have any content,
   then they don't get killed properly
     * they get killed, but they don't get drawn over by anything else, so it looks like they stick around
-* get rid of all tmp file usage in plugins
-    * prefer popen + yed_fill_buff_from_stream()
-    * maybe wrap up?

@@ -8,14 +8,9 @@ static yed_event_handler  buff_post_mod_handler;
 static yed_event_handler  buff_post_write_handler;
 static yed_event_handler  cursor_moved_handler;
 static int                build_is_running;
-static int                build_is_finished;
 static int                build_failed;
 static char              *build_cmd;
-static int                build_status;
-static char              *build_output;
-static int                build_output_len;
 static int                builder_run_before;
-static pthread_t          tid;
 static int                notif_up;
 static u64                notif_start_ms;
 static u64                notif_stay_ms;
@@ -28,14 +23,27 @@ static char               err_file[512];
 static int                err_line;
 static int                err_col;
 static int                err_has_loc;
-static pthread_mutex_t    mtx = PTHREAD_MUTEX_INITIALIZER;
 static char               builder_notif_cmd[1024];
 static int                builder_notif_cmd_status;
+
+static yed_nb_subproc_t   nb_subproc;
 
 #define LOCKED(_m)                                 \
 for (int _foozle = (pthread_mutex_lock(&(_m)), 1); \
      _foozle;                                      \
      _foozle = (pthread_mutex_unlock(&(_m)), 0))
+
+static yed_buffer * get_or_make_buffer(void) {
+    yed_buffer *buff;
+
+    buff = yed_get_buffer("*builder-output");
+    if (buff == NULL) {
+        buff = yed_create_buffer("*builder-output");
+        buff->flags |= BUFF_SPECIAL | BUFF_RD_ONLY;
+    }
+
+    return buff;
+}
 
 static void builder_unload(yed_plugin *self);
 static void builder_pump_handler(yed_event *event);
@@ -57,6 +65,8 @@ int yed_plugin_boot(yed_plugin *self) {
     Self = self;
 
     YED_PLUG_VERSION_CHECK();
+
+    get_or_make_buffer();
 
     yed_plugin_set_unload_fn(self, builder_unload);
 
@@ -89,9 +99,23 @@ int yed_plugin_boot(yed_plugin *self) {
     return 0;
 }
 
+static void builder_cleanup(void) {
+    if (builder_run_before) {
+        notif_stop();
+        free(build_cmd);
+        build_cmd = NULL;
+    }
+}
+
 static void builder_unload(yed_plugin *self) {
-    notif_stop();
-    pthread_mutex_destroy(&mtx);
+    yed_buffer *buff;
+
+    buff = yed_get_buffer("*builder-output");
+    if (buff != NULL) {
+        yed_free_buffer(buff);
+    }
+
+    builder_cleanup();
 }
 
 static void notif_start(void) {
@@ -108,9 +132,7 @@ static void notif_start(void) {
     if (notif_up) { return; }
 
     third_line = build_failed
-                    ? (build_output
-                        ? "builder-jump-to-error and builder-view-output are available."
-                        : "popen() failed.")
+                    ? "builder-jump-to-error and builder-view-output are available."
                     : "builder-view-output is available.";
 
     sprintf(test_buff, "Build command '%s':", build_cmd);
@@ -178,7 +200,7 @@ static void notif_stop(void) {
 static const char * builder_get_status_string(void) {
     if (build_is_running) {
         return "a build is currently running";
-    } else if (build_is_finished) {
+    } else if (builder_run_before) {
         if (build_failed) {
             return "the build FAILED";
         }
@@ -231,25 +253,6 @@ static void builder_report(void) {
     }
 
     YEXE("builder-echo-status");
-}
-
-static void builder_write_output_to_tmp_file(void) {
-    char  path_buff[256];
-    FILE *f;
-
-    LOG_FN_ENTER();
-
-    sprintf(path_buff, "/tmp/yed_builder_output_%llx", (unsigned long long)Self);
-
-    if (!(f = fopen(path_buff, "w"))) {
-        yed_cerr("failed to open output file");
-        LOG_EXIT();
-        return;
-    }
-    fwrite(build_output, 1, build_output_len, f);
-    fclose(f);
-
-    LOG_EXIT();
 }
 
 static yed_attrs get_err_attrs(void) {
@@ -308,20 +311,43 @@ static void builder_draw_error_message(int do_draw) {
     }
 }
 
+void builder_update_running(void) {
+    yed_frame **fit;
+    int         last_row;
+
+LOG_FN_ENTER();
+
+    build_is_running = yed_read_subproc_into_buffer_nb(&nb_subproc);
+    if (!build_is_running) {
+        builder_run_before = 1;
+        if (nb_subproc.err) {
+            yed_cerr("something went wrong -- errno = %d\n", nb_subproc.err);
+            build_failed = 1;
+        } else {
+            build_failed = nb_subproc.exit_status != 0;
+            builder_report();
+        }
+        err_fixed = 0;
+    }
+
+    array_traverse(ys->frames, fit) {
+        if (*fit == ys->active_frame) { continue; }
+        if ((*fit)->buffer == get_or_make_buffer()) {
+            last_row = yed_buff_n_lines((*fit)->buffer);
+            yed_set_cursor_far_within_frame(*fit, 1, last_row);
+        }
+    }
+
+LOG_EXIT();
+}
+
 void builder_pump_handler(yed_event *event) {
     LOG_FN_ENTER();
 
     u64 now_ms;
 
     if (build_is_running) {
-        LOCKED(mtx) {
-            if (build_is_finished) {
-                build_is_running   = 0;
-                builder_run_before = 1;
-                builder_write_output_to_tmp_file();
-                builder_report();
-            }
-        }
+        builder_update_running();
     }
 
     if (notif_up) {
@@ -453,8 +479,9 @@ static void builder_jump_to_error_location(int n_args, char **args) {
     char         cmd_buff[512];
     char        *parse_output;
     char        *parse_output_cpy;
-    int          parse_output_len;
+    int          subproc_status;
     int          parse_status;
+    char         c;
     char        *scan;
     char        *bump;
     char         file_buff[256];
@@ -487,14 +514,23 @@ static void builder_jump_to_error_location(int n_args, char **args) {
                         "'";
     }
 
-    sprintf(cmd_buff, "(%s | head -n1) < '/tmp/yed_builder_output_%llx' 2>&1", err_parse_cmd, (unsigned long long)Self);
-
-    parse_output     = yed_run_subproc(cmd_buff, &parse_output_len, &parse_status);
+    sprintf(cmd_buff, "(%s | head -n1) 2>&1", err_parse_cmd);
+    parse_output     = NULL;
     parse_output_cpy = NULL;
+    subproc_status = yed_write_buffer_to_subproc(get_or_make_buffer(), cmd_buff, &parse_status, &parse_output);
+    if (subproc_status != 0) {
+        yed_cerr("encountered an error when running builder-error-parse-command -- errno = %d", subproc_status);
+        goto out;
+    }
 
     if (parse_status != 0) {
         yed_cerr("'%s' exited with non-zero status %d", cmd_buff, parse_status);
         goto out;
+    }
+
+    while ((c = parse_output[strlen(parse_output) - 1]) == '\n'
+    ||     c == '\r') {
+        parse_output[strlen(parse_output) - 1] = 0;
     }
 
     parse_output_cpy = strdup(parse_output);
@@ -574,8 +610,9 @@ static void builder_print_error(int n_args, char **args) {
     char *err_parse_cmd;
     char  cmd_buff[512];
     char *parse_output;
-    int   parse_output_len;
+    int   subproc_status;
     int   parse_status;
+    char  c;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -604,49 +641,42 @@ static void builder_print_error(int n_args, char **args) {
                         "'";
     }
 
-    sprintf(cmd_buff, "(%s | head -n1) < '/tmp/yed_builder_output_%llx' 2>&1", err_parse_cmd, (unsigned long long)Self);
+    sprintf(cmd_buff, "(%s | head -n1) 2>&1", err_parse_cmd);
 
-    parse_output     = yed_run_subproc(cmd_buff, &parse_output_len, &parse_status);
+    parse_output   = NULL;
+    subproc_status = yed_write_buffer_to_subproc(get_or_make_buffer(), cmd_buff, &parse_status, &parse_output);
+    if (subproc_status != 0) {
+        yed_cerr("encountered an error when running builder-error-parse-command -- errno = %d", subproc_status);
+        goto out;
+    }
 
     if (parse_status != 0) {
-        yed_cerr("'%s' exited with non-zero status %d", cmd_buff, parse_status);
-        return;
+        yed_cerr("'%s' exited with non-zero status %d", err_parse_cmd, parse_status);
+        goto out;
+    }
+
+    while ((c = parse_output[strlen(parse_output) - 1]) == '\n'
+    ||     c == '\r') {
+        parse_output[strlen(parse_output) - 1] = 0;
     }
 
     yed_cprint("%s", parse_output);
+
+out:;
+    if (parse_output) { free(parse_output); }
 }
 
 static void builder_view_output(int n_args, char **args) {
-    char        path_buff[256];
-    yed_buffer *buff;
-
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
         return;
     }
 
-    if (!builder_run_before) {
-        yed_cerr("builder has not been run!");
-        return;
-    }
-
     notif_stop();
-
-    buff = yed_get_buffer("*builder-output");
-    if (buff == NULL) {
-        buff = yed_create_buffer("*builder-output");
-        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    }
-
-    sprintf(path_buff, "/tmp/yed_builder_output_%llx", (unsigned long long)Self);
-    if (yed_fill_buff_from_file(buff, path_buff) != BUFF_FILL_STATUS_SUCCESS) {
-        yed_cerr("error loading *builder-output buffer");
-        return;
-    }
 
     YEXE("special-buffer-prepare-focus", "*builder-output");
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
-    yed_frame_set_buff(ys->active_frame, buff);
+    YEXE("buffer", "*builder-output");
 }
 
 static void builder_echo_status(int n_args, char **args) {
@@ -658,35 +688,10 @@ static void builder_echo_status(int n_args, char **args) {
     yed_cprint((char*)builder_get_status_string());
 }
 
-static void * builder_thread_fn(void *arg) {
-    char cmd_buff[512];
-
-    sprintf(cmd_buff, "(%s) 2>&1", build_cmd);
-
-    build_output = yed_run_subproc(cmd_buff, &build_output_len, &build_status);
-
-    build_failed = (!build_output || build_status);
-    err_fixed    = 0;
-
-    LOCKED(mtx) { build_is_finished = 1; }
-
-    return NULL;
-}
-
-static void builder_cleanup(void) {
-    if (builder_run_before) {
-        notif_stop();
-
-        free(build_cmd);
-
-        if (build_output) {
-            free(build_output);
-        }
-    }
-}
-
 static void builder_start(int n_args, char **args) {
     char *cmd;
+    yed_buffer *buff;
+    char cmd_buff[1024];
 
     if (n_args > 1) {
         yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
@@ -711,9 +716,27 @@ static void builder_start(int n_args, char **args) {
 
     build_cmd = strdup(cmd);
 
-    build_is_finished = 0;
-    build_is_running  = 1;
     has_err           = 0;
     err_fixed         = 1;
-    pthread_create(&tid, NULL, builder_thread_fn, NULL);
+    buff              = get_or_make_buffer();
+
+    yed_buff_clear_no_undo(buff);
+
+    snprintf(cmd_buff, sizeof(cmd_buff),
+             "(%s) 2>&1", cmd);
+
+    if (yed_start_read_subproc_into_buffer_nb(cmd_buff, buff, &nb_subproc)) {
+        yed_cerr("there was an error when calling yed_start_read_subproc_into_buffer_nb()");
+        return;
+    }
+
+    build_is_running  = 1;
+    /*
+    ** Wait 15 milliseconds so that the subprocess has time to start and
+    ** do _something_.
+    ** This makes it so that we can start to produce output before the next
+    ** pump (which could be ~300 ms if there aren't any keypresses).
+    */
+    usleep(15000);
+    builder_update_running();
 }
