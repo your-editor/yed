@@ -27,8 +27,6 @@
     * I think I encountered a crash... not sure
 * regex support
     * use POSIX stuff for now; maybe write our own in the future
-* separate C and C++ ft plugins
-    * C++ scanner to look for certain keywords
 * actually accurate vim emulation plugin (vym)
 * make style_picker use the new 'special-buffer-prepare-*' stuff
 * yedrc should be able to read multi-line strings with backslashed at the end
