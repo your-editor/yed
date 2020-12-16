@@ -653,3 +653,33 @@ int yed_vvget_key_sequence(int len, va_list args) {
 
     return yed_get_key_sequence(len, keys);
 }
+
+int yed_get_real_keys(int key, int *len, int *real_keys) {
+    yed_key_sequence *seq_it;
+    int               i,
+                      found;
+
+    if (key < REAL_KEY_MAX) {
+        *len       = 1;
+        *real_keys = key;
+        return 1;
+    }
+
+    found = 0;
+    array_traverse(ys->key_sequences, seq_it) {
+        if (seq_it->seq_key == key) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found)    { return 0; }
+
+    *len = seq_it->len;
+
+    for (i = 0; i < seq_it->len; i += 1) {
+        real_keys[i] = seq_it->keys[i];
+    }
+
+    return 1;
+}

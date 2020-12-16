@@ -109,5 +109,6 @@ int yed_vadd_key_sequence(int len, ...);
 int yed_vget_key_sequence(int len, ...);
 int yed_vvadd_key_sequence(int len, va_list args);
 int yed_vvget_key_sequence(int len, va_list args);
+int yed_get_real_keys(int key, int *len, int *real_keys);
 
 #endif
