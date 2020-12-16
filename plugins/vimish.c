@@ -468,54 +468,6 @@ out:
     return;
 }
 
-static void vimish_till_fw(void) {
-    int n_keys, keys[16], n_feed, feed[16], till_key, i;
-    char buff[16], *buff_p;
-
-    if (repeating)    { return; }
-
-    n_feed = 0;
-    n_keys = yed_read_keys(keys);
-
-    if (n_keys) {
-        till_key = keys[0];
-
-        for (i = 1; i < n_keys; i += 1) {
-            feed[n_feed] = keys[i];
-            n_feed += 1;
-        }
-
-        sprintf(buff, "%d", till_key);
-        buff_p = buff;
-        vimish_take_key(1, &buff_p);
-        yed_feed_keys(n_feed, feed);
-    }
-}
-
-static void vimish_till_bw(void) {
-    int n_keys, keys[16], n_feed, feed[16], till_key, i;
-    char buff[16], *buff_p;
-
-    if (repeating)    { return; }
-
-    n_feed = 0;
-    n_keys = yed_read_keys(keys);
-
-    if (n_keys) {
-        till_key = keys[0];
-
-        for (i = 1; i < n_keys; i += 1) {
-            feed[n_feed] = keys[i];
-            n_feed += 1;
-        }
-
-        sprintf(buff, "%d", till_key);
-        buff_p = buff;
-        vimish_take_key(1, &buff_p);
-        yed_feed_keys(n_feed, feed);
-    }
-}
-
 static void vimish_repeat_till(void) {
     if (last_till_op == 'f' || last_till_op == 't') {
         vimish_do_till_fw(last_till_key);
@@ -527,9 +479,15 @@ static void vimish_repeat_till(void) {
 int vimish_nav_common(int key, char *key_str) {
     if (till_pending == 1) {
         vimish_do_till_fw(key);
+        if (mode != MODE_NORMAL) {
+            vimish_push_repeat_key(key);
+        }
         goto out;
     } else if (till_pending > 1) {
         vimish_do_till_bw(key, till_pending == 3);
+        if (mode != MODE_NORMAL) {
+            vimish_push_repeat_key(key);
+        }
         goto out;
     }
 
@@ -615,15 +573,19 @@ int vimish_nav_common(int key, char *key_str) {
         case 'f':
         case 't':
             till_pending = 1;
-            vimish_till_fw();
             last_till_op = key;
+            if (mode != MODE_NORMAL) {
+                vimish_push_repeat_key(key);
+            }
             break;
 
         case 'F':
         case 'T':
             till_pending = 2 + (key == 'T');
-            vimish_till_bw();
             last_till_op = key;
+            if (mode != MODE_NORMAL) {
+                vimish_push_repeat_key(key);
+            }
             break;
 
         case ';':
