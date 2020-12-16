@@ -94,23 +94,29 @@ int kwd_scan(yed_buffer *buff) {
             pos = scan - line_data;
             while (pos < line_len && isspace(*scan)) { scan += 1; pos += 1; }
             if (pos < line_len && *scan == '<') {
-                char *cpp_includes[] = {
-                    "cstdint",
-                    "string",
-                    "vector",
-                    "map",
-                    "list",
-                    "array",
-                    "bitset",
-                    "queue",
-                    "stack",
-                    "forward_list",
-                    "unordered_map",
-                    "unordered_set",
-                };
+                scan += 1;
+                pos = scan - line_data;
+                if (pos < line_len) {
+                    char *cpp_includes[] = {
+                        "cstdint",
+                        "string",
+                        "vector",
+                        "map",
+                        "list",
+                        "array",
+                        "bitset",
+                        "queue",
+                        "stack",
+                        "forward_list",
+                        "unordered_map",
+                        "unordered_set",
+                    };
 
-                for (i = 0; i < sizeof(cpp_includes) / sizeof(char*); i += 1) {
-                    if (strcmp(scan, cpp_includes[i]) == 0) { return 1; }
+                    for (i = 0; i < sizeof(cpp_includes) / sizeof(char*); i += 1) {
+                        if (strncmp(scan, cpp_includes[i], strlen(cpp_includes[i])) == 0) {
+                            return 1;
+                        }
+                    }
                 }
             }
         }
@@ -122,7 +128,8 @@ int kwd_scan(yed_buffer *buff) {
 void maybe_change_ft(yed_buffer *buff) {
     char *ext;
 
-    if (buff->ft != FT_UNKNOWN) {
+    if (buff->ft != FT_UNKNOWN
+    &&  buff->ft != yed_get_ft("C")) {
         return;
     }
     if (buff->path == NULL) {
