@@ -675,8 +675,8 @@ static void builder_view_output(int n_args, char **args) {
     notif_stop();
 
     YEXE("special-buffer-prepare-focus", "*builder-output");
-    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     YEXE("buffer", "*builder-output");
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
 }
 
 static void builder_echo_status(int n_args, char **args) {

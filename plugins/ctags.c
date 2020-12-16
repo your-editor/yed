@@ -538,8 +538,8 @@ int ctags_find_start(char *start) {
 
     yed_buff_clear_no_undo(get_or_make_buff());
     YEXE("special-buffer-prepare-focus", "*ctags-find-list");
-    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     yed_frame_set_buff(ys->active_frame, get_or_make_buff());
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     yed_clear_cmd_buff();
 
     if (start != NULL) {
