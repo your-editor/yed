@@ -3917,6 +3917,14 @@ void yed_default_command_special_buffer_prepare_jump_focus(int n_args, char **ar
         yed_delete_frame(ys->active_frame);
     }
 
+    /*
+    ** This will ensure that the position of the cursor in the old buffer
+    ** can be restored.
+    */
+    if (ys->active_frame != NULL) {
+        yed_frame_set_buff(ys->active_frame, NULL);
+    }
+
     if (array_len(ys->frames) == 0) {
         YEXE("frame-new");
     }

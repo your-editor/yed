@@ -246,6 +246,7 @@ void yed_activate_frame(yed_frame *frame) {
 
     yed_trigger_event(&event);
 }
+
 #define FRAME_CELL(f, y_off, x_off)                                 \
     (ys->written_cells + (((f)->top + (y_off) - 1) * ys->term_cols) \
                             + (f)->left + (x_off) - 1)
