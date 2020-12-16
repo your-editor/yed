@@ -36,6 +36,13 @@ int yed_term_enter(void) {
     yed_register_sigwinch_handler();
     yed_register_sigstop_handler();
     yed_register_sigcont_handler();
+    yed_register_sigterm_handler();
+    yed_register_sigquit_handler();
+    yed_register_sigstop_handler();
+    yed_register_sigsegv_handler();
+    yed_register_sigill_handler();
+    yed_register_sigfpe_handler();
+    yed_register_sigbus_handler();
 
     printf(TERM_ALT_SCREEN);
     printf(TERM_ENABLE_BRACKETED_PASTE);
@@ -206,6 +213,136 @@ void sigcont_handler(int sig) {
     }
 }
 
+void sigterm_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGTERM, &act, NULL);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    /* Do the real terminate */
+    kill(0, SIGTERM);
+}
+
+void sigquit_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGQUIT, &act, NULL);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    /* Do the real quit */
+    kill(0, SIGQUIT);
+}
+
+void print_fatal_signal_message_and_backtrace(char *sig_name) {
+    printf("\n" TERM_RED "yed has received a fatal signal (%s).\n", sig_name);
+    printf("Here is a backtrace of its execution (most recent first):" TERM_RESET "\n\n");
+    printf(TERM_BLUE);
+    print_backtrace();
+    printf(TERM_RESET);
+    printf("\n");
+    printf(TERM_GREEN);
+    printf("Please create an issue at https://github.com/kammerdienerb/yed\n"
+           "describing what happened.\n");
+    printf(TERM_RESET);
+    printf("\n");
+}
+
+void sigsegv_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGSEGV, &act, NULL);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    print_fatal_signal_message_and_backtrace("SIGSEGV");
+
+    /* Do the real signal */
+    kill(0, SIGSEGV);
+}
+
+void sigill_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGILL, &act, NULL);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    print_fatal_signal_message_and_backtrace("SIGILL");
+
+    /* Do the real signal */
+    kill(0, SIGILL);
+}
+
+void sigfpe_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGFPE, &act, NULL);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    print_fatal_signal_message_and_backtrace("SIGFPE");
+
+    /* Do the real signal */
+    kill(0, SIGFPE);
+}
+
+void sigbus_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGBUS, &act, NULL);
+
+    /* Stop the writer thread. */
+    pthread_mutex_lock(&ys->write_mtx);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    print_fatal_signal_message_and_backtrace("SIGBUS");
+
+    /* Do the real signal */
+    kill(0, SIGBUS);
+}
+
 void yed_register_sigwinch_handler(void) {
     struct sigaction sa;
 
@@ -236,6 +373,72 @@ void yed_register_sigcont_handler(void) {
     sa.sa_handler = sigcont_handler;
     if (sigaction(SIGCONT, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGCONT");
+    }
+}
+
+void yed_register_sigterm_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigterm_handler;
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGTERM");
+    }
+}
+
+void yed_register_sigquit_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigquit_handler;
+    if (sigaction(SIGQUIT, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGQUIT");
+    }
+}
+
+void yed_register_sigsegv_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigsegv_handler;
+    if (sigaction(SIGSEGV, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGSEGV");
+    }
+}
+
+void yed_register_sigill_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigill_handler;
+    if (sigaction(SIGILL, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGILL");
+    }
+}
+
+void yed_register_sigfpe_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigfpe_handler;
+    if (sigaction(SIGFPE, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGFPE");
+    }
+}
+
+void yed_register_sigbus_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigbus_handler;
+    if (sigaction(SIGBUS, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGBUS");
     }
 }
 

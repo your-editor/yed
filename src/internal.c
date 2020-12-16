@@ -404,3 +404,4 @@ int s_to_i(const char *s) {
 #include "direct_draw.c"
 #include "frame_tree.c"
 #include "version.c"
+#include "print_backtrace.c"

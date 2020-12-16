@@ -71,6 +71,12 @@ void yed_set_cursor(int col, int row);
 void yed_register_sigwinch_handler(void);
 void yed_register_sigstop_handler(void);
 void yed_register_sigcont_handler(void);
+void yed_register_sigterm_handler(void);
+void yed_register_sigquit_handler(void);
+void yed_register_sigsegv_handler(void);
+void yed_register_sigill_handler(void);
+void yed_register_sigfpe_handler(void);
+void yed_register_sigbus_handler(void);
 int yed_check_for_resize(void);
 void yed_handle_resize(void);
 

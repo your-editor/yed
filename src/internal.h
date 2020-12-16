@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <pthread.h>
+#include <execinfo.h>
 
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -154,6 +155,7 @@ int mk_wcwidth(wchar_t ucs);
 #include "complete.h"
 #include "direct_draw.h"
 #include "version.h"
+#include "print_backtrace.h"
 
 typedef struct {
     array_t  files;
