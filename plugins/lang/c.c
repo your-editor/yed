@@ -14,7 +14,7 @@ int yed_plugin_boot(yed_plugin *self) {
 LOG_FN_ENTER();
     yed_plugin_set_unload_fn(self, unload);
 
-    if (yed_plugin_make_ft(self, "C/C++") == FT_ERR_TAKEN) {
+    if (yed_plugin_make_ft(self, "C") == FT_ERR_TAKEN) {
         yed_cerr("lang/c: unable to create file type name");
         LOG_EXIT();
         return 1;
@@ -55,14 +55,8 @@ void maybe_change_ft(yed_buffer *buff) {
         return;
     }
 
-    if (strcmp(ext, "c")   == 0 ||
-        strcmp(ext, "cpp") == 0 ||
-        strcmp(ext, "cxx") == 0 ||
-        strcmp(ext, "h")   == 0 ||
-        strcmp(ext, "hpp") == 0 ||
-        strcmp(ext, "hxx") == 0) {
-
-        yed_buffer_set_ft(buff, yed_get_ft("C/C++"));
+    if (strcmp(ext, "c") == 0 || strcmp(ext, "h") == 0) {
+        yed_buffer_set_ft(buff, yed_get_ft("C"));
     }
 }
 

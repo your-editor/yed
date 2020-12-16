@@ -15,15 +15,24 @@ void syntax_c_buff_mod_post_handler(yed_event *event);
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler frame, line, buff_mod_pre, buff_mod_post;
     char              *kwds[] = {
-        "__asm__",  "asm",
-        "const",
-        "enum",     "extern",
+        "__asm__",  "asm", "alignas", "alignof", "and", "and_eq", "atomic_cancel", "atomic_commit", "atomic_noexcept", "auto",
+        "bitand", "bitor",
+        "const", "class", "compl", "concept ", "consteval ", "constexpr ", "constinit ", "const_cast",
+        "decltype ", "delete", "dynamic_cast",
+        "enum",     "extern", "explicit", "export",
+        "friend",
         "inline",
-        "restrict",
+        "mutable",
+        "namespace", "new", "noexcept ", "not", "not_eq",
+        "operator", "or", "or_eq",
+        "private", "protected", "public",
+        "restrict", "reflexpr ", "register", "reinterpret_cast", "requires ",
         "sizeof", "static", "struct",
-        "typedef",
-        "union",
-        "volatile",
+        "static_assert ", "static_cast", "synchronized ", "typedef",
+        "template", "thread_local ", "typedef", "typeid", "typename",
+        "union", "using",
+        "virtual", "volatile",
+        "xor", "xor_eq",
     };
     char              *pp_kwds[] = {
         "define",
@@ -35,16 +44,29 @@ int yed_plugin_boot(yed_plugin *self) {
         "warning",
     };
     char              *control_flow[] = {
-        "break", "case", "continue", "default", "do", "else", "for",
-        "goto", "if", "return", "switch",
+        "break",
+        "case", "catch", "co_await", "co_return", "co_yield", "continue",
+        "default", "do",
+        "else",
+        "for",
+        "goto",
+        "if",
+        "return",
+        "switch",
+        "throw", "try",
         "while",
     };
     char              *typenames[] = {
-        "bool", "char",
+        "bool",
+        "char", "char8_t", "char16_t", "char32_t",
         "double",
         "float",
-        "long", "int",
-        "short", "size_t", "ssize_t", "unsigned", "void",
+        "long",
+        "int",
+        "short", "size_t", "ssize_t",
+        "unsigned",
+        "void",
+        "wchar_t",
     };
 
     YED_PLUG_VERSION_CHECK();
@@ -94,6 +116,11 @@ int yed_plugin_boot(yed_plugin *self) {
     highlight_add_kwd(&hinfo, "stdin", HL_CON);
     highlight_add_kwd(&hinfo, "stdout", HL_CON);
     highlight_add_kwd(&hinfo, "stderr", HL_CON);
+    highlight_add_kwd(&hinfo, "false", HL_CON);
+    highlight_add_kwd(&hinfo, "true", HL_CON);
+    highlight_add_kwd(&hinfo, "nullptr", HL_CON);
+    highlight_add_kwd(&hinfo, "this", HL_CON);
+
     highlight_suffixed_words(&hinfo, '(', HL_CALL);
     highlight_numbers(&hinfo);
     highlight_within(&hinfo, "\"", "\"", '\\', -1, HL_STR);
@@ -120,7 +147,7 @@ void syntax_c_frame_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("C")) {
+    ||  frame->buffer->ft != yed_get_ft("C++")) {
         return;
     }
 
@@ -135,7 +162,7 @@ void syntax_c_line_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("C")) {
+    ||  frame->buffer->ft != yed_get_ft("C++")) {
         return;
     }
 
@@ -150,7 +177,7 @@ void syntax_c_buff_mod_pre_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("C")) {
+    ||  frame->buffer->ft != yed_get_ft("C++")) {
         return;
     }
 
@@ -165,7 +192,7 @@ void syntax_c_buff_mod_post_handler(yed_event *event) {
     if (!frame
     ||  !frame->buffer
     ||  frame->buffer->kind != BUFF_KIND_FILE
-    ||  frame->buffer->ft != yed_get_ft("C")) {
+    ||  frame->buffer->ft != yed_get_ft("C++")) {
         return;
     }
 
