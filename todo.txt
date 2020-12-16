@@ -3,7 +3,6 @@
     * seems like if you have greedy, you don't need to compose?
 * catch SIGTERM
     * exit gracefully (don't leave the terminal messed up)
-* macro plugin
 * revamped command line
     * history (generalize)
     * more advanced editing with arrow keys, etc.
