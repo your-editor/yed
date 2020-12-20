@@ -18,7 +18,6 @@
       buffers
     * make 'quit' check the flags and ask
       if you really want to quit without saving
-* meta keys in core (fn keys too?)
 * OSC 52
 * bucket_array_rtraverse{_from}
     * use in yed_find_prev()
@@ -33,3 +32,7 @@
 * direct draws have a bug where if they are drawn over an area that doesn't have any content,
   then they don't get killed properly
     * they get killed, but they don't get drawn over by anything else, so it looks like they stick around
+* create a string_to_keys function in the core that can be used by plugins and stuff that needs to parse
+    * keys/key sequences from command args
+    * make it parse meta-*
+    * use in vimish and yed_default_command_bind()

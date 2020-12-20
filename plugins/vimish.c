@@ -275,6 +275,14 @@ void vimish_bind(int n_args, char **args) {
             key_i = ' ';
         } else if (strcmp(key_str, "bsp") == 0) {
             key_i = BACKSPACE;
+        } else if (strcmp(key_str, "left") == 0) {
+            key_i = ARROW_LEFT;
+        } else if (strcmp(key_str, "right") == 0) {
+            key_i = ARROW_RIGHT;
+        } else if (strcmp(key_str, "up") == 0) {
+            key_i = ARROW_UP;
+        } else if (strcmp(key_str, "down") == 0) {
+            key_i = ARROW_DOWN;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
             if (key_c != -1) {
                 if (key_c == '/') {

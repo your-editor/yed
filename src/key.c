@@ -53,6 +53,36 @@ int esc_sequence(int *input) {
             /* Extended escape, read additional byte. */
             if (read(0, &c, 1) == 0) {
                 return 3;
+            } else if (input[2] == '1') {
+                input[3] = c;
+                if (c == '~') {
+                    input[0] = HOME_KEY;
+                    return 1;
+                } else if (c == ';') {
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '3') {
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        input[5] = c;
+                        switch (c) {
+                            case 'A':
+                                input[1] = ARROW_UP;
+                                return 2;
+                            case 'B':
+                                input[1] = ARROW_DOWN;
+                                return 2;
+                            case 'C':
+                                input[1] = ARROW_RIGHT;
+                                return 2;
+                            case 'D':
+                                input[1] = ARROW_LEFT;
+                                return 2;
+                        }
+                        return 6;
+                    }
+                    return 5;
+                }
+                return 4;
             } else if (input[2] == '2') {
                 if (c == '0') {
                     input[3] = c;
@@ -109,67 +139,71 @@ int esc_sequence(int *input) {
         return 1;
     }
 
+    if (input[1] == ESC) {
+        if (read(0, &c, 1)) {
+            input[3] = c;
+            return 1 + esc_sequence(input + 1);
+        }
+    }
+
     return 3;
 }
 
-int yed_read_key_sequences(char first, int *input) {
+int yed_read_key_sequences(int len, int *input) {
     int  seq_key,
-         len,
          i,
          found_a_partial_match,
          keep_reading;
     char c;
+    int  new_key;
     yed_key_sequence *seq_it;
 
-    c = (first == CTRL_H && ctrl_h_is_bs
-            ? BACKSPACE
-            : first);
+    if (len == 0) { return 0; }
 
-    len = 0;
+    new_key = (input[len - 1] == CTRL_H && ctrl_h_is_bs
+                ? BACKSPACE
+                : input[len - 1]);
 
-    if (ys->interactive_command) {
-        input[len] = c;
-        len        = 1;
-    } else {
-        do {
-            /* We have consumed a keystroke. */
-            if (c == CTRL_H && ctrl_h_is_bs) { c = BACKSPACE; }
+    len -= 1;
 
-            input[len]    = c;
-            len          += 1;
+    do {
+        /* We have consumed a keystroke. */
+        if (new_key == CTRL_H && ctrl_h_is_bs) {new_key = BACKSPACE; }
 
-            keep_reading  = 0;
+        input[len]    = new_key;
+        len          += 1;
 
-            /*
-             * Should we consume another? See if there's
-             * a key sequence defined that matches the keys
-             * we have so far.
-             */
-            array_traverse(ys->key_sequences, seq_it) {
-                /* Only if there's more in the sequence to read.. */
-                if (seq_it->len > len) {
-                    found_a_partial_match = 1;
-                    for (i = 0; i < len; i += 1) {
-                        if (seq_it->keys[i] != input[i]) {
-                            found_a_partial_match = 0;
-                            break;
-                        }
-                    }
+        keep_reading  = 0;
 
-                    if (found_a_partial_match) {
-                        keep_reading = 1;
+        /*
+         * Should we consume another? See if there's
+         * a key sequence defined that matches the keys
+         * we have so far.
+         */
+        array_traverse(ys->key_sequences, seq_it) {
+            /* Only if there's more in the sequence to read.. */
+            if (seq_it->len > len) {
+                found_a_partial_match = 1;
+                for (i = 0; i < len; i += 1) {
+                    if (seq_it->keys[i] != input[i]) {
+                        found_a_partial_match = 0;
                         break;
                     }
                 }
+
+                if (found_a_partial_match) {
+                    keep_reading = 1;
+                    break;
+                }
             }
-        } while (keep_reading && read(0, &c, 1) && len < MAX_SEQ_LEN);
-
-        seq_key = yed_get_key_sequence(len, input);
-
-        if (seq_key != KEY_NULL) {
-            input[0] = seq_key;
-            return 1;
         }
+    } while (keep_reading && read(0, &c, 1) && ((new_key = c), len < MAX_SEQ_LEN));
+
+    seq_key = yed_get_key_sequence(len, input);
+
+    if (seq_key != KEY_NULL) {
+        input[0] = seq_key;
+        return 1;
     }
 
     return len;
@@ -205,6 +239,8 @@ int yed_read_keys(int *input) {
     yed_glyph g;
     int       n_bytes;
 
+    len          = 0;
+
     ctrl_h_is_bs = yed_var_is_truthy("ctrl-h-is-backspace");
 
 /*
@@ -235,21 +271,26 @@ int yed_read_keys(int *input) {
 
         len = esc_timeout(input);
 
-        if (len >= 3) {
-            return esc_sequence(input);
+        if (len == 3) {
+            len = esc_sequence(input);
+            if (len > 1) { goto do_seq; }
         }
-
-        return len;
     } else if (n_bytes > 1) {
         if (yed_read_mbyte_keys(g.c, n_bytes)) {
-            *input = MBYTE;
-            return 1;
+            input[0] = MBYTE;
+            len      = 1;
         }
     } else if (c >= 0) {
-        return yed_read_key_sequences(c, input);
+        input[0] = c;
+        len      = 1;
+
+do_seq:;
+        if (!ys->interactive_command) {
+            len = yed_read_key_sequences(len, input);
+        }
     }
 
-    return 0;
+    return len;
 }
 
 int handle_bracketed_paste(int key) {
@@ -386,12 +427,38 @@ void yed_set_default_key_binding(int key) {
 }
 
 void yed_set_default_key_bindings(void) {
-    int i;
+    int             i;
+    int             keys[2];
+    yed_key_binding b;
 
     for (i = 0; i < sizeof(default_key_bindings) / sizeof(yed_key_binding); i += 1) {
 
         yed_bind_key(default_key_bindings[i]);
     }
+
+    memset(&b, 0, sizeof(b));
+
+    keys[0] = ESC;
+
+    keys[1] = ARROW_UP;
+    b.key = yed_add_key_sequence(2, keys);
+    b.cmd = "cursor-prev-paragraph";
+    yed_bind_key(b);
+
+    keys[1] = ARROW_DOWN;
+    b.key = yed_add_key_sequence(2, keys);
+    b.cmd = "cursor-next-paragraph";
+    yed_bind_key(b);
+
+    keys[1] = ARROW_RIGHT;
+    b.key = yed_add_key_sequence(2, keys);
+    b.cmd = "cursor-next-word";
+    yed_bind_key(b);
+
+    keys[1] = ARROW_LEFT;
+    b.key = yed_add_key_sequence(2, keys);
+    b.cmd = "cursor-prev-word";
+    yed_bind_key(b);
 }
 
 void yed_bind_key(yed_key_binding binding) {

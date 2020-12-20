@@ -9,6 +9,10 @@
  * To navigate and edit this file in yed's basic state, use the
  * following keybindings:
  *     Move the cursor:                               arrow keys
+ *     Move the cursor to the next word:              meta-right
+ *     Move the cursor to the previous word:          meta-left
+ *     Move the cursor to the next paragraph:         meta-up
+ *     Move the cursor to the previous paragraph:     meta-down
  *     Insert a character:                            type the key
  *     Delete the previous character:                 hit the backspace key
  *     Delete the next character:                     hit the delete key
