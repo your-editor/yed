@@ -3,6 +3,7 @@
 /* COMMANDS */
 void vimish_take_key(int n_args, char **args);
 void vimish_bind(int n_args, char **args);
+void vimish_unbind(int n_args, char **args);
 void vimish_exit_insert(int n_args, char **args);
 void vimish_write(int n_args, char **args);
 void vimish_quit(int n_args, char **args);
@@ -57,6 +58,7 @@ void exit_delete(int cancel);
 void enter_yank(int by_line);
 void exit_yank(int cancel);
 void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_args, char **args);
+void vimish_remove_binding(int b_mode, int n_keys, int *keys);
 
 int yed_plugin_boot(yed_plugin *self) {
     int i;
@@ -75,6 +77,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_command(Self, "vimish-take-key",    vimish_take_key);
     yed_plugin_set_command(Self, "vimish-bind",        vimish_bind);
+    yed_plugin_set_command(Self, "vimish-unbind",      vimish_unbind);
     yed_plugin_set_command(Self, "vimish-exit-insert", vimish_exit_insert);
     yed_plugin_set_command(Self, "w",                  vimish_write);
     yed_plugin_set_command(Self, "W",                  vimish_write);
@@ -215,9 +218,8 @@ void vimish_take_key(int n_args, char **args) {
 }
 
 void vimish_bind(int n_args, char **args) {
-    char *mode_str, *key_str, *cmd;
-    int   b_mode, i, cmd_delim, n_keys, key_i, keys[MAX_SEQ_LEN], n_cmd_args;
-    char  key_c;
+    char *mode_str, *cmd;
+    int   b_mode, n_keys, keys[MAX_SEQ_LEN], n_cmd_args;
 
     if (n_args < 1) {
         yed_cerr("missing 'mode' as first argument");
@@ -236,75 +238,67 @@ void vimish_bind(int n_args, char **args) {
     }
 
     if (n_args < 2) {
-        yed_cerr("missing 'keys' as second argument until 'CMD'");
+        yed_cerr("missing 'keys' as second argument");
         return;
     }
 
-    cmd_delim = -1;
-    for (i = 1; i < n_args; i += 1) {
-        if (strcmp(args[i], "CMD") == 0) {
-            cmd_delim = i;
-            break;
-        }
-    }
-
-    if (cmd_delim == -1) {
-        yed_cerr("missing 'CMD'");
+    if (n_args < 3) {
+        yed_cerr("missing 'command', 'command_args'... as third and up arguments");
         return;
     }
 
-    if (cmd_delim == n_args - 1) {
-        yed_cerr("missing command name as argument after 'CMD'");
+    n_keys = yed_string_to_keys(args[1], keys);
+    if (n_keys == -1) {
+        yed_cerr("invalid string of keys '%s'", args[1]);
+        return;
+    }
+    if (n_keys == -2) {
+        yed_cerr("too many keys to be a sequence in '%s'", args[1]);
         return;
     }
 
-    n_keys = cmd_delim - 1;
-    for (i = 0; i < n_keys; i += 1) {
-        key_str = args[i + 1];
-        key_c   = key_i = -1;
-        if (strlen(key_str) == 1) {
-            sscanf(key_str, "%c", &key_c);
-            key_i = key_c;
-        } else if (strcmp(key_str, "tab") == 0) {
-            key_i = TAB;
-        } else if (strcmp(key_str, "enter") == 0) {
-            key_i = ENTER;
-        } else if (strcmp(key_str, "esc") == 0) {
-            key_i = ESC;
-        } else if (strcmp(key_str, "spc") == 0) {
-            key_i = ' ';
-        } else if (strcmp(key_str, "bsp") == 0) {
-            key_i = BACKSPACE;
-        } else if (strcmp(key_str, "left") == 0) {
-            key_i = ARROW_LEFT;
-        } else if (strcmp(key_str, "right") == 0) {
-            key_i = ARROW_RIGHT;
-        } else if (strcmp(key_str, "up") == 0) {
-            key_i = ARROW_UP;
-        } else if (strcmp(key_str, "down") == 0) {
-            key_i = ARROW_DOWN;
-        } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
-            if (key_c != -1) {
-                if (key_c == '/') {
-                    key_i = CTRL_FS;
-                } else {
-                    key_i = CTRL_KEY(key_c);
-                }
-            }
-        }
+    cmd = args[2];
 
-        if (key_i == -1) {
-            yed_cerr("invalid key '%s'", key_str);
-            return;
-        }
+    n_cmd_args = n_args - 3;
+    vimish_make_binding(b_mode, n_keys, keys, cmd, n_cmd_args, args + 3);
+}
 
-        keys[i] = key_i;
+void vimish_unbind(int n_args, char **args) {
+    char *mode_str;
+    int   b_mode, n_keys, keys[MAX_SEQ_LEN];
+
+    if (n_args < 1) {
+        yed_cerr("missing 'mode' as first argument");
+        return;
     }
 
-    cmd = args[cmd_delim + 1];
+    mode_str = args[0];
 
-    n_cmd_args = n_args - (cmd_delim + 2);
-    vimish_make_binding(b_mode, n_keys, keys, cmd, n_cmd_args, args + cmd_delim + 2);
+    if      (strcmp(mode_str, "normal") == 0)    { b_mode = MODE_NORMAL; }
+    else if (strcmp(mode_str, "insert") == 0)    { b_mode = MODE_INSERT; }
+    else if (strcmp(mode_str, "delete") == 0)    { b_mode = MODE_DELETE; }
+    else if (strcmp(mode_str, "yank")   == 0)    { b_mode = MODE_YANK;   }
+    else {
+        yed_cerr("no mode named '%s'", mode_str);
+        return;
+    }
+
+    if (n_args != 2) {
+        yed_cerr("missing 'keys' as second argument");
+        return;
+    }
+
+    n_keys = yed_string_to_keys(args[1], keys);
+    if (n_keys == -1) {
+        yed_cerr("invalid string of keys '%s'", args[1]);
+        return;
+    }
+    if (n_keys == -2) {
+        yed_cerr("too many keys to be a sequence in '%s'", args[1]);
+        return;
+    }
+
+    vimish_remove_binding(b_mode, n_keys, keys);
 }
 
 void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_args, char **args) {
@@ -350,6 +344,49 @@ void vimish_make_binding(int b_mode, int n_keys, int *keys, char *cmd, int n_arg
 
             yed_plugin_bind_key(Self, b->key, b->cmd, b->n_args, b->args);
         }
+    }
+}
+
+void vimish_remove_binding(int b_mode, int n_keys, int *keys) {
+    int                 i;
+    vimish_key_binding *b;
+
+    if (n_keys <= 0) {
+        return;
+    }
+
+    i = 0;
+    array_traverse(mode_bindings[b_mode], b) {
+        if (b->len == n_keys
+        &&  memcmp(b->keys, keys, n_keys * sizeof(int)) == 0) {
+            break;
+        }
+        i += 1;
+    }
+
+    if (i == array_len(mode_bindings[b_mode])) { return; }
+
+    if (b_mode == mode) {
+        array_traverse(mode_bindings[mode], b) {
+            yed_unbind_key(b->key);
+            if (b->len > 1) {
+                yed_delete_key_sequence(b->key);
+            }
+        }
+
+        array_delete(mode_bindings[b_mode], i);
+
+        array_traverse(mode_bindings[mode], b) {
+            if (b->len > 1) {
+                b->key = yed_plugin_add_key_sequence(Self, b->len, b->keys);
+            } else {
+                b->key = b->keys[0];
+            }
+
+            yed_plugin_bind_key(Self, b->key, b->cmd, b->n_args, b->args);
+        }
+    } else {
+        array_delete(mode_bindings[b_mode], i);
     }
 }
 

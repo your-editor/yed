@@ -111,4 +111,13 @@ int yed_vvadd_key_sequence(int len, va_list args);
 int yed_vvget_key_sequence(int len, va_list args);
 int yed_get_real_keys(int key, int *len, int *real_keys);
 
+
+/* 'keys' must be able to hold at least 'MAX_SEQ_LEN' integers.
+** Whitespace is ignored.
+** Returns the number of keys parsed in 'str' or:
+**   -1 for invalid keys
+**   -2 if the number of keys in 'str' exceeds 'MAX_SEQ_LEN'
+*/
+int yed_string_to_keys(const char *str, int *keys);
+
 #endif

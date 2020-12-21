@@ -750,3 +750,122 @@ int yed_get_real_keys(int key, int *len, int *real_keys) {
 
     return 1;
 }
+
+int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
+    char *str_dup;
+    char *key_str;
+    int  *key_ptr;
+    int   n_keys;
+    char *scan;
+    int   save_wspc;
+    char  key_c;
+    int   key_i;
+    int   meta;
+    int   meta_result;
+
+    str_dup = strdup(str);
+    key_str = str_dup;
+    key_ptr = keys;
+    n_keys  = 0;
+
+    while (*key_str) {
+        if (n_keys == MAX_SEQ_LEN) {
+            n_keys = -2;
+            goto out;
+        }
+
+        if (isspace(*key_str)) {
+            key_str += 1;
+            continue;
+        }
+
+                     scan = strchr(key_str, ' ' );
+        if (!scan) { scan = strchr(key_str, '\t'); }
+        if (!scan) { scan = strchr(key_str, '\n'); }
+        if (!scan) { scan = strchr(key_str, '\r'); }
+
+        if (scan) { save_wspc = *scan; *scan = 0; }
+
+        key_c = key_i = -1;
+        meta  = 0;
+
+        if (strlen(key_str) == 1) {
+            sscanf(key_str, "%c", &key_c);
+            key_i = key_c;
+        } else if (strcmp(key_str, "tab") == 0) {
+            key_i = TAB;
+        } else if (strcmp(key_str, "enter") == 0) {
+            key_i = ENTER;
+        } else if (strcmp(key_str, "esc") == 0) {
+            key_i = ESC;
+        } else if (strcmp(key_str, "spc") == 0) {
+            key_i = ' ';
+        } else if (strcmp(key_str, "bsp") == 0) {
+            key_i = BACKSPACE;
+        } else if (strcmp(key_str, "left") == 0) {
+            key_i = ARROW_LEFT;
+        } else if (strcmp(key_str, "right") == 0) {
+            key_i = ARROW_RIGHT;
+        } else if (strcmp(key_str, "up") == 0) {
+            key_i = ARROW_UP;
+        } else if (strcmp(key_str, "down") == 0) {
+            key_i = ARROW_DOWN;
+        } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
+            if (key_c != -1) {
+                if (key_c == '/') {
+                    key_i = CTRL_FS;
+                } else {
+                    key_i = CTRL_KEY(key_c);
+                }
+            }
+        } else if (allow_meta && strncmp(key_str, "meta-", 5) == 0) {
+            meta = 1;
+
+            key_i     = ESC;
+            *key_ptr  = key_i;
+            key_ptr  += 1;
+            n_keys   += 1;
+
+            if (n_keys == MAX_SEQ_LEN) {
+                n_keys = -2;
+                goto out;
+            }
+
+            meta_result = _yed_string_to_keys(key_str + 5, key_ptr, 0);
+
+            if (meta_result < 0) {
+                n_keys = meta_result;
+                goto out;
+            }
+
+            key_ptr += meta_result;
+            n_keys  += meta_result;
+        }
+
+        if (key_i == -1) {
+            n_keys = -1;
+            goto out;
+        }
+
+        if (!meta) {
+            *key_ptr  = key_i;
+            key_ptr  += 1;
+            n_keys   += 1;
+        }
+
+        if (scan) {
+            *scan = save_wspc;
+            key_str = scan + 1;
+        } else {
+            key_str += strlen(key_str);
+        }
+    }
+
+out:;
+    free(str_dup);
+    return n_keys;
+}
+
+int yed_string_to_keys(const char *str, int *keys) {
+    return _yed_string_to_keys(str, keys, 1);
+}
