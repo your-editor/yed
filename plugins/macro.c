@@ -282,6 +282,7 @@ void macro_play(int n_args, char **args) {
             play_count = abs(sel->anchor_row - sel->cursor_row) + 1;
             yed_set_cursor_within_frame(ys->active_frame,
                                         sel->anchor_col, sel->anchor_row);
+            ys->active_frame->buffer->has_selection = 0;
         } else {
             play_count = 1;
         }
