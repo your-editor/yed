@@ -53,25 +53,25 @@ int yed_plugin_boot(yed_plugin *self) {
     }
 
     /* Keybindings */
-    YEXE("vimish-bind", "insert",    "j", "j",                "CMD",    "vimish-exit-insert");
-    YEXE("vimish-bind", "normal",    "spc", "c", "o",         "CMD",    "comment-toggle");
-    YEXE("vimish-bind", "normal",    "spc", "l", "c",         "CMD",    "latex-compile-current-file");
-    YEXE("vimish-bind", "normal",    "spc", "l", "v",         "CMD",    "latex-view-current-file");
-    YEXE("vimish-bind", "normal",    "spc", "r", "d",         "CMD",    "redraw");
-    YEXE("vimish-bind", "normal",    "spc", "v", "s", "p",    "CMD",    "frame-vsplit");
-    YEXE("vimish-bind", "normal",    "spc", "h", "s", "p",    "CMD",    "frame-hsplit");
-    YEXE("vimish-bind", "normal",    "spc", "b", "o",         "CMD",    "fill-command-prompt", "buffer");
-    YEXE("vimish-bind", "normal",    "spc", "b", "d",         "CMD",    "buffer-delete");
-    YEXE("vimish-bind", "normal",    "ctrl-n",                "CMD",    "buffer-next");
-    YEXE("vimish-bind", "normal",    "ctrl-p",                "CMD",    "buffer-prev");
-    YEXE("vimish-bind", "normal",    "M", "M",                "CMD",    "man-word");
-    YEXE("vimish-bind", "normal",    "L", "L",                "CMD",    "fill-command-prompt", "cursor-line");
-    YEXE("vimish-bind", "normal",    "ctrl-l",                "CMD",    "frame-next");
-    YEXE("vimish-bind", "normal",    "ctrl-h",                "CMD",    "frame-prev");
-    YEXE("vimish-bind", "normal",    ">",                     "CMD",    "indent");
-    YEXE("vimish-bind", "normal",    "<",                     "CMD",    "unindent");
-    YEXE("vimish-bind", "normal",    "spc", "g",              "CMD",    "grep");
-    YEXE("vimish-bind", "normal",    "spc", "f",              "CMD",    "find-file");
+    YEXE("vimish-bind", "insert",    "j j",          "vimish-exit-insert");
+    YEXE("vimish-bind", "normal",    "spc c o",      "comment-toggle");
+    YEXE("vimish-bind", "normal",    "spc l c",      "latex-compile-current-file");
+    YEXE("vimish-bind", "normal",    "spc l v",      "latex-view-current-file");
+    YEXE("vimish-bind", "normal",    "spc r d",      "redraw");
+    YEXE("vimish-bind", "normal",    "spc v s p",    "frame-vsplit");
+    YEXE("vimish-bind", "normal",    "spc h s p",    "frame-hsplit");
+    YEXE("vimish-bind", "normal",    "spc b o",      "fill-command-prompt", "buffer");
+    YEXE("vimish-bind", "normal",    "spc b d",      "buffer-delete");
+    YEXE("vimish-bind", "normal",    "ctrl-n",       "buffer-next");
+    YEXE("vimish-bind", "normal",    "ctrl-p",       "buffer-prev");
+    YEXE("vimish-bind", "normal",    "M M",          "man-word");
+    YEXE("vimish-bind", "normal",    "L L",          "fill-command-prompt", "cursor-line");
+    YEXE("vimish-bind", "normal",    "ctrl-l",       "frame-next");
+    YEXE("vimish-bind", "normal",    "ctrl-h",       "frame-prev");
+    YEXE("vimish-bind", "normal",    ">",            "indent");
+    YEXE("vimish-bind", "normal",    "<",            "unindent");
+    YEXE("vimish-bind", "normal",    "spc g",        "grep");
+    YEXE("vimish-bind", "normal",    "spc f",        "find-file");
 
     /* Colors */
     YEXE("style", "casey");
