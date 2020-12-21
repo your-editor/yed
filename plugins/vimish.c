@@ -115,10 +115,31 @@ void vimish_unload(yed_plugin *self) {
 }
 
 void bind_keys(void) {
+    int   meta_keys[2];
+    int   meta_key;
     char *ctrl_h_is_bs;
     char *ctrl_h_is_bs_cpy;
     int   key;
     char  key_str[32];
+
+    meta_keys[0] = ESC;
+
+    meta_keys[1] = ARROW_UP;
+    meta_key     = yed_get_key_sequence(2, meta_keys);
+    yed_unbind_key(meta_key);
+    yed_delete_key_sequence(meta_key);
+    meta_keys[1] = ARROW_DOWN;
+    meta_key     = yed_get_key_sequence(2, meta_keys);
+    yed_unbind_key(meta_key);
+    yed_delete_key_sequence(meta_key);
+    meta_keys[1] = ARROW_RIGHT;
+    meta_key     = yed_get_key_sequence(2, meta_keys);
+    yed_unbind_key(meta_key);
+    yed_delete_key_sequence(meta_key);
+    meta_keys[1] = ARROW_LEFT;
+    meta_key     = yed_get_key_sequence(2, meta_keys);
+    yed_unbind_key(meta_key);
+    yed_delete_key_sequence(meta_key);
 
     if ((ctrl_h_is_bs = yed_get_var("ctrl-h-is-backspace"))) {
         ctrl_h_is_bs_cpy = strdup(ctrl_h_is_bs);
