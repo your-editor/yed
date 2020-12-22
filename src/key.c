@@ -88,21 +88,60 @@ int esc_sequence(int *input) {
                     input[3] = c;
 
                     if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
 
                     if (c == '0') {
-                        input[4] = c;
                         if (read(0, &c, 1) == 0) { return 5; }
-                        if (c == '~') { input[0] = _BRACKETED_PASTE_BEGIN; return 1; }
                         input[5] = c;
+                        if (c == '~') { input[0] = _BRACKETED_PASTE_BEGIN; return 1; }
                         return 6;
                     } else if (c == '1') {
-                        input[4] = c;
                         if (read(0, &c, 1) == 0) { return 5; }
-                        if (c == '~') { input[0] = _BRACKETED_PASTE_END; return 1; }
                         input[5] = c;
+                        if (c == '~') { input[0] = _BRACKETED_PASTE_END; return 1; }
                         return 6;
                     }
-
+                    return 5;
+                } else if (c == '7') {
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == ';') {
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        input[5] = c;
+                        if (c == '5') {
+                            if (read(0, &c, 1) == 0) { return 6; }
+                            input[6] = c;
+                            if (c == ';') {
+                                if (read(0, &c, 1) == 0) { return 7; }
+                                input[7] = c;
+                                if (c == '9') {
+                                    if (read(0, &c, 1) == 0) { return 8; }
+                                    input[8] = c;
+                                    if (c == '~') {
+                                        input[0] = CTRL_TAB;
+                                        return 1;
+                                    }
+                                    return 9;
+                                } else if (c == '1') {
+                                    if (read(0, &c, 1) == 0) { return 9; }
+                                    input[9] = c;
+                                    if (c == '3') {
+                                        if (read(0, &c, 1) == 0) { return 10; }
+                                        input[10] = c;
+                                        if (c == '~') {
+                                            input[0] = CTRL_ENTER;
+                                            return 1;
+                                        }
+                                        return 10;
+                                    }
+                                    return 9;
+                                }
+                                return 8;
+                            }
+                            return 7;
+                        }
+                        return 6;
+                    }
                     return 5;
                 }
                 return 4;
@@ -233,20 +272,20 @@ int yed_read_mbyte_keys(char first_byte, int n_bytes) {
 }
 
 int yed_read_keys(int *input) {
-    int       nread;
     int       len;
+    int       nread;
     char      c;
-    yed_glyph g;
     int       n_bytes;
+    yed_glyph g;
 
-    len          = 0;
+    len     = 0;
 
     ctrl_h_is_bs = yed_var_is_truthy("ctrl-h-is-backspace");
 
 /*
  * BLOCKING(ish):
  **********************************************/
-/*     while ((nread = read(0, &c, 1)) == 0); */
+/*    while ((nread = read(0, &c, 1)) == 0); */
 /**********************************************/
 
 /*
@@ -258,6 +297,8 @@ int yed_read_keys(int *input) {
 
 
     if (nread == -1)    { return 0; }
+
+    n_bytes = nread;
 
     if (c != 0) {
         if (c == CTRL_H && ctrl_h_is_bs) { c = BACKSPACE; }
@@ -281,7 +322,7 @@ int yed_read_keys(int *input) {
             len      = 1;
         }
     } else if (c >= 0) {
-        input[0] = c;
+        input[0] = c ? c : CTRL_SPACE;
         len      = 1;
 
 do_seq:;
@@ -810,6 +851,12 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             key_i = ARROW_UP;
         } else if (strcmp(key_str, "down") == 0) {
             key_i = ARROW_DOWN;
+        } else if (strcmp(key_str, "ctrl-tab") == 0) {
+            key_i = CTRL_TAB;
+        } else if (strcmp(key_str, "ctrl-enter") == 0) {
+            key_i = CTRL_ENTER;
+        } else if (strcmp(key_str, "ctrl-space") == 0) {
+            key_i = CTRL_SPACE;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
             if (key_c != -1) {
                 if (key_c == '/') {
