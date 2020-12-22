@@ -32,3 +32,4 @@
 * direct draws have a bug where if they are drawn over an area that doesn't have any content,
   then they don't get killed properly
     * they get killed, but they don't get drawn over by anything else, so it looks like they stick around
+* Can't bind meta-ctrl-enter? meta-enter and ctrl-enter work fine.
