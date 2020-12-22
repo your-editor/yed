@@ -82,7 +82,8 @@ void comment_toggle(int n_args, char **args) {
 }
 
 int comment_toggle_line(yed_frame *frame, yed_line *line, int row) {
-    if (       frame->buffer->ft == yed_get_ft("C/C++")) {
+    if (       frame->buffer->ft == yed_get_ft("C")      ||
+               frame->buffer->ft == yed_get_ft("C++"))   {
         comment_toggle_line_c(frame, line, row);
 
     } else if (frame->buffer->ft == yed_get_ft("Shell")  ||
