@@ -139,6 +139,39 @@ int esc_sequence(int *input) {
                                 return 8;
                             }
                             return 7;
+                        } else if (c == '7') {
+                            if (read(0, &c, 1) == 0) { return 6; }
+                            input[6] = c;
+                            if (c == ';') {
+                                if (read(0, &c, 1) == 0) { return 7; }
+                                input[7] = c;
+                                if (c == '9') {
+                                    if (read(0, &c, 1) == 0) { return 8; }
+                                    input[8] = c;
+                                    if (c == '~') {
+                                        input[0] = ESC;
+                                        input[1] = CTRL_TAB;
+                                        return 2;
+                                    }
+                                    return 9;
+                                } else if (c == '1') {
+                                    if (read(0, &c, 1) == 0) { return 8; }
+                                    input[8] = c;
+                                    if (c == '3') {
+                                        if (read(0, &c, 1) == 0) { return 9; }
+                                        input[9] = c;
+                                        if (c == '~') {
+                                            input[0] = ESC;
+                                            input[1] = CTRL_ENTER;
+                                            return 2;
+                                        }
+                                        return 10;
+                                    }
+                                    return 9;
+                                }
+                                return 8;
+                            }
+                            return 7;
                         }
                         return 6;
                     }
