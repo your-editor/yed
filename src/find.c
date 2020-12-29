@@ -120,7 +120,7 @@ int yed_find_next(int row, int col, int *row_out, int *col_out) {
     }
 
     r = row;
-    bucket_array_traverse_from(buff->lines, line, row - 1) {
+    bucket_array_traverse_from(buff->lines, line, r - 1) {
         data_len = array_len(line->chars);
 
         if (!line->visual_width) {
@@ -265,12 +265,11 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
     if (!search_len)    { return 0; }
 
     r = row;
-    for (r = row; r > 0; r -= 1) {
-        line = yed_buff_get_line(buff, r);
-
+    bucket_array_rtraverse_from(buff->lines, line, r - 1) {
         data_len = array_len(line->chars);
 
         if (!line->visual_width) {
+            r -= 1;
             continue;
         }
 
@@ -279,6 +278,7 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
 
         if (r == row) {
             if (col <= search_len) {
+                r -= 1;
                 continue;
             }
             line_data_end = line_data + yed_line_col_to_idx(line, col - 1);
@@ -300,14 +300,16 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
                 break;
             }
         }
+
+        r -= 1;
     }
 
-    for (r = bucket_array_len(buff->lines); r > row; r -= 1) {
-        line = yed_buff_get_line(buff, r);
-
+    r = bucket_array_len(buff->lines);
+    bucket_array_rtraverse_from(buff->lines, line, r - 1) {
         data_len = array_len(line->chars);
 
         if (!line->visual_width) {
+            r -= 1;
             continue;
         }
 
@@ -330,6 +332,8 @@ int yed_find_prev(int row, int col, int *row_out, int *col_out) {
                 break;
             }
         }
+
+        r -= 1;
     }
 
     return 0;

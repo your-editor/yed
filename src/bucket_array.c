@@ -298,13 +298,14 @@ void _bucket_array_clear(bucket_array_t *array) {
 }
 
 
-bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx) {
+bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx, int dir) {
     bucket_array_iter_t iter;
 
     iter.array = array;
 
-    iter.elem_idx = idx;
+    iter.elem_idx   = idx;
     iter.bucket_idx = _get_bucket_and_elem_idx_for_idx(array, &iter.elem_idx);
+    iter.direction  = dir;
 
     if (iter.elem_idx   == -1
     ||  iter.bucket_idx == -1) {
@@ -317,17 +318,22 @@ bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx) {
     return iter;
 }
 
-bucket_array_iter_t _bucket_array_iter_make(bucket_array_t *array) {
+bucket_array_iter_t _bucket_array_iter_make(bucket_array_t *array, int dir) {
     bucket_array_iter_t iter;
 
-    iter.array = array;
+    iter.array      = array;
     iter.bucket_idx = iter.elem_idx = 0;
+    iter.direction  = dir;
 
     return iter;
 }
 
 int _bucket_array_iter_is_end(bucket_array_iter_t *it) {
     int n_buckets;
+
+    if (it->direction == 1) {
+        return (it->bucket_idx <= 0 && it->elem_idx <= 0);
+    }
 
     n_buckets = array_len(it->array->buckets);
 
@@ -354,11 +360,22 @@ void _bucket_array_iter_next(bucket_array_iter_t *it) {
 
     bucket = GET_BUCKET(it->array, it->bucket_idx);
 
-    if (bucket->used == 0
-    ||  it->elem_idx == bucket->used - 1) {
-        it->bucket_idx += 1;
-        it->elem_idx    = 0;
+    if (it->direction == 1) {
+        if (bucket->used == 0
+        ||  it->elem_idx == 0) {
+            it->bucket_idx -= 1;
+            bucket = GET_BUCKET(it->array, it->bucket_idx);
+            it->elem_idx = bucket->used - 1;
+        } else {
+            it->elem_idx -= 1;
+        }
     } else {
-        it->elem_idx += 1;
+        if (bucket->used == 0
+        ||  it->elem_idx == bucket->used - 1) {
+            it->bucket_idx += 1;
+            it->elem_idx    = 0;
+        } else {
+            it->elem_idx += 1;
+        }
     }
 }
