@@ -332,7 +332,7 @@ int _bucket_array_iter_is_end(bucket_array_iter_t *it) {
     int n_buckets;
 
     if (it->direction == 1) {
-        return (it->bucket_idx <= 0 && it->elem_idx <= 0);
+        return it->elem_idx < 0;
     }
 
     n_buckets = array_len(it->array->buckets);
@@ -361,8 +361,9 @@ void _bucket_array_iter_next(bucket_array_iter_t *it) {
     bucket = GET_BUCKET(it->array, it->bucket_idx);
 
     if (it->direction == 1) {
-        if (bucket->used == 0
-        ||  it->elem_idx == 0) {
+        if ((bucket->used == 0
+        ||  it->elem_idx == 0)
+        &&  it->bucket_idx > 0) {
             it->bucket_idx -= 1;
             bucket = GET_BUCKET(it->array, it->bucket_idx);
             it->elem_idx = bucket->used - 1;
