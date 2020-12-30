@@ -3186,6 +3186,11 @@ void yed_start_find_in_buffer(void) {
 void yed_default_command_find_in_buffer(int n_args, char **args) {
     yed_frame *frame;
     int        key;
+    int        found;
+    yed_attrs  cmd_attr;
+    yed_attrs  attn_attr;
+    yed_attrs  err_attr;
+    char       attr_buff[128];
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -3200,7 +3205,38 @@ void yed_default_command_find_in_buffer(int n_args, char **args) {
     }
 
     if (!ys->interactive_command) {
-        yed_start_find_in_buffer();
+        if (n_args > 0) {
+            if (n_args > 1) {
+                yed_cerr("expected one search string (use quotes to search for a pattern with whitespace)");
+                return;
+            }
+
+            ys->current_search  = strdup(args[0]);
+            ys->save_search     = ys->current_search;
+            ys->search_save_row = ys->active_frame->cursor_line;
+            ys->search_save_col = ys->active_frame->cursor_col;
+
+            found = yed_inc_find_in_buffer();
+
+            if (!found) {
+                cmd_attr    = yed_active_style_get_command_line();
+                attn_attr   = yed_active_style_get_attention();
+                err_attr    = cmd_attr;
+                err_attr.fg = attn_attr.fg;
+                yed_get_attr_str(err_attr, attr_buff);
+
+                yed_append_text_to_cmd_buff(ys->cmd_prompt);
+                yed_append_non_text_to_cmd_buff(attr_buff);
+                yed_append_text_to_cmd_buff("[!] '");
+                yed_append_text_to_cmd_buff(ys->current_search);
+                yed_append_text_to_cmd_buff("' not found");
+
+                ys->current_search = NULL;
+            }
+
+        } else {
+            yed_start_find_in_buffer();
+        }
     } else {
         sscanf(args[0], "%d", &key);
         yed_find_in_buffer_take_key(key);
