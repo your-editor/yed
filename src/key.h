@@ -38,6 +38,8 @@ enum KEY_ACTION {
     CTRL_FS   = 31,   /* Ctrl-/    */
     BACKSPACE = 127,  /* Backspace */
 
+    ASCII_KEY_MAX = 256,
+
     /* The following are just soft codes, not really reported by the
      * terminal directly. */
     ARROW_LEFT = 300,

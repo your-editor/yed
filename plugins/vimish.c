@@ -25,6 +25,21 @@ static char *mode_strs[] = {
     "YANK"
 };
 
+static char *mode_strs_lowercase[] = {
+    "normal",
+    "insert",
+    "delete",
+    "yank"
+};
+
+static int vimish_mode_completion(char *string, yed_completion_results *results) {
+    int status;
+
+    FN_BODY_FOR_COMPLETE_FROM_ARRAY(string, 4, mode_strs_lowercase, results, status);
+
+    return status;
+}
+
 typedef struct {
     int    len;
     int    keys[MAX_SEQ_LEN];
@@ -85,6 +100,11 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(Self, "Q",                  vimish_quit);
     yed_plugin_set_command(Self, "wq",                 vimish_write_quit);
     yed_plugin_set_command(Self, "Wq",                 vimish_write_quit);
+
+    yed_plugin_set_completion(Self, "vimish-mode", vimish_mode_completion);
+    yed_plugin_set_completion(Self, "vimish-bind-compl-arg-0", vimish_mode_completion);
+    yed_plugin_set_completion(Self, "vimish-bind-compl-arg-2", yed_get_completion("command"));
+    yed_plugin_set_completion(Self, "vimish-unbind-compl-arg-0", vimish_mode_completion);
 
     bind_keys();
 
@@ -449,26 +469,6 @@ static void vimish_start_repeat(int key) {
 void vimish_exit_insert(int n_args, char **args) {
     vimish_push_repeat_key(CTRL_C);
     vimish_change_mode(MODE_NORMAL, 0, 0);
-}
-
-static void fill_cmd_prompt(const char *cmd) {
-    int   len, i, key;
-    char  key_str_buff[32];
-    char *key_str;
-
-    len = strlen(cmd);
-
-    YEXE("command-prompt");
-
-    for (i = 0; i < len; i += 1) {
-        key = cmd[i];
-        sprintf(key_str_buff, "%d", key);
-        key_str = key_str_buff;
-        YEXE("command-prompt", key_str);
-    }
-
-    key_str = "32"; /* space */
-    YEXE("command-prompt", key_str);
 }
 
 static void vimish_do_till_fw(int key) {

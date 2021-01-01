@@ -260,22 +260,25 @@ out:;
 }
 
 void yed_service_reload(void) {
-    tree_it(yed_plugin_name_t, yed_plugin_ptr_t)  plug_it;
-    tree_it(yed_command_name_t, yed_command)      cmd_it;
-    tree_it(yed_var_name_t, yed_var_val_t)        var_it;
-    tree_it(yed_style_name_t, yed_style_ptr_t)    style_it;
-    char                                         *key,
-                                                 *val;
-    yed_style                                    *style;
-    char                                        **ft_name_it;
+    tree_it(yed_plugin_name_t, yed_plugin_ptr_t)     plug_it;
+    tree_it(yed_command_name_t, yed_command)         cmd_it;
+    tree_it(yed_completion_name_t, yed_completion)   compl_it;
+    tree_it(yed_var_name_t, yed_var_val_t)           var_it;
+    tree_it(yed_style_name_t, yed_style_ptr_t)       style_it;
+    char                                            *key,
+                                                    *val;
+    yed_style                                       *style;
+    char                                           **ft_name_it;
 
-    tree_reset_fns(yed_style_name_t,   yed_style_ptr_t,       ys->styles,           strcmp);
-    tree_reset_fns(yed_var_name_t,     yed_var_val_t,         ys->vars,             strcmp);
-    tree_reset_fns(yed_buffer_name_t,  yed_buffer_ptr_t,      ys->buffers,          strcmp);
-    tree_reset_fns(int,                yed_key_binding_ptr_t, ys->vkey_binding_map, NULL);
-    tree_reset_fns(yed_command_name_t, yed_command,           ys->commands,         strcmp);
-    tree_reset_fns(yed_command_name_t, yed_command,           ys->default_commands, strcmp);
-    tree_reset_fns(yed_plugin_name_t,  yed_plugin_ptr_t,      ys->plugins,          strcmp);
+    tree_reset_fns(yed_style_name_t,      yed_style_ptr_t,       ys->styles,              strcmp);
+    tree_reset_fns(yed_var_name_t,        yed_var_val_t,         ys->vars,                strcmp);
+    tree_reset_fns(yed_buffer_name_t,     yed_buffer_ptr_t,      ys->buffers,             strcmp);
+    tree_reset_fns(int,                   yed_key_binding_ptr_t, ys->vkey_binding_map,    NULL);
+    tree_reset_fns(yed_command_name_t,    yed_command,           ys->commands,            strcmp);
+    tree_reset_fns(yed_command_name_t,    yed_command,           ys->default_commands,    strcmp);
+    tree_reset_fns(yed_completion_name_t, yed_completion,        ys->completions,         strcmp);
+    tree_reset_fns(yed_completion_name_t, yed_completion,        ys->default_completions, strcmp);
+    tree_reset_fns(yed_plugin_name_t,     yed_plugin_ptr_t,      ys->plugins,             strcmp);
 
     ys->cur_log_name = NULL; /* This could be memory from a plugin that got unloaded. */
 
@@ -333,10 +336,35 @@ void yed_service_reload(void) {
         tree_delete(ys->commands, key);
         free(key);
     }
+    while (tree_len(ys->default_commands)) {
+        cmd_it = tree_begin(ys->default_commands);
+        key = tree_it_key(cmd_it);
+        tree_delete(ys->default_commands, key);
+        free(key);
+    }
     /*
      * Reset the defaults.
      */
     yed_set_default_commands();
+    /*
+     * Clear out all of the old completions.
+     */
+    while (tree_len(ys->completions)) {
+        compl_it = tree_begin(ys->completions);
+        key      = tree_it_key(compl_it);
+        tree_delete(ys->completions, key);
+        free(key);
+    }
+    while (tree_len(ys->default_completions)) {
+        compl_it = tree_begin(ys->default_completions);
+        key      = tree_it_key(compl_it);
+        tree_delete(ys->default_completions, key);
+        free(key);
+    }
+    /*
+     * Reset the defaults.
+     */
+    yed_set_default_completions();
 
     yed_reload_default_event_handlers();
     yed_reload_plugins();
@@ -405,3 +433,4 @@ int s_to_i(const char *s) {
 #include "frame_tree.c"
 #include "version.c"
 #include "print_backtrace.c"
+#include "cmd_line.c"

@@ -46,6 +46,7 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void grep(int n_args, char **args) {
+    int i;
     int key;
 
     if (!ys->interactive_command) {
@@ -55,6 +56,15 @@ void grep(int n_args, char **args) {
             return;
         }
         grep_start();
+        if (n_args) {
+            for (i = 0; i < strlen(args[0]); i += 1) {
+                yed_cmd_line_readline_take_key(NULL, (int)args[0][i]);
+            }
+            array_zero_term(ys->cmd_buff);
+            grep_run();
+            ys->interactive_command = NULL;
+            yed_clear_cmd_buff();
+        }
     } else {
         sscanf(args[0], "%d", &key);
         grep_take_key(key);
@@ -78,29 +88,25 @@ void grep_start(void) {
 }
 
 void grep_take_key(int key) {
-    if (key == CTRL_C) {
-        ys->interactive_command = NULL;
-        ys->current_search      = NULL;
-        yed_clear_cmd_buff();
-        YEXE("special-buffer-prepare-unfocus", "*grep-list");
-        grep_cleanup();
-    } else if (key == ENTER) {
-        ys->interactive_command = NULL;
-        ys->current_search      = NULL;
-        ys->active_frame->dirty = 1;
-        yed_clear_cmd_buff();
-    } else if (key == TAB) {
-        grep_run();
-    } else {
-        if (key == BACKSPACE) {
-            if (array_len(ys->cmd_buff)) {
-                yed_cmd_buff_pop();
-            }
-        } else if (!iscntrl(key)) {
-            yed_cmd_buff_push(key);
-        }
-
-        grep_run();
+    switch (key) {
+        case ESC:
+        case CTRL_C:
+            ys->interactive_command = NULL;
+            ys->current_search      = NULL;
+            yed_clear_cmd_buff();
+            YEXE("special-buffer-prepare-unfocus", "*grep-list");
+            grep_cleanup();
+            break;
+        case ENTER:
+            ys->interactive_command = NULL;
+            ys->current_search      = NULL;
+            ys->active_frame->dirty = 1;
+            yed_clear_cmd_buff();
+            break;
+        default:
+            yed_cmd_line_readline_take_key(NULL, key);
+            grep_run();
+            break;
     }
 }
 

@@ -1,3 +1,310 @@
+void yed_init_completions(void) {
+    ys->completions         = tree_make_c(yed_completion_name_t, yed_completion, strcmp);
+    ys->default_completions = tree_make_c(yed_completion_name_t, yed_completion, strcmp);
+    yed_set_default_completions();
+}
+
+void yed_set_completion(char *name, yed_completion compl) {
+    tree_it(yed_completion_name_t, yed_completion) it;
+
+    it = tree_lookup(ys->completions, name);
+
+    if (tree_it_good(it)) {
+        tree_insert(ys->completions, name, compl);
+    } else {
+        tree_insert(ys->completions, strdup(name), compl);
+    }
+}
+
+void yed_unset_completion(char *name) {
+    tree_it(yed_completion_name_t, yed_completion)  it;
+    char                                           *old_key;
+
+    it = tree_lookup(ys->completions, name);
+
+    if (tree_it_good(it)) {
+        old_key = tree_it_key(it);
+        tree_delete(ys->completions, name);
+        free(old_key);
+    }
+}
+
+yed_completion yed_get_completion(char *name) {
+    tree_it(yed_completion_name_t, yed_completion) it;
+
+    it = tree_lookup(ys->completions, name);
+
+    if (!tree_it_good(it)) {
+        return NULL;
+    }
+
+    return tree_it_val(it);
+}
+
+void yed_set_default_completion(char *name, yed_completion compl) {
+    tree_it(yed_completion_name_t, yed_completion) it;
+
+    it = tree_lookup(ys->default_completions, name);
+
+    if (tree_it_good(it)) {
+        tree_insert(ys->default_completions, name, compl);
+    } else {
+        tree_insert(ys->default_completions, strdup(name), compl);
+    }
+}
+
+void yed_unset_default_completion(char *name) {
+    tree_it(yed_completion_name_t, yed_completion)  it;
+    char                                           *old_key;
+
+    it = tree_lookup(ys->default_completions, name);
+
+    if (tree_it_good(it)) {
+        old_key = tree_it_key(it);
+        tree_delete(ys->default_completions, name);
+        free(old_key);
+    }
+}
+
+yed_completion yed_get_default_completion(char *name) {
+    tree_it(yed_completion_name_t, yed_completion) it;
+
+    it = tree_lookup(ys->default_completions, name);
+
+    if (!tree_it_good(it)) {
+        return NULL;
+    }
+
+    return tree_it_val(it);
+}
+
+static int yed_default_completion_commands(char *string, yed_completion_results *results) {
+    tree_it(yed_command_name_t, yed_command) it;
+    int                                      status;
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, ys->commands, it, results, status);
+
+    return status;
+}
+
+static int yed_default_completion_styles(char *string, yed_completion_results *results) {
+    tree_it(yed_style_name_t, yed_style_ptr_t) it;
+    int                                        status;
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, ys->styles, it, results, status);
+
+    return status;
+}
+
+static int yed_default_completion_buffers(char *string, yed_completion_results *results) {
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t) it;
+    int                                          status;
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, ys->buffers, it, results, status);
+
+    return status;
+}
+
+static int yed_default_completion_variables(char *string, yed_completion_results *results) {
+    tree_it(yed_var_name_t, yed_var_val_t) it;
+    int                                    status;
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, ys->vars, it, results, status);
+
+    return status;
+}
+
+static int yed_default_completion_fts(char *string, yed_completion_results *results) {
+    int status;
+
+    FN_BODY_FOR_COMPLETE_FROM_ARRAY(string,
+                                    array_len(ys->ft_array),
+                                    (char**)array_data(ys->ft_array),
+                                    results,
+                                    status);
+
+    return status;
+}
+
+static int yed_default_completion_plugins(char *string, yed_completion_results *results) {
+    tree_it(yed_plugin_name_t, yed_plugin_ptr_t) it;
+    int                                          status;
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, ys->plugins, it, results, status);
+
+    return status;
+}
+
+static int yed_default_completion_files(char *string, yed_completion_results *results) {
+    char                    *cpy;
+    char                    *dirn;
+    tree(str_t, empty_t)     t;
+    char                     dir_path_buff[4096];
+    DIR                     *dir;
+    struct dirent           *dent;
+    char                     full_path[4096];
+    tree_it(str_t, empty_t)  it;
+    char                    *key;
+    int                      status;
+
+    cpy  = strdup(string);
+    dirn = dirname(cpy);
+    t    = tree_make_c(str_t, empty_t, strcmp);
+
+    if (string[strlen(string) - 1] == '/') {
+        strcpy(dir_path_buff, string);
+        if (strlen(string) > 1) {
+            dir_path_buff[strlen(dir_path_buff) - 1] = 0;
+        }
+        dirn = dir_path_buff;
+    }
+
+    if ((dir = opendir(dirn)) == NULL) { goto out; }
+
+    while ((dent = readdir(dir)) != NULL) {
+        if (strcmp(dent->d_name, ".")  == 0
+        ||  strcmp(dent->d_name, "..") == 0) {
+            continue;
+        }
+
+        full_path[0] = 0;
+        if (strcmp(dirn, ".") != 0) {
+            strcat(full_path, dirn);
+            if (strcmp(dirn, "/") != 0) {
+                strcat(full_path, "/");
+            }
+        }
+        strcat(full_path, dent->d_name);
+        tree_insert(t, strdup(full_path), (empty_t){});
+    }
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
+
+out:;
+    tree_traverse(t, it) {
+        key = tree_it_key(it);
+        tree_delete(t, key);
+        free(key);
+    }
+    tree_free(t);
+    free(cpy);
+
+    return status;
+}
+
+static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
+    int  col, start_col;
+    char c, *word_start, *word;
+
+    col = 1;
+
+    while (col < line->visual_width) {
+        start_col = col;
+
+        c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+        if (isalnum(c) || c == '_') {
+            while (col <= line->visual_width) {
+                col += 1;
+                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+                if (!isalnum(c) && c != '_') {
+                    break;
+                }
+            }
+
+            word_start = array_data(line->chars)
+                         + yed_line_col_to_idx(line, start_col);
+
+            word = strndup(word_start, col - start_col);
+
+            tree_insert(words, word, (empty_t){});
+        } else if (!isspace(c)) {
+            while (col <= line->visual_width) {
+                col += 1;
+                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+                if (isalnum(c) || c == '_' || isspace(c)) {
+                    break;
+                }
+            }
+        }
+
+        if (isspace(c)) {
+            while (col <= line->visual_width) {
+                col += 1;
+                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+                if (!isspace(c)) {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+static void get_all_buff_words(tree(str_t, empty_t) words) {
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    yed_line                                     *line;
+
+    tree_traverse(ys->buffers, it) {
+        bucket_array_traverse(tree_it_val(it)->lines, line) {
+            get_all_line_words(words, line);
+        }
+    }
+}
+
+static int yed_default_completion_words(char *string, yed_completion_results *results) {
+    tree(str_t, empty_t)     t;
+    tree_it(str_t, empty_t)  it;
+    int                      status;
+    char                    *key;
+
+    t = tree_make_c(str_t, empty_t, strcmp);
+    get_all_buff_words(t);
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
+
+    tree_traverse(t, it) {
+        key = tree_it_key(it);
+        tree_delete(t, key);
+        free(key);
+    }
+    tree_free(t);
+
+    return status;
+}
+
+
+#define SET_DEFAULT_COMPL(name1, name2)        \
+do {                                           \
+    yed_set_completion(name1, &name2);         \
+    yed_set_default_completion(name1, &name2); \
+} while (0)
+
+void yed_set_default_completions(void) {
+    SET_DEFAULT_COMPL("command",                     yed_default_completion_commands);
+    SET_DEFAULT_COMPL("buffer",                      yed_default_completion_buffers);
+    SET_DEFAULT_COMPL("variable",                    yed_default_completion_variables);
+    SET_DEFAULT_COMPL("style",                       yed_default_completion_styles);
+    SET_DEFAULT_COMPL("ft",                          yed_default_completion_fts);
+    SET_DEFAULT_COMPL("plugin",                      yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("file",                        yed_default_completion_files);
+    SET_DEFAULT_COMPL("word",                        yed_default_completion_words);
+
+    SET_DEFAULT_COMPL("bind-compl-arg-1",            yed_default_completion_commands);
+    SET_DEFAULT_COMPL("buffer-compl-arg-0",          yed_default_completion_files);
+    SET_DEFAULT_COMPL("buffer-delete-compl-arg-0",   yed_default_completion_buffers);
+    SET_DEFAULT_COMPL("set-compl-arg-0",             yed_default_completion_variables);
+    SET_DEFAULT_COMPL("get-compl-arg-0",             yed_default_completion_variables);
+    SET_DEFAULT_COMPL("unset-compl-arg-0",           yed_default_completion_variables);
+    SET_DEFAULT_COMPL("style-compl-arg-0",           yed_default_completion_styles);
+    SET_DEFAULT_COMPL("buffer-set-ft-compl-arg-0",   yed_default_completion_fts);
+    SET_DEFAULT_COMPL("plugin-unload-compl-arg-0",   yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("find-in-buffer-compl-arg-0",  yed_default_completion_words);
+    SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0", yed_default_completion_files);
+}
+
 int compute_common_prefix_len(char *in, int n_items, char **items) {
     int  i, len, max_len;
 
@@ -75,68 +382,6 @@ none:
     return n_items;
 }
 
-void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
-    int  col, start_col;
-    char c, *word_start, *word;
-
-    col = 1;
-
-    while (col < line->visual_width) {
-        start_col = col;
-
-        c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-
-        if (isalnum(c) || c == '_') {
-            while (col <= line->visual_width) {
-                col += 1;
-                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-
-                if (!isalnum(c) && c != '_') {
-                    break;
-                }
-            }
-
-            word_start = array_data(line->chars)
-                         + yed_line_col_to_idx(line, start_col);
-
-            word = strndup(word_start, col - start_col);
-
-            tree_insert(words, word, (empty_t){});
-        } else if (!isspace(c)) {
-            while (col <= line->visual_width) {
-                col += 1;
-                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-
-                if (isalnum(c) || c == '_' || isspace(c)) {
-                    break;
-                }
-            }
-        }
-
-        if (isspace(c)) {
-            while (col <= line->visual_width) {
-                col += 1;
-                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-
-                if (!isspace(c)) {
-                    break;
-                }
-            }
-        }
-    }
-}
-
-void get_all_buff_words(tree(str_t, empty_t) words) {
-    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
-    yed_line                                     *line;
-
-    tree_traverse(ys->buffers, it) {
-        bucket_array_traverse(tree_it_val(it)->lines, line) {
-            get_all_line_words(words, line);
-        }
-    }
-}
-
 int get_buff_word_completion(char *in, char ***out) {
     tree(str_t, empty_t)      words;
     tree_it(str_t, empty_t)   it;
@@ -190,30 +435,68 @@ none:
     return n_items;
 }
 
+int yed_complete(char *compl_name, char *string, yed_completion_results *results) {
+    tree_it(yed_completion_name_t, yed_completion) it;
+    yed_completion                                 compl;
+    int                                            status;
 
-int yed_get_completion(int type, char *in, char ***out, int *common_prefix_len) {
-    int    num_items;
-    char **items;
+    it = tree_lookup(ys->completions, compl_name);
 
-    items     = NULL;
-    num_items = 0;
-
-    switch (type) {
-        case COMPL_CMD:
-            num_items = get_cmd_completion(in, &items);
-            break;
-        case COMPL_BUFF:
-            num_items = get_buff_word_completion(in, &items);
-            break;
+    if (!tree_it_good(it)) {
+        return COMPL_ERR_NO_COMPL;
     }
 
-    if (items && common_prefix_len) {
-        *common_prefix_len = compute_common_prefix_len(in, num_items, items);
+    compl            = tree_it_val(it);
+    results->strings = array_make(char*);
+
+    status = compl(string, results);
+
+    if (status == COMPL_ERR_NO_ERR) {
+        results->common_prefix_len =
+            compute_common_prefix_len(string,
+                                      array_len(results->strings),
+                                      array_data(results->strings));
     }
 
-    if (out) {
-        *out = items;
+    return status;
+}
+
+int yed_complete_multiple(int n, char **compl_names, char *string, yed_completion_results *results) {
+    int                       status;
+    tree(str_t, empty_t)      t;
+    int                       i;
+    yed_completion_results    tmp_results;
+    char                    **str_it;
+    tree_it(str_t, empty_t)   it;
+    char                     *key;
+
+
+    status = COMPL_ERR_NO_ERR;
+    t      = tree_make_c(str_t, empty_t, strcmp);
+
+    for (i = 0; i < n; i += 1) {
+        status = yed_complete(compl_names[i], string, &tmp_results);
+        if (status != COMPL_ERR_NO_ERR) { goto out; }
+        array_traverse(tmp_results.strings, str_it) {
+            it = tree_lookup(t, *str_it);
+            if (!tree_it_good(it)) {
+                tree_insert(t, strdup(*str_it), (empty_t){});
+            }
+        }
+        free_string_array(tmp_results.strings);
     }
 
-    return num_items;
+    results->strings = array_make(char*);
+
+    FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
+
+out:;
+    tree_traverse(t, it) {
+        key = tree_it_key(it);
+        tree_delete(t, key);
+        free(key);
+    }
+    tree_free(t);
+
+    return status;
 }

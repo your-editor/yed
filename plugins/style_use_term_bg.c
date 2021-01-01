@@ -54,5 +54,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_command(self, "style-use-term-bg", style_use_term_bg);
     yed_plugin_set_command(self, "style-term-bg", style_term_bg);
+
+    yed_plugin_set_completion(self, "style-term-bg-compl-arg-0", yed_get_completion("style"));
     return 0;
 }

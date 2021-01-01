@@ -3,9 +3,6 @@
 void completer(int n_args, char **args);
 void completer_buff_pre_insert_handler(yed_event *event);
 
-static int    compl_num_items = 0;
-static char **compl_items     = NULL;
-
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
 
@@ -22,10 +19,14 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void completer(int n_args, char **args) {
-    yed_frame *frame;
-    int        save_col;
-    char      *word, key_str[32];
-    int        i, word_len, cpl;
+    yed_frame              *frame;
+    int                     save_col;
+    char                   *word, key_str[32];
+    int                     i, word_len, cpl;
+    int                     compl_status;
+    int                     compl_num_items;
+    yed_completion_results  results;
+    char                   *first;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -43,13 +44,14 @@ void completer(int n_args, char **args) {
 
     word_len = strlen(word);
 
-    compl_num_items =
-        yed_get_completion(COMPL_BUFF, word, &compl_items, &cpl);
+    compl_status    = yed_complete("word", word, &results);
+    compl_num_items = array_len(results.strings);
+    cpl             = results.common_prefix_len;
 
-    if (compl_num_items) {
-        compl_items[0][cpl] = 0;
+    if (compl_status == COMPL_ERR_NO_ERR && compl_num_items > 0) {
+        first = *(char**)array_item(results.strings, 0);
         for (i = word_len; i < cpl; i += 1) {
-            sprintf(key_str, "%d", compl_items[0][i]);
+            sprintf(key_str, "%d", first[i]);
             YEXE("insert", key_str);
         }
 
@@ -57,11 +59,7 @@ void completer(int n_args, char **args) {
             yed_cerr("%d words with same prefix", compl_num_items);
         }
 
-        /* Cleanup */
-        for (i = 0; i < compl_num_items; i += 1) {
-            free(compl_items[i]);
-        }
-        free(compl_items);
+        free_string_array(results.strings);
     }
 
     free(word);

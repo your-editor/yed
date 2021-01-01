@@ -32,3 +32,8 @@
     * they get killed, but they don't get drawn over by anything else, so it looks like they stick around
 * make a "buffer-fill-string" variable with default "~"
 * ys->current_search is a leak-fest -- fix it
+* @here -- cleanup cmd_line/completion code and ship it
+    * still need to do a filesystem completion source
+    * how to merge completion sources?
+    * actually replace the command prompt
+    * integrate into all plugins where appropriate

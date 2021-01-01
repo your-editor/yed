@@ -2,8 +2,17 @@ void yed_init_commands(void) {
     ys->commands         = tree_make_c(yed_command_name_t, yed_command, strcmp);
     ys->default_commands = tree_make_c(yed_command_name_t, yed_command, strcmp);
     yed_set_default_commands();
-    ys->cmd_buff         = array_make(char);
-    ys->log_name_stack   = array_make(char*);
+
+    ys->cmd_buff       = array_make(char);
+    ys->log_name_stack = array_make(char*);
+
+    ys->cmd_prompt_hist     = array_make(char*);
+    ys->cmd_prompt_readline = malloc(sizeof(*ys->cmd_prompt_readline));
+    yed_cmd_line_readline_make(ys->cmd_prompt_readline, &ys->cmd_prompt_hist);
+
+    ys->search_hist     = array_make(char*);
+    ys->search_readline = malloc(sizeof(*ys->search_readline));
+    yed_cmd_line_readline_make(ys->search_readline, &ys->search_hist);
 }
 
 yed_command yed_get_command(char *name) {
@@ -75,7 +84,6 @@ do {                                                              \
 } while (0)
 
     SET_DEFAULT_COMMAND("command-prompt",                     command_prompt);
-    SET_DEFAULT_COMMAND("fill-command-prompt",                fill_command_prompt);
     SET_DEFAULT_COMMAND("quit",                               quit);
     SET_DEFAULT_COMMAND("reload",                             reload);
     SET_DEFAULT_COMMAND("redraw",                             redraw);
@@ -366,6 +374,16 @@ void yed_cmd_buff_pop(void) {
     array_pop(ys->cmd_buff);
 }
 
+void yed_cmd_buff_insert(int idx, char c) {
+    array_insert(ys->cmd_buff, idx, c);
+    ys->cmd_cursor_x += yed_get_glyph_width(G(c));
+}
+
+void yed_cmd_buff_delete(int idx) {
+    array_delete(ys->cmd_buff, idx);
+    ys->cmd_cursor_x -= 1;
+}
+
 void yed_draw_command_line() {
     int i;
     int j;
@@ -395,191 +413,14 @@ void yed_draw_command_line() {
     append_to_output_buff(TERM_CURSOR_HIDE);
 }
 
-void yed_start_command_prompt(void) {
-    ys->interactive_command = "command-prompt";
-    yed_clear_cmd_buff();
-}
-
-void yed_do_command(void) {
-    array_t   split;
-    char     *cmd_cpy;
-
-    array_zero_term(ys->cmd_buff);
-    cmd_cpy = malloc(array_len(ys->cmd_buff) + 1);
-    memcpy(cmd_cpy, array_data(ys->cmd_buff), array_len(ys->cmd_buff));
-    cmd_cpy[array_len(ys->cmd_buff)] = 0;
-
-    yed_clear_cmd_buff();
-
-    split = sh_split(cmd_cpy);
-
-    ys->interactive_command = NULL;
-
-    yed_execute_command_from_split(split);
-
-    free(cmd_cpy);
-
-    free_string_array(split);
-}
-
-static int    command_prompt_compl_idx       = -1;
-static int    command_prompt_compl_num_items = 0;
-static char **command_prompt_compl_items     = NULL;
-static char  *command_prompt_compl_start     = NULL;
-
-void yed_command_take_key(int key) {
-    char *c, *new;
-    int   free_new;
-
-    if (key == ESC || key == CTRL_C) {
-        ys->interactive_command = NULL;
-        if (command_prompt_compl_items) {
-            free(command_prompt_compl_items);
-            command_prompt_compl_items = NULL;
-            if (command_prompt_compl_start) {
-                free(command_prompt_compl_start);
-            }
-        }
-        yed_clear_cmd_buff();
-    } else if (key == TAB) {
-        array_traverse(ys->cmd_buff, c) {
-            if (*c == ' ') {
-                return;
-            }
-        }
-
-        array_zero_term(ys->cmd_buff);
-
-        free_new = 0;
-
-        if (!command_prompt_compl_items) {
-            command_prompt_compl_start = strdup(array_data(ys->cmd_buff));
-
-            command_prompt_compl_num_items =
-                yed_get_completion(COMPL_CMD,
-                                   command_prompt_compl_start,
-                                   &command_prompt_compl_items,
-                                   NULL);
-
-            if (command_prompt_compl_num_items) {
-                command_prompt_compl_idx = 0;
-                new = command_prompt_compl_items[command_prompt_compl_idx];
-            } else {
-                new      = command_prompt_compl_start;
-                free_new = 1;
-            }
-        } else if (command_prompt_compl_idx == command_prompt_compl_num_items - 1) {
-            free(command_prompt_compl_items);
-            command_prompt_compl_items = NULL;
-            new                        = command_prompt_compl_start;
-            free_new                   = 1;
-        } else {
-            command_prompt_compl_idx += 1;
-            new                       = command_prompt_compl_items[command_prompt_compl_idx];
-        }
-
-        yed_clear_cmd_buff();
-        yed_append_text_to_cmd_buff(new);
-
-        if (free_new)    { free(new); }
-    } else if (key == SHIFT_TAB) {
-        array_traverse(ys->cmd_buff, c) {
-            if (*c == ' ') {
-                return;
-            }
-        }
-
-        free_new = 0;
-
-        if (!command_prompt_compl_items) {
-            command_prompt_compl_start = strdup(array_data(ys->cmd_buff));
-
-            command_prompt_compl_num_items =
-                yed_get_completion(COMPL_CMD,
-                                   command_prompt_compl_start,
-                                   &command_prompt_compl_items,
-                                   NULL);
-
-            if (command_prompt_compl_num_items) {
-                command_prompt_compl_idx = command_prompt_compl_num_items - 1;
-                new = command_prompt_compl_items[command_prompt_compl_idx];
-            } else {
-                new      = command_prompt_compl_start;
-                free_new = 1;
-            }
-        } else {
-            if (command_prompt_compl_idx == 0) {
-                free(command_prompt_compl_items);
-                command_prompt_compl_items = NULL;
-                new                        = command_prompt_compl_start;
-                free_new                   = 1;
-            } else {
-                command_prompt_compl_idx -= 1;
-                new                       = command_prompt_compl_items[command_prompt_compl_idx];
-            }
-        }
-
-        yed_clear_cmd_buff();
-        yed_append_text_to_cmd_buff(new);
-
-        if (free_new)    { free(new); }
-
-    } else if (key == ENTER) {
-        ys->interactive_command = NULL;
-        if (command_prompt_compl_items) {
-            free(command_prompt_compl_items);
-            command_prompt_compl_items = NULL;
-
-            if (command_prompt_compl_start) {
-                free(command_prompt_compl_start);
-            }
-        }
-        yed_do_command();
-    } else {
-        if (key == BACKSPACE) {
-            if (array_len(ys->cmd_buff)) {
-                yed_cmd_buff_pop();
-            }
-        } else if (!iscntrl(key)) {
-            yed_cmd_buff_push(key);
-        }
-
-        if (command_prompt_compl_items) {
-            free(command_prompt_compl_items);
-            command_prompt_compl_items = NULL;
-
-            if (command_prompt_compl_start) {
-                free(command_prompt_compl_start);
-            }
-        }
-    }
-}
-
 void yed_default_command_command_prompt(int n_args, char **args) {
     int key;
 
     if (!ys->interactive_command) {
-        yed_start_command_prompt();
+        yed_builtin_cmd_prompt_start(n_args, args);
     } else {
         sscanf(args[0], "%d", &key);
-        yed_command_take_key(key);
-    }
-}
-
-void yed_default_command_fill_command_prompt(int n_args, char **args) {
-    int    i, j, len, key;
-    char   key_str[32];
-
-    YEXE("command-prompt");
-
-    for (i = 0; i < n_args; i += 1) {
-        len = strlen(args[i]);
-        for (j = 0; j < len; j += 1) {
-            key = args[i][j];
-            sprintf(key_str, "%d", key);
-            YEXE("command-prompt", key_str);
-        }
-        YEXE("command-prompt", "32"); /* 32 = space */
+        yed_builtin_cmd_prompt_take_key(key);
     }
 }
 
@@ -3119,57 +2960,64 @@ int yed_inc_find_in_buffer(void) {
 }
 
 void yed_find_in_buffer_take_key(int key) {
-    int       found;
-    yed_attrs cmd_attr;
-    yed_attrs attn_attr;
-    yed_attrs err_attr;
-    char      attr_buff[128];
+    int         found;
+    char      **mru_search;
+    char       *cpy;
+    yed_attrs   cmd_attr;
+    yed_attrs   attn_attr;
+    yed_attrs   err_attr;
+    char        attr_buff[128];
 
-    if (key == ESC || key == CTRL_C) {
-        ys->interactive_command = NULL;
-        ys->current_search      = NULL;
-        yed_clear_cmd_buff();
-        yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
-    } else if (key == ENTER) {
-        found = yed_inc_find_in_buffer();
-        if (ys->save_search) {
-            free(ys->save_search);
-        }
-        ys->save_search    = strdup(ys->current_search);
-        ys->current_search = ys->save_search;
-
-        ys->interactive_command = NULL;
-        yed_clear_cmd_buff();
-
-        if (!found) {
-            cmd_attr    = yed_active_style_get_command_line();
-            attn_attr   = yed_active_style_get_attention();
-            err_attr    = cmd_attr;
-            err_attr.fg = attn_attr.fg;
-            yed_get_attr_str(err_attr, attr_buff);
-
-            yed_append_text_to_cmd_buff(ys->cmd_prompt);
-            yed_append_non_text_to_cmd_buff(attr_buff);
-            yed_append_text_to_cmd_buff("[!] '");
-            yed_append_text_to_cmd_buff(ys->save_search);
-            yed_append_text_to_cmd_buff("' not found");
-        }
-
-    } else {
-        if (key == BACKSPACE) {
-            if (array_len(ys->cmd_buff)) {
-                yed_cmd_buff_pop();
+    switch (key) {
+        case ENTER:
+            found = yed_inc_find_in_buffer();
+            if (ys->save_search) {
+                free(ys->save_search);
             }
-        } else if (key == SHIFT_TAB) {
-            yed_cmd_buff_push('\t');
-        } else if (!iscntrl(key)) {
-            yed_cmd_buff_push(key);
-        }
+            ys->save_search    = strdup(ys->current_search);
+            ys->current_search = ys->save_search;
 
-        array_zero_term(ys->cmd_buff);
-        ys->current_search = array_data(ys->cmd_buff);
+            ys->interactive_command = NULL;
+            yed_clear_cmd_buff();
 
-        yed_inc_find_in_buffer();
+            if (!found) {
+                cmd_attr    = yed_active_style_get_command_line();
+                attn_attr   = yed_active_style_get_attention();
+                err_attr    = cmd_attr;
+                err_attr.fg = attn_attr.fg;
+                yed_get_attr_str(err_attr, attr_buff);
+
+                yed_append_text_to_cmd_buff(ys->cmd_prompt);
+                yed_append_non_text_to_cmd_buff(attr_buff);
+                yed_append_text_to_cmd_buff("[!] '");
+                yed_append_text_to_cmd_buff(ys->save_search);
+                yed_append_text_to_cmd_buff("' not found");
+            }
+
+            mru_search = array_last(ys->search_hist);
+
+            if (strlen(ys->save_search)) {
+                if (!mru_search || strcmp(*mru_search, ys->save_search) != 0) {
+                    cpy = strdup(ys->save_search);
+                    array_push(ys->search_hist, cpy);
+                }
+            }
+
+            break;
+        case CTRL_C:
+        case ESC:
+            ys->interactive_command = NULL;
+            ys->current_search      = NULL;
+            yed_clear_cmd_buff();
+            yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+            break;
+        default:
+            yed_cmd_line_readline_take_key(ys->search_readline, key);
+
+            array_zero_term(ys->cmd_buff);
+            ys->current_search = array_data(ys->cmd_buff);
+
+            yed_inc_find_in_buffer();
     }
 }
 
@@ -3178,7 +3026,9 @@ void yed_start_find_in_buffer(void) {
     ys->cmd_prompt          = "(find-in-buffer) ";
     ys->search_save_row     = ys->active_frame->cursor_line;
     ys->search_save_col     = ys->active_frame->cursor_col;
+
     yed_clear_cmd_buff();
+    yed_cmd_line_readline_reset(ys->search_readline, &ys->search_hist);
 
     ys->current_search = array_data(ys->cmd_buff);
 }
@@ -3443,49 +3293,45 @@ void replace_free(void) {
 void yed_replace_current_search_take_key(int key) {
     char *cpy;
 
-    if (key == ESC || key == CTRL_C) {
-        ys->interactive_command = NULL;
-        yed_clear_cmd_buff();
-        replace_abort();
-        replace_free();
-        yed_cancel_undo_record(ys->active_frame, ys->active_frame->buffer);
-    } else if (key == ENTER) {
-        yed_replace_current_search_update();
+    switch (key) {
+        case ESC:
+        case CTRL_C:
+            ys->interactive_command = NULL;
+            yed_clear_cmd_buff();
+            replace_abort();
+            replace_free();
+            yed_cancel_undo_record(ys->active_frame, ys->active_frame->buffer);
+            break;
+        case ENTER:
+            yed_replace_current_search_update();
 
-        replace_free();
-        yed_end_undo_record(ys->active_frame, ys->active_frame->buffer);
+            replace_free();
+            yed_end_undo_record(ys->active_frame, ys->active_frame->buffer);
 
-        ys->interactive_command = NULL;
-        cpy = strdup(array_data(ys->cmd_buff));
+            ys->interactive_command = NULL;
+            cpy = strdup(array_data(ys->cmd_buff));
 
-        YEXE("select-off");
+            YEXE("select-off");
 
-        yed_clear_cmd_buff();
+            yed_clear_cmd_buff();
 
-        yed_append_text_to_cmd_buff(ys->cmd_prompt);
-        yed_append_text_to_cmd_buff("replaced ");
-        yed_append_int_to_cmd_buff(ys->replace_count);
-        yed_append_text_to_cmd_buff(" occurances of '");
-        yed_append_text_to_cmd_buff(ys->current_search);
-        yed_append_text_to_cmd_buff("' with '");
-        yed_append_text_to_cmd_buff(cpy);
-        yed_append_text_to_cmd_buff("'");
+            yed_append_text_to_cmd_buff(ys->cmd_prompt);
+            yed_append_text_to_cmd_buff("replaced ");
+            yed_append_int_to_cmd_buff(ys->replace_count);
+            yed_append_text_to_cmd_buff(" occurances of '");
+            yed_append_text_to_cmd_buff(ys->current_search);
+            yed_append_text_to_cmd_buff("' with '");
+            yed_append_text_to_cmd_buff(cpy);
+            yed_append_text_to_cmd_buff("'");
 
-        free(cpy);
-    } else {
-        if (key == BACKSPACE) {
-            if (array_len(ys->cmd_buff)) {
-                yed_cmd_buff_pop();
-            }
-        } else if (!iscntrl(key)) {
-            yed_cmd_buff_push(key);
-        }
-
-        array_zero_term(ys->cmd_buff);
-
-        yed_replace_current_search_update();
-
-        ys->active_frame->dirty = 1;
+            free(cpy);
+            break;
+        default:
+            yed_cmd_line_readline_take_key(NULL, key);
+            array_zero_term(ys->cmd_buff);
+            yed_replace_current_search_update();
+            ys->active_frame->dirty = 1;
+            break;
     }
 }
 

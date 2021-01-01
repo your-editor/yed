@@ -35,6 +35,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_add_event_handler(self, h);
     yed_plugin_set_command(self, "find-file", find_file);
+    yed_plugin_set_completion(self, "find-file-compl-arg-0", yed_get_completion("file"));
 
     if (!yed_get_var("find-file-prg")) {
         yed_set_var("find-file-prg",
@@ -45,7 +46,9 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void find_file(int n_args, char **args) {
-    int key;
+    int       i;
+    int       key;
+    yed_line *line;
 
     if (!ys->interactive_command) {
         prg = yed_get_var("find-file-prg");
@@ -54,6 +57,22 @@ void find_file(int n_args, char **args) {
             return;
         }
         find_file_start();
+
+        if (n_args) {
+            for (i = 0; i < strlen(args[0]); i += 1) {
+                yed_cmd_line_readline_take_key(NULL, (int)args[0][i]);
+            }
+            array_zero_term(ys->cmd_buff);
+            find_file_run();
+            ys->interactive_command = NULL;
+            yed_clear_cmd_buff();
+            if (yed_buff_n_lines(get_or_make_buff()) == 1) {
+                line = yed_buff_get_line(get_or_make_buff(), 1);
+                if (line->visual_width) {
+                    find_file_select();
+                }
+            }
+        }
     } else {
         sscanf(args[0], "%d", &key);
         find_file_take_key(key);
@@ -74,33 +93,29 @@ void find_file_start(void) {
 void find_file_take_key(int key) {
     yed_line *line;
 
-    if (key == CTRL_C) {
-        ys->interactive_command = NULL;
-        ys->current_search      = NULL;
-        yed_clear_cmd_buff();
-        YEXE("special-buffer-prepare-unfocus", "*find-file-list");
-    } else if (key == ENTER) {
-        ys->interactive_command = NULL;
-        yed_clear_cmd_buff();
-        if (yed_buff_n_lines(get_or_make_buff()) == 1) {
-            line = yed_buff_get_line(get_or_make_buff(), 1);
-            if (line->visual_width) {
-                find_file_select();
+    switch (key) {
+        case ESC:
+        case CTRL_C:
+            ys->interactive_command = NULL;
+            ys->current_search      = NULL;
+            yed_clear_cmd_buff();
+            YEXE("special-buffer-prepare-unfocus", "*find-file-list");
+            break;
+        case ENTER:
+            ys->interactive_command = NULL;
+            yed_clear_cmd_buff();
+            if (yed_buff_n_lines(get_or_make_buff()) == 1) {
+                line = yed_buff_get_line(get_or_make_buff(), 1);
+                if (line->visual_width) {
+                    find_file_select();
+                }
             }
-        }
-    } else if (key == TAB) {
-        find_file_run();
-    } else {
-        if (key == BACKSPACE) {
-            if (array_len(ys->cmd_buff)) {
-                yed_cmd_buff_pop();
-            }
-        } else if (!iscntrl(key)) {
-            yed_cmd_buff_push(key);
-        }
-
-        array_zero_term(ys->cmd_buff);
-        find_file_run();
+            break;
+        default:
+            yed_cmd_line_readline_take_key(NULL, key);
+            array_zero_term(ys->cmd_buff);
+            find_file_run();
+            break;
     }
 }
 

@@ -156,6 +156,7 @@ int yed_load_plugin(char *plug_name) {
     plug->added_event_handlers = array_make(yed_event_handler);
     plug->added_styles         = array_make(char*);
     plug->added_fts            = array_make(char*);
+    plug->added_compls         = array_make(char*);
 
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
@@ -167,6 +168,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_event_handlers);
         array_free(plug->added_styles);
         array_free(plug->added_fts);
+        array_free(plug->added_compls);
         free(plug);
         return YED_PLUG_NO_BOOT;
     }
@@ -183,6 +185,7 @@ int yed_load_plugin(char *plug_name) {
         array_free(plug->added_event_handlers);
         array_free(plug->added_styles);
         array_free(plug->added_fts);
+        array_free(plug->added_compls);
         free(plug);
 
         if (err == YED_PLUG_VER_MIS) {
@@ -198,10 +201,13 @@ int yed_load_plugin(char *plug_name) {
 
 void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
-            yed_command)          cmd_it;
-    char                        **cmd_name_it, **style_name_it, **ft_name_it;
-    int                          *key_it;
-    yed_event_handler            *handler_it;
+            yed_command)             cmd_it;
+    char                           **cmd_name_it, **style_name_it, **ft_name_it;
+    int                             *key_it;
+    yed_event_handler               *handler_it;
+    tree_it(yed_completion_name_t,
+            yed_completion)          compl_it;
+    char                           **compl_name_it;
 
     array_traverse(plug->added_cmds, cmd_name_it) {
         yed_unset_command(*cmd_name_it);
@@ -243,6 +249,17 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
         yed_delete_ft(*ft_name_it);
     }
     array_free(plug->added_fts);
+
+    array_traverse(plug->added_compls, compl_name_it) {
+        yed_unset_completion(*compl_name_it);
+
+        /* If this is a default completion, restore it. */
+        compl_it = tree_lookup(ys->default_completions, *compl_name_it);
+        if (tree_it_good(compl_it)) {
+            yed_set_completion(tree_it_key(compl_it), tree_it_val(compl_it));
+        }
+    }
+    array_free(plug->added_compls);
 }
 
 int yed_unload_plugin(char *plug_name) {
@@ -459,6 +476,22 @@ void yed_add_plugin_dir(char *s) {
     s_dup = strdup(buff);
 
     array_insert(ys->plugin_dirs, 0, s_dup);
+}
+
+void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion compl) {
+    tree_it(yed_completion_name_t, yed_completion)  it;
+    char                                           *old_name, *name_dup;
+
+    it = tree_lookup(ys->completions, name);
+    if (tree_it_good(it)) {
+        old_name = tree_it_key(it);
+        tree_delete(ys->completions, name);
+        free(old_name);
+    }
+
+    name_dup = strdup(name);
+    tree_insert(ys->completions, strdup(name), compl);
+    array_push(plug->added_compls, name_dup);
 }
 
 void yed_plugin_set_unload_fn(yed_plugin *plug, yed_plugin_unload_fn_t fn) {

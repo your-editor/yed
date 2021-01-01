@@ -554,27 +554,25 @@ int ctags_find_start(char *start) {
 }
 
 void ctags_find_take_key(int key) {
-    if (key == CTRL_C) {
-        ys->interactive_command = NULL;
-        yed_clear_cmd_buff();
-        YEXE("special-buffer-prepare-unfocus", "*ctags-find-list");
-    } else if (key == ENTER) {
-        ys->interactive_command = NULL;
-        ys->active_frame->dirty = 1;
-        yed_clear_cmd_buff();
-        if (yed_buff_n_lines(get_or_make_buff()) == 1) {
-            ctag_find_select();
-        }
-    } else {
-        if (key == BACKSPACE) {
-            if (array_len(ys->cmd_buff)) {
-                yed_cmd_buff_pop();
+    switch (key) {
+        case ESC:
+        case CTRL_C:
+            ys->interactive_command = NULL;
+            yed_clear_cmd_buff();
+            YEXE("special-buffer-prepare-unfocus", "*ctags-find-list");
+            break;
+        case ENTER:
+            ys->interactive_command = NULL;
+            ys->active_frame->dirty = 1;
+            yed_clear_cmd_buff();
+            if (yed_buff_n_lines(get_or_make_buff()) == 1) {
+                ctag_find_select();
             }
-        } else if (!iscntrl(key)) {
-            yed_cmd_buff_push(key);
-        }
-
-        ctags_find_filter();
+            break;
+        default:
+            yed_cmd_line_readline_take_key(NULL, key);
+            ctags_find_filter();
+            break;
     }
 }
 

@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <dirent.h>
+#include <libgen.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -126,6 +128,8 @@ use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
 use_tree(yed_var_name_t, yed_var_val_t);
 use_tree(yed_style_name_t, yed_style_ptr_t);
 use_tree(str_t, empty_t);
+use_tree(yed_completion_name_t, yed_completion);
+use_tree(yed_ft_name_t, empty_t);
 #undef inline
 
 #include "array.h"
@@ -142,6 +146,8 @@ int mk_wcwidth(wchar_t ucs);
 #include "attrs.h"
 #include "frame.h"
 #include "log.h"
+#include "complete.h"
+#include "cmd_line.h"
 #include "command.h"
 #include "getRSS.h"
 #include "measure_time.h"
@@ -152,7 +158,6 @@ int mk_wcwidth(wchar_t ucs);
 #include "util.h"
 #include "style.h"
 #include "subproc.h"
-#include "complete.h"
 #include "direct_draw.h"
 #include "version.h"
 #include "print_backtrace.h"
@@ -201,13 +206,22 @@ typedef struct yed_state_t {
     char                        *save_search;
     int                          search_save_row,
                                  search_save_col;
+    array_t                      search_hist;
+    yed_cmd_line_readline_ptr_t  search_readline;
     array_t                      replace_save_lines;
     array_t                      replace_working_lines;
     array_t                      replace_markers;
     int                          replace_count;
+    yed_cmd_line_readline_ptr_t  replace_readline;
     array_t                      cmd_buff;
     int                          cmd_cursor_x;
-    array_t                      cmd_name_stack;
+    array_t                      cmd_prompt_hist;
+    yed_cmd_line_readline_ptr_t  cmd_prompt_readline;
+    yed_completion_results       cmd_prompt_compl_results;
+    int                          cmd_prompt_has_compl_results;
+    int                          cmd_prompt_compl_item;
+    int                          cmd_prompt_compl_start_idx;
+    int                          cmd_prompt_compl_string_len;
     int                          status;
     int                          tabw;
     int                          redraw;
@@ -248,6 +262,10 @@ typedef struct yed_state_t {
     int                          stopped;
     int                          has_resized;
     int                          new_term_cols, new_term_rows;
+    tree(yed_completion_name_t,
+         yed_completion)         completions;
+    tree(yed_completion_name_t,
+         yed_completion)         default_completions;
 } yed_state;
 
 extern yed_state *ys;

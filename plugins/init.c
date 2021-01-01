@@ -60,12 +60,12 @@ int yed_plugin_boot(yed_plugin *self) {
     YEXE("vimish-bind", "normal",    "spc r d",      "redraw");
     YEXE("vimish-bind", "normal",    "spc v s p",    "frame-vsplit");
     YEXE("vimish-bind", "normal",    "spc h s p",    "frame-hsplit");
-    YEXE("vimish-bind", "normal",    "spc b o",      "fill-command-prompt", "buffer");
+    YEXE("vimish-bind", "normal",    "spc b o",      "command-prompt", "buffer ");
     YEXE("vimish-bind", "normal",    "spc b d",      "buffer-delete");
     YEXE("vimish-bind", "normal",    "ctrl-n",       "buffer-next");
     YEXE("vimish-bind", "normal",    "ctrl-p",       "buffer-prev");
     YEXE("vimish-bind", "normal",    "M M",          "man-word");
-    YEXE("vimish-bind", "normal",    "L L",          "fill-command-prompt", "cursor-line");
+    YEXE("vimish-bind", "normal",    "L L",          "command-prompt", "cursor-line ");
     YEXE("vimish-bind", "normal",    "ctrl-l",       "frame-next");
     YEXE("vimish-bind", "normal",    "ctrl-h",       "frame-prev");
     YEXE("vimish-bind", "normal",    ">",            "indent");

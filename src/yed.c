@@ -253,6 +253,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_keys();
     yed_init_events();
     yed_init_search();
+    yed_init_completions();
 
     LOG_FN_ENTER();
 
