@@ -54,6 +54,7 @@ void yed_set_cursor_within_frame(yed_frame *frame, int dst_x, int dst_y);
 void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y);
 void yed_frame_reset_cursor(yed_frame *frame);
 void yed_frame_hard_reset_cursor_x(yed_frame *frame);
+void yed_frame_scroll_buffer(yed_frame *frame, int rows);
 void yed_update_frames(void);
 void yed_frame_update_dirty_line(yed_frame *frame);
 void yed_frame_update_cursor_line(yed_frame *frame);

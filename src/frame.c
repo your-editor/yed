@@ -1311,6 +1311,36 @@ void yed_frame_hard_reset_cursor_x(yed_frame *frame) {
     }
 }
 
+void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
+    int buff_n_lines;
+    int old_off;
+
+    if (frame         == NULL) { return; }
+    if (frame->buffer == NULL) { return; }
+    if (rows          == 0)    { return; }
+
+    buff_n_lines = bucket_array_len(frame->buffer->lines);
+
+    old_off = frame->buffer_y_offset;
+
+    if (rows > 0
+    &&  frame->cursor_line - frame->buffer_y_offset - 1 <= frame->scroll_off) {
+        yed_move_cursor_within_frame(frame, 0, rows);
+    } else if (rows < 0
+    &&         frame->buffer_y_offset + frame->height - frame->cursor_line <= frame->scroll_off) {
+        yed_move_cursor_within_frame(frame, 0, rows);
+    }
+
+    frame->buffer_y_offset += rows;
+    LIMIT(frame->buffer_y_offset, 0, buff_n_lines - 1);
+
+    if (frame->buffer_y_offset != old_off) {
+        yed_move_cursor_within_frame(frame, 0, -rows);
+
+        frame->dirty = 1;
+    }
+}
+
 void yed_move_cursor_within_active_frame(int col, int row) {
     if (ys->active_frame) {
         yed_move_cursor_within_frame(ys->active_frame, col, row);
