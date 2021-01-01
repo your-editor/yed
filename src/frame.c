@@ -1332,7 +1332,7 @@ void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
     }
 
     frame->buffer_y_offset += rows;
-    LIMIT(frame->buffer_y_offset, 0, buff_n_lines - 1);
+    LIMIT(frame->buffer_y_offset, 0, buff_n_lines - frame->height);
 
     if (frame->buffer_y_offset != old_off) {
         yed_move_cursor_within_frame(frame, 0, -rows);
