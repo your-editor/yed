@@ -15,6 +15,8 @@ int yed_get_tab_width(void);
 #define DEFAULT_SCROLL_OFF 5
 int yed_get_default_scroll_offset(void);
 
+#define DEFAULT_FILL_STRING "~"
+
 int yed_var_is_truthy(char *var);
 int yed_get_var_as_int(char *var, int *out);
 

@@ -706,10 +706,21 @@ again_gutter:
 }
 
 void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
+    char *fill_str;
+    int   fill_str_len;
     int i, j, n, run_len, run_start_n;
     yed_attrs base_attr;
     yed_attrs gut_attr;
+    char *fill_scomp;
+    int   fill_scomp_nr;
+    yed_attrs fill_attr_pre;
+    yed_attrs fill_attr;
     char *cell;
+
+    if ((fill_str = yed_get_var("fill-string")) == NULL) {
+        fill_str = DEFAULT_FILL_STRING;
+    }
+    fill_str_len = strlen(fill_str);
 
     if (frame == ys->active_frame) {
         base_attr = yed_active_style_get_active();
@@ -718,6 +729,24 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
         base_attr = yed_active_style_get_inactive();
         gut_attr  = yed_active_style_get_inactive_gutter();
     }
+
+    fill_scomp = yed_get_var("fill-scomp");
+    if (fill_scomp == NULL) {
+        fill_attr = base_attr;
+    } else {
+        fill_scomp_nr = yed_get_active_style_scomp_nr_by_name(fill_scomp);
+        if (fill_scomp_nr >= 0) {
+            fill_attr_pre = base_attr;
+            fill_attr = yed_get_active_style_scomp(fill_scomp_nr);
+            yed_combine_attrs(&fill_attr_pre, &fill_attr);
+            fill_attr = fill_attr_pre;
+        } else {
+            fill_attr = base_attr;
+        }
+    }
+
+    /* This isn't right.. it should be it's own style component. */
+    fill_attr = base_attr;
 
     yed_set_cursor(frame->left, frame->top + y_offset);
 
@@ -735,7 +764,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
         }
     }
 
-    yed_set_attr(base_attr);
+    yed_set_attr(fill_attr);
 
     for (i = 0; i < frame->height - y_offset; i += 1) {
         cell = FRAME_CELL(frame, y_offset + i, 0);
@@ -765,7 +794,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
         cell = FRAME_CELL(frame, y_offset + i, frame->gutter_width);
         if (!*cell) {
             yed_set_cursor(frame->left + frame->gutter_width, frame->top + y_offset + i);
-            append_n_to_output_buff("~", 1);
+            append_n_to_output_buff(fill_str, fill_str_len);
         }
     }
 

@@ -11,6 +11,7 @@ void yed_set_default_vars(void) {
     yed_set_var("enable-search-cursor-move", "yes");
     yed_set_var("default-scroll-offset",     XSTR(DEFAULT_SCROLL_OFF));
     yed_set_var("command-prompt-string",     DEFAULT_CMD_PROMPT_STRING);
+    yed_set_var("fill-string",               DEFAULT_FILL_STRING);
 }
 
 void yed_set_var(char *var, char *val) {
