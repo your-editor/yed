@@ -3807,6 +3807,10 @@ int yed_execute_command(char *name, int n_args, char **args) {
         yed_append_non_text_to_cmd_buff(TERM_RESET);
         yed_append_non_text_to_cmd_buff(TERM_CURSOR_HIDE);
 
+LOG_FN_ENTER();
+        yed_log("[!] unknown command '%s'", name);
+LOG_EXIT();
+
         return 1;
     }
 
