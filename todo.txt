@@ -15,7 +15,6 @@
 * regex support
     * use POSIX stuff for now; maybe write our own in the future
 * actually accurate vim emulation plugin (vym)
-* make style_picker use the new 'special-buffer-prepare-*' stuff
 * yedrc should be able to read multi-line strings with backslashed at the end
 * direct draws have a bug where if they are drawn over an area that doesn't have any content,
   then they don't get killed properly
