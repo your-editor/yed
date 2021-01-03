@@ -15,7 +15,6 @@
 * regex support
     * use POSIX stuff for now; maybe write our own in the future
 * actually accurate vim emulation plugin (vym)
-* yedrc should be able to read multi-line strings with backslashed at the end
 * direct draws have a bug where if they are drawn over an area that doesn't have any content,
   then they don't get killed properly
     * they get killed, but they don't get drawn over by anything else, so it looks like they stick around

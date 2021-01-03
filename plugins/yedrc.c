@@ -19,6 +19,9 @@ void yedrc_load(int n_args, char **args) {
     tree_it(yedrc_path_t, int)  it;
     FILE                       *f;
     char                        line[512];
+    char                        line_accum[4096];
+    char                       *bw_scan;
+    int                         bs_cont;
     array_t                     split;
 
     if (n_args != 1) {
@@ -56,12 +59,24 @@ void yedrc_load(int n_args, char **args) {
 
     tree_insert(loading, path, 1);
 
+    line_accum[0] = 0;
     while (fgets(line, sizeof(line), f)) {
-        split = sh_split(line);
-        if (array_len(split)) {
-            yed_execute_command_from_split(split);
+        strncat(line_accum, line, sizeof(line_accum) - strlen(line_accum) - 1);
+
+        bw_scan = line_accum + strlen(line_accum) - 1;
+        while (bw_scan >= line_accum && isspace(*bw_scan)) { bw_scan -= 1; }
+        bs_cont = *bw_scan == '\\';
+
+        if (bs_cont) {
+            *bw_scan = ' ';
+        } else {
+            split = sh_split(line_accum);
+            if (array_len(split)) {
+                yed_execute_command_from_split(split);
+            }
+            free_string_array(split);
+            line_accum[0] = 0;
         }
-        free_string_array(split);
     }
 
     tree_delete(loading, path);
