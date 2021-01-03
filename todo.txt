@@ -1,6 +1,3 @@
-* greedy key sequences reading instead of eager
-* compose key sequences
-    * seems like if you have greedy, you don't need to compose?
 * only "live" update replace visible lines
     * maybe this can be done in a line draw event handler
       where we change the contents?
