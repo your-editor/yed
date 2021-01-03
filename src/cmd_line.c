@@ -235,6 +235,7 @@ static char * yed_builtin_cmd_prompt_get_compl_string_from_context(void) {
     array_t split;
 
     compl_string_buff[0] = 0;
+
     if (array_len(ys->cmd_buff) == 0
     ||  (*(char*)array_last(ys->cmd_buff)) == ' ') {
         goto out;
@@ -245,7 +246,7 @@ static char * yed_builtin_cmd_prompt_get_compl_string_from_context(void) {
 
     if (array_len(split) == 0) { goto out_free; }
 
-    strncat(compl_string_buff, *(char**)array_last(split), sizeof(compl_string_buff));
+    strncpy(compl_string_buff, *(char**)array_last(split), sizeof(compl_string_buff));
 
 out_free:;
     free_string_array(split);
