@@ -1,6 +1,11 @@
 # install.options
 
-prefix=/usr # typical system install
+if [ "$(uname)" == "Darwin" ]; then
+    prefix=/usr/local # typical macOS system install
+else
+    prefix=/usr # typical linux system install
+fi
+
 # prefix=~/.local # typical local user install
 
 lib_dir=${prefix}/lib
