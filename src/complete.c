@@ -181,7 +181,8 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
 out:;
-    tree_traverse(t, it) {
+    while (tree_len(t)) {
+        it  = tree_begin(t);
         key = tree_it_key(it);
         tree_delete(t, key);
         free(key);
@@ -265,11 +266,12 @@ static int yed_default_completion_words(char *string, yed_completion_results *re
 
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
-    tree_traverse(t, it) {
-        key = tree_it_key(it);
-        tree_delete(t, key);
-        free(key);
-    }
+    while (tree_len(t)) {                                                 \
+        it  = tree_begin(t);                                            \
+        key = tree_it_key(it);                                          \
+        tree_delete(t, key);                                            \
+        free(key);                                                        \
+    }                                                                       \
     tree_free(t);
 
     return status;
@@ -491,12 +493,12 @@ int yed_complete_multiple(int n, char **compl_names, char *string, yed_completio
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
 out:;
-    tree_traverse(t, it) {
+    while (tree_len(t)) {
+        it  = tree_begin(t);
         key = tree_it_key(it);
         tree_delete(t, key);
         free(key);
     }
-    tree_free(t);
 
     return status;
 }

@@ -1,1 +1,6 @@
-
+* On macOS, there's a weird bug that causes a crash when yed is run in a
+  directory that has a libyed.so file in it.
+    * I think what is happening is that dyld is preferring the version of
+      libyed.so in the cwd over the one that gets resolved with yed's rpath.
+    * Not sure how to fix it... we could do some nasty hack in the driver,
+      but that doesn't sound very nice.

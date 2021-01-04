@@ -11,7 +11,6 @@ use_tree(ctags_str_t, int);
 #define TAG_KIND_TYPE       (2)
 #define TAG_KIND_ENUMERATOR (3)
 
-static char             prompt_buff[512];
 
 int                     gen_thread_started;
 int                     gen_thread_finished;
@@ -435,18 +434,6 @@ void ctags_gen(int n_args, char **args) {
     pthread_create(&p, NULL, ctags_gen_thread, strdup(cmd_buff));
 }
 
-void ctags_find_set_prompt(char *p, char *attr) {
-    prompt_buff[0] = 0;
-
-    strcat(prompt_buff, p);
-
-    if (attr) {
-        strcat(prompt_buff, attr);
-    }
-
-    ys->cmd_prompt = prompt_buff;
-}
-
 void ctags_find_filter(void) {
     char      *tag_start;
     char       cmd_buff[1024];
@@ -534,7 +521,7 @@ int ctags_find_start(char *start) {
     int i;
 
     ys->interactive_command = "ctags-find";
-    ctags_find_set_prompt("(ctags-find) ", NULL);
+    ys->cmd_prompt          = "(ctags-find) ";
 
     yed_buff_clear_no_undo(get_or_make_buff());
     YEXE("special-buffer-prepare-focus", "*ctags-find-list");

@@ -71,7 +71,8 @@ for (_i_ = 0; _i_ < (_n); _i_ += 1) {                                   \
                                                                         \
 FN_BODY_FOR_COMPLETE_FROM_TREE((_str), (_t_), (_it_), (_res), (_stat)); \
                                                                         \
-tree_traverse(_t_, _it_) {                                              \
+while (tree_len(_t_)) {                                                 \
+    _it_  = tree_begin(_t_);                                            \
     _key_ = tree_it_key(_it_);                                          \
     tree_delete(_t_, _key_);                                            \
     free(_key_);                                                        \

@@ -5,7 +5,6 @@ void find_file_start(void);
 void find_file_take_key(int key);
 void find_file_run(void);
 void find_file_select(void);
-void find_file_set_prompt(char *p, char *attr);
 
 void find_file_key_pressed_handler(yed_event *event);
 
@@ -23,7 +22,6 @@ yed_buffer *get_or_make_buff(void) {
 }
 
 static char *prg;
-static char  prompt_buff[256];
 
 int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler h;
@@ -81,7 +79,7 @@ void find_file(int n_args, char **args) {
 
 void find_file_start(void) {
     ys->interactive_command = "find-file";
-    find_file_set_prompt("(find-file) ", NULL);
+    ys->cmd_prompt          = "(find-file) ";
 
     yed_buff_clear_no_undo(get_or_make_buff());
     YEXE("special-buffer-prepare-focus", "*find-file-list");
@@ -121,12 +119,8 @@ void find_file_take_key(int key) {
 
 void find_file_run(void) {
     char       cmd_buff[1024];
-    yed_attrs  attr_cmd, attr_attn;
-    char       attr_buff[128];
     char      *pattern;
     int        len, status;
-
-    find_file_set_prompt("(find-file) ", NULL);
 
     cmd_buff[0] = 0;
     pattern     = array_data(ys->cmd_buff);
@@ -140,17 +134,10 @@ void find_file_run(void) {
     strcat(cmd_buff, " 2>/dev/null");
 
     if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
-        goto err;
+        goto empty;
     }
 
     if (status != 0) {
-err:;
-        attr_cmd    = yed_active_style_get_command_line();
-        attr_attn   = yed_active_style_get_attention();
-        attr_cmd.fg = attr_attn.fg;
-        yed_get_attr_str(attr_cmd, attr_buff);
-
-        find_file_set_prompt("(find-file) ", attr_buff);
 empty:;
         yed_buff_clear_no_undo(get_or_make_buff());
     }
@@ -193,16 +180,4 @@ void find_file_key_pressed_handler(yed_event *event) {
     find_file_select();
 
     event->cancel = 1;
-}
-
-void find_file_set_prompt(char *p, char *attr) {
-    prompt_buff[0] = 0;
-
-    strcat(prompt_buff, p);
-
-    if (attr) {
-        strcat(prompt_buff, attr);
-    }
-
-    ys->cmd_prompt = prompt_buff;
 }

@@ -54,13 +54,14 @@ static void yed_cmd_line_readline_hist_next(yed_cmd_line_readline *rdline) {
 }
 
 int yed_cmd_line_readline_take_key(yed_cmd_line_readline *rdline, int key) {
-    int len;
-    int prompt_len;
+    int width;
+    int prompt_width;
     int cursor_idx;
 
-    len        = array_len(ys->cmd_buff);
-    prompt_len = strlen(ys->cmd_prompt);
-    cursor_idx = ys->cmd_cursor_x - prompt_len - 1;
+    array_zero_term(ys->cmd_buff);
+    width        = yed_get_string_width(array_data(ys->cmd_buff));
+    prompt_width = yed_get_string_width(ys->cmd_prompt);
+    cursor_idx   = ys->cmd_cursor_x - prompt_width - 1;
 
     switch (key) {
         case ARROW_UP:
@@ -71,30 +72,30 @@ int yed_cmd_line_readline_take_key(yed_cmd_line_readline *rdline, int key) {
             break;
 
         case ARROW_LEFT:
-            if (ys->cmd_cursor_x > prompt_len + 1) {
+            if (ys->cmd_cursor_x > prompt_width + 1) {
                 ys->cmd_cursor_x -= 1;
             }
             break;
         case ARROW_RIGHT:
-            if (ys->cmd_cursor_x < prompt_len + len + 1) {
+            if (ys->cmd_cursor_x < prompt_width + width + 1) {
                 ys->cmd_cursor_x += 1;
             }
             break;
         case HOME_KEY:
         case CTRL_A:
-            ys->cmd_cursor_x = 1 + prompt_len;
+            ys->cmd_cursor_x = 1 + prompt_width;
             break;
         case END_KEY:
         case CTRL_E:
-            ys->cmd_cursor_x = 1 + prompt_len + len;
+            ys->cmd_cursor_x = 1 + prompt_width + width;
             break;
         case BACKSPACE:
-            if (len && cursor_idx > 0) {
+            if (width && cursor_idx > 0) {
                 yed_cmd_buff_delete(cursor_idx - 1);
             }
             break;
         case DEL_KEY:
-            if (len && cursor_idx < len) {
+            if (width && cursor_idx < width) {
                 yed_cmd_buff_delete(cursor_idx);
                 ys->cmd_cursor_x += 1;
             }

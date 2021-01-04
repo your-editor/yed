@@ -6,7 +6,6 @@ void grep_cleanup(void);
 void grep_take_key(int key);
 void grep_run(void);
 void grep_select(void);
-void grep_set_prompt(char *p, char *attr);
 
 void grep_key_pressed_handler(yed_event *event);
 
@@ -24,7 +23,6 @@ yed_buffer *get_or_make_buff(void) {
 }
 
 static char *prg;
-static char  prompt_buff[256];
 static char *save_current_search;
 
 int yed_plugin_boot(yed_plugin *self) {
@@ -77,7 +75,7 @@ void grep_cleanup(void) {
 
 void grep_start(void) {
     ys->interactive_command = "grep";
-    grep_set_prompt("(grep) ", NULL);
+    ys->cmd_prompt          = "(grep) ";
     save_current_search = ys->current_search;
 
     yed_buff_clear_no_undo(get_or_make_buff());
@@ -112,12 +110,8 @@ void grep_take_key(int key) {
 
 void grep_run(void) {
     char       cmd_buff[1024];
-    yed_attrs  attr_cmd, attr_attn;
-    char       attr_buff[128];
     char      *pattern;
     int        len, status;
-
-    grep_set_prompt("(grep) ", NULL);
 
     array_zero_term(ys->cmd_buff);
 
@@ -134,17 +128,10 @@ void grep_run(void) {
     strcat(cmd_buff, " 2>/dev/null");
 
     if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
-        goto err;
+        goto empty;
     }
 
     if (status != 0) {
-err:;
-        attr_cmd    = yed_active_style_get_command_line();
-        attr_attn   = yed_active_style_get_attention();
-        attr_cmd.fg = attr_attn.fg;
-        yed_get_attr_str(attr_cmd, attr_buff);
-
-        grep_set_prompt("(grep) ", attr_buff);
 empty:;
         yed_buff_clear_no_undo(get_or_make_buff());
     }
@@ -203,16 +190,4 @@ void grep_key_pressed_handler(yed_event *event) {
     grep_select();
 
     event->cancel = 1;
-}
-
-void grep_set_prompt(char *p, char *attr) {
-    prompt_buff[0] = 0;
-
-    strcat(prompt_buff, p);
-
-    if (attr) {
-        strcat(prompt_buff, attr);
-    }
-
-    ys->cmd_prompt = prompt_buff;
 }
