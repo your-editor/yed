@@ -51,6 +51,7 @@ fi
 
 export cfg=${cfg}
 
+mkdir -p lib
 make all -j$(corecount) || exit 1
 
 if [ "${strip}x" = "yesx" ]; then

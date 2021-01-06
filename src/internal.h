@@ -40,6 +40,17 @@
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 
+typedef struct __attribute__((__packed__)) {
+    char path[4096];
+    char id[32];
+} _path_patch_guide;
+
+extern _path_patch_guide _path_patch_guide_default_plug_dir;
+extern _path_patch_guide _path_patch_guide_installed_lib_dir;
+
+#define DEFAULT_PLUG_DIR  (_path_patch_guide_default_plug_dir.path)
+#define INSTALLED_LIB_DIR (_path_patch_guide_installed_lib_dir.path)
+
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
 #define ASSERT(cond, msg)                            \

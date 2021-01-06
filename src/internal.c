@@ -1,3 +1,23 @@
+/*
+ * This memory is overwritten by a sneaky dd in install.sh
+ */
+
+__attribute__((used))
+_path_patch_guide
+_path_patch_guide_default_plug_dir = {
+    {},
+    /* rot13 of "default_plug_dir" */
+    {'q', 'r', 's', 'n', 'h', 'y', 'g', '_', 'c', 'y', 'h', 't', '_', 'q', 'v', 'e'}
+};
+
+__attribute__((used))
+_path_patch_guide
+_path_patch_guide_installed_lib_dir = {
+    {},
+    /* rot13 of "installed_lib_dir" */
+    {'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'y', 'v', 'o', '_', 'q', 'v', 'e'}
+};
+
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
@@ -420,7 +440,6 @@ int s_to_i(const char *s) {
 #include "getRSS.c"
 #include "measure_time.c"
 #include "event.c"
-#include "default_plug_dir.c"
 #include "plugin.c"
 #include "boyer_moore.c"
 #include "find.c"

@@ -6,6 +6,26 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+typedef struct __attribute__((__packed__)) {
+    char path[4096];
+    char id[32];
+} _path_patch_guide;
+
+/*
+ * This memory is overwritten by a sneaky dd in install.sh
+ */
+__attribute__((used))
+_path_patch_guide
+_path_patch_guide_installed_lib_dir = {
+    {},
+    /* rot13 of "installed_lib_dir" */
+    {'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'y', 'v', 'o', '_', 'q', 'v', 'e'}
+};
+
+#define INSTALLED_LIB_DIR (_path_patch_guide_installed_lib_dir.path)
+
+char lib_path[4096];
+
 static yed_lib_t           yed_lib;
 static struct yed_state_t *state;
 
@@ -14,6 +34,12 @@ void call_yed_fini(void);
 
 int main(int argc, char **argv) {
     int status;
+
+    if (strlen(INSTALLED_LIB_DIR)) {
+        strcat(lib_path, INSTALLED_LIB_DIR);
+        strcat(lib_path, "/");
+    }
+    strcat(lib_path, "libyed.so");
 
     if (load_yed_lib() != 0) {
         return 1;
@@ -60,7 +86,7 @@ void call_yed_fini(void)    { yed_lib._fini(state); }
 void force_yed_unload(void *handle) {
     void *try_handle;
 
-    while ((try_handle = dlopen("libyed.so", RTLD_NOW | RTLD_NOLOAD))) {
+    while ((try_handle = dlopen(lib_path, RTLD_NOW | RTLD_NOLOAD))) {
         dlclose(try_handle);
         dlclose(handle);
     }
@@ -79,7 +105,7 @@ int load_yed_lib(void) {
         force_yed_unload(yed_lib.handle);
     }
 
-    yed_lib.handle = dlopen("libyed.so", RTLD_NOW | RTLD_LOCAL);
+    yed_lib.handle = dlopen(lib_path, RTLD_NOW | RTLD_LOCAL);
 
     if (yed_lib.handle == NULL) {
         printf("[yed]! could not load 'libyed.so'\n%s\n", dlerror());
