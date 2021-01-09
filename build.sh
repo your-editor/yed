@@ -21,7 +21,7 @@ export CC=${CC}
 export LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
 export DRIVER_C_FLAGS="-ldl -lm -lpthread -Wl,${DTAGS},-rpath,${lib_dir}"
 export _YEDVER_C_FLAGS="-lyed -Wl,${DTAGS},-rpath,${lib_dir}"
-export PLUGIN_C_FLAGS="-shared -fPIC -I${DIR}/include -L${DIR} -lyed"
+export PLUGIN_C_FLAGS="-shared -fPIC -I${DIR}/include -L${DIR}/lib -lyed"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
