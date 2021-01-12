@@ -297,6 +297,12 @@ static void yed_builtin_cmd_prompt_do_compl_fwd(void) {
     yed_append_text_to_cmd_buff(
           *(char**)array_item(*strings, ys->cmd_prompt_compl_item - 1)
         + ys->cmd_prompt_compl_string_len);
+
+    if (ys->cmd_prompt_has_compl_results
+    &&  ys->cmd_prompt_compl_item == 1
+    &&  array_len(*strings) == 1) {
+        yed_builtin_cmd_prompt_compl_cleanup();
+    }
 }
 
 static void yed_builtin_cmd_prompt_do_compl_bwd(void) {
@@ -341,6 +347,12 @@ static void yed_builtin_cmd_prompt_do_compl_bwd(void) {
     yed_append_text_to_cmd_buff(
           *(char**)array_item(*strings, ys->cmd_prompt_compl_item - 1)
         + ys->cmd_prompt_compl_string_len);
+
+    if (ys->cmd_prompt_has_compl_results
+    &&  ys->cmd_prompt_compl_item == 1
+    &&  array_len(*strings) == 1) {
+        yed_builtin_cmd_prompt_compl_cleanup();
+    }
 }
 
 void yed_builtin_cmd_prompt_take_key(int key) {

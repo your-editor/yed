@@ -136,6 +136,9 @@ static int yed_default_completion_plugins(char *string, yed_completion_results *
 }
 
 static int yed_default_completion_files(char *string, yed_completion_results *results) {
+    char                    *orig;
+    int                      expanded;
+    char                     expanded_path[4096];
     char                    *cpy;
     char                    *dirn;
     tree(str_t, empty_t)     t;
@@ -143,20 +146,36 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
     DIR                     *dir;
     struct dirent           *dent;
     char                     full_path[4096];
+    char                     homeified_path[4096];
     tree_it(str_t, empty_t)  it;
     char                    *key;
     int                      status;
 
-    cpy  = strdup(string);
-    dirn = dirname(cpy);
-    t    = tree_make_c(str_t, empty_t, strcmp);
+    if (strcmp(string, "~") == 0) {
+        array_clear(results->strings);
+        cpy = strdup("~/");
+        array_push(results->strings, cpy);
+        return COMPL_ERR_NO_ERR;
+    }
 
-    if (string[strlen(string) - 1] == '/') {
-        strcpy(dir_path_buff, string);
-        if (strlen(string) > 1) {
-            dir_path_buff[strlen(dir_path_buff) - 1] = 0;
+    orig = string;
+    expand_path(string, expanded_path);
+    expanded = !!strcmp(string, expanded_path);
+    if (expanded) {
+        string = expanded_path;
+    }
+    cpy    = strdup(string);
+    dirn   = dirname(cpy);
+    t      = tree_make_c(str_t, empty_t, strcmp);
+
+    if (strlen(string) > 0) {
+        if (string[strlen(string) - 1] == '/') {
+            strcpy(dir_path_buff, string);
+            if (strlen(string) > 1) {
+                dir_path_buff[strlen(dir_path_buff) - 1] = 0;
+            }
+            dirn = dir_path_buff;
         }
-        dirn = dir_path_buff;
     }
 
     if ((dir = opendir(dirn)) == NULL) { goto out; }
@@ -175,9 +194,17 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
             }
         }
         strcat(full_path, dent->d_name);
-        tree_insert(t, strdup(full_path), (empty_t){});
+
+        if (expanded) {
+            if (homeify_path(full_path, homeified_path) != NULL) {
+                tree_insert(t, strdup(homeified_path), (empty_t){});
+            }
+        } else {
+            tree_insert(t, strdup(full_path), (empty_t){});
+        }
     }
 
+    string = orig;
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
 out:;
