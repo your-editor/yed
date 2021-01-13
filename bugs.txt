@@ -4,3 +4,5 @@
       libyed.so in the cwd over the one that gets resolved with yed's rpath.
     * Not sure how to fix it... we could do some nasty hack in the driver,
       but that doesn't sound very nice.
+* If a plugin is running any additional threads, yed will crash on reload because
+  pthreads loses the code it's supposed to be running
