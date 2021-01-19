@@ -81,6 +81,38 @@ int esc_sequence(int *input) {
                         return 6;
                     }
                     return 5;
+                } else if (c == '5') {
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN5;
+                        return 1;
+                    }
+                    return 5;
+                } else if (c == '7') {
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN6;
+                        return 1;
+                    }
+                    return 5;
+                } else if (c == '8') {
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN7;
+                        return 1;
+                    }
+                    return 5;
+                } else if (c == '9') {
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN8;
+                        return 1;
+                    }
+                    return 5;
                 }
                 return 4;
             } else if (input[2] == '2') {
@@ -90,7 +122,10 @@ int esc_sequence(int *input) {
                     if (read(0, &c, 1) == 0) { return 4; }
                     input[4] = c;
 
-                    if (c == '0') {
+                    if (c == '~') {
+                        input[0] = FN9;
+                        return 1;
+                    } else if (c == '0') {
                         if (read(0, &c, 1) == 0) { return 5; }
                         input[5] = c;
                         if (c == '~') { input[0] = _BRACKETED_PASTE_BEGIN; return 1; }
@@ -102,7 +137,35 @@ int esc_sequence(int *input) {
                         return 6;
                     }
                     return 5;
+                } else if (c == '1') {
+                    input[3] = c;
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN10;
+                        return 1;
+                    }
+                    return 5;
+                } else if (c == '3') {
+                    input[3] = c;
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN11;
+                        return 1;
+                    }
+                    return 5;
+                } else if (c == '4') {
+                    input[3] = c;
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '~') {
+                        input[0] = FN12;
+                        return 1;
+                    }
+                    return 5;
                 } else if (c == '7') {
+                    input[3] = c;
                     if (read(0, &c, 1) == 0) { return 4; }
                     input[4] = c;
                     if (c == ';') {
@@ -209,6 +272,10 @@ int esc_sequence(int *input) {
             case 'B':    { input[0] = ARROW_DOWN; break; }
             case 'H':    { input[0] = HOME_KEY;   break; }
             case 'F':    { input[0] = END_KEY;    break; }
+            case 'P':    { input[0] = FN1;        break; }
+            case 'Q':    { input[0] = FN2;        break; }
+            case 'R':    { input[0] = FN3;        break; }
+            case 'S':    { input[0] = FN4;        break; }
         }
         return 1;
     }
@@ -838,6 +905,7 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
     int   key_i;
     int   meta;
     int   meta_result;
+    int   fn_nr;
 
     str_dup = strdup(str);
     key_str = str_dup;
@@ -864,6 +932,7 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
 
         key_c = key_i = -1;
         meta  = 0;
+        fn_nr = -1;
 
         if (strlen(key_str) == 1) {
             sscanf(key_str, "%c", &key_c);
@@ -922,6 +991,12 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
 
             key_ptr += meta_result;
             n_keys  += meta_result;
+        } else if (sscanf(key_str, "fn-%d", &fn_nr)) {
+            if (fn_nr != -1) {
+                if (fn_nr > 0 && fn_nr < 13) {
+                    key_i = FN1 + (fn_nr - 1);
+                }
+            }
         }
 
         if (key_i == -1) {
