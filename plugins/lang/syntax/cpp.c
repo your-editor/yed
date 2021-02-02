@@ -36,7 +36,7 @@ int yed_plugin_boot(yed_plugin *self) {
     };
     char              *pp_kwds[] = {
         "define",
-        "else", "endif", "error",
+        "elif", "else", "endif", "error",
         "if", "ifdef", "ifndef", "include",
         "message",
         "pragma",
