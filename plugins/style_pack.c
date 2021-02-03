@@ -30,6 +30,7 @@
 #include "styles/bullet.c"
 #include "styles/mrjantz.c"
 #include "styles/elly.c"
+#include "styles/river.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
@@ -63,6 +64,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, bullet);
     PACK_STYLE(self, mrjantz);
     PACK_STYLE(self, elly);
+    PACK_STYLE(self, river);
 
     return 0;
 }
