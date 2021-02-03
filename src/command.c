@@ -3204,7 +3204,7 @@ void yed_default_command_find_prev_in_buffer(int n_args, char **args) {
     }
 }
 
-void yed_replace_current_search_update_line(int idx, int row) {
+void yed_replace_current_search_update_line(int idx, int row, int final) {
     char       *replacement;
     int         i, len, it,
                *mark;
@@ -3218,7 +3218,11 @@ void yed_replace_current_search_update_line(int idx, int row) {
 
     working_line = *(yed_line**)array_item(ys->replace_working_lines, idx);
     line         = yed_copy_line(working_line);
-    yed_buff_set_line(buff, row, line);
+    if (final) {
+        yed_buff_set_line(buff, row, line);
+    } else {
+        yed_buff_set_line_no_undo(buff, row, line);
+    }
     line = NULL;
 
     replacement = array_data(ys->cmd_buff);
@@ -3228,15 +3232,21 @@ void yed_replace_current_search_update_line(int idx, int row) {
     it = 0;
     array_traverse(*markers, mark) {
         for (i = len - 1; i >= 0; i -= 1) {
-            g.c = replacement[i];
-            yed_insert_into_line(buff, row, *mark + (it * len), g);
+            g = G(replacement[i]);
+            if (final) {
+                yed_insert_into_line(buff, row, *mark + (it * len), g);
+            } else {
+                yed_insert_into_line_no_undo(buff, row, *mark + (it * len), g);
+            }
         }
         it += 1;
     }
 }
 
-void yed_replace_current_search_update(void) {
+void yed_replace_current_search_update(int final) {
     int row, r1, c1, r2, c2, i;
+
+    array_zero_term(ys->cmd_buff);
 
     if (ys->active_frame->buffer->has_selection) {
         yed_range_sorted_points(&ys->active_frame->buffer->selection,
@@ -3248,7 +3258,7 @@ void yed_replace_current_search_update(void) {
 
     i = 0;
     for (row = r1; row <= r2; row += 1) {
-        yed_replace_current_search_update_line(i, row);
+        yed_replace_current_search_update_line(i, row, final);
         i += 1;
     }
 }
@@ -3303,7 +3313,7 @@ void yed_replace_current_search_take_key(int key) {
             yed_cancel_undo_record(ys->active_frame, ys->active_frame->buffer);
             break;
         case ENTER:
-            yed_replace_current_search_update();
+            yed_replace_current_search_update(1);
 
             replace_free();
             yed_end_undo_record(ys->active_frame, ys->active_frame->buffer);
@@ -3328,8 +3338,7 @@ void yed_replace_current_search_take_key(int key) {
             break;
         default:
             yed_cmd_line_readline_take_key(NULL, key);
-            array_zero_term(ys->cmd_buff);
-            yed_replace_current_search_update();
+            yed_replace_current_search_update(0);
             ys->active_frame->dirty = 1;
             break;
     }
@@ -3351,6 +3360,7 @@ void replace_add_line(yed_buffer *buff, int row, int len) {
 
     while (1) {
         yed_line_glyph_traverse(*line, git) {
+            if (((void*)git) + len - 1 > array_last(line->chars)) { break; }
             if (strncmp(&git->c, ys->current_search, len) == 0) {
                 idx = ((void*)git - line->chars.data);
                 col = yed_line_idx_to_col(line, idx);
@@ -3407,7 +3417,7 @@ void yed_start_replace_current_search(void) {
 
     yed_clear_cmd_buff();
 
-    yed_replace_current_search_update();
+    yed_replace_current_search_update(0);
 }
 
 void yed_default_command_replace_current_search(int n_args, char **args) {

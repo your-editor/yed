@@ -620,6 +620,7 @@ yed_glyph * yed_line_col_to_glyph(yed_line *line, int col) {
 }
 
 yed_glyph * yed_line_last_glyph(yed_line *line) {
+    if (line->visual_width == 0) { return NULL; }
     return yed_line_col_to_glyph(line, line->visual_width);
 }
 
