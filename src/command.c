@@ -1354,6 +1354,10 @@ void yed_default_command_buffer(int n_args, char **args) {
                     buffer->path = strdup(path);
                     buffer->kind = BUFF_KIND_FILE;
                     yed_buffer_set_ft(buffer, FT_UNKNOWN);
+
+                    event.buffer_is_new_file = 1;
+                } else {
+                    event.buffer_is_new_file = 0;
                 }
 
                 event.kind = EVENT_BUFFER_POST_LOAD;

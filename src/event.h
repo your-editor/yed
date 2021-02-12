@@ -43,6 +43,7 @@ typedef struct {
     char             *glyph;
     int               cancel;
     char             *path;
+    int               buffer_is_new_file;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);
