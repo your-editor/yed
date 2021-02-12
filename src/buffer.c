@@ -236,6 +236,46 @@ void yed_buffer_set_ft(yed_buffer *buffer, int ft) {
 
 
 
+void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, int col) {
+    yed_glyph *g;
+    yed_line  *line;
+    yed_glyph *line_last_glyph;
+
+    if (strlen(str) == 0) { return; }
+
+    if (row <= 0) { row = 1; }
+    if (col <= 0) { col = 1; }
+
+    while (yed_buff_n_lines(buff) < row) {
+        yed_buffer_add_line_no_undo(buff);
+    }
+
+    line = yed_buff_get_line(buff, row);
+    while (line->visual_width < col - 1) {
+        yed_append_to_line_no_undo(buff, row, G(' '));
+    }
+
+    while (*str) {
+        g = (yed_glyph*)(void*)str;
+
+        if (g->c == '\n') {
+            line = yed_buff_get_line(buff, row);
+            yed_buff_insert_line_no_undo(buff, row + 1);
+            while (line->visual_width > col - 1) {
+                line_last_glyph = yed_line_last_glyph(line);
+                yed_insert_into_line_no_undo(buff, row + 1, 1, *line_last_glyph);
+                yed_pop_from_line_no_undo(buff, row);
+            }
+            row += 1;
+            col  = 1;
+        } else if (!G_IS_ASCII(*g) || isprint(g->c)) {
+            yed_insert_into_line_no_undo(buff, row, col, *g);
+            col += yed_get_glyph_width(*g);
+        }
+
+        str += yed_get_glyph_len(*g);
+    }
+}
 
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g) {
     yed_line *line;
@@ -365,6 +405,73 @@ void yed_buff_clear_no_undo(yed_buffer *buff) {
  * else should modify buffers.
  * This is meant to preserve undo/redo behavior.
  */
+
+void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col) {
+    yed_frame  *frame;
+    yed_frame **fit;
+    int         num_orig_undo_records;
+    yed_glyph  *g;
+    yed_line   *line;
+    yed_glyph  *line_last_glyph;
+
+    if (strlen(str) == 0) { return; }
+
+    if (row <= 0) { row = 1; }
+    if (col <= 0) { col = 1; }
+
+    /* Can we find a good frame? */
+    frame = NULL;
+    if (ys->active_frame && ys->active_frame->buffer == buff) {
+        frame = ys->active_frame;
+    } else {
+        array_traverse(ys->frames, fit) {
+            if ((*fit)->buffer == buff) {
+                frame = *fit;
+                break;
+            }
+        }
+    }
+
+    yed_start_undo_record(frame, buff);
+
+    num_orig_undo_records = yed_get_undo_num_records(buff);
+
+    while (yed_buff_n_lines(buff) < row) {
+        yed_buffer_add_line(buff);
+    }
+
+    line = yed_buff_get_line(buff, row);
+    while (line->visual_width < col - 1) {
+        yed_append_to_line(buff, row, G(' '));
+    }
+
+    while (*str) {
+        g = (yed_glyph*)(void*)str;
+
+        if (g->c == '\n') {
+            line = yed_buff_get_line(buff, row);
+            yed_buff_insert_line(buff, row + 1);
+            while (line->visual_width > col - 1) {
+                line_last_glyph = yed_line_last_glyph(line);
+                yed_insert_into_line(buff, row + 1, 1, *line_last_glyph);
+                yed_pop_from_line(buff, row);
+            }
+            row += 1;
+            col  = 1;
+        } else if (!G_IS_ASCII(*g) || isprint(g->c)) {
+            yed_insert_into_line(buff, row, col, *g);
+            col += yed_get_glyph_width(*g);
+        }
+
+        str += yed_get_glyph_len(*g);
+    }
+
+    yed_end_undo_record(frame, buff);
+
+    while (yed_get_undo_num_records(buff) > num_orig_undo_records) {
+        yed_merge_undo_records(buff);
+    }
+}
 
 void yed_append_to_line(yed_buffer *buff, int row, yed_glyph g) {
     yed_undo_action uact;

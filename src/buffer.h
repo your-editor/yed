@@ -78,6 +78,7 @@ yed_glyph * yed_line_last_glyph(yed_line *line);
 int yed_line_normalize_col(yed_line *line, int col);
 yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col);
 
+void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, int col);
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g);
 void yed_pop_from_line_no_undo(yed_buffer *buff, int row);
 void yed_line_clear_no_undo(yed_buffer *buff, int row);
@@ -93,6 +94,7 @@ void yed_buff_clear_no_undo(yed_buffer *buff);
  * else should modify buffers.
  * This is meant to preserve undo/redo behavior.
  */
+void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col);
 void yed_append_to_line(yed_buffer *buff, int row, yed_glyph g);
 void yed_pop_from_line(yed_buffer *buff, int row);
 void yed_line_clear(yed_buffer *buff, int row);
