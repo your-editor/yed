@@ -21,6 +21,16 @@ mkdir -p ${prefix} || exit 1
 mkdir -p ${bin_dir} || exit 1
 cp _yed ${bin_dir}/yed.new || exit 1
 mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
+
+if [ $(uname) = "Linux" ]; then
+    if which patchelf >/dev/null 2>&1; then
+        patchelf --set-rpath ${lib_dir} ${bin_dir}/yed || exit 1
+    else
+        echo "install.sh: [WARN] no patchelf executable found -- be careful with non-standard lib paths."
+        echo "install.sh:        (you may have to set LD_LIBRARY_PATH)"
+    fi
+fi
+
 echo "Installed 'yed':                 ${bin_dir}"
 # Patch installed_lib_dir in driver
 patch_offset=$(strings -t d ${bin_dir}/yed | grep vafgnyyrq_yvo_qve | awk '{ print $1 - 4096; }')
