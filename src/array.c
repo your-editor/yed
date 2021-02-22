@@ -168,7 +168,6 @@ void _array_zero_term(array_t *array) {
 }
 
 void _array_copy(array_t *dst, array_t *src) {
-    dst->data = NULL;
     _array_grow_if_needed_to(dst, src->used);
 
     dst->used = src->used;
