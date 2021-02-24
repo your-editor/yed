@@ -39,6 +39,8 @@ int yed_get_ft(char *name) {
     int    idx;
     char **it;
 
+    if (name == NULL) { return FT_ERR_NOT_FOUND; }
+
     idx = 0;
     array_traverse(ys->ft_array, it) {
         if (strcmp(*it, name) == 0) {
