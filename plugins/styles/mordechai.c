@@ -93,7 +93,7 @@ PACKABLE_STYLE(mordechai) {
     s.code_number.flags  = attr_kind;
     s.code_number.fg     = color_num;
 
-    s.code_constant      = s.code_preprocessor;
+    s.code_constant      = s.code_number;
     s.code_string.fg     = color_str;
     s.code_character.fg  = color_str;
 
