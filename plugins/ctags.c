@@ -160,6 +160,8 @@ LOG_FN_ENTER();
         }
     }
 
+    fclose(f);
+
 out:;
 LOG_EXIT();
 }

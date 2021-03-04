@@ -29,6 +29,15 @@ if [ $(uname) = "Linux" ]; then
         echo "install.sh: [WARN] no patchelf executable found -- be careful with non-standard lib paths."
         echo "install.sh:        (you may have to set LD_LIBRARY_PATH)"
     fi
+elif [ $(uname) = "Darwin" ]; then
+    existing_rpath=$(otool -l _yed | awk '/cmd LC_RPATH/ { x=1; } /path/ { if (x) { print $2; exit(0); } }')
+    if [ "${existing_rpath}" != "${lib_dir}" ]; then
+        if [ "${existing_rpath}" == "" ]; then
+            install_name_tool -add_rpath "${lib_dir}" ${bin_dir}/yed || exit 1
+        else
+            install_name_tool -rpath "${existing_rpath}" "${lib_dir}" ${bin_dir}/yed || exit 1
+        fi
+    fi
 fi
 
 echo "Installed 'yed':                 ${bin_dir}"
