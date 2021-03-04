@@ -1,5 +1,5 @@
 CC="${CC:-gcc}"
 common="-std=gnu99"
 debug="${common} -g -O0 -DYED_DO_ASSERTIONS -DYED_DO_LOGGING -Wall -Werror -Wno-address-of-packed-member -Wno-unused-function"
-release="${common} -O3"
+release="${common} -O3 -march=native -mtune=native -flto"
 strip="no"
