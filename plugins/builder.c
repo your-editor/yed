@@ -320,11 +320,11 @@ LOG_FN_ENTER();
     build_is_running = yed_read_subproc_into_buffer_nb(&nb_subproc);
     if (!build_is_running) {
         builder_run_before = 1;
-        if (nb_subproc.err) {
+        if (nb_subproc.err && nb_subproc.err != ECHILD) {
             yed_cerr("something went wrong -- errno = %d\n", nb_subproc.err);
             build_failed = 1;
         } else {
-            build_failed = nb_subproc.exit_status != 0;
+            build_failed = nb_subproc.exit_status != 0 || nb_subproc.err == ECHILD;
             builder_report();
         }
         err_fixed = 0;
