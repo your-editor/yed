@@ -63,6 +63,8 @@ static void shell_run_update(void) {
     yed_frame **fit;
     int         last_row;
 
+LOG_CMD_ENTER("shell-run");
+
     cmd_is_running = yed_read_subproc_into_buffer_nb(&nb_subproc);
 
     if (!cmd_is_running) {
@@ -70,9 +72,7 @@ static void shell_run_update(void) {
             yed_cerr("something went wrong -- errno = %d\n", nb_subproc.err);
         } else {
             if (nb_subproc.exit_status != 0) {
-LOG_CMD_ENTER("shell-run");
                 yed_cerr("'%s' failed with error code %d", cmd_string, nb_subproc.exit_status);
-LOG_EXIT();
             }
         }
         free(cmd_string);
@@ -86,6 +86,8 @@ LOG_EXIT();
             yed_set_cursor_far_within_frame(*fit, 1, last_row);
         }
     }
+
+LOG_EXIT();
 }
 
 static void shell_run_pump_handler(yed_event *event) {
