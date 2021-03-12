@@ -4,6 +4,7 @@ void word_wrap(int n_args, char **args);
 int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols);
 int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols);
 int is_line_all_whitespace(yed_line *line);
+int remove_preceding_whitespace(yed_buffer *buff, int row);
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
