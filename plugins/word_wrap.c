@@ -13,32 +13,35 @@ int yed_plugin_boot(yed_plugin *self) {
     return 0;
 }
 
-int is_line_all_whitespace(yed_line *line) {
+int remove_preceding_whitespace(yed_buffer *buff, int row) {
+    yed_line *line;
     yed_glyph *git;
+    int num_glyphs, i;
     
+    line = yed_buff_get_line(buff, row);
+    
+    num_glyphs = 0;
     yed_line_glyph_traverse(*line, git) {
-        if(git->c != ' ') {
-            return 0;
-        }
+        if(git->c == ' ') num_glyphs++;
+        else break;
     }
     
+    for(i = 0; i < num_glyphs; i++) {
+        yed_delete_from_line(buff, row, 1);
+    }
+}
+
+int is_line_all_whitespace(yed_line *line) {
+    yed_glyph *git;
+    yed_line_glyph_traverse(*line, git) {
+        if(git->c != ' ') return 0;
+    }
     return 1;
 }
 
 /* Continuously absorbs the first word of the next line, until we can't anymore. */
 int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
-    int i;
-    
-    i = 0;
-    while(absorb_first_word_of_next_line(buff, line, row, max_cols)) {
-        i++;
-    }
-    if(i) {
-        yed_cerr("Ran absorb_first_word_of_next_line %d times.", i);
-        return 1;
-    }
-    
-    return 0;
+    while(absorb_first_word_of_next_line(buff, line, row, max_cols));
 }
 
 /* Combine the current line with the first word of the next line, making it no more than max_cols in width.
@@ -90,9 +93,11 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
        if we've seen any non-whitespace characters at all. */
     if((max_cols >= first_word_visual_width + line->visual_width) && seen_non_whitespace) {
         num_glyphs = 0;
+        /* If there was no preceding whitespace, we'll need to add some */
         if(!preceding_whitespace) {
             yed_append_to_line(buff, row, G(' '));
         }
+        /* Copy the first word from the next line to the current one */
         yed_line_glyph_traverse(*next_line, git) {
             if(num_glyphs >= first_word_width) {
                 break;
@@ -100,13 +105,16 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
             yed_append_to_line(buff, row, *git);
             num_glyphs++;
         }
-        /* If we've removed all characters from the next line, delete it */
         if(next_line->n_glyphs == num_glyphs) {
+            /* If we've removed all characters from the next line, delete it */
             yed_buff_delete_line(buff, row + 1);
         } else {
+            /* Remove the glyphs that we just copied. Make sure the resulting 
+               line doesn't start with whitespace. */
             for(i = 0; i < num_glyphs; i++) {
                 yed_delete_from_line(buff, row + 1, 1);
             }
+            remove_preceding_whitespace(buff, row + 1);
         }
         return 1;
     }
@@ -195,6 +203,9 @@ void word_wrap(int n_args, char **args) {
     for (row = r1; row <= r2; row += 1) {
         line = yed_buff_get_line(buff, row);
         
+        if(!line) {
+            continue;
+        }
         if(is_line_all_whitespace(line)) {
             continue;
         }
@@ -204,9 +215,7 @@ void word_wrap(int n_args, char **args) {
                 r2++;
             }
         } else if(line->visual_width < max_cols) {
-            if(combine_line_with_next(buff, line, row, max_cols)) {
-                break;
-            }
+            combine_line_with_next(buff, line, row, max_cols);
         }
     }
 
