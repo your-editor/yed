@@ -1,6 +1,9 @@
 #include <yed/plugin.h>
 
 void word_wrap(int n_args, char **args);
+int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols);
+int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols);
+int is_line_all_whitespace(yed_line *line);
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
@@ -10,14 +13,48 @@ int yed_plugin_boot(yed_plugin *self) {
     return 0;
 }
 
-/* Combine the line with the next line, making it no more than max_cols in width */
+int is_line_all_whitespace(yed_line *line) {
+    yed_glyph *git;
+    
+    yed_line_glyph_traverse(*line, git) {
+        if(git->c != ' ') {
+            return 0;
+        }
+    }
+    
+    return 1;
+}
+
+/* Continuously absorbs the first word of the next line, until we can't anymore. */
 int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
+    int i;
+    
+    i = 0;
+    while(absorb_first_word_of_next_line(buff, line, row, max_cols)) {
+        i++;
+    }
+    if(i) {
+        yed_cerr("Ran absorb_first_word_of_next_line %d times.", i);
+        return 1;
+    }
+    
+    return 0;
+}
+
+/* Combine the current line with the first word of the next line, making it no more than max_cols in width.
+   Returns the number of words it was able to absorb (1 or 0). */
+int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
     yed_glyph *git;
     int i, num_glyphs, col, first_word_width, first_word_visual_width;
     char seen_non_whitespace, preceding_whitespace;
     yed_line *next_line;
     
     next_line = yed_buff_get_line(buff, row + 1);
+    if(!next_line) {
+        /* It's possible for this line to no longer exist. It could have
+           been consumed in an earlier call to this function. */
+        return 0;
+    }
     
     /* Start by inspecting the next line. In order to do anything whatsoever,
        we need `line->visual_width` plus the visual width of the first word on
@@ -71,7 +108,7 @@ int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_co
                 yed_delete_from_line(buff, row + 1, 1);
             }
         }
-        
+        return 1;
     }
     
     return 0;
@@ -158,13 +195,18 @@ void word_wrap(int n_args, char **args) {
     for (row = r1; row <= r2; row += 1) {
         line = yed_buff_get_line(buff, row);
         
+        if(is_line_all_whitespace(line)) {
+            continue;
+        }
+        
         if(line->visual_width > max_cols) {
             if(split_line(buff, line, row, max_cols)) {
                 r2++;
             }
         } else if(line->visual_width < max_cols) {
-            combine_line_with_next(buff, line, row, max_cols);
-            break;
+            if(combine_line_with_next(buff, line, row, max_cols)) {
+                break;
+            }
         }
     }
 
