@@ -1,10 +1,11 @@
 #include <yed/plugin.h>
 
-void word_wrap(int n_args, char **args);
-int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols);
-int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols);
+void remove_preceding_whitespace(yed_buffer *buff, int row);
+void remove_trailing_whitespace(yed_buffer *buff, int row);
 int is_line_all_whitespace(yed_line *line);
-int remove_preceding_whitespace(yed_buffer *buff, int row);
+void combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols);
+int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols);
+void word_wrap(int n_args, char **args);
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
@@ -14,7 +15,35 @@ int yed_plugin_boot(yed_plugin *self) {
     return 0;
 }
 
-int remove_preceding_whitespace(yed_buffer *buff, int row) {
+/* This function is used to remove whitespace that's at the end of a line.
+   We only call this if we delete words from a line, and the resulting
+   line happens to end with whitespace. */
+void remove_trailing_whitespace(yed_buffer *buff, int row) {
+    yed_line *line;
+    yed_glyph *git;
+    int num_glyphs, i;
+    
+    line = yed_buff_get_line(buff, row);
+    
+    num_glyphs = 0;
+    yed_line_glyph_traverse(*line, git) {
+        if(git->c != ' ') {
+            num_glyphs = 0;
+            continue;
+        } else {
+            num_glyphs++;
+        }
+    }
+    
+    for(i = 0; i < num_glyphs; i++) {
+        yed_pop_from_line(buff, row);
+    }
+}
+
+/* This function is used to remove whitespace that begins a line.
+   We only call this if we delete words from a line, and the resulting
+   line happens to begin with whitespace. */
+void remove_preceding_whitespace(yed_buffer *buff, int row) {
     yed_line *line;
     yed_glyph *git;
     int num_glyphs, i;
@@ -32,6 +61,7 @@ int remove_preceding_whitespace(yed_buffer *buff, int row) {
     }
 }
 
+/* Duh */
 int is_line_all_whitespace(yed_line *line) {
     yed_glyph *git;
     yed_line_glyph_traverse(*line, git) {
@@ -41,7 +71,7 @@ int is_line_all_whitespace(yed_line *line) {
 }
 
 /* Continuously absorbs the first word of the next line, until we can't anymore. */
-int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
+void combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
     while(absorb_first_word_of_next_line(buff, line, row, max_cols));
 }
 
@@ -49,7 +79,7 @@ int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_co
    Returns the number of words it was able to absorb (1 or 0). */
 int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
     yed_glyph *git;
-    int i, num_glyphs, col, first_word_width, first_word_visual_width;
+    int i, num_glyphs, first_word_width, first_word_visual_width;
     char seen_non_whitespace, preceding_whitespace;
     yed_line *next_line;
     
@@ -127,7 +157,6 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
    the rest of the line to the new line. Returns 1 if it created a new line,
    and 0 otherwise. */
 int split_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
-    char       *line_data;
     yed_glyph  *git, *prev_git, *prev_word_git, *tmp_git;
     int i, idx, col, num_glyphs_to_pop;
     
@@ -154,6 +183,7 @@ int split_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
                 for(i = 0; i < num_glyphs_to_pop; i++) {
                     yed_pop_from_line(buff, row);
                 }
+                remove_trailing_whitespace(buff, row);
                 return 1;
             }
         }
@@ -168,7 +198,7 @@ int split_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
 void word_wrap(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
-    int         r1, c1, r2, c2, row, max_cols, retval;
+    int         r1, c1, r2, c2, row, max_cols;
     yed_line   *line;
 
     if (n_args != 1) {
