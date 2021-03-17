@@ -1153,6 +1153,8 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_line  *line;
     yed_glyph *g, *new_g;
 
+    if (f->buffer == NULL) { return; }
+
     row = new_y - f->cursor_line;
     yed_move_cursor_within_frame(f, 0, row);
 
