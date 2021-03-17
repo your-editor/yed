@@ -32,6 +32,7 @@
 #include "styles/elly.c"
 #include "styles/river.c"
 #include "styles/mordechai.c"
+#include "styles/humanoid.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
@@ -67,6 +68,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, elly);
     PACK_STYLE(self, river);
     PACK_STYLE(self, mordechai);
+    PACK_STYLE(self, humanoid);
 
     return 0;
 }
