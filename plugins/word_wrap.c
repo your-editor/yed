@@ -15,6 +15,27 @@ int yed_plugin_boot(yed_plugin *self) {
     return 0;
 }
 
+/* Determine if a line is the beginning of a paragraph or not. */
+int is_beginning_of_paragraph(yed_buffer *buff, int row) {
+    yed_line *line;
+    yed_glyph *git;
+    int num_glyphs, i;
+    
+    line = yed_buff_get_line(buff, row - 1);
+    if(!line) {
+        /* The first line is the beginning of a paragraph */
+        return 1;
+    }
+    
+    /* `row` is the beginning of a paragraph if the previous
+       row contains no glyphs or all whitespace. */
+    yed_line_glyph_traverse(*line, git) {
+        if(git->c != ' ') return 0;
+    }
+    
+    return 1;
+}
+
 /* This function is used to remove whitespace that's at the end of a line.
    We only call this if we delete words from a line, and the resulting
    line happens to end with whitespace. */
@@ -234,6 +255,8 @@ void word_wrap(int n_args, char **args) {
         }
         if(is_line_all_whitespace(line)) {
             continue;
+        }
+        if(!is_beginning_of_paragraph(buff, row)) {
         }
         
         if(line->visual_width > max_cols) {
