@@ -205,23 +205,18 @@ void word_wrap(int n_args, char **args) {
         yed_cerr("expected 1 argument, a maximum number of columns per line");
         return;
     }
-
     sscanf(args[0], "%d", &max_cols);
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
         return;
     }
-
     frame = ys->active_frame;
-
     if (!frame->buffer) {
         yed_cerr("active frame has no buffer");
         return;
     }
-
     buff = frame->buffer;
-
     if (!buff->has_selection) {
         yed_cerr("at least one line must be selected");
         return;
