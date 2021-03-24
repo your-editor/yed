@@ -19,7 +19,6 @@ int yed_plugin_boot(yed_plugin *self) {
 int is_beginning_of_paragraph(yed_buffer *buff, int row) {
     yed_line *line;
     yed_glyph *git;
-    int num_glyphs, i;
     
     line = yed_buff_get_line(buff, row - 1);
     if(!line) {
