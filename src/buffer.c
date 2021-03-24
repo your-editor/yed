@@ -113,6 +113,7 @@ void yed_line_pop_glyph(yed_line *line) {
 yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
+    buff.kind                 = BUFF_KIND_UNKNOWN;
     buff.lines                = bucket_array_make(1024, yed_line);
     buff.get_line_cache       = NULL;
     buff.get_line_cache_row   = 0;

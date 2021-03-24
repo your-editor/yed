@@ -16,6 +16,7 @@ typedef struct {
     int anchor_row, anchor_col, cursor_row, cursor_col;
 } yed_range;
 
+#define BUFF_KIND_UNKNOWN         (0x0)
 #define BUFF_KIND_FILE            (0x1)
 #define BUFF_KIND_YANK            (0x2)
 #define BUFF_KIND_LOG             (0x3)
