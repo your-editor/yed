@@ -33,10 +33,9 @@ void remove_trailing_whitespace(yed_buffer *buff, int row) {
     line = yed_buff_get_line(buff, row);
 
     num_glyphs = 0;
-    yed_line_glyph_traverse(*line, git) {
+    yed_line_glyph_rtraverse(*line, git) {
         if(git->c != ' ') {
-            num_glyphs = 0;
-            continue;
+            break;
         } else {
             num_glyphs++;
         }
@@ -81,6 +80,7 @@ char split_line(yed_buffer *buff, int row, yed_glyph *start_git, int start_col, 
     if(!next_line || end_of_selection || is_line_whitespace(buff, row + 1)) {
         /* We'll need to create the next line */
         yed_buff_insert_line(buff, row + 1);
+        line = yed_buff_get_line(buff, row);
         next_line = yed_buff_get_line(buff, row + 1);
         created_line = 1;
     }
@@ -96,7 +96,8 @@ char split_line(yed_buffer *buff, int row, yed_glyph *start_git, int start_col, 
     
     /* We need a space after the words that we just inserted, otherwise they're
        going to merge with the words that're already on the line */
-    yed_buff_insert_string(buff, " ", row + 1, col);
+    /* TODO: do this conditionally */
+    yed_insert_into_line(buff, row + 1, col, G(' '));
     
     /* Delete the glyphs that we moved to the next line */
     for(i = 0; i < glyphs_to_delete; i++) {
