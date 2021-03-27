@@ -34,10 +34,10 @@ void remove_trailing_whitespace(yed_buffer *buff, int row) {
 
     num_glyphs = 0;
     yed_line_glyph_rtraverse(*line, git) {
-        if(git->c != ' ') {
-            break;
-        } else {
+        if(git->c == ' ') {
             num_glyphs++;
+        } else {
+            break;
         }
     }
 
@@ -80,9 +80,12 @@ char split_line(yed_buffer *buff, int row, yed_glyph *start_git, int start_col, 
     if(!next_line || end_of_selection || is_line_whitespace(buff, row + 1)) {
         /* We'll need to create the next line */
         yed_buff_insert_line(buff, row + 1);
-        line = yed_buff_get_line(buff, row);
-        next_line = yed_buff_get_line(buff, row + 1);
         created_line = 1;
+        
+        /* Because we've created a new line, so these pointers are invalidated. */
+        line = yed_buff_get_line(buff, row);
+        idx = ((void*)start_git) - array_data(line->chars);
+        next_line = yed_buff_get_line(buff, row + 1);
     }
     
     /* Loop over glyphs and prepend them onto the next line */
@@ -125,7 +128,7 @@ void word_wrap2(int n_args, char **args) {
     int        r1, c1,
                r2, c2, 
                row, max_cols, word_col,
-               num_line_cols;
+               num_line_cols, idx, n_lines;
     char       begins_par, in_word, end_of_selection;
     
     if (n_args != 1) {
@@ -146,9 +149,15 @@ void word_wrap2(int n_args, char **args) {
     }
     buff = frame->buffer;
     if (!buff->has_selection) {
+        r1 = 1;
+        c1 = 1;
+        n_lines = yed_buff_n_lines(buff);
+        r2 = n_lines ? n_lines : 1;
+        c2 = 1;
+    } else {
+        yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
     }
     
-    yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
     yed_start_undo_record(frame, buff);
     
     /* Iterate over the words until they've hit the maximum number of columns.
@@ -156,6 +165,7 @@ void word_wrap2(int n_args, char **args) {
     end_of_selection = 0;
     for (row = r1; row <= r2; row += 1) {
         line = yed_buff_get_line(buff, row);
+        if(!line) break;
         
         if(row == r2) {
             end_of_selection = 1;
@@ -185,7 +195,7 @@ void word_wrap2(int n_args, char **args) {
            Remember various things, like where the start of the last word is, so that we
            don't have to backtrack. */
         num_line_cols = 0;
-        word_col = 0;
+        word_col = 1;
         word_git = NULL;
         prev_git = NULL;
         first_git = NULL;
@@ -222,8 +232,10 @@ void word_wrap2(int n_args, char **args) {
                     r2++;
                 }
                 end_of_selection = 0;
+                /* We have to break from the loop here, because `git` and `prev_git` are now invalidated. */
                 break;
             }
+            
             num_line_cols += yed_get_glyph_width(*git);
             prev_git = git;
         }
