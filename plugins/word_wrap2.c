@@ -65,14 +65,12 @@ void remove_preceding_whitespace(yed_buffer *buff, int row) {
         }
 }
 
-char split_line(yed_buffer *buff, int row, yed_glyph *start_git, int start_col, char end_of_selection) {
+char split_line(yed_buffer *buff, int row, int start_col, char end_of_selection) {
     yed_line  *line, *next_line;
     yed_glyph *git;
     int idx, glyphs_to_delete, i, col;
     char created_line, last_glyph_whitespace;
     
-    line = yed_buff_get_line(buff, row);
-    idx = ((void*)start_git) - array_data(line->chars);
     next_line = yed_buff_get_line(buff, row + 1);
     
     /* Create a line if necessary */
@@ -81,17 +79,14 @@ char split_line(yed_buffer *buff, int row, yed_glyph *start_git, int start_col, 
         /* We'll need to create the next line */
         yed_buff_insert_line(buff, row + 1);
         created_line = 1;
-        
-        /* Because we've created a new line, so these pointers are invalidated. */
-        line = yed_buff_get_line(buff, row);
-        idx = ((void*)start_git) - array_data(line->chars);
-        next_line = yed_buff_get_line(buff, row + 1);
     }
     
     /* Loop over glyphs and prepend them onto the next line */
     glyphs_to_delete = 0;
     last_glyph_whitespace = 0;
     col = 1;
+    line = yed_buff_get_line(buff, row);
+    idx = yed_line_col_to_idx(line, start_col);
     yed_line_glyph_traverse_from(*line, git, idx) {
         yed_insert_into_line(buff, row + 1, col, *git);
         glyphs_to_delete++;
@@ -111,7 +106,7 @@ char split_line(yed_buffer *buff, int row, yed_glyph *start_git, int start_col, 
     
     /* Delete the glyphs that we moved to the next line */
     for(i = 0; i < glyphs_to_delete; i++) {
-        yed_pop_from_line(buff, row);
+        //yed_pop_from_line(buff, row);
     }
     
     if(created_line) {
@@ -215,11 +210,6 @@ void word_wrap2(int n_args, char **args) {
                     word_git = git;
                     word_col = num_line_cols + 1;
                 }
-            } else {
-                in_word = 0;
-                if(prev_git && (prev_git->c != ' ')) {
-                    /* This is the end of a word */
-                }
             }
             
             if(!(in_word && (word_git == first_git)) && (num_line_cols + yed_get_glyph_width(*git)) > max_cols) {
@@ -228,7 +218,7 @@ void word_wrap2(int n_args, char **args) {
                     word_git = git;
                     word_col = num_line_cols + 1;
                 }
-                if(split_line(buff, row, word_git, word_col, end_of_selection)) {
+                if(split_line(buff, row, word_col, end_of_selection)) {
                     r2++;
                 }
                 end_of_selection = 0;
