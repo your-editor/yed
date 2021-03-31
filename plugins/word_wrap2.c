@@ -88,14 +88,15 @@ char split_line(yed_buffer *buff, int row, int start_col, char end_of_selection)
     line = yed_buff_get_line(buff, row);
     idx = yed_line_col_to_idx(line, start_col);
     yed_line_glyph_traverse_from(*line, git, idx) {
-        yed_insert_into_line(buff, row + 1, col, *git);
+        /*
+        yed_insert_into_line(buff, row + 1, 1, *git);
         glyphs_to_delete++;
         col += yed_get_glyph_width(*git);
         if(git->c == ' ') {
             last_glyph_whitespace = 1;
         } else {
             last_glyph_whitespace = 0;
-        }
+        } */
     }
     
     /* We need a space after the words that we just inserted, otherwise they're
@@ -106,7 +107,7 @@ char split_line(yed_buffer *buff, int row, int start_col, char end_of_selection)
     
     /* Delete the glyphs that we moved to the next line */
     for(i = 0; i < glyphs_to_delete; i++) {
-        //yed_pop_from_line(buff, row);
+        yed_pop_from_line(buff, row);
     }
     
     if(created_line) {
@@ -161,6 +162,7 @@ void word_wrap2(int n_args, char **args) {
     for (row = r1; row <= r2; row += 1) {
         line = yed_buff_get_line(buff, row);
         if(!line) break;
+        if(!(line->visual_width > max_cols)) continue;
         
         if(row == r2) {
             end_of_selection = 1;
