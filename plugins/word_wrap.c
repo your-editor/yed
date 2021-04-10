@@ -279,7 +279,7 @@ void word_wrap(int n_args, char **args) {
         }
     }
 
-    //yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, 1, row);
     yed_end_undo_record(frame, buff);
     frame->dirty = 1;
 
