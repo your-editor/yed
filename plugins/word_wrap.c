@@ -176,36 +176,46 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
 /* Create a new line, find the last word that can fit in the limit, and copy
    the rest of the line to the new line. Returns 1 if it created a new line,
    and 0 otherwise. */
-int split_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
-    yed_glyph  *git, *prev_git, *prev_word_git, *tmp_git;
-    int i, idx, col, num_glyphs_to_pop;
+int split_line(yed_buffer *buff, int row, int max_cols) {
+    yed_glyph  *git, *prev_git, *tmp_git;
+    int i, idx, col, num_glyphs_to_pop, prev_word_col;
+    yed_line *line;
     
     col = 1;
-    prev_word_git = NULL;
+    prev_git = NULL;
+    prev_word_col = 0;
     
+    line = yed_buff_get_line(buff, row);
     yed_line_glyph_traverse(*line, git) {
         
-        if((prev_git->c == ' ') && (git->c != ' ')) {
-            prev_word_git = git;
+        if((prev_git && (prev_git->c == ' ')) && (git->c != ' ')) {
+            /* prev_word_col will never be set to the first column. */
+            prev_word_col = col;
         }
         
-        /* If the current column is at the limit */
-        if(col >= max_cols) {
-            if(prev_word_git)  {
-                /* Break on the last whitespace that we found */
-                yed_buff_insert_line(buff, row + 1);
-                idx = ((void*)prev_word_git) - array_data(line->chars);
-                num_glyphs_to_pop = 0;
-                yed_line_glyph_traverse_from(*line, tmp_git, idx) {
-                    yed_append_to_line(buff, row + 1, *tmp_git);
-                    num_glyphs_to_pop++;
-                }
-                for(i = 0; i < num_glyphs_to_pop; i++) {
-                    yed_pop_from_line(buff, row);
-                }
-                remove_trailing_whitespace(buff, row);
-                return 1;
+        /* If the current column is over the limit */
+        if((col > max_cols) && prev_word_col) {
+            /* Break on the last whitespace that we found */
+            yed_buff_insert_line(buff, row + 1);
+            if(git->c != ' ') {
+                /* If we're in a word, split on the start of the last word we've seen */
+                idx = yed_line_col_to_idx(line, prev_word_col);
+            } else {
+                /* If we're on whitespace, just split here. */
+                idx = yed_line_col_to_idx(line, col);
             }
+            num_glyphs_to_pop = 0;
+            yed_line_glyph_traverse_from(*line, tmp_git, idx) {
+                yed_append_to_line(buff, row + 1, *tmp_git);
+                num_glyphs_to_pop++;
+            }
+            for(i = 0; i < num_glyphs_to_pop; i++) {
+                yed_pop_from_line(buff, row);
+            }
+            remove_trailing_whitespace(buff, row);
+            
+            /* We have to break here, because the glyph pointer is now invalidated. */
+            return 1;
         }
         
         prev_git = git;
@@ -218,7 +228,7 @@ int split_line(yed_buffer *buff, yed_line *line, int row, int max_cols) {
 void word_wrap(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
-    int         r1, c1, r2, c2, row, max_cols;
+    int         r1, c1, r2, c2, row, max_cols, n_lines;
     yed_line   *line;
 
     if (n_args != 1) {
@@ -237,29 +247,31 @@ void word_wrap(int n_args, char **args) {
         return;
     }
     buff = frame->buffer;
-    if (!buff->has_selection) {
-        yed_cerr("at least one line must be selected");
-        return;
+    if (!(buff->has_selection)) {
+        r1 = 1;
+        c1 = 1;
+        n_lines = yed_buff_n_lines(buff);
+        r2 = n_lines ? n_lines : 1;
+        c2 = 1;
+    } else {
+        yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
     }
-
-    yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
 
     yed_start_undo_record(frame, buff);
 
     for (row = r1; row <= r2; row += 1) {
         line = yed_buff_get_line(buff, row);
         
-        if(!line) {
-            continue;
-        }
-        if(is_line_all_whitespace(line)) {
+        if(!line || is_line_all_whitespace(line)) {
             continue;
         }
         if(!is_beginning_of_paragraph(buff, row)) {
+            remove_preceding_whitespace(buff, row);
         }
+        remove_trailing_whitespace(buff, row);
         
         if(line->visual_width > max_cols) {
-            if(split_line(buff, line, row, max_cols)) {
+            if(split_line(buff, row, max_cols)) {
                 r2++;
             }
         } else if(line->visual_width < max_cols) {
