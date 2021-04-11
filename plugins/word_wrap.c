@@ -3,7 +3,7 @@
 void remove_preceding_whitespace(yed_buffer *buff, int row);
 void remove_trailing_whitespace(yed_buffer *buff, int row);
 int is_line_all_whitespace(yed_line *line);
-void combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols);
+int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols);
 int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, int max_cols);
 void word_wrap(int n_args, char **args);
 
@@ -90,9 +90,22 @@ int is_line_all_whitespace(yed_line *line) {
     return 1;
 }
 
-/* Continuously absorbs the first word of the next line, until we can't anymore. */
-void combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
-    while(absorb_first_word_of_next_line(buff, line, row, max_cols));
+/* Continuously absorbs the first word of the next line, until we can't anymore. 
+   Returns the number of lines that we deleted. */
+int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
+    int retval, num_deleted;
+    
+    retval = 1;
+    num_deleted = 0;
+    while(retval == 1) {
+        retval = absorb_first_word_of_next_line(buff, line, row, max_cols);
+        if(retval == -1) {
+            num_deleted++;
+            retval = 1;
+        }
+    }
+    
+    return num_deleted;
 }
 
 /* Combine the current line with the first word of the next line, making it no more than max_cols in width.
@@ -144,10 +157,12 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
        if we've seen any non-whitespace characters at all. */
     if((max_cols >= first_word_visual_width + line->visual_width) && seen_non_whitespace) {
         num_glyphs = 0;
+        
         /* If there was no preceding whitespace, we'll need to add some */
         if(!preceding_whitespace) {
             yed_append_to_line(buff, row, G(' '));
         }
+        
         /* Copy the first word from the next line to the current one */
         yed_line_glyph_traverse(*next_line, git) {
             if(num_glyphs >= first_word_width) {
@@ -156,20 +171,25 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
             yed_append_to_line(buff, row, *git);
             num_glyphs++;
         }
+        
+        /* If we've removed all characters from the next line, delete it.
+            Return -1 if we deleted a line. */
         if(next_line->n_glyphs == num_glyphs) {
-            /* If we've removed all characters from the next line, delete it */
             yed_buff_delete_line(buff, row + 1);
-        } else {
-            /* Remove the glyphs that we just copied. Make sure the resulting 
-               line doesn't start with whitespace. */
-            for(i = 0; i < num_glyphs; i++) {
-                yed_delete_from_line(buff, row + 1, 1);
-            }
-            remove_preceding_whitespace(buff, row + 1);
+            return -1;
         }
+        
+        /* Remove the glyphs that we just copied. Make sure the resulting 
+            line doesn't start with whitespace.  Return 1 if we combined
+            a line, but didn't delete one. */
+        for(i = 0; i < num_glyphs; i++) {
+            yed_delete_from_line(buff, row + 1, 1);
+        }
+        remove_preceding_whitespace(buff, row + 1);
         return 1;
     }
     
+    /* Return 0 if we didn't combine any lines */
     return 0;
 }
 
@@ -228,7 +248,7 @@ int split_line(yed_buffer *buff, int row, int max_cols) {
 void word_wrap(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
-    int         r1, c1, r2, c2, row, max_cols, n_lines;
+    int         r1, c1, r2, c2, row, max_cols, n_lines, num_deleted;
     yed_line   *line;
 
     if (n_args != 1) {
@@ -274,12 +294,13 @@ void word_wrap(int n_args, char **args) {
             if(split_line(buff, row, max_cols)) {
                 r2++;
             }
-        } else if(line->visual_width < max_cols) {
-            combine_line_with_next(buff, line, row, max_cols);
+        } else if((line->visual_width < max_cols) && (row != r2)) {
+            num_deleted = combine_line_with_next(buff, line, row, max_cols);
+            r2 -= num_deleted;
         }
     }
-
-    yed_set_cursor_within_frame(frame, 1, row);
+    
+    yed_set_cursor_within_frame(frame, 1, r2);
     yed_end_undo_record(frame, buff);
     frame->dirty = 1;
 
