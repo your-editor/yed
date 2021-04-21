@@ -285,8 +285,15 @@ LOG_EXIT();
     }
 
     YEXE("special-buffer-prepare-jump-focus", "*ctags-find-list");
-
     YEXE("buffer", path);
+
+    if (ys->active_frame         == NULL
+    ||  ys->active_frame->buffer == NULL) {
+LOG_CMD_ENTER("ctags-find");
+        yed_cerr("unable to open buffer for tag path '%s'", path);
+LOG_EXIT();
+        return;
+    }
 
     /* This will help keep the destination near the top of the buffer. */
     YEXE("cursor-buffer-end");
@@ -301,7 +308,9 @@ LOG_EXIT();
             yed_set_cursor_within_frame(ys->active_frame, col, row);
         } else {
             YEXE("cursor-buffer-begin");
+LOG_CMD_ENTER("ctags-find");
             yed_cerr("could not find pattern from tag file");
+LOG_EXIT();
         }
 
         ys->current_search = save_cur_search;
