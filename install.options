@@ -1,7 +1,11 @@
 # install.options
 
 if [ "$(uname)" == "Darwin" ]; then
-    prefix=/usr/local # typical macOS system install
+    if uname -a | grep "arm64" >/dev/null 2>&1; then
+        prefix=/opt/yed   # Apple silicon macOS system install
+    else
+        prefix=/usr/local # Intel macOS system install
+    fi
 else
     prefix=/usr # typical linux system install
 fi

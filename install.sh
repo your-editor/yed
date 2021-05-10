@@ -47,6 +47,13 @@ dd if=<(head -c 4096 /dev/zero) of="${bin_dir}/yed" obs=1 seek=${patch_offset} c
 dd if=<(printf "${lib_dir}") of="${bin_dir}/yed" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
 echo "    patched installed lib path"
 
+if [ $(uname) = "Darwin" ]; then
+    cp ${bin_dir}/yed ${bin_dir}/yed.tmp                || exit 1
+    codesign -s - -f ${bin_dir}/yed.tmp >/dev/null 2>&1 || exit 1
+    cp ${bin_dir}/yed.tmp ${bin_dir}/yed                || exit 1
+    echo "    performed codesign fixup"
+fi
+
 mkdir -p ${lib_dir} || exit 1
 cp lib/libyed.so ${lib_dir}/libyed.so.new || exit 1
 mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
@@ -67,6 +74,13 @@ patch_offset=$(strings -t d ${lib_dir}/libyed.so | grep vafgnyyrq_yvo_qve | awk 
 dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
 dd if=<(printf "${lib_dir}") of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
 echo "    patched installed lib path"
+
+if [ $(uname) = "Darwin" ]; then
+    cp ${lib_dir}/libyed.so ${lib_dir}/libyed.so.tmp          || exit 1
+    codesign -s - -f ${lib_dir}/libyed.so.tmp >/dev/null 2>&1 || exit 1
+    cp ${lib_dir}/libyed.so.tmp ${lib_dir}/libyed.so          || exit 1
+    echo "    performed codesign fixup"
+fi
 
 mkdir -p ${inc_dir}/yed || exit 1
 rm -rf ${inc_dir}/yed/* || exit 1

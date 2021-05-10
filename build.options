@@ -1,5 +1,11 @@
 CC="${CC:-gcc}"
 common="-std=gnu99"
 debug="${common} -g -O0 -DYED_DO_ASSERTIONS -DYED_DO_LOGGING -Wall -Werror -Wno-address-of-packed-member -Wno-unused-function"
-release="${common} -O3 -march=native -mtune=native -flto"
+
+if [ "$(uname)" == "Darwin" ] && uname -a | grep "arm64" >/dev/null 2>&1; then
+    # march and mtune don't work on apple's arm systems as far as I can tell
+    release="${common} -O3 -flto"
+else
+    release="${common} -O3 -march=native -mtune=native -flto"
+fi
 strip="no"

@@ -18,6 +18,11 @@ else
 fi
 
 export CC=${CC}
+if [ $(uname) = "Darwin" ]; then
+    if uname -a | grep "arm64" >/dev/null 2>&1; then
+        CC+=" -arch arm64"
+    fi
+fi
 export LIB_C_FLAGS="-shared -fPIC -ldl -lm -lpthread"
 export DRIVER_C_FLAGS="-ldl -lm -lpthread -Wl,${DTAGS},-rpath,${lib_dir}"
 export _YEDVER_C_FLAGS="-lyed -Wl,${DTAGS},-rpath,${lib_dir}"
