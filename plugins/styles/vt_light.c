@@ -17,6 +17,10 @@ PACKABLE_STYLE(vt_light) {
     s.inactive.bg           = ATTR_16_GREY;
     s.inactive_border = s.inactive;
 
+    s.cursor_line.flags     = ATTR_16;
+    s.cursor_line.fg        = s.active.fg;
+    s.cursor_line.bg        = ATTR_16_GREY;
+
     s.selection.flags     = ATTR_INVERSE;
 
     s.search.flags        = ATTR_16 | ATTR_INVERSE;
