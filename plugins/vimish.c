@@ -640,18 +640,12 @@ int vimish_nav_common(int key, char *key_str) {
         case 't':
             till_pending = 1;
             last_till_op = key;
-            if (mode != MODE_NORMAL) {
-                vimish_push_repeat_key(key);
-            }
             break;
 
         case 'F':
         case 'T':
             till_pending = 2 + (key == 'T');
             last_till_op = key;
-            if (mode != MODE_NORMAL) {
-                vimish_push_repeat_key(key);
-            }
             break;
 
         case ';':

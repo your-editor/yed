@@ -4,5 +4,10 @@
       libyed.so in the cwd over the one that gets resolved with yed's rpath.
     * Not sure how to fix it... we could do some nasty hack in the driver,
       but that doesn't sound very nice.
+    * UPDATE: This doesn't seem to happen on my new M1 machine, so I'm not really
+      sure about this one.
 * If a plugin is running any additional threads, yed will crash on reload because
   pthreads loses the code it's supposed to be running
+* multi-line comments sometimes lose their highlighting... not sure how to repro
+* still have that bug since forever where sometimes the cursor will get stuck
+  in the scroll-offset zone. This one is also hard to repro
