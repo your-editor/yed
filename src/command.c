@@ -619,8 +619,10 @@ void yed_default_command_cursor_down(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     if (n_args == 0) {
@@ -654,8 +656,10 @@ void yed_default_command_cursor_up(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
 
@@ -690,8 +694,10 @@ void yed_default_command_cursor_left(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
 
@@ -726,8 +732,10 @@ void yed_default_command_cursor_right(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     if (n_args == 0) {
@@ -760,8 +768,10 @@ void yed_default_command_cursor_line_begin(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
 
@@ -790,8 +800,10 @@ void yed_default_command_cursor_line_end(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
@@ -820,8 +832,10 @@ void yed_default_command_cursor_buffer_begin(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     yed_set_cursor_far_within_frame(frame, 1, 1);
@@ -849,8 +863,10 @@ void yed_default_command_cursor_buffer_end(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     last_line = bucket_array_last(frame->buffer->lines);
@@ -879,8 +895,10 @@ void yed_default_command_cursor_line(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     sscanf(args[0], "%d", &line);
@@ -942,8 +960,10 @@ void yed_default_command_cursor_prev_word(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
 again:
@@ -1030,8 +1050,10 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
 again:
@@ -1119,8 +1141,10 @@ void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
@@ -1174,8 +1198,10 @@ void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
@@ -1223,8 +1249,10 @@ void yed_default_command_cursor_page_up(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     if (bucket_array_len(frame->buffer->lines) <= frame->height) {
@@ -1266,8 +1294,10 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
     }
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 
     if (bucket_array_len(frame->buffer->lines) <= frame->height) {
@@ -2095,8 +2125,10 @@ void yed_default_command_insert(int n_args, char **args) {
     yed_trigger_event(&event);
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 }
 
@@ -2175,8 +2207,10 @@ void yed_default_command_simple_insert_string(int n_args, char **args) {
     yed_trigger_event(&event);
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 }
 
@@ -2286,8 +2320,10 @@ void yed_default_command_delete_back(int n_args, char **args) {
     yed_trigger_event(&event);
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 }
 
@@ -2387,8 +2423,10 @@ void yed_default_command_delete_forward(int n_args, char **args) {
     yed_trigger_event(&event);
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 }
 
@@ -2463,8 +2501,10 @@ void yed_default_command_delete_line(int n_args, char **args) {
     yed_trigger_event(&event);
 
     if (ys->current_search) {
-        ys->current_search = NULL;
-        frame->dirty = 1;
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
     }
 }
 
