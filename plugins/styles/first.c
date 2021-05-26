@@ -145,7 +145,7 @@ PACKABLE_STYLE(first) {
     s.code_control_flow   = s.code_keyword;
 
     s.code_typename.flags = attr_kind | ATTR_BOLD;
-    s.code_typename.fg    = MAYBE_CONVERT(RGB_32_hex(87B38D));
+    s.code_typename.fg    = MAYBE_CONVERT(RGB_32_hex(67936D));
 
     s.code_preprocessor   = s.code_keyword;
 
