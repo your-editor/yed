@@ -36,9 +36,9 @@ void completer(int n_args, char **args) {
     frame = ys->active_frame;
 
     save_col = frame->cursor_col;
-    yed_move_cursor_within_frame(frame, -1, 0);
+    yed_move_cursor_within_frame(frame, 0, -1);
     word = yed_word_under_cursor();
-    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, save_col);
 
     if (!word)    { return; }
 

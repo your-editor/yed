@@ -30,7 +30,7 @@ void autotrim_pre_write_handler(yed_event *event) {
 
     if (f) {
         cursor_col = ys->active_frame->cursor_col;
-        yed_set_cursor_within_frame(ys->active_frame, 1, ys->active_frame->cursor_line);
+        yed_set_cursor_within_frame(ys->active_frame, ys->active_frame->cursor_line, 1);
     }
 
     for (row = 1; row <= yed_buff_n_lines(event->buffer); row += 1) {
@@ -42,7 +42,7 @@ void autotrim_pre_write_handler(yed_event *event) {
     }
 
     if (f) {
-        yed_set_cursor_within_frame(f, cursor_col, f->cursor_line);
+        yed_set_cursor_within_frame(f, f->cursor_line, cursor_col);
     }
 
     yed_end_undo_record(f, event->buffer);

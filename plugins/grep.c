@@ -170,7 +170,7 @@ void grep_select(void) {
 
     YEXE("special-buffer-prepare-jump-focus", "*grep-list");
     YEXE("buffer", path);
-    yed_set_cursor_within_frame(ys->active_frame, 1, row);
+    yed_set_cursor_within_frame(ys->active_frame, row, 1);
     grep_cleanup();
 }
 

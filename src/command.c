@@ -631,7 +631,7 @@ void yed_default_command_cursor_down(int n_args, char **args) {
         rows = s_to_i(args[0]);
     }
 
-    yed_move_cursor_within_active_frame(0, rows);
+    yed_move_cursor_within_active_frame(rows, 0);
 }
 
 void yed_default_command_cursor_up(int n_args, char **args) {
@@ -669,7 +669,7 @@ void yed_default_command_cursor_up(int n_args, char **args) {
         rows = -1 * s_to_i(args[0]);
     }
 
-    yed_move_cursor_within_active_frame(0, rows);
+    yed_move_cursor_within_active_frame(rows, 0);
 }
 
 void yed_default_command_cursor_left(int n_args, char **args) {
@@ -707,7 +707,7 @@ void yed_default_command_cursor_left(int n_args, char **args) {
         cols = -1 * s_to_i(args[0]);
     }
 
-    yed_move_cursor_within_active_frame(cols, 0);
+    yed_move_cursor_within_active_frame(0, cols);
 }
 
 void yed_default_command_cursor_right(int n_args, char **args) {
@@ -744,7 +744,7 @@ void yed_default_command_cursor_right(int n_args, char **args) {
         cols = s_to_i(args[0]);
     }
 
-    yed_move_cursor_within_active_frame(cols, 0);
+    yed_move_cursor_within_active_frame(0, cols);
 }
 
 void yed_default_command_cursor_line_begin(int n_args, char **args) {
@@ -775,7 +775,7 @@ void yed_default_command_cursor_line_begin(int n_args, char **args) {
     }
 
 
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, 1);
 }
 
 void yed_default_command_cursor_line_end(int n_args, char **args) {
@@ -808,7 +808,7 @@ void yed_default_command_cursor_line_end(int n_args, char **args) {
 
     line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
-    yed_set_cursor_within_frame(frame, line->visual_width + 1, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, line->visual_width + 1);
 }
 
 void yed_default_command_cursor_buffer_begin(int n_args, char **args) {
@@ -870,7 +870,7 @@ void yed_default_command_cursor_buffer_end(int n_args, char **args) {
     }
 
     last_line = bucket_array_last(frame->buffer->lines);
-    yed_set_cursor_far_within_frame(frame, last_line->visual_width + 1, bucket_array_len(frame->buffer->lines));
+    yed_set_cursor_far_within_frame(frame, bucket_array_len(frame->buffer->lines), last_line->visual_width + 1);
 }
 
 void yed_default_command_cursor_line(int n_args, char **args) {
@@ -902,7 +902,7 @@ void yed_default_command_cursor_line(int n_args, char **args) {
     }
 
     sscanf(args[0], "%d", &line);
-    yed_set_cursor_far_within_frame(frame, 1, line);
+    yed_set_cursor_far_within_frame(frame, line, 1);
 }
 
 void yed_default_command_word_under_cursor(int n_args, char **args) {
@@ -1018,11 +1018,11 @@ skip_lines:
         } while (line && !line->visual_width);
 
         if (line) {
-            yed_move_cursor_within_frame(frame, line->visual_width, row - frame->cursor_line);
+            yed_move_cursor_within_frame(frame, row - frame->cursor_line, line->visual_width);
             goto again;
         }
     } else {
-        yed_set_cursor_within_frame(frame, col, frame->cursor_line);
+        yed_set_cursor_within_frame(frame, frame->cursor_line, col);
     }
 }
 
@@ -1106,7 +1106,7 @@ skip_lines:
         } while (line && !line->visual_width);
 
         if (line) {
-            yed_set_cursor_far_within_frame(frame, 1, row);
+            yed_set_cursor_far_within_frame(frame, row, 1);
             line = yed_buff_get_line(frame->buffer, row);
             c    = ((yed_glyph*)yed_line_col_to_glyph(line, 1))->c;
             if (c && isspace(c)) {
@@ -1114,7 +1114,7 @@ skip_lines:
             }
         }
     } else {
-        yed_set_cursor_within_frame(frame, col, frame->cursor_line);
+        yed_set_cursor_within_frame(frame, frame->cursor_line, col);
     }
 }
 
@@ -1172,7 +1172,7 @@ void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
         }
     }
 
-    yed_move_cursor_within_frame(frame, 0, i);
+    yed_move_cursor_within_frame(frame, i, 0);
 }
 
 void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
@@ -1223,7 +1223,7 @@ void yed_default_command_cursor_next_paragraph(int n_args, char **args) {
 
     i += 1;
 
-    yed_move_cursor_within_frame(frame, 0, i);
+    yed_move_cursor_within_frame(frame, i, 0);
 }
 
 void yed_default_command_cursor_page_up(int n_args, char **args) {
@@ -1265,7 +1265,7 @@ void yed_default_command_cursor_page_up(int n_args, char **args) {
         want_top_line = 1;
     }
     while (top_line != want_top_line) {
-        yed_move_cursor_within_frame(frame, 0, -1);
+        yed_move_cursor_within_frame(frame, -1, 0);
         top_line = frame->buffer_y_offset + 1;
     }
 }
@@ -1311,7 +1311,7 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
         want_top_line = max_top_line;
     }
     while (top_line != want_top_line) {
-        yed_move_cursor_within_frame(frame, 0, 1);
+        yed_move_cursor_within_frame(frame, 1, 0);
         top_line = frame->buffer_y_offset + 1;
     }
 }
@@ -2088,7 +2088,7 @@ void yed_default_command_insert(int n_args, char **args) {
             yed_pop_from_line(frame->buffer, frame->cursor_line);
         }
 
-        yed_set_cursor_within_frame(frame, 1, frame->cursor_line + 1);
+        yed_set_cursor_within_frame(frame, frame->cursor_line + 1, 1);
     } else {
         if (key == TAB) {
             tabw = yed_get_tab_width();
@@ -2096,7 +2096,7 @@ void yed_default_command_insert(int n_args, char **args) {
             for (i = 0; i < tabw; i += 1) {
                 yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, g);
             }
-            yed_move_cursor_within_frame(frame, tabw, 0);
+            yed_move_cursor_within_frame(frame, 0, tabw);
         } else {
             if (key == SHIFT_TAB) {
                 g.c = '\t';
@@ -2108,7 +2108,7 @@ void yed_default_command_insert(int n_args, char **args) {
                 g.c = key;
                 yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
             }
-            yed_move_cursor_within_frame(frame, 1, 0);
+            yed_move_cursor_within_frame(frame, 0, 1);
         }
     }
 
@@ -2264,9 +2264,9 @@ void yed_default_command_delete_back(int n_args, char **args) {
         frame->buffer->selection.locked = 1;
         if (frame->buffer->selection.kind == RANGE_LINE) {
             r1 = MIN(r1, yed_buff_n_lines(frame->buffer) - (r2 - r1) - 1);
-            yed_set_cursor_far_within_frame(frame, 1, r1);
+            yed_set_cursor_far_within_frame(frame, r1, 1);
         } else {
-            yed_set_cursor_far_within_frame(frame, c1, r1);
+            yed_set_cursor_far_within_frame(frame, r1, c1);
         }
         yed_buff_delete_selection(frame->buffer);
     } else {
@@ -2286,7 +2286,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 /*
                  * Move to the previous line.
                  */
-                yed_set_cursor_within_frame(frame, prev_line_width + 1, frame->cursor_line - 1);
+                yed_set_cursor_within_frame(frame, frame->cursor_line - 1, prev_line_width + 1);
 
                 /*
                  * Kinda hacky, but this will help us pull the buffer
@@ -2304,7 +2304,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 yed_buff_delete_line(frame->buffer, old_line_nr);
             }
         } else {
-            yed_move_cursor_within_frame(frame, -1, 0);
+            yed_move_cursor_within_frame(frame, 0, -1);
             yed_delete_from_line(frame->buffer, frame->cursor_line, col - 1);
         }
     }
@@ -2379,9 +2379,9 @@ void yed_default_command_delete_forward(int n_args, char **args) {
         frame->buffer->selection.locked = 1;
         if (frame->buffer->selection.kind == RANGE_LINE) {
             r1 = MIN(r1, yed_buff_n_lines(frame->buffer) - (r2 - r1) - 1);
-            yed_set_cursor_far_within_frame(frame, 1, r1);
+            yed_set_cursor_far_within_frame(frame, r1, 1);
         } else {
-            yed_set_cursor_far_within_frame(frame, c1, r1);
+            yed_set_cursor_far_within_frame(frame, r1, c1);
         }
         yed_buff_delete_selection(frame->buffer);
     } else {
@@ -2471,7 +2471,7 @@ void yed_default_command_delete_line(int n_args, char **args) {
 
     if (n_lines > 1) {
         if (row == n_lines) {
-            yed_move_cursor_within_frame(frame, 0, -1);
+            yed_move_cursor_within_frame(frame, -1, 0);
         }
         yed_buff_delete_line(frame->buffer, row);
     } else {
@@ -2933,7 +2933,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 col += yed_get_glyph_width(*g);
             }
         }
-        yed_set_cursor_far_within_frame(frame, 1, frame->cursor_line + 1);
+        yed_set_cursor_far_within_frame(frame, frame->cursor_line + 1, 1);
     } else {
         if (yank_buff_n_lines == 1) {
             line_it  = yed_buff_get_line(ys->yank_buff, 1);
@@ -2995,9 +2995,9 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
 int yed_inc_find_in_buffer(void) {
     int r, c;
 
-    yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+    yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_row, ys->search_save_col);
     if (yed_find_next(ys->active_frame->cursor_line, ys->active_frame->cursor_col, &r, &c)) {
-        yed_set_cursor_far_within_frame(ys->active_frame, c, r);
+        yed_set_cursor_far_within_frame(ys->active_frame, r, c);
         return 1;
     }
     return 0;
@@ -3053,7 +3053,7 @@ void yed_find_in_buffer_take_key(int key) {
             ys->interactive_command = NULL;
             ys->current_search      = NULL;
             yed_clear_cmd_buff();
-            yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+            yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_row, ys->search_save_col);
             break;
         default:
             yed_cmd_line_readline_take_key(ys->search_readline, key);
@@ -3191,9 +3191,9 @@ void yed_default_command_find_next_in_buffer(int n_args, char **args) {
 int yed_inc_find_prev_in_buffer(void) {
     int r, c;
 
-    yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_col, ys->search_save_row);
+    yed_set_cursor_far_within_frame(ys->active_frame, ys->search_save_row, ys->search_save_col);
     if (yed_find_prev(ys->active_frame->cursor_line, ys->active_frame->cursor_col, &r, &c)) {
-        yed_set_cursor_far_within_frame(ys->active_frame, c, r);
+        yed_set_cursor_far_within_frame(ys->active_frame, r, c);
         return 1;
     }
     return 0;
@@ -3438,7 +3438,7 @@ void yed_start_replace_current_search(void) {
 
     yed_start_undo_record(ys->active_frame, buff);
 
-    yed_set_cursor_within_frame(ys->active_frame, 1, ys->active_frame->cursor_line);
+    yed_set_cursor_within_frame(ys->active_frame, ys->active_frame->cursor_line, 1);
 
     if (buff->has_selection) {
         yed_range_sorted_points(&ys->active_frame->buffer->selection,

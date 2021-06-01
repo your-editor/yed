@@ -58,7 +58,7 @@ static void do_indent(yed_frame *frame) {
         yed_insert_into_line(frame->buffer, frame->cursor_line, 1, G(' '));
     }
 
-    yed_move_cursor_within_frame(frame, indent_width, 0);
+    yed_move_cursor_within_frame(frame, 0, indent_width);
 }
 
 static void do_brace_backup(yed_frame *frame) {
@@ -89,7 +89,7 @@ static void do_brace_backup(yed_frame *frame) {
 
     if (tabw > i) { tabw = i; }
 
-    yed_move_cursor_within_frame(frame, -tabw, 0);
+    yed_move_cursor_within_frame(frame, 0, -tabw);
     for (i = 0; i < tabw; i += 1) {
         yed_delete_from_line(frame->buffer, frame->cursor_line, 1);
     }
@@ -146,7 +146,7 @@ void indent_c_post_delete_back_handler(yed_event *event) {
     if (!all_spaces)    { return; }
 
     if (col % tabw == 1) {
-        yed_move_cursor_within_frame(frame, -(tabw - 1), 0);
+        yed_move_cursor_within_frame(frame, 0, -(tabw - 1));
         for (i = 0; i < (tabw - 1); i += 1) {
             yed_delete_from_line(frame->buffer, frame->cursor_line, 1);
         }
@@ -180,7 +180,7 @@ void indent(int n_args, char **args) {
     yed_start_undo_record(frame, buff);
 
     save_col = frame->cursor_col;
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, 1);
 
     if (buff->has_selection) {
         yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
@@ -196,7 +196,7 @@ void indent(int n_args, char **args) {
         indent_line(frame, line, frame->cursor_line, tabw);
     }
 
-    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, save_col);
 
     yed_end_undo_record(frame, buff);
 }
@@ -228,7 +228,7 @@ void unindent(int n_args, char **args) {
     yed_start_undo_record(frame, buff);
 
     save_col = frame->cursor_col;
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, 1);
 
     if (buff->has_selection) {
         yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
@@ -244,7 +244,7 @@ void unindent(int n_args, char **args) {
         unindent_line(frame, line, frame->cursor_line, tabw);
     }
 
-    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, save_col);
 
     yed_end_undo_record(frame, buff);
 }

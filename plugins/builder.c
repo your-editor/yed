@@ -334,7 +334,7 @@ LOG_FN_ENTER();
         if (*fit == ys->active_frame) { continue; }
         if ((*fit)->buffer == get_or_make_buffer()) {
             last_row = yed_buff_n_lines((*fit)->buffer);
-            yed_set_cursor_far_within_frame(*fit, 1, last_row);
+            yed_set_cursor_far_within_frame(*fit, last_row, 1);
         }
     }
 
@@ -587,7 +587,7 @@ done:;
 
     builder_set_err(1, file_buff, line, col, scan);
 
-    yed_set_cursor_far_within_frame(ys->active_frame, col, line);
+    yed_set_cursor_far_within_frame(ys->active_frame, line, col);
 
     YEXE("builder-print-error");
 

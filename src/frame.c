@@ -182,13 +182,13 @@ yed_frame * yed_vsplit_frame(yed_frame *frame) {
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
-    yed_set_cursor_far_within_frame(frame, 1, save_cursor_row);
+    yed_set_cursor_far_within_frame(frame, save_cursor_row, 1);
 
     yed_frame_tree_leaf_vsplit(frame->tree);
 
     new_frame = frame->tree->parent->child_trees[1]->frame;
 
-    yed_set_cursor_far_within_frame(frame, save_cursor_col, save_cursor_row);
+    yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
     return new_frame;
 }
@@ -200,13 +200,13 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
-    yed_set_cursor_far_within_frame(frame, 1, save_cursor_row);
+    yed_set_cursor_far_within_frame(frame, save_cursor_row, 1);
 
     yed_frame_tree_leaf_hsplit(frame->tree);
 
     new_frame = frame->tree->parent->child_trees[1]->frame;
 
-    yed_set_cursor_far_within_frame(frame, save_cursor_col, save_cursor_row);
+    yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
     return new_frame;
 }
@@ -234,7 +234,7 @@ void yed_activate_frame(yed_frame *frame) {
         if (frame->cursor_line > buff_n_lines) {
             save_cursor_line = frame->cursor_line;
             yed_set_cursor_far_within_frame(frame, 1, 1);
-            yed_set_cursor_far_within_frame(frame, 1, save_cursor_line);
+            yed_set_cursor_far_within_frame(frame, save_cursor_line, 1);
         } else if (frame->buffer->kind == BUFF_KIND_YANK) {
             yed_set_cursor_far_within_frame(frame, 1, 1);
         }
@@ -867,7 +867,7 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
 
     if (buff) {
         yed_set_cursor_far_within_frame(frame, 1, 1);
-        yed_set_cursor_within_frame(frame, buff->last_cursor_col, buff->last_cursor_row);
+        yed_set_cursor_within_frame(frame, buff->last_cursor_row, buff->last_cursor_col);
     }
 }
 
@@ -984,7 +984,7 @@ void yed_frame_update(yed_frame *frame) {
         if (frame->cursor_line > buff_n_lines) {
             save_cursor_line = frame->cursor_line;
             yed_set_cursor_far_within_frame(frame, 1, 1);
-            yed_set_cursor_far_within_frame(frame, 1, save_cursor_line);
+            yed_set_cursor_far_within_frame(frame, save_cursor_line, 1);
         } else if (frame->buffer->kind == BUFF_KIND_YANK) {
             yed_set_cursor_far_within_frame(frame, 1, 1);
         }
@@ -1146,7 +1146,7 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
     f->desired_col = f->cursor_col;
 }
 
-void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
+void yed_set_cursor_within_frame(yed_frame *f, int new_col, int new_row) {
     yed_event  event;
     int        dir, glyph_dist, row,
                line_width;
@@ -1155,21 +1155,21 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
 
     if (f->buffer == NULL) { return; }
 
-    row = new_y - f->cursor_line;
-    yed_move_cursor_within_frame(f, 0, row);
+    row = new_row - f->cursor_line;
+    yed_move_cursor_within_frame(f, row, 0);
 
     line       = yed_buff_get_line(f->buffer, f->cursor_line);
     line_width = line->visual_width;
 
-    if (new_x > line_width + 1) {
-        new_x = line_width + 1;
+    if (new_col > line_width + 1) {
+        new_col = line_width + 1;
     }
 
-    if (f->cursor_col != new_x) {
-        dir        = new_x - f->cursor_col > 0 ? 1 : -1;
+    if (f->cursor_col != new_col) {
+        dir        = new_col - f->cursor_col > 0 ? 1 : -1;
         glyph_dist = 0;
         g          = yed_line_col_to_glyph(line, f->cursor_col);
-        new_g      = yed_line_col_to_glyph(line, new_x);
+        new_g      = yed_line_col_to_glyph(line, new_col);
 
         if (dir == 1) {
             while (g != new_g) {
@@ -1184,7 +1184,7 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
         }
 
         glyph_dist *= dir;
-        yed_move_cursor_within_frame(f, glyph_dist, 0);
+        yed_move_cursor_within_frame(f, 0, glyph_dist);
     }
 
     event.kind  = EVENT_CURSOR_MOVED;
@@ -1193,7 +1193,7 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_x, int new_y) {
     yed_trigger_event(&event);
 }
 
-void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
+void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
     int       i,
               dir,
               line_width,
@@ -1249,8 +1249,8 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
         f->cursor_col = f->buffer_x_offset + (f->cur_x - (f->left + f->gutter_width) + 1);
     }
 
-    dir = glyph > 0 ? 1 : -1;
-    for (i = 0; i < dir * glyph; i += 1) {
+    dir = n_glyphs > 0 ? 1 : -1;
+    for (i = 0; i < dir * n_glyphs; i += 1) {
         yed_move_cursor_once_x_within_frame(f, dir, line_width);
         f->cursor_line_is_dirty = 1;
     }
@@ -1281,17 +1281,17 @@ void yed_move_cursor_within_frame(yed_frame *f, int glyph, int row) {
 
 }
 
-void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
+void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col) {
     int buff_n_lines;
 
     if (frame->buffer) {
         buff_n_lines = bucket_array_len(frame->buffer->lines);
 
-        if ((dst_y <  frame->buffer_y_offset + 1)
-        ||  (dst_y >= frame->buffer_y_offset + frame->height)) {
+        if ((new_row <  frame->buffer_y_offset + 1)
+        ||  (new_row >= frame->buffer_y_offset + frame->height)) {
 
             frame->buffer_x_offset = 0;
-            frame->buffer_y_offset = MIN(dst_y, MAX(0, buff_n_lines - frame->height));
+            frame->buffer_y_offset = MIN(new_row, MAX(0, buff_n_lines - frame->height));
             frame->desired_col     = 1;
             frame->cur_x           = frame->left + frame->gutter_width;
             frame->cur_y           = frame->top  + NORM_SCROLL_OFF(frame);
@@ -1303,7 +1303,7 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int dst_x, int dst_y) {
             frame->cursor_line     = frame->buffer_y_offset + (frame->cur_y - frame->top + 1);
         }
 
-        yed_set_cursor_within_frame(frame, dst_x, dst_y);
+        yed_set_cursor_within_frame(frame, new_row, new_col);
 
         frame->dirty = 1;
     }
@@ -1320,7 +1320,7 @@ void yed_frame_reset_cursor(yed_frame *frame) {
     }
 
     if (frame->buffer) {
-        yed_set_cursor_far_within_frame(frame, frame->cursor_col, frame->cursor_line);
+        yed_set_cursor_far_within_frame(frame, frame->cursor_line, frame->cursor_col);
     } else {
         frame->cur_y = frame->top;
         frame->cur_x = frame->left + frame->gutter_width;
@@ -1328,14 +1328,14 @@ void yed_frame_reset_cursor(yed_frame *frame) {
 }
 
 void yed_frame_hard_reset_cursor_x(yed_frame *frame) {
-    int dst_x;
+    int dst_col;
 
     if (frame->buffer) {
-        dst_x = frame->cursor_col;
+        dst_col = frame->cursor_col;
         frame->buffer_x_offset = 0;
         frame->cur_x = frame->left + frame->gutter_width;
         frame->cursor_col = 1;
-        yed_set_cursor_within_frame(frame, dst_x, frame->cursor_line);
+        yed_set_cursor_within_frame(frame, frame->cursor_line, dst_col);
     } else {
         frame->cur_y = frame->top;
         frame->cur_x = frame->left + frame->gutter_width;
@@ -1356,25 +1356,25 @@ void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
 
     if (rows > 0
     &&  frame->cursor_line - frame->buffer_y_offset - 1 <= frame->scroll_off) {
-        yed_move_cursor_within_frame(frame, 0, rows);
+        yed_move_cursor_within_frame(frame, rows, 0);
     } else if (rows < 0
     &&         frame->buffer_y_offset + frame->height - frame->cursor_line <= frame->scroll_off) {
-        yed_move_cursor_within_frame(frame, 0, rows);
+        yed_move_cursor_within_frame(frame, rows, 0);
     }
 
     frame->buffer_y_offset += rows;
     LIMIT(frame->buffer_y_offset, 0, buff_n_lines - frame->height);
 
     if (frame->buffer_y_offset != old_off) {
-        yed_move_cursor_within_frame(frame, 0, -rows);
+        yed_move_cursor_within_frame(frame, -rows, 0);
 
         frame->dirty = 1;
     }
 }
 
-void yed_move_cursor_within_active_frame(int col, int row) {
+void yed_move_cursor_within_active_frame(int row, int col) {
     if (ys->active_frame) {
-        yed_move_cursor_within_frame(ys->active_frame, col, row);
+        yed_move_cursor_within_frame(ys->active_frame, row, col);
     }
 }
 

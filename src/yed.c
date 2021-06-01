@@ -422,7 +422,7 @@ int yed_pump(void) {
     array_traverse(ys->frames, frame) {
         if ((*frame) != ys->active_frame
         &&  (*frame)->buffer == ys->log_buff) {
-            yed_set_cursor_far_within_frame((*frame), 1, yed_buff_n_lines(ys->log_buff));
+            yed_set_cursor_far_within_frame((*frame), yed_buff_n_lines(ys->log_buff), 1);
             (*frame)->dirty = 1;
         }
     }

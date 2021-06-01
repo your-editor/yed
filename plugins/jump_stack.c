@@ -85,7 +85,7 @@ void jump_stack_pop(int n_args, char **args) {
     target = array_last(stack);
 
     YEXE("buffer", target->buffer_name);
-    yed_set_cursor_far_within_frame(ys->active_frame, target->col, target->row);
+    yed_set_cursor_far_within_frame(ys->active_frame, target->row, target->col);
 
     free(target->buffer_name);
     array_pop(stack);
