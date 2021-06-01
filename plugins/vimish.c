@@ -743,6 +743,7 @@ enter_insert:
             YEXE("command-prompt");
             break;
 
+        case ESC:
         case CTRL_C:
             YEXE("select-off");
             break;
