@@ -1146,7 +1146,7 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
     f->desired_col = f->cursor_col;
 }
 
-void yed_set_cursor_within_frame(yed_frame *f, int new_col, int new_row) {
+void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
     yed_event  event;
     int        dir, glyph_dist, row,
                line_width;
