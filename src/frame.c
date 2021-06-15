@@ -1155,6 +1155,9 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 
     if (f->buffer == NULL) { return; }
 
+    if (new_row <= 0) { new_row = 1; }
+    if (new_col <= 0) { new_col = 1; }
+
     row = new_row - f->cursor_line;
     yed_move_cursor_within_frame(f, row, 0);
 
@@ -1285,6 +1288,9 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col)
     int buff_n_lines;
 
     if (frame->buffer) {
+        if (new_row <= 0) { new_row = 1; }
+        if (new_col <= 0) { new_col = 1; }
+
         buff_n_lines = bucket_array_len(frame->buffer->lines);
 
         if ((new_row <  frame->buffer_y_offset + 1)
