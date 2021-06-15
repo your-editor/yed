@@ -1350,6 +1350,10 @@ void yed_default_command_buffer(int n_args, char **args) {
 
     if (lookup) {
         buffer = lookup;
+
+        if (ys->active_frame) {
+            yed_frame_set_buff(ys->active_frame, buffer);
+        }
     } else {
         event.kind  = EVENT_BUFFER_PRE_LOAD;
         event.frame = ys->active_frame;
@@ -1390,16 +1394,16 @@ void yed_default_command_buffer(int n_args, char **args) {
                     event.buffer_is_new_file = 0;
                 }
 
+                if (ys->active_frame) {
+                    yed_frame_set_buff(ys->active_frame, buffer);
+                }
+
                 event.kind = EVENT_BUFFER_POST_LOAD;
 
                 yed_trigger_event(&event);
 
                 break;
         }
-    }
-
-    if (ys->active_frame) {
-        yed_frame_set_buff(ys->active_frame, buffer);
     }
 
     goto out;
