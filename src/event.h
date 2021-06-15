@@ -27,6 +27,7 @@ typedef enum {
     EVENT_PRE_PUMP,
     EVENT_POST_PUMP,
     EVENT_STYLE_CHANGE,
+    EVENT_PRE_QUIT,
 
     N_EVENTS,
 } yed_event_kind_t;

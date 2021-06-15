@@ -345,13 +345,15 @@ yed_state * yed_get_state(void)         { return ys;  }
 
 
 int yed_pump(void) {
+    yed_event            event;
     int                  keys[16], n_keys, i, tabw_var_val;
     unsigned long long   start_us;
     yed_frame          **frame;
-    yed_event            event;
     int                  skip_keys;
 
     if (ys->status == YED_QUIT) {
+        event.kind = EVENT_PRE_QUIT;
+        yed_trigger_event(&event);
         return YED_QUIT;
     }
 
