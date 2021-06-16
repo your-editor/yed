@@ -354,7 +354,7 @@ int yed_pump(void) {
     if (ys->status == YED_QUIT) {
         event.kind = EVENT_PRE_QUIT;
         yed_trigger_event(&event);
-        return YED_QUIT;
+        return ys->status;
     }
 
     if (ys->status == YED_RELOAD) {
@@ -480,6 +480,11 @@ LOG_EXIT();
             yed_unload_plugin_libs();
             kill_writer();
         }
+    }
+
+    if (ys->status == YED_QUIT) {
+        event.kind = EVENT_PRE_QUIT;
+        yed_trigger_event(&event);
     }
 
     return ys->status;
