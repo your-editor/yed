@@ -847,6 +847,7 @@ void yed_frame_set_gutter_width(yed_frame *frame, int width) {
 }
 
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
+    yed_event   event;
     yed_buffer *old_buff;
 
     old_buff = frame->buffer;
@@ -854,6 +855,11 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     if (old_buff == buff) {
         return;
     }
+
+    event.kind  = EVENT_FRAME_PRE_SET_BUFFER;
+    event.frame = frame;
+
+    yed_trigger_event(&event);
 
     frame->buffer = buff;
     frame->dirty  = 1;
@@ -869,6 +875,9 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
         yed_set_cursor_far_within_frame(frame, 1, 1);
         yed_set_cursor_within_frame(frame, buff->last_cursor_col, buff->last_cursor_row);
     }
+
+    event.kind = EVENT_FRAME_POST_SET_BUFFER;
+    yed_trigger_event(&event);
 }
 
 void yed_frame_draw_border(yed_frame *frame) {

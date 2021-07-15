@@ -9,5 +9,8 @@
 * If a plugin is running any additional threads, yed will crash on reload because
   pthreads loses the code it's supposed to be running
 * multi-line comments sometimes lose their highlighting... not sure how to repro
+    * it seems to happen when a multi-line highlight is cut off by the bottom of the
+      frame and then we scroll the buffer (because we've hit the scroll offset)
+      (so, something to do with redrawing the whole frame)
 * still have that bug since forever where sometimes the cursor will get stuck
   in the scroll-offset zone. This one is also hard to repro
