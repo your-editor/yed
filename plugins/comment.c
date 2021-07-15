@@ -53,7 +53,7 @@ void comment_toggle(int n_args, char **args) {
     yed_start_undo_record(frame, buff);
 
     save_col = frame->cursor_col;
-    yed_set_cursor_within_frame(frame, 1, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, 1);
 
     if (buff->has_selection) {
         yed_range_sorted_points(&buff->selection, &r1, &c1, &r2, &c2);
@@ -71,7 +71,7 @@ void comment_toggle(int n_args, char **args) {
         status = comment_toggle_line(frame, line, frame->cursor_line);
     }
 
-    yed_set_cursor_within_frame(frame, save_col, frame->cursor_line);
+    yed_set_cursor_within_frame(frame, frame->cursor_line, save_col);
 
     if (status == 0) {
         yed_cerr("unhandled ft");

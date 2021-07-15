@@ -294,7 +294,7 @@ int yed_undo(yed_frame *frame, yed_buffer *buffer) {
         yed_undo_single_action(frame, buffer, action);
     }
 
-    yed_set_cursor_within_frame(frame, record->start_cursor_col, record->start_cursor_row);
+    yed_set_cursor_within_frame(frame, record->start_cursor_row, record->start_cursor_col);
 
     array_push(history->redo, *record);
     array_pop(history->undo);
@@ -320,7 +320,7 @@ int yed_redo(yed_frame *frame, yed_buffer *buffer) {
         yed_redo_single_action(frame, buffer, action);
     }
 
-    yed_set_cursor_within_frame(frame, record->end_cursor_col, record->end_cursor_row);
+    yed_set_cursor_within_frame(frame, record->end_cursor_row, record->end_cursor_col);
 
     array_push(history->undo, *record);
     array_pop(history->redo);

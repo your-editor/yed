@@ -26,6 +26,10 @@ int yed_plugin_boot(yed_plugin *self) {
         "if", "for", "try", "elif", "else", "pass", "with", "break", "raise", "while",
         "yield", "except", "return", "finally", "continue",
     };
+    char              *constants[] = {
+        "None", "True",
+        "False",
+    };
 
     YED_PLUG_VERSION_CHECK();
 
@@ -53,6 +57,8 @@ int yed_plugin_boot(yed_plugin *self) {
         highlight_add_kwd(&hinfo, *it, HL_KEY);
     ARRAY_LOOP(control_flow)
         highlight_add_kwd(&hinfo, *it, HL_CF);
+    ARRAY_LOOP(constants)
+        highlight_add_kwd(&hinfo, *it, HL_CON);
     highlight_suffixed_words(&hinfo, '(', HL_CALL);
     highlight_numbers(&hinfo);
     highlight_within_multiline(&hinfo, "\"\"\"", "\"\"\"", 0, HL_STR);

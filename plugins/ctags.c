@@ -299,13 +299,13 @@ LOG_EXIT();
     YEXE("cursor-buffer-end");
 
     if (row > 0) {
-        yed_set_cursor_within_frame(ys->active_frame, 1, row);
+        yed_set_cursor_within_frame(ys->active_frame, row, 1);
     } else {
         save_cur_search = ys->current_search;
 
         ys->current_search = search;
         if (yed_find_next(1, 1, &row, &col)) {
-            yed_set_cursor_within_frame(ys->active_frame, col, row);
+            yed_set_cursor_within_frame(ys->active_frame, row, col);
         } else {
             YEXE("cursor-buffer-begin");
 LOG_CMD_ENTER("ctags-find");
@@ -686,13 +686,13 @@ select:
     YEXE("cursor-buffer-end");
 
     if (row > 0) {
-        yed_set_cursor_within_frame(ys->active_frame, 1, row);
+        yed_set_cursor_within_frame(ys->active_frame, row, 1);
     } else {
         save_cur_search = ys->current_search;
 
         ys->current_search = search;
         if (yed_find_next(1, 1, &row, &col)) {
-            yed_set_cursor_within_frame(ys->active_frame, col, row);
+            yed_set_cursor_within_frame(ys->active_frame, row, col);
         } else {
             YEXE("cursor-buffer-begin");
             yed_cerr("could not find pattern from tag file");

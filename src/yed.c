@@ -345,14 +345,16 @@ yed_state * yed_get_state(void)         { return ys;  }
 
 
 int yed_pump(void) {
+    yed_event            event;
     int                  keys[16], n_keys, i, tabw_var_val;
     unsigned long long   start_us;
     yed_frame          **frame;
-    yed_event            event;
     int                  skip_keys;
 
     if (ys->status == YED_QUIT) {
-        return YED_QUIT;
+        event.kind = EVENT_PRE_QUIT;
+        yed_trigger_event(&event);
+        return ys->status;
     }
 
     if (ys->status == YED_RELOAD) {
@@ -422,7 +424,7 @@ int yed_pump(void) {
     array_traverse(ys->frames, frame) {
         if ((*frame) != ys->active_frame
         &&  (*frame)->buffer == ys->log_buff) {
-            yed_set_cursor_far_within_frame((*frame), 1, yed_buff_n_lines(ys->log_buff));
+            yed_set_cursor_far_within_frame((*frame), yed_buff_n_lines(ys->log_buff), 1);
             (*frame)->dirty = 1;
         }
     }
@@ -478,6 +480,11 @@ LOG_EXIT();
             yed_unload_plugin_libs();
             kill_writer();
         }
+    }
+
+    if (ys->status == YED_QUIT) {
+        event.kind = EVENT_PRE_QUIT;
+        yed_trigger_event(&event);
     }
 
     return ys->status;

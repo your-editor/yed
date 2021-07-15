@@ -83,7 +83,7 @@ LOG_CMD_ENTER("shell-run");
         if (*fit == ys->active_frame) { continue; }
         if ((*fit)->buffer == get_or_make_buffer()) {
             last_row = yed_buff_n_lines((*fit)->buffer);
-            yed_set_cursor_far_within_frame(*fit, 1, last_row);
+            yed_set_cursor_far_within_frame(*fit, last_row, 1);
         }
     }
 

@@ -501,7 +501,7 @@ void yed_handle_resize(void) {
     yed_clear_screen();
 
     if (af) {
-        yed_set_cursor_far_within_frame(af, save_col, save_row);
+        yed_set_cursor_far_within_frame(af, save_row, save_col);
     }
 
 #if 0
