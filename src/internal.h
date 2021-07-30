@@ -47,9 +47,11 @@ typedef struct __attribute__((__packed__)) {
 
 extern _path_patch_guide _path_patch_guide_default_plug_dir;
 extern _path_patch_guide _path_patch_guide_installed_lib_dir;
+extern _path_patch_guide _path_patch_guide_installed_include_dir;
 
-#define DEFAULT_PLUG_DIR  (_path_patch_guide_default_plug_dir.path)
-#define INSTALLED_LIB_DIR (_path_patch_guide_installed_lib_dir.path)
+#define DEFAULT_PLUG_DIR      (_path_patch_guide_default_plug_dir.path)
+#define INSTALLED_LIB_DIR     (_path_patch_guide_installed_lib_dir.path)
+#define INSTALLED_INCLUDE_DIR (_path_patch_guide_installed_include_dir.path)
 
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);

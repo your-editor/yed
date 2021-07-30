@@ -18,6 +18,14 @@ _path_patch_guide_installed_lib_dir = {
     {'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'y', 'v', 'o', '_', 'q', 'v', 'e'}
 };
 
+__attribute__((used))
+_path_patch_guide
+_path_patch_guide_installed_include_dir = {
+    {},
+    /* rot13 of "installed_include_dir" */
+    { 'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'v', 'a', 'p', 'y', 'h', 'q', 'r', '_', 'q', 'v', 'e' }
+};
+
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;

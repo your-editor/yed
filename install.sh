@@ -74,6 +74,11 @@ patch_offset=$(strings -t d ${lib_dir}/libyed.so | grep vafgnyyrq_yvo_qve | awk 
 dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
 dd if=<(printf "${lib_dir}") of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
 echo "    patched installed lib path"
+# Patch installed_include_dir in lib
+patch_offset=$(strings -t d ${lib_dir}/libyed.so | grep vafgnyyrq_vapyhqr_qve | awk '{ print $1 - 4096; }')
+dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
+dd if=<(printf "${inc_dir}") of="${lib_dir}/libyed.so" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
+echo "    patched installed include path"
 
 if [ $(uname) = "Darwin" ]; then
     cp ${lib_dir}/libyed.so ${lib_dir}/libyed.so.tmp          || exit 1

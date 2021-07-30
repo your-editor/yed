@@ -163,6 +163,9 @@ static int parse_options(int argc, char **argv) {
             } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
                 printf("%s\n", INSTALLED_LIB_DIR);
                 exit(0);
+            } else if (strcmp(argv[i], "--print-include-dir") == 0) {
+                printf("%s\n", INSTALLED_INCLUDE_DIR);
+                exit(0);
             } else if (strcmp(argv[i], "--print-default-plugin-dir") == 0) {
                 printf("%s\n", DEFAULT_PLUG_DIR);
                 exit(0);
