@@ -278,30 +278,85 @@ void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, 
     }
 }
 
+#define DO_RD_ONLY_CHECK(_buff)                      \
+do {                                                 \
+    if ((_buff)->flags & BUFF_RD_ONLY) { goto out; } \
+} while (0)
+
+#define DO_PRE_MOD_EVT(_buff, _kind, _row, _col)     \
+do {                                                 \
+    yed_event _event;                                \
+    _event.kind           = EVENT_BUFFER_PRE_MOD;    \
+    _event.buffer         = (_buff);                 \
+    _event.buff_mod_event = (_kind);                 \
+    _event.row            = (_row);                  \
+    _event.col            = (_col);                  \
+    yed_trigger_event(&_event);                      \
+    if (_event.cancel) { goto out; }                 \
+} while (0)
+#define DO_POST_MOD_EVT(_buff, _kind, _row, _col)    \
+do {                                                 \
+    yed_event _event;                                \
+    _event.kind           = EVENT_BUFFER_POST_MOD;   \
+    _event.buffer         = (_buff);                 \
+    _event.buff_mod_event = (_kind);                 \
+    _event.row            = (_row);                  \
+    _event.col            = (_col);                  \
+    yed_trigger_event(&_event);                      \
+} while (0)
+
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g) {
     yed_line *line;
 
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_APPEND_TO_LINE, row, 0);
+
     line = yed_buff_get_line(buff, row);
     yed_line_append_glyph(line, g);
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_APPEND_TO_LINE, row, 0);
+out:;
 }
 
 void yed_pop_from_line_no_undo(yed_buffer *buff, int row) {
     yed_line *line;
 
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_POP_FROM_LINE, row, 0);
+
     line = yed_buff_get_line(buff, row);
     yed_line_pop_glyph(line);
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_POP_FROM_LINE, row, 0);
+out:;
 }
 
 void yed_line_clear_no_undo(yed_buffer *buff, int row) {
     yed_line *line;
 
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_CLEAR, row, 0);
+
     line = yed_buff_get_line(buff, row);
     array_clear(line->chars);
     line->visual_width = 0;
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_CLEAR, row, 0);
+out:;
 }
 
 int yed_buffer_add_line_no_undo(yed_buffer *buff) {
+    u32      n_lines;
     yed_line new_line;
+
+    n_lines = yed_buff_n_lines(buff);
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_ADD_LINE, n_lines + 1, 0);
 
     new_line = yed_new_line();
 
@@ -311,11 +366,18 @@ int yed_buffer_add_line_no_undo(yed_buffer *buff) {
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
-    return yed_buff_n_lines(buff);
+    DO_POST_MOD_EVT(buff, BUFF_MOD_ADD_LINE, n_lines + 1, 0);
+
+out:;
+    return n_lines + 1;
 }
 
 void yed_buff_set_line_no_undo(yed_buffer *buff, int row, yed_line *line) {
     yed_line *old_line;
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_SET_LINE, row, 0);
 
     old_line = yed_buff_get_line(buff, row);
 
@@ -323,6 +385,9 @@ void yed_buff_set_line_no_undo(yed_buffer *buff, int row, yed_line *line) {
     old_line->visual_width = line->visual_width;
     old_line->chars        = array_make(char);
     array_copy(old_line->chars, line->chars);
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_SET_LINE, row, 0);
+out:;
 }
 
 yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row) {
@@ -335,6 +400,12 @@ yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row) {
         return NULL;
     }
 
+    line = NULL;
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_INSERT_LINE, row, 0);
+
     new_line = yed_new_line();
     line     = bucket_array_insert(buff->lines, idx, new_line);
 
@@ -342,12 +413,19 @@ yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row) {
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
+    DO_POST_MOD_EVT(buff, BUFF_MOD_INSERT_LINE, row, 0);
+
+out:;
     return line;
 }
 
 void yed_buff_delete_line_no_undo(yed_buffer *buff, int row) {
     int       idx;
     yed_line *line;
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_DELETE_LINE, row, 0);
 
     idx = row - 1;
 
@@ -360,11 +438,19 @@ void yed_buff_delete_line_no_undo(yed_buffer *buff, int row) {
     yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_DELETE_LINE, row, 0);
+
+out:;
 }
 
 void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, yed_glyph g) {
     int       idx;
     yed_line *line;
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_INSERT_INTO_LINE, row, col);
 
     line = yed_buff_get_line(buff, row);
 
@@ -372,11 +458,19 @@ void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, yed_glyph 
     yed_line_add_glyph(line, g, idx);
 
     yed_mark_dirty_frames_line(buff, row);
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_INSERT_INTO_LINE, row, col);
+
+out:;
 }
 
 void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col) {
     int       idx;
     yed_line *line;
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_DELETE_FROM_LINE, row, col);
 
     line = yed_buff_get_line(buff, row);
 
@@ -384,10 +478,18 @@ void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col) {
     yed_line_delete_glyph(line, idx);
 
     yed_mark_dirty_frames_line(buff, row);
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_DELETE_FROM_LINE, row, col);
+
+out:;
 }
 
 void yed_buff_clear_no_undo(yed_buffer *buff) {
     yed_line *line;
+
+    DO_RD_ONLY_CHECK(buff);
+
+    DO_PRE_MOD_EVT(buff, BUFF_MOD_CLEAR, 0, 0);
 
     bucket_array_traverse(buff->lines, line) {
         yed_free_line(line);
@@ -399,6 +501,10 @@ void yed_buff_clear_no_undo(yed_buffer *buff) {
     yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
+
+    DO_POST_MOD_EVT(buff, BUFF_MOD_CLEAR, 0, 0);
+
+out:;
 }
 
 /*

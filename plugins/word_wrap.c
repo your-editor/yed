@@ -19,19 +19,19 @@ int yed_plugin_boot(yed_plugin *self) {
 int is_beginning_of_paragraph(yed_buffer *buff, int row) {
     yed_line *line;
     yed_glyph *git;
-    
+
     line = yed_buff_get_line(buff, row - 1);
     if(!line) {
         /* The first line is the beginning of a paragraph */
         return 1;
     }
-    
+
     /* `row` is the beginning of a paragraph if the previous
        row contains no glyphs or all whitespace. */
     yed_line_glyph_traverse(*line, git) {
         if(git->c != ' ') return 0;
     }
-    
+
     return 1;
 }
 
@@ -42,9 +42,9 @@ void remove_trailing_whitespace(yed_buffer *buff, int row) {
     yed_line *line;
     yed_glyph *git;
     int num_glyphs, i;
-    
+
     line = yed_buff_get_line(buff, row);
-    
+
     num_glyphs = 0;
     yed_line_glyph_traverse(*line, git) {
         if(git->c != ' ') {
@@ -54,7 +54,7 @@ void remove_trailing_whitespace(yed_buffer *buff, int row) {
             num_glyphs++;
         }
     }
-    
+
     for(i = 0; i < num_glyphs; i++) {
         yed_pop_from_line(buff, row);
     }
@@ -67,15 +67,15 @@ void remove_preceding_whitespace(yed_buffer *buff, int row) {
     yed_line *line;
     yed_glyph *git;
     int num_glyphs, i;
-    
+
     line = yed_buff_get_line(buff, row);
-    
+
     num_glyphs = 0;
     yed_line_glyph_traverse(*line, git) {
         if(git->c == ' ') num_glyphs++;
         else break;
     }
-    
+
     for(i = 0; i < num_glyphs; i++) {
         yed_delete_from_line(buff, row, 1);
     }
@@ -90,11 +90,11 @@ int is_line_all_whitespace(yed_line *line) {
     return 1;
 }
 
-/* Continuously absorbs the first word of the next line, until we can't anymore. 
+/* Continuously absorbs the first word of the next line, until we can't anymore.
    Returns the number of lines that we deleted. */
 int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_cols) {
     int retval, num_deleted;
-    
+
     retval = 1;
     num_deleted = 0;
     while(retval == 1) {
@@ -104,7 +104,7 @@ int combine_line_with_next(yed_buffer *buff, yed_line *line, int row, int max_co
             retval = 1;
         }
     }
-    
+
     return num_deleted;
 }
 
@@ -115,14 +115,14 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
     int i, num_glyphs, first_word_width, first_word_visual_width;
     char seen_non_whitespace, preceding_whitespace;
     yed_line *next_line;
-    
+
     next_line = yed_buff_get_line(buff, row + 1);
     if(!next_line) {
         /* It's possible for this line to no longer exist. It could have
            been consumed in an earlier call to this function. */
         return 0;
     }
-    
+
     /* Start by inspecting the next line. In order to do anything whatsoever,
        we need `line->visual_width` plus the visual width of the first word on
        the next line to be less than `max_cols`. */
@@ -141,28 +141,28 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
         }
         first_word_visual_width += yed_get_glyph_width(*git);
         first_word_width++;
-        
+
         /* Bail out if we've already exceeded our limit */
         if(max_cols < first_word_visual_width + line->visual_width) {
             break;
         }
     }
-    
+
     /* If there was no preceding whitespace, we'll have to add a space. */
     if(!preceding_whitespace) {
         first_word_visual_width++;
     }
-    
+
     /* We'll only combine if the first word (incl. preceding whitespace) can fit, AND
        if we've seen any non-whitespace characters at all. */
     if((max_cols >= first_word_visual_width + line->visual_width) && seen_non_whitespace) {
         num_glyphs = 0;
-        
+
         /* If there was no preceding whitespace, we'll need to add some */
         if(!preceding_whitespace) {
             yed_append_to_line(buff, row, G(' '));
         }
-        
+
         /* Copy the first word from the next line to the current one */
         yed_line_glyph_traverse(*next_line, git) {
             if(num_glyphs >= first_word_width) {
@@ -171,15 +171,15 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
             yed_append_to_line(buff, row, *git);
             num_glyphs++;
         }
-        
+
         /* If we've removed all characters from the next line, delete it.
             Return -1 if we deleted a line. */
         if(next_line->n_glyphs == num_glyphs) {
             yed_buff_delete_line(buff, row + 1);
             return -1;
         }
-        
-        /* Remove the glyphs that we just copied. Make sure the resulting 
+
+        /* Remove the glyphs that we just copied. Make sure the resulting
             line doesn't start with whitespace.  Return 1 if we combined
             a line, but didn't delete one. */
         for(i = 0; i < num_glyphs; i++) {
@@ -188,7 +188,7 @@ int absorb_first_word_of_next_line(yed_buffer *buff, yed_line *line, int row, in
         remove_preceding_whitespace(buff, row + 1);
         return 1;
     }
-    
+
     /* Return 0 if we didn't combine any lines */
     return 0;
 }
@@ -200,19 +200,19 @@ int split_line(yed_buffer *buff, int row, int max_cols) {
     yed_glyph  *git, *prev_git, *tmp_git;
     int i, idx, col, num_glyphs_to_pop, prev_word_col;
     yed_line *line;
-    
+
     col = 1;
     prev_git = NULL;
     prev_word_col = 0;
-    
+
     line = yed_buff_get_line(buff, row);
     yed_line_glyph_traverse(*line, git) {
-        
+
         if((prev_git && (prev_git->c == ' ')) && (git->c != ' ')) {
             /* prev_word_col will never be set to the first column. */
             prev_word_col = col;
         }
-        
+
         /* If the current column is over the limit */
         if((col > max_cols) && prev_word_col) {
             /* Break on the last whitespace that we found */
@@ -233,15 +233,15 @@ int split_line(yed_buffer *buff, int row, int max_cols) {
                 yed_pop_from_line(buff, row);
             }
             remove_trailing_whitespace(buff, row);
-            
+
             /* We have to break here, because the glyph pointer is now invalidated. */
             return 1;
         }
-        
+
         prev_git = git;
         col += yed_get_glyph_width(*git);
     }
-    
+
     return 0;
 }
 
@@ -281,7 +281,7 @@ void word_wrap(int n_args, char **args) {
 
     for (row = r1; row <= r2; row += 1) {
         line = yed_buff_get_line(buff, row);
-        
+
         if(!line || is_line_all_whitespace(line)) {
             continue;
         }
@@ -289,7 +289,7 @@ void word_wrap(int n_args, char **args) {
             remove_preceding_whitespace(buff, row);
         }
         remove_trailing_whitespace(buff, row);
-        
+
         if(line->visual_width > max_cols) {
             if(split_line(buff, row, max_cols)) {
                 r2++;
@@ -299,8 +299,8 @@ void word_wrap(int n_args, char **args) {
             r2 -= num_deleted;
         }
     }
-    
-    yed_set_cursor_within_frame(frame, 1, r2);
+
+    yed_set_cursor_within_frame(frame, r2, 1);
     yed_end_undo_record(frame, buff);
     frame->dirty = 1;
 

@@ -859,12 +859,13 @@ static inline int _highlight_line_ml_within(highlight_info *info, int row, yed_f
     return 0;
 }
 
-static inline void _highlight_line_get_word_info(highlight_info *info, yed_line *line, int col, int *word_len, int *all_num) {
+static inline void _highlight_line_get_word_info(highlight_info *info, yed_line *line, int col, int *word_len, int *all_num, int *is_hex) {
     yed_glyph *g;
     int        save_col;
 
     save_col = col;
     *all_num = 1;
+    *is_hex  = 0;
 
     if (col > line->visual_width) { return; }
 
@@ -874,29 +875,42 @@ static inline void _highlight_line_get_word_info(highlight_info *info, yed_line 
         do {
             col      += yed_get_glyph_width(*g);
             *all_num &= !!isdigit(g->c);
+            switch (*is_hex) {
+                case 0: if (g->c == '0') { *is_hex = 1; } break;
+                case 1: if (g->c == 'x') { *is_hex = 2; } break;
+                case 2: if (!(
+                             (g->c >= 'a' && g->c <= 'f')
+                        ||   (g->c >= 'A' && g->c <= 'F')
+                        ||   isdigit(g->c))) {
+
+                            *is_hex = 3;
+                        }
+                        break;
+            }
             if (col > line->visual_width) { break; }
             g = yed_line_col_to_glyph(line, col);
         } while (isalnum(g->c) || g->c == '_');
     } else if (!isspace(g->c) && !isalnum(g->c) && g->c != '_') {
-        *all_num = 0;
+        *all_num = *is_hex = 0;
         do {
             col += yed_get_glyph_width(*g);
             if (col > line->visual_width) { break; }
             g = yed_line_col_to_glyph(line, col);
         } while (!isspace(g->c) && !isalnum(g->c) && g->c != '_');
     } else if (isspace(g->c)) {
-        *all_num = 0;
+        *all_num = *is_hex = 0;
         do {
             col += yed_get_glyph_width(*g);
             if (col > line->visual_width) { break; }
             g = yed_line_col_to_glyph(line, col);
         } while (isspace(g->c));
     } else {
-        *all_num   = 0;
-        col       += yed_get_glyph_width(*g);
+        *all_num = *is_hex  = 0;
+        col                += yed_get_glyph_width(*g);
     }
 
     *word_len = col - save_col;
+    *is_hex   = *is_hex == 2;
 }
 
 static inline void highlight_line(highlight_info *info, yed_event *event) {
@@ -907,6 +921,7 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
     char               last_c;
     int                word_len;
     int                all_num;
+    int                is_hex;
     attrs_set          attrs;
     int                last_is_word_boundary;
     int                prev_state, state_idx;
@@ -953,7 +968,7 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
         g = yed_line_col_to_glyph(line, col);
 
         if (isspace(g->c)) {
-            _highlight_line_get_word_info(info, line, col, &word_len, &all_num);
+            _highlight_line_get_word_info(info, line, col, &word_len, &all_num, &is_hex);
             bump = word_len;
             goto next;
         } else {
@@ -965,21 +980,27 @@ static inline void highlight_line(highlight_info *info, yed_event *event) {
                 goto out;
             }
 
-            _highlight_line_get_word_info(info, line, col, &word_len, &all_num);
+            _highlight_line_get_word_info(info, line, col, &word_len, &all_num, &is_hex);
 
             if (!last_is_word_boundary) {
                 bump = 1;
                 goto next;
             }
 
-            if (all_num && info->hl_numbers) {
-                if (last_c == '-' || last_c == '.') {
-                    _highlight_range_with_attrs(col - 1, col + word_len - 1, line_attrs, &attrs.num);
-                } else {
+            if (info->hl_numbers) {
+                if (all_num) {
+                    if (last_c == '-' || last_c == '.') {
+                        _highlight_range_with_attrs(col - 1, col + word_len - 1, line_attrs, &attrs.num);
+                    } else {
+                        _highlight_range_with_attrs(col, col + word_len - 1, line_attrs, &attrs.num);
+                    }
+                    bump = word_len;
+                    goto next;
+                } else if (is_hex) {
                     _highlight_range_with_attrs(col, col + word_len - 1, line_attrs, &attrs.num);
+                    bump = word_len;
+                    goto next;
                 }
-                bump = word_len;
-                goto next;
             }
 
             if (!(bump = _highlight_line_prefixed_keyword(info, line, line_attrs, &attrs, col, word_len, last_c))) {
@@ -1006,15 +1027,27 @@ static inline void highlight_frame_pre_draw_update(highlight_info *info, yed_eve
 static inline void highlight_buffer_pre_mod_update(highlight_info *info, yed_event *event) {
     int prev_state;
 
-    info->state_before = _highlight_get_ml_state(info, event->frame, event->frame->cursor_line, &prev_state);
+    if (ys->active_frame         == NULL
+    ||  ys->active_frame->buffer == NULL
+    ||  ys->active_frame->buffer != event->buffer) {
+        return;
+    }
+
+    info->state_before = _highlight_get_ml_state(info, ys->active_frame, ys->active_frame->cursor_line, &prev_state);
 }
 
 static inline void highlight_buffer_post_mod_update(highlight_info *info, yed_event *event) {
     int state, prev_state;
 
-    state = _highlight_get_ml_state(info, event->frame, event->frame->cursor_line, &prev_state);
+    if (ys->active_frame         == NULL
+    ||  ys->active_frame->buffer == NULL
+    ||  ys->active_frame->buffer != event->buffer) {
+        return;
+    }
+
+    state = _highlight_get_ml_state(info, ys->active_frame, ys->active_frame->cursor_line, &prev_state);
 
     if (state != info->state_before) {
-        event->frame->dirty = 1;
+        ys->active_frame->dirty = 1;
     }
 }

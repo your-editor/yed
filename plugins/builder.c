@@ -3,7 +3,7 @@
 static yed_plugin        *Self;
 static yed_event_handler  pump_handler;
 static yed_event_handler  style_handler;
-static yed_event_handler  line_handler;
+static yed_event_handler  row_handler;
 static yed_event_handler  buff_post_mod_handler;
 static yed_event_handler  buff_post_write_handler;
 static yed_event_handler  cursor_moved_handler;
@@ -47,7 +47,7 @@ static yed_buffer * get_or_make_buffer(void) {
 
 static void builder_unload(yed_plugin *self);
 static void builder_pump_handler(yed_event *event);
-static void builder_line_handler(yed_event *event);
+static void builder_row_handler(yed_event *event);
 static void builder_buff_post_mod_handler(yed_event *event);
 static void builder_buff_post_write_handler(yed_event *event);
 static void builder_cursor_moved_handler(yed_event *event);
@@ -78,13 +78,13 @@ int yed_plugin_boot(yed_plugin *self) {
 
     pump_handler.kind            = EVENT_PRE_PUMP;
     pump_handler.fn              = builder_pump_handler;
-    line_handler.kind            = EVENT_LINE_PRE_DRAW;
-    line_handler.fn              = builder_line_handler;
+    row_handler.kind             = EVENT_ROW_PRE_CLEAR;
+    row_handler.fn               = builder_row_handler;
     buff_post_mod_handler.kind   = EVENT_BUFFER_POST_MOD;
     buff_post_mod_handler.fn     = builder_buff_post_mod_handler;
     buff_post_write_handler.kind = EVENT_BUFFER_POST_WRITE;
     buff_post_write_handler.fn   = builder_buff_post_write_handler;
-    cursor_moved_handler.kind    = EVENT_CURSOR_MOVED;
+    cursor_moved_handler.kind    = EVENT_CURSOR_POST_MOVE;
     cursor_moved_handler.fn      = builder_cursor_moved_handler;
     style_handler.kind           = EVENT_STYLE_CHANGE;
     style_handler.fn             = builder_style_handler;
@@ -317,7 +317,10 @@ void builder_update_running(void) {
 
 LOG_FN_ENTER();
 
+    get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
     build_is_running = yed_read_subproc_into_buffer_nb(&nb_subproc);
+    get_or_make_buffer()->flags |= BUFF_RD_ONLY;
+
     if (!build_is_running) {
         builder_run_before = 1;
         if (nb_subproc.err && nb_subproc.err != ECHILD) {
@@ -363,10 +366,8 @@ void builder_pump_handler(yed_event *event) {
     LOG_EXIT();
 }
 
-void builder_line_handler(yed_event *event) {
+void builder_row_handler(yed_event *event) {
     yed_buffer *buff;
-    yed_attrs  *ait;
-    yed_attrs   a;
 
     if (!has_err)               { return; }
     if (event->row != err_line) { return; }
@@ -375,11 +376,7 @@ void builder_line_handler(yed_event *event) {
 
     if (event->frame->buffer != buff) { return; }
 
-    a = get_err_attrs();
-
-    array_traverse(event->line_attrs, ait) {
-        *ait = a;
-    }
+    event->row_base_attr = get_err_attrs();
 }
 
 static void builder_buff_post_mod_handler(yed_event *event) {
@@ -387,11 +384,11 @@ static void builder_buff_post_mod_handler(yed_event *event) {
 
     buff = yed_get_buffer_by_path(err_file);
 
-    if (event->frame->buffer != buff) { return; }
+    if (event->buffer != buff) { return; }
 
     builder_draw_error_message(0);
 
-    yed_delete_event_handler(line_handler);
+    yed_delete_event_handler(row_handler);
     yed_delete_event_handler(buff_post_mod_handler);
     yed_delete_event_handler(buff_post_write_handler);
     yed_delete_event_handler(cursor_moved_handler);
@@ -410,7 +407,7 @@ static void builder_buff_post_write_handler(yed_event *event) {
 
     builder_draw_error_message(0);
 
-    yed_delete_event_handler(line_handler);
+    yed_delete_event_handler(row_handler);
     yed_delete_event_handler(buff_post_mod_handler);
     yed_delete_event_handler(buff_post_write_handler);
     yed_delete_event_handler(cursor_moved_handler);
@@ -445,7 +442,7 @@ static void builder_set_err(int has_loc, char *file, int line, int col, char *ms
     int max_err_len;
 
     if (!has_err && has_loc) {
-        yed_plugin_add_event_handler(Self, line_handler);
+        yed_plugin_add_event_handler(Self, row_handler);
         yed_plugin_add_event_handler(Self, buff_post_mod_handler);
         yed_plugin_add_event_handler(Self, buff_post_write_handler);
         yed_plugin_add_event_handler(Self, cursor_moved_handler);
@@ -725,10 +722,13 @@ static void builder_start(int n_args, char **args) {
     snprintf(cmd_buff, sizeof(cmd_buff),
              "(%s) 2>&1", cmd);
 
+    get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
     if (yed_start_read_subproc_into_buffer_nb(cmd_buff, buff, &nb_subproc)) {
+        get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
         yed_cerr("there was an error when calling yed_start_read_subproc_into_buffer_nb()");
         return;
     }
+    get_or_make_buffer()->flags |= BUFF_RD_ONLY;
 
     build_is_running  = 1;
     /*

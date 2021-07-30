@@ -78,7 +78,10 @@ void grep_start(void) {
     ys->cmd_prompt          = "(grep) ";
     save_current_search = ys->current_search;
 
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
     yed_buff_clear_no_undo(get_or_make_buff());
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
+
     YEXE("special-buffer-prepare-focus", "*grep-list");
     yed_frame_set_buff(ys->active_frame, get_or_make_buff());
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
@@ -113,6 +116,8 @@ void grep_run(void) {
     char      *pattern;
     int        len, status;
 
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
+
     array_zero_term(ys->cmd_buff);
 
     cmd_buff[0]        = 0;
@@ -135,6 +140,8 @@ void grep_run(void) {
 empty:;
         yed_buff_clear_no_undo(get_or_make_buff());
     }
+
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
 }
 
 void grep_select(void) {

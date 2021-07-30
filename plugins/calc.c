@@ -1,17 +1,9 @@
 #include <yed/plugin.h>
+#include <yed/highlight.h>
+#include <math.h>
 
-enum {
-    TYPE_UNKNOWN,
-    TYPE_INT,
-    TYPE_FLOAT,
-    TYPE_VAR,
-};
-
-enum {
-    UNIT_UNKNOWN,
-
-    N_UNITS,
-};
+#define PROMPT     "CALC> "
+#define PROMPT_LEN (6)
 
 #define OP_ASSOC_LEFT  (1)
 #define OP_ASSOC_RIGHT (2)
@@ -19,10 +11,12 @@ enum {
 #define X_OPS                                                           \
     /* op              prec,    assoc,            arity,      str */    \
     X(OP_INVALID,      0,       0,                0,          NULL)     \
-    X(OP_CALL,         12,      OP_ASSOC_LEFT,    2,          "(")      \
+    X(OP_CALL,         13,      OP_ASSOC_LEFT,    2,          "(")      \
+    X(OP_EXP,          12,      OP_ASSOC_LEFT,    2,          "**")     \
     X(OP_PLUS,         9,       OP_ASSOC_LEFT,    2,          "+")      \
     X(OP_MINUS,        9,       OP_ASSOC_LEFT,    2,          "-")      \
     X(OP_MULT,         10,      OP_ASSOC_LEFT,    2,          "*")      \
+    X(OP_IDIV,         10,      OP_ASSOC_LEFT,    2,          "//")     \
     X(OP_DIV,          10,      OP_ASSOC_LEFT,    2,          "/")      \
     X(OP_MOD,          10,      OP_ASSOC_LEFT,    2,          "%")      \
     X(OP_LEQ,          7,       OP_ASSOC_LEFT,    2,          "<=")     \
@@ -74,7 +68,20 @@ const char * op_str_table[] = {
 #define OP_STR(_op)       (op_str_table[(_op)])
 #define OP_STRLEN(_op)    (strlen(OP_STR((_op))))
 #define ASSIGNMENT_PREC   (OP_PREC(OP_ASSIGN))
-#define HIGHEST_BIN_PREC  (12)
+#define HIGHEST_BIN_PREC  (13)
+
+enum {
+    TYPE_UNKNOWN,
+    TYPE_INT,
+    TYPE_FLOAT,
+    TYPE_VAR,
+};
+
+enum {
+    UNIT_UNKNOWN,
+
+    N_UNITS,
+};
 
 typedef struct {
     union {
@@ -105,6 +112,7 @@ typedef struct calc_expr {
             u32                   op;
         } op;
     };
+    u32                           str_off;
 } calc_expr_t;
 
 
@@ -118,40 +126,78 @@ use_tree(varname_t, calc_val_t);
 
 
 
-convert_t converters[N_UNITS][N_UNITS];
-tree(varname_t, calc_val_t) vars;
-const char *str;
+static convert_t                    converters[N_UNITS][N_UNITS];
+static tree(varname_t, calc_val_t)  vars;
+static char                        *start;
+static char                        *str;
+static char                        *last;
+static int                          success = 1;
+static char                         err_buff[512];
+static int                          err_off;
+static calc_val_t                   last_val;
 
+#define CLEAR_ERR()  \
+do {                 \
+    err_buff[0] = 0; \
+} while (0)
 
-static calc_expr_t *expr_val(calc_val_t val) {
+#define SET_ERR(_fmt, ...)                                         \
+do {                                                               \
+    if (strlen(err_buff) == 0) {                                   \
+        snprintf(err_buff, sizeof(err_buff), _fmt, ##__VA_ARGS__); \
+        err_off = str - start;                                     \
+    }                                                              \
+} while (0)
+
+#define SET_ERR_AT(_off, _fmt, ...)                                \
+do {                                                               \
+    if (strlen(err_buff) == 0) {                                   \
+        snprintf(err_buff, sizeof(err_buff), _fmt, ##__VA_ARGS__); \
+        err_off = (_off);                                          \
+    }                                                              \
+} while (0)
+
+static calc_expr_t *expr_val(calc_val_t val, u32 str_off) {
     calc_expr_t *expr;
 
-    expr       = malloc(sizeof(*expr));
-    expr->type = EXPR_VAL;
-    expr->val  = val;
+    expr = malloc(sizeof(*expr));
+
+    memset(expr, 0, sizeof(*expr));
+
+    expr->type    = EXPR_VAL;
+    expr->val     = val;
+    expr->str_off = str_off;
 
     return expr;
 }
 
-static calc_expr_t *expr_unary(u32 op, calc_expr_t *child) {
+static calc_expr_t *expr_unary(u32 op, calc_expr_t *child, u32 str_off) {
     calc_expr_t *expr;
 
-    expr           = malloc(sizeof(*expr));
+    expr = malloc(sizeof(*expr));
+
+    memset(expr, 0, sizeof(*expr));
+
     expr->type     = EXPR_OP;
     expr->op.child = child;
     expr->op.op    = op;
+    expr->str_off  = str_off;
 
     return expr;
 }
 
-static calc_expr_t *expr_binary(u32 op, calc_expr_t *left, calc_expr_t *right) {
+static calc_expr_t *expr_binary(u32 op, calc_expr_t *left, calc_expr_t *right, u32 str_off) {
     calc_expr_t *expr;
 
-    expr           = malloc(sizeof(*expr));
+    expr = malloc(sizeof(*expr));
+
+    memset(expr, 0, sizeof(*expr));
+
     expr->type     = EXPR_OP;
     expr->op.left  = left;
     expr->op.right = right;
     expr->op.op    = op;
+    expr->str_off  = str_off;
 
     return expr;
 }
@@ -182,12 +228,12 @@ static void free_expr(calc_expr_t *expr) {
 
 #define PEEK(_search)       (strncmp(str, (_search), strlen((_search))) == 0)
 
-#define EXPECT(_search, ...)           \
-do {                                   \
-    if (!PEEK((_search))) {            \
-        /* @error */                   \
-        __VA_ARGS__;                   \
-    }                                  \
+#define EXPECT(_search, ...)                 \
+do {                                         \
+    if (!PEEK((_search))) {                  \
+        SET_ERR("expected '%s'", (_search)); \
+        __VA_ARGS__;                         \
+    }                                        \
 } while (0)
 
 #define EAT(_len)                      \
@@ -211,11 +257,13 @@ static u32 lookahead_binary_op(void) {
     ** (Obviously applies to other operators too.)
     */
          if (PEEK(OP_STR(OP_CALL)))  { op = OP_CALL;  }
+    else if (PEEK(OP_STR(OP_EXP)))   { op = OP_EXP;   }
     else if (PEEK(OP_STR(OP_EQU)))   { op = OP_EQU;   }
     else if (PEEK(OP_STR(OP_NEQ)))   { op = OP_NEQ;   }
     else if (PEEK(OP_STR(OP_PLUS)))  { op = OP_PLUS;  }
     else if (PEEK(OP_STR(OP_MINUS))) { op = OP_MINUS; }
     else if (PEEK(OP_STR(OP_MULT)))  { op = OP_MULT;  }
+    else if (PEEK(OP_STR(OP_IDIV)))  { op = OP_IDIV;  }
     else if (PEEK(OP_STR(OP_DIV)))   { op = OP_DIV;   }
     else if (PEEK(OP_STR(OP_MOD)))   { op = OP_MOD;   }
     else if (PEEK(OP_STR(OP_BSHL)))  { op = OP_BSHL;  }
@@ -276,6 +324,7 @@ static int parse_name(char *buff) {
 
     if (len > 0) {
         memcpy(buff, str, len);
+        buff[len] = 0;
     }
 
     return len;
@@ -285,19 +334,30 @@ static calc_expr_t * parse_expr(void);
 
 static calc_expr_t * parse_leaf_expr(void) {
     calc_expr_t *result;
+    u32          str_off;
     calc_val_t   val;
     char         buff[256];
     char        *end;
     const char  *scan;
 
-    result = NULL;
+    result  = NULL;
+    str_off = str - start;
 
     memset(&val, 0, sizeof(val));
 
     if (PEEK("(")) {
         EAT(1);
+        if (PEEK(")")) {
+            SET_ERR("empty set of parentheses");
+            return NULL;
+        }
         result = parse_expr();
+        if (result == NULL) {
+            SET_ERR("expected valid expression after '('");
+            return NULL;
+        }
         EXPECT(")", return NULL);
+        EAT(1);
     } else {
         val.f = strtod(str, &end);
         if (end > str) {
@@ -328,7 +388,7 @@ static calc_expr_t * parse_leaf_expr(void) {
             }
         }
 
-        result = expr_val(val);
+        result = expr_val(val, str_off);
     }
 
     return result;
@@ -336,23 +396,24 @@ static calc_expr_t * parse_leaf_expr(void) {
 
 static calc_expr_t * parse_expr_more(calc_expr_t *left, int min_prec);
 
-static calc_expr_t * parse_operand() {
+static calc_expr_t * parse_operand(void) {
+    u32          str_off;
     u32          op;
     calc_expr_t *child;
 
-    op = lookahead_unary_prefix_op();
+    str_off = str - start;
+    op      = lookahead_unary_prefix_op();
 
     if (op == OP_INVALID) { return parse_leaf_expr(); }
 
     EAT(strlen(OP_STR(op)));
 
     if ((child = parse_operand()) == NULL) {
-        /* @error */
-/*         report_loc_err(GET_BEG_POINT(str), "invalid operand to '%s' expression", OP_STR(op)); */
+        SET_ERR("invalid operand to unary '%s' expression", OP_STR(op));
         return NULL;
     }
 
-    return expr_unary(op, child);
+    return expr_unary(op, child, str_off);
 }
 
 static calc_expr_t * parse_expr_more(calc_expr_t *left, int min_prec) {
@@ -362,11 +423,14 @@ static calc_expr_t * parse_expr_more(calc_expr_t *left, int min_prec) {
     */
 
     calc_expr_t *right;
+    u32          str_off;
     int          op;
     int          op_prec;
     int          lookahead_op;
 
     right = NULL;
+
+    str_off = str - start;
 
     /*
     ** lookahead := peek next token
@@ -383,18 +447,27 @@ static calc_expr_t * parse_expr_more(calc_expr_t *left, int min_prec) {
         ** rhs := parse_primary()
         */
 
+        str_off = str - start;
+
         EAT(strlen(OP_STR(op)));
 
         if (op == OP_CALL) {
-            right = parse_expr();
-            if (right == NULL) { return NULL; }
-            EXPECT(")", return NULL);
+            if (PEEK(")")) {
+                right = NULL;
+            } else {
+                right = parse_expr();
+                if (right == NULL) {
+                    SET_ERR("expected valid expression as function argument");
+                    return NULL;
+                }
+                EXPECT(")", return NULL);
+            }
+            EAT(1);
         } else {
             if (OP_IS_BINARY(op)) {
                 right = parse_operand();
                 if (right == NULL) {
-                    /* @error */
-/*                     report_loc_err(GET_BEG_POINT(str), "missing operand to binary '%s' expression", OP_STR(op)); */
+                    SET_ERR("missing operand to binary '%s' expression", OP_STR(op));
                     return NULL;
                 }
             }
@@ -419,15 +492,14 @@ static calc_expr_t * parse_expr_more(calc_expr_t *left, int min_prec) {
 
             right = parse_expr_more(right, OP_PREC(lookahead_op));
             if (right == NULL) {
-                /* @error */
-/*                 report_loc_err(GET_BEG_POINT(str), "missing operand to binary '%s' expression", OP_STR(lookahead_op)); */
+                SET_ERR("missing operand to binary '%s' expression", OP_STR(lookahead_op));
                 return NULL;
             }
         }
 
         /* lhs := the result of applying op with operands lhs and rhs */
 
-        left = expr_binary(op, left, right);
+        left = expr_binary(op, left, right, str_off);
     }
 
     return left;
@@ -442,21 +514,306 @@ static calc_expr_t * parse_expr_prec(int min_prec) {
     return parse_expr_more(operand, min_prec);
 }
 
-static calc_expr_t * parse_expr() {
+static calc_expr_t * parse_expr(void) { return parse_expr_prec(0); }
+
+static calc_expr_t * parse_top_level_expr(void) {
     calc_expr_t *expr;
-    expr = parse_expr_prec(0);
+
+    expr = parse_expr();
 
     if (*str) {
-        /* @error */
+        SET_ERR("unexpected '%s'", str);
         if (expr != NULL) {
             free_expr(expr);
+            expr = NULL;
         }
-        return NULL;
+    }
+
+    if (expr == NULL) {
+        SET_ERR("expected expression");
     }
 
     return expr;
 }
 
+
+static void set_var(char *name, calc_val_t val) {
+    tree_it(varname_t, calc_val_t) it;
+
+    it = tree_lookup(vars, name);
+
+    if (tree_it_good(it)) {
+        tree_it_val(it) = val;
+    } else {
+        tree_insert(vars, strdup(name), val);
+    }
+}
+
+static void set_float_var(char *name, double f) {
+    calc_val_t val;
+
+    val.f       = f;
+    val.type    = TYPE_FLOAT;
+    val.unit_id = UNIT_UNKNOWN;
+
+    set_var(name, val);
+}
+
+static void set_int_var(char *name, i64 i) {
+    calc_val_t val;
+
+    val.i       = i;
+    val.type    = TYPE_INT;
+    val.unit_id = UNIT_UNKNOWN;
+
+    set_var(name, val);
+}
+
+
+
+static int eval_expr(calc_expr_t *expr, calc_val_t *val) {
+    tree_it(varname_t, calc_val_t)   it;
+    double                         (*fn)(double);
+    calc_val_t                       lval;
+    calc_val_t                       rval;
+    i64                              li;
+    i64                              ri;
+    double                           lf;
+    double                           rf;
+    u32                              result_type;
+    int                              is_compare;
+    u32                              result_unit_id;
+    i64                              result_i;
+    double                           result_f;
+    int                              cmp_i;
+    int                              cmp_f;
+    int                              i;
+
+    switch (expr->type) {
+        case EXPR_VAL:
+            if (expr->val.type == TYPE_VAR) {
+                it = tree_lookup(vars, expr->val.name);
+                if (!tree_it_good(it)) {
+                    SET_ERR_AT(expr->str_off, "no such variable named '%s'", expr->val.name);
+                    return 0;
+                }
+                *val = tree_it_val(it);
+            } else {
+                *val = expr->val;
+            }
+
+            return 1;
+
+        case EXPR_OP:
+            if (expr->op.op == OP_CALL) {
+                if (expr->op.left->type != EXPR_VAL) {
+                    SET_ERR_AT(expr->op.left->str_off,
+                               "attempting to call an arithmetic expression as if it were a function");
+                    return 0;
+                }
+                if (expr->op.left->val.type != TYPE_VAR) {
+                    SET_ERR_AT(expr->op.left->str_off,
+                               "attempting to call %s as if it were a function",
+                               expr->op.left->val.type == TYPE_INT ? "an integer" : "a float");
+                    return 0;
+                }
+
+                fn = NULL;
+
+                if      (strcmp("sin",   expr->op.left->val.name) == 0) { fn = sin;   }
+                else if (strcmp("cos",   expr->op.left->val.name) == 0) { fn = cos;   }
+                else if (strcmp("acos",  expr->op.left->val.name) == 0) { fn = acos;  }
+                else if (strcmp("asin",  expr->op.left->val.name) == 0) { fn = asin;  }
+                else if (strcmp("atan",  expr->op.left->val.name) == 0) { fn = atan;  }
+                else if (strcmp("cos",   expr->op.left->val.name) == 0) { fn = cos;   }
+                else if (strcmp("cosh",  expr->op.left->val.name) == 0) { fn = cosh;  }
+                else if (strcmp("sin",   expr->op.left->val.name) == 0) { fn = sin;   }
+                else if (strcmp("sinh",  expr->op.left->val.name) == 0) { fn = sinh;  }
+                else if (strcmp("tanh",  expr->op.left->val.name) == 0) { fn = tanh;  }
+                else if (strcmp("exp",   expr->op.left->val.name) == 0) { fn = exp;   }
+                else if (strcmp("log",   expr->op.left->val.name) == 0) { fn = log;   }
+                else if (strcmp("log2",  expr->op.left->val.name) == 0) { fn = log2;  }
+                else if (strcmp("log10", expr->op.left->val.name) == 0) { fn = log10; }
+                else if (strcmp("sqrt",  expr->op.left->val.name) == 0) { fn = sqrt;  }
+                else if (strcmp("ceil",  expr->op.left->val.name) == 0) { fn = ceil;  }
+                else if (strcmp("fabs",  expr->op.left->val.name) == 0) { fn = fabs;  }
+                else if (strcmp("floor", expr->op.left->val.name) == 0) { fn = floor; }
+
+                if (fn == NULL) {
+                    SET_ERR_AT(expr->op.left->str_off,
+                               "unknown function '%s'", expr->op.left->val.name);
+                    return 0;
+                }
+
+                if (expr->op.right == NULL) {
+                    SET_ERR_AT(expr->str_off, "missing argument to function '%s'", expr->op.left->val.name);
+                    return 0;
+                }
+
+                if (!eval_expr(expr->op.right, &rval)) { return 0; }
+
+                if (rval.type == TYPE_INT) {
+                    ri = rval.i;
+                    rf = (double)ri;
+                } else {
+                    ri = (i64)rval.f;
+                    rf = rval.f;
+                }
+
+                val->f = fn(rf);
+
+                if (rval.type == TYPE_INT
+                &&  ceil(val->f) == val->f) {
+
+                    val->i      = val->f;
+                    result_type = TYPE_INT;
+                } else {
+                    result_type = TYPE_FLOAT;
+                }
+
+                val->type    = result_type;
+                val->unit_id = rval.unit_id;
+
+                return 1;
+            }
+
+            if (OP_IS_BINARY(expr->op.op)) {
+                if (!eval_expr(expr->op.left,  &lval)) { return 0; }
+                if (!eval_expr(expr->op.right, &rval)) { return 0; }
+            } else if (OP_IS_UNARY(expr->op.op)) {
+                if (!eval_expr(expr->op.child, &rval)) { return 0; }
+            }
+
+            if (lval.type == TYPE_INT) {
+                li = lval.i;
+                lf = (double)li;
+            } else {
+                li = (i64)lval.f;
+                lf = lval.f;
+            }
+
+            if (rval.type == TYPE_INT) {
+                ri = rval.i;
+                rf = (double)ri;
+            } else {
+                ri = (i64)rval.f;
+                rf = rval.f;
+            }
+
+            result_type = (lval.type == TYPE_FLOAT || rval.type == TYPE_FLOAT)
+                            ? TYPE_FLOAT
+                            : TYPE_INT;
+
+            if (expr->op.op == OP_DIV || expr->op.op == OP_IDIV) {
+                if (ri == 0 || rf == 0.0) {
+                    SET_ERR_AT(expr->str_off, "divide by zero");
+                    return 0;
+                }
+            }
+
+            if (expr->op.op == OP_DIV
+            &&  result_type == TYPE_INT
+            &&  li % ri     != 0) {
+
+                result_type = TYPE_FLOAT;
+            }
+
+            is_compare = 0;
+
+            switch (expr->op.op) {
+                case OP_LEQ:
+                case OP_GEQ:
+                case OP_LSS:
+                case OP_GTR:
+                case OP_EQU:
+                case OP_NEQ:
+                    is_compare = 1;
+                    break;
+
+                case OP_MOD:
+                case OP_IDIV:
+                case OP_BSHL:
+                case OP_BSHR:
+                case OP_BAND:
+                case OP_BXOR:
+                case OP_BOR:
+                case OP_BNEG:
+                    if (result_type == TYPE_FLOAT) {
+                        SET_ERR_AT(expr->str_off, "operator '%s' invalid for floats", OP_STR(expr->op.op));
+                        return 0;
+                    }
+                    break;
+            }
+
+
+            if (lval.unit_id == rval.unit_id) {
+                result_unit_id = lval.unit_id;
+            } else if (lval.unit_id == UNIT_UNKNOWN) {
+                result_unit_id = rval.unit_id;
+            } else if (rval.unit_id == UNIT_UNKNOWN) {
+                result_unit_id = lval.unit_id;
+            } else {
+                SET_ERR_AT(expr->str_off, "operator '%s' does not apply to these units", OP_STR(expr->op.op));
+                return 0;
+            }
+
+            switch (expr->op.op) {
+                case OP_NEG:   result_i =     -ri;   result_f =     -rf;  break;
+                case OP_PLUS:  result_i = li + ri;   result_f = lf + rf;  break;
+                case OP_MINUS: result_i = li - ri;   result_f = lf - rf;  break;
+                case OP_MULT:  result_i = li * ri;   result_f = lf * rf;  break;
+                case OP_DIV:   result_i = li / ri;   result_f = lf / rf;  break;
+                case OP_IDIV:  result_i = li / ri;                        break;
+                case OP_MOD:   result_i = li % ri;                        break;
+                case OP_LEQ:   cmp_i    = li <= ri;  cmp_f    = lf <= rf; break;
+                case OP_GEQ:   cmp_i    = li >= ri;  cmp_f    = lf >= rf; break;
+                case OP_LSS:   cmp_i    = li <  ri;  cmp_f    = lf <  rf; break;
+                case OP_GTR:   cmp_i    = li >  ri;  cmp_f    = lf >  rf; break;
+                case OP_EQU:   cmp_i    = li == ri;  cmp_f    = lf == rf; break;
+                case OP_NEQ:   cmp_i    = li != ri;  cmp_f    = lf != rf; break;
+                case OP_BSHL:  result_i = li << ri;                       break;
+                case OP_BSHR:  result_i = li >> ri;                       break;
+                case OP_BAND:  result_i = li &  ri;                       break;
+                case OP_BXOR:  result_i = li ^ ri;                        break;
+                case OP_BOR:   result_i = li | ri;                        break;
+                case OP_BNEG:  result_i =     ~ri;                        break;
+
+                case OP_EXP:
+                    if (result_type == TYPE_INT) {
+                        result_i = 1;
+                        for (i = 0; i < ri; i += 1) { result_i *= li; }
+                    } else {
+                        result_f = pow(lf, rf);
+                    }
+                    break;
+
+                default:
+                    SET_ERR_AT(expr->str_off, "unimplemented/unknown operator '%s'", OP_STR(expr->op.op));
+                    return 0;
+            }
+
+            if (is_compare) {
+                val->type = TYPE_INT;
+                if (result_type == TYPE_INT) { val->i = cmp_i; }
+                else                         { val->i = cmp_f; }
+                val->unit_id = UNIT_UNKNOWN;
+            } else {
+                val->type = result_type;
+                if (result_type == TYPE_INT) { val->i = result_i; }
+                else                         { val->f = result_f; }
+                val->unit_id = result_unit_id;
+            }
+
+            return 1;
+
+        case EXPR_UNKNOWN:
+            SET_ERR("unknown expr type");
+            return 0;
+
+    }
+
+    return 0;
+}
 
 
 static yed_buffer *get_or_make_buff(void) {
@@ -466,36 +823,12 @@ static yed_buffer *get_or_make_buff(void) {
 
     if (buff == NULL) {
         buff = yed_create_buffer("*calc");
-        buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
+        buff->flags |= BUFF_SPECIAL;
+        yed_buffer_add_line(buff);
+        yed_buff_insert_string(buff, PROMPT, 1, 1);
     }
 
     return buff;
-}
-
-static void test_expr(int n_args, char **args) {
-    yed_line    *line;
-    calc_expr_t *expr;
-
-    line = yed_buff_get_line(ys->active_frame->buffer, ys->active_frame->cursor_line);
-    array_zero_term(line->chars);
-    str = array_data(line->chars);
-
-    EAT(0);
-
-    expr = parse_expr();
-
-    if (expr == NULL) {
-        yed_cerr("bad expr");
-        return;
-    }
-
-    yed_cprint("nice expr");
-}
-
-static void set_cursor_top_line(yed_frame *f) {
-    LOG_FN_ENTER();
-    yed_log("nice");
-    LOG_EXIT();
 }
 
 #define CHECK_EVENT_FRAME_AND_BUFFER(_evt)            \
@@ -507,24 +840,282 @@ do {                                                  \
     }                                                 \
 } while (0)
 
-static void frame_post_set_buffer_handler(yed_event *event) {
+static int cursor_move_handler_recursing;
+static int save_cursor_col = 1;
+
+static void cursor_pre_move_handler(yed_event *event) {
+    yed_frame *f;
+
+    if (cursor_move_handler_recursing) { return; }
+
     CHECK_EVENT_FRAME_AND_BUFFER(event);
 
-    set_cursor_top_line(event->frame);
+    f = event->frame;
+
+    save_cursor_col = f->cursor_col;
 }
 
-static void frame_activated_handler(yed_event *event) {
+static void cursor_post_move_handler(yed_event *event) {
+    yed_frame *f;
+
+    if (cursor_move_handler_recursing) { return; }
+
     CHECK_EVENT_FRAME_AND_BUFFER(event);
 
-    set_cursor_top_line(event->frame);
-}
+    f = event->frame;
 
-static void cursor_moved_handler(yed_event *event) {
-    CHECK_EVENT_FRAME_AND_BUFFER(event);
 
-    if (frame->cursor_line != 1) {
+    if (f->cursor_line != 1) {
+        get_or_make_buff()->flags |= BUFF_RD_ONLY;
+    } else {
+        get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
 
+        if (f->cursor_col <= PROMPT_LEN) {
+            cursor_move_handler_recursing = 1;
+            yed_set_cursor_within_frame(f, 1, PROMPT_LEN + 1);
+            cursor_move_handler_recursing = 0;
+        }
     }
+
+}
+
+
+static int disable_buffer_mod_handler = 0;
+
+static void buffer_pre_mod_handler(yed_event *event) {
+    if (disable_buffer_mod_handler
+    ||  event->buffer != get_or_make_buff()) {
+        return;
+    }
+
+    if (event->buff_mod_event == BUFF_MOD_ADD_LINE
+    ||  event->buff_mod_event == BUFF_MOD_INSERT_LINE
+    ||  event->buff_mod_event == BUFF_MOD_DELETE_LINE
+    ||  event->buff_mod_event == BUFF_MOD_CLEAR_LINE
+    ||  event->buff_mod_event == BUFF_MOD_SET_LINE
+    ||  event->buff_mod_event == BUFF_MOD_CLEAR) {
+        event->cancel = 1;
+    }
+
+    if (event->buff_mod_event == BUFF_MOD_INSERT_INTO_LINE
+    ||  event->buff_mod_event == BUFF_MOD_APPEND_TO_LINE
+    ||  event->buff_mod_event == BUFF_MOD_DELETE_FROM_LINE
+    ||  event->buff_mod_event == BUFF_MOD_POP_FROM_LINE) {
+        if (event->row != 1 || event->col <= PROMPT_LEN) {
+            event->cancel = 1;
+        }
+    }
+}
+
+static void buffer_post_mod_handler(yed_event *event) {
+    yed_line    *line;
+    char         name_buff[256];
+    int          var_assign;
+    calc_expr_t *expr;
+    calc_val_t   val;
+    char         line_buff[512];
+    int          i;
+
+    if (disable_buffer_mod_handler
+    ||  ys->active_frame == NULL
+    ||  ys->active_frame->buffer == NULL
+    ||  ys->active_frame->buffer != event->buffer
+    ||  event->buffer != get_or_make_buff()) {
+        return;
+    }
+
+    if (ys->active_frame->cursor_line == 1) {
+        disable_buffer_mod_handler = 1;
+
+        if (start != NULL) {
+            free(start);
+            start = str = NULL;
+        }
+
+        line = yed_buff_get_line(get_or_make_buff(), 1);
+        array_zero_term(line->chars);
+        start = str = strdup(array_data(line->chars) + PROMPT_LEN);
+
+        EAT(0);
+
+        CLEAR_ERR();
+
+        if (strlen(str) > 0) {
+            var_assign = 0;
+            if (parse_name(name_buff)) {
+                EAT(strlen(name_buff));
+                if (PEEK("=")) {
+                    EAT(1);
+                    var_assign = 1;
+                } else {
+                    str = start;
+                }
+            }
+
+            expr = parse_top_level_expr();
+
+            if (expr != NULL) {
+                if (!eval_expr(expr, &val)) { goto error; }
+
+                last_val = val;
+
+                if (val.type == TYPE_INT) {
+                    sprintf(line_buff, "ans: %lld, 0x%llx", val.i, (u64)val.i);
+                } else if (val.type == TYPE_FLOAT) {
+                    sprintf(line_buff, "ans: %f", val.f);
+                }
+
+                if (var_assign) {
+                    if (val.type == TYPE_INT) {
+                        set_int_var(name_buff, val.i);
+                    } else if (val.type == TYPE_FLOAT) {
+                        set_float_var(name_buff, val.f);
+                    }
+                }
+
+                yed_line_clear_no_undo(get_or_make_buff(), 2);
+                yed_buff_insert_string_no_undo(get_or_make_buff(), line_buff, 2, 1);
+                free_expr(expr);
+                success = 1;
+            } else {
+error:;
+                yed_line_clear_no_undo(get_or_make_buff(), 2);
+                strcpy(line_buff, "error:");
+                for (i = 0; i < (PROMPT_LEN + err_off) - strlen("error:"); i += 1) { strcat(line_buff, " "); }
+                strcat(line_buff, "^ ");
+                strcat(line_buff, err_buff);
+                yed_buff_insert_string_no_undo(get_or_make_buff(), line_buff, 2, 1);
+                success = 0;
+            }
+        } else {
+            yed_line_clear_no_undo(get_or_make_buff(), 2);
+            success = 1;
+        }
+
+        if (last != NULL) { free(last); }
+        last = strdup(start);
+
+        disable_buffer_mod_handler = 0;
+
+        ys->active_frame->dirty = 1;
+    }
+}
+
+static void key_pressed_handler(yed_event *event) {
+    char name[32];
+    char buff[512];
+    int  ans;
+
+    if (ys->active_frame == NULL
+    ||  ys->interactive_command
+    ||  ys->active_frame->cursor_line != 1
+    ||  ys->active_frame->buffer == NULL
+    ||  ys->active_frame->buffer != get_or_make_buff()) {
+        return;
+    }
+
+    if (event->key == ENTER) {
+        if (last && strlen(last) > 0 && success) {
+            disable_buffer_mod_handler = 1;
+            yed_buff_insert_line_no_undo(get_or_make_buff(), 3);
+            ans = yed_buff_n_lines(get_or_make_buff()) - 2;
+
+            buff[0] = 0;
+            snprintf(name, sizeof(name), "ans_%d", ans);
+            if (last_val.type == TYPE_INT) {
+                snprintf(buff, sizeof(buff), "%s:%s  %s  = %lld, 0x%llx", name, ans < 10 ? " " : "", last, last_val.i, (u64)last_val.i);
+                set_int_var(name, last_val.i);
+            } else if (last_val.type == TYPE_FLOAT) {
+                snprintf(buff, sizeof(buff), "%s:%s  %s  = %f", name, ans < 10 ? " " : "", last, last_val.f);
+                set_float_var(name, last_val.f);
+            }
+
+            yed_buff_insert_string_no_undo(get_or_make_buff(), buff, 3, 1);
+            yed_set_cursor_within_frame(ys->active_frame, 1, 1);
+            yed_line_clear_no_undo(get_or_make_buff(), 1);
+            yed_buff_insert_string(get_or_make_buff(), PROMPT, 1, 1);
+            yed_set_cursor_within_frame(ys->active_frame, 1, 1);
+            yed_line_clear_no_undo(get_or_make_buff(), 2);
+            free(last);
+            last = NULL;
+            disable_buffer_mod_handler = 0;
+        }
+        event->cancel = 1;
+    }
+}
+
+static void line_pre_draw_handler(yed_event *event) {
+    yed_attrs                       a;
+    yed_attrs                      *ait;
+    tree_it(varname_t, calc_val_t)  it;
+
+    if (event->frame         == NULL
+    ||  event->frame->buffer == NULL
+    ||  event->frame->buffer != get_or_make_buff()) {
+        return;
+    }
+
+    if (event->row == 2 && start != NULL && !success) {
+        a = yed_active_style_get_attention();
+        array_traverse(event->line_attrs, ait) {
+            yed_combine_attrs(ait, &a);
+        }
+    }
+
+    highlight_info hinfo;
+    highlight_info_make(&hinfo);
+
+    highlight_numbers(&hinfo);
+    highlight_suffixed_words(&hinfo, '(', HL_CALL);
+    tree_traverse(vars, it) {
+        highlight_add_kwd(&hinfo, tree_it_key(it), HL_KEY);
+    }
+    highlight_line(&hinfo, event);
+
+    highlight_info_free(&hinfo);
+}
+
+static void free_vars(void) {
+    tree_it(varname_t, calc_val_t)  it;
+    char                           *key;
+
+    while (tree_len(vars)) {
+        it  = tree_begin(vars);
+        key = tree_it_key(it);
+        tree_delete(vars, key);
+        free(key);
+    }
+
+    tree_free(vars);
+}
+
+static void unload(yed_plugin *self) {
+    yed_buffer *buff;
+
+    buff = yed_get_buffer("*calc");
+    if (buff != NULL) {
+        yed_free_buffer(buff);
+    }
+
+    free_vars();
+
+    if (start != NULL) {
+        free(start);
+        start = str = NULL;
+    }
+
+    ys->redraw = 1;
+}
+
+void calc_open(int n_args, char **args) {
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    get_or_make_buff();
+    YEXE("special-buffer-prepare-focus", "*calc");
+    YEXE("buffer", "*calc");
 }
 
 int yed_plugin_boot(yed_plugin *self) {
@@ -532,19 +1123,44 @@ int yed_plugin_boot(yed_plugin *self) {
 
     YED_PLUG_VERSION_CHECK();
 
+    yed_plugin_set_unload_fn(self, unload);
+
     vars = tree_make_c(varname_t, calc_val_t, strcmp);
+
+    set_float_var("pi", M_PI);
+    set_float_var("e",  M_E);
+    set_int_var("page_size", 4096);
+    set_int_var("NULL", 0);
 
     get_or_make_buff();
 
-    yed_plugin_set_command(self, "calc-expr", test_expr);
+    yed_plugin_set_command(self, "calc", calc_open);
 
-    h.kind = EVENT_FRAME_ACTIVATED;
-    h.fn   = frame_activated_handler;
+    h.kind = EVENT_CURSOR_PRE_MOVE;
+    h.fn   = cursor_pre_move_handler;
     yed_plugin_add_event_handler(self, h);
 
-    h.kind = EVENT_FRAME_POST_SET_BUFFER;
-    h.fn   = frame_post_set_buffer_handler;
+    h.kind = EVENT_CURSOR_POST_MOVE;
+    h.fn   = cursor_post_move_handler;
     yed_plugin_add_event_handler(self, h);
+
+    h.kind = EVENT_BUFFER_PRE_MOD;
+    h.fn   = buffer_pre_mod_handler;
+    yed_plugin_add_event_handler(self, h);
+
+    h.kind = EVENT_BUFFER_POST_MOD;
+    h.fn   = buffer_post_mod_handler;
+    yed_plugin_add_event_handler(self, h);
+
+    h.kind = EVENT_KEY_PRESSED;
+    h.fn   = key_pressed_handler;
+    yed_plugin_add_event_handler(self, h);
+
+    h.kind = EVENT_LINE_PRE_DRAW;
+    h.fn   = line_pre_draw_handler;
+    yed_plugin_add_event_handler(self, h);
+
+    (void)converters;
 
     return 0;
 }

@@ -17,7 +17,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     YED_PLUG_VERSION_CHECK();
 
-    cursor_moved.kind  = EVENT_CURSOR_MOVED;
+    cursor_moved.kind  = EVENT_CURSOR_POST_MOVE;
     cursor_moved.fn    = paren_hl_cursor_moved_handler;
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = paren_hl_line_handler;

@@ -428,7 +428,7 @@ int yed_read_keys(int *input) {
         len      = 1;
 
 do_seq:;
-        if (!ys->interactive_command) {
+        if (!ys->interactive_command && !ys->doing_bracketed_paste) {
             len = yed_read_key_sequences(len, input);
         }
     }

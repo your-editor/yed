@@ -21,7 +21,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     line.kind          = EVENT_LINE_PRE_DRAW;
     line.fn            = cursor_word_hl_line_handler;
-    cursor_moved.kind  = EVENT_CURSOR_MOVED;
+    cursor_moved.kind  = EVENT_CURSOR_POST_MOVE;
     cursor_moved.fn    = cursor_word_hl_cursor_moved_handler;
     delete_back.kind   = EVENT_BUFFER_POST_DELETE_BACK;
     delete_back.fn     = cursor_word_hl_delete_back_handler;

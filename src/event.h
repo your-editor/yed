@@ -9,6 +9,7 @@ typedef enum {
     EVENT_FRAME_PRE_DELETE,
     EVENT_FRAME_PRE_SET_BUFFER,
     EVENT_FRAME_POST_SET_BUFFER,
+    EVENT_ROW_PRE_CLEAR,
     EVENT_LINE_PRE_DRAW,
     EVENT_BUFFER_PRE_LOAD,
     EVENT_BUFFER_POST_LOAD,
@@ -23,7 +24,8 @@ typedef enum {
     EVENT_BUFFER_POST_MOD,
     EVENT_BUFFER_PRE_WRITE,
     EVENT_BUFFER_POST_WRITE,
-    EVENT_CURSOR_MOVED,
+    EVENT_CURSOR_PRE_MOVE,
+    EVENT_CURSOR_POST_MOVE,
     EVENT_KEY_PRESSED,
     EVENT_TERMINAL_RESIZED,
     EVENT_PRE_PUMP,
@@ -34,11 +36,27 @@ typedef enum {
     N_EVENTS,
 } yed_event_kind_t;
 
+typedef enum {
+    BUFF_MOD_APPEND_TO_LINE,
+    BUFF_MOD_POP_FROM_LINE,
+    BUFF_MOD_CLEAR_LINE,
+    BUFF_MOD_ADD_LINE,
+    BUFF_MOD_SET_LINE,
+    BUFF_MOD_INSERT_LINE,
+    BUFF_MOD_DELETE_LINE,
+    BUFF_MOD_INSERT_INTO_LINE,
+    BUFF_MOD_DELETE_FROM_LINE,
+    BUFF_MOD_CLEAR,
+
+    N_BUFF_MOD_EVENTS,
+} yed_buff_mod_event;
+
 typedef struct {
     yed_event_kind_t  kind;
     yed_frame        *frame;
     yed_buffer       *buffer;
     int               row, col;
+    yed_attrs         row_base_attr;
     array_t           line_attrs;
     array_t           gutter_glyphs;
     array_t           gutter_attrs;
@@ -47,6 +65,7 @@ typedef struct {
     int               cancel;
     char             *path;
     int               buffer_is_new_file;
+    int               buff_mod_event;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

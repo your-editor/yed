@@ -205,7 +205,7 @@ typedef struct yed_state_t {
     yed_buffer                  *yank_buff,
                                 *log_buff;
     array_t                      log_name_stack;
-    char                        *cur_log_name;
+    const char                  *cur_log_name;
     int                          clear_cmd_output;
     array_t                      frames;
     yed_frame                   *active_frame,

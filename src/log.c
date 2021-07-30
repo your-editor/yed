@@ -12,6 +12,8 @@ void yed__log_prints(char *s, int len) {
 
     row = yed_buff_n_lines(ys->log_buff);
 
+    ys->log_buff->flags &= ~BUFF_RD_ONLY;
+
     for (i = 0; i < len; i += 1) {
         g.c = s[i];
         if (g.c == '\n') {
@@ -21,21 +23,38 @@ void yed__log_prints(char *s, int len) {
         }
     }
 
+    ys->log_buff->flags |= BUFF_RD_ONLY;
+
     yed_mark_dirty_frames(ys->log_buff);
 }
 
-int yed_vlog(char *fmt, va_list args) {
-    char       tm_buff[128], nm_tm_buff[512], buff[1024];
-    time_t     t;
-    struct tm *tm;
-    char      *log_name, *header_fmt;
-    int        len, new_header;
+const char *yed_top_log_name(void) {
+    const char **top_p;
 
-    log_name   = *(char**)array_last(ys->log_name_stack);
+    top_p = (const char**)array_last(ys->log_name_stack);
+    if (top_p == NULL) { return "???"; }
+
+    return *top_p;
+}
+
+static int in_log;
+
+int yed_vlog(char *fmt, va_list args) {
+    char        tm_buff[128], nm_tm_buff[512], buff[1024];
+    time_t      t;
+    struct tm  *tm;
+    const char *log_name, *header_fmt;
+    int         len, new_header;
+
+    if (in_log) { return 1; }
+
+    in_log = 1;
+
+    log_name   = yed_top_log_name();
     new_header = 0;
 
     /* If we don't have the names, do the new header. */
-    if (!log_name || !ys->cur_log_name) {
+    if (!log_name || !ys->cur_log_name || strcmp(log_name, "???")) {
         new_header = 1;
     }
 
@@ -80,6 +99,8 @@ int yed_vlog(char *fmt, va_list args) {
     } else {
         yed__log_prints(buff, len);
     }
+
+    in_log = 0;
 
     return new_header;
 }

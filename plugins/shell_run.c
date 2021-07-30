@@ -65,7 +65,9 @@ static void shell_run_update(void) {
 
 LOG_CMD_ENTER("shell-run");
 
+    get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
     cmd_is_running = yed_read_subproc_into_buffer_nb(&nb_subproc);
+    get_or_make_buffer()->flags |= BUFF_RD_ONLY;
 
     if (!cmd_is_running) {
         if (nb_subproc.err) {
@@ -117,12 +119,19 @@ static void do_shell_run(int n_args, char **args) {
     snprintf(full_cmd, array_len(string_build) + 16,
              "(%s) 2>&1", (char*)array_data(string_build));
 
+
+    get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
+
     if (yed_start_read_subproc_into_buffer_nb(full_cmd, get_or_make_buffer(), &nb_subproc)) {
+        get_or_make_buffer()->flags |= BUFF_RD_ONLY;
+
         yed_cerr("there was an error when calling yed_start_read_subproc_into_buffer_nb()");
         free(full_cmd);
         array_free(string_build);
         return;
     }
+
+    get_or_make_buffer()->flags |= BUFF_RD_ONLY;
 
     free(full_cmd);
 

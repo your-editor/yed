@@ -81,7 +81,10 @@ void find_file_start(void) {
     ys->interactive_command = "find-file";
     ys->cmd_prompt          = "(find-file) ";
 
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
     yed_buff_clear_no_undo(get_or_make_buff());
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
+
     YEXE("special-buffer-prepare-focus", "*find-file-list");
     yed_frame_set_buff(ys->active_frame, get_or_make_buff());
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
@@ -122,6 +125,8 @@ void find_file_run(void) {
     char      *pattern;
     int        len, status;
 
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
+
     cmd_buff[0] = 0;
     pattern     = array_data(ys->cmd_buff);
 
@@ -141,6 +146,8 @@ void find_file_run(void) {
 empty:;
         yed_buff_clear_no_undo(get_or_make_buff());
     }
+
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
 }
 
 void find_file_select(void) {

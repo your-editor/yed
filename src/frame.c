@@ -412,6 +412,15 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     }
 
 
+    event.kind          = EVENT_ROW_PRE_CLEAR;
+    event.frame         = frame;
+    event.row           = row;
+    event.row_base_attr = base_attr;
+
+    yed_trigger_event(&event);
+
+    base_attr = event.row_base_attr;
+
     /*
      * Store the base attributes for each column.
      * They might be modified later on.
@@ -462,12 +471,13 @@ again_gutter:
      * We're about to start drawing.
      * Do the pre-draw event.
      */
-    event.kind          = EVENT_LINE_PRE_DRAW;
-    event.frame         = frame;
-    event.row           = row;
-    event.line_attrs    = frame->line_attrs;
-    event.gutter_glyphs = frame->gutter_glyphs;
-    event.gutter_attrs  = frame->gutter_attrs;
+    event.kind           = EVENT_LINE_PRE_DRAW;
+    event.frame          = frame;
+    event.row            = row;
+    event.row_base_attr  = base_attr;
+    event.line_attrs     = frame->line_attrs;
+    event.gutter_glyphs  = frame->gutter_glyphs;
+    event.gutter_attrs   = frame->gutter_attrs;
 
     yed_trigger_event(&event);
 
@@ -1155,57 +1165,7 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
     f->desired_col = f->cursor_col;
 }
 
-void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
-    yed_event  event;
-    int        dir, glyph_dist, row,
-               line_width;
-    yed_line  *line;
-    yed_glyph *g, *new_g;
-
-    if (f->buffer == NULL) { return; }
-
-    if (new_row <= 0) { new_row = 1; }
-    if (new_col <= 0) { new_col = 1; }
-
-    row = new_row - f->cursor_line;
-    yed_move_cursor_within_frame(f, row, 0);
-
-    line       = yed_buff_get_line(f->buffer, f->cursor_line);
-    line_width = line->visual_width;
-
-    if (new_col > line_width + 1) {
-        new_col = line_width + 1;
-    }
-
-    if (f->cursor_col != new_col) {
-        dir        = new_col - f->cursor_col > 0 ? 1 : -1;
-        glyph_dist = 0;
-        g          = yed_line_col_to_glyph(line, f->cursor_col);
-        new_g      = yed_line_col_to_glyph(line, new_col);
-
-        if (dir == 1) {
-            while (g != new_g) {
-                g           = ((void*)g) + yed_get_glyph_len(*g);
-                glyph_dist += 1;
-            }
-        } else {
-            while (new_g != g) {
-                new_g       = ((void*)new_g) + yed_get_glyph_len(*new_g);
-                glyph_dist += 1;
-            }
-        }
-
-        glyph_dist *= dir;
-        yed_move_cursor_within_frame(f, 0, glyph_dist);
-    }
-
-    event.kind  = EVENT_CURSOR_MOVED;
-    event.frame = f;
-
-    yed_trigger_event(&event);
-}
-
-void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
+void _yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
     int       i,
               dir,
               line_width,
@@ -1214,9 +1174,6 @@ void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
               buff_big_enough_to_scroll,
               save_cursor_line;
     yed_line *line;
-    yed_event event;
-
-    if (f->buffer == NULL) { return; }
 
     buff_n_lines              = bucket_array_len(f->buffer->lines);
     buff_big_enough_to_scroll = buff_n_lines > 2 * NORM_SCROLL_OFF(f);
@@ -1236,9 +1193,9 @@ void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
     line             = yed_buff_get_line(f->buffer, f->cursor_line);
     line_width       = line->visual_width;
 
-    if (row) {
+    if (line != NULL && row) {
         /*
-         * Update x values tied y.
+         * Update x values tied to y.
          */
         potential_new_x = f->desired_col;
 
@@ -1285,12 +1242,80 @@ void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
     if (row > 1 || row < -1) {
         f->dirty = 1;
     }
+}
 
-    event.kind  = EVENT_CURSOR_MOVED;
+void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
+    yed_event event;
+
+    if (f->buffer == NULL) { return; }
+
+    event.kind  = EVENT_CURSOR_PRE_MOVE;
     event.frame = f;
-
     yed_trigger_event(&event);
+    if (event.cancel) { return; }
 
+    _yed_move_cursor_within_frame(f, row, n_glyphs);
+
+    event.kind = EVENT_CURSOR_POST_MOVE;
+    yed_trigger_event(&event);
+}
+
+void _yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
+    int        dir, glyph_dist, row,
+               line_width;
+    yed_line  *line;
+    yed_glyph *g, *new_g;
+
+    if (new_row <= 0) { new_row = 1; }
+    if (new_col <= 0) { new_col = 1; }
+
+    row = new_row - f->cursor_line;
+    _yed_move_cursor_within_frame(f, row, 0);
+
+    line       = yed_buff_get_line(f->buffer, f->cursor_line);
+    line_width = line->visual_width;
+
+    if (new_col > line_width + 1) {
+        new_col = line_width + 1;
+    }
+
+    if (f->cursor_col != new_col) {
+        dir        = new_col - f->cursor_col > 0 ? 1 : -1;
+        glyph_dist = 0;
+        g          = yed_line_col_to_glyph(line, f->cursor_col);
+        new_g      = yed_line_col_to_glyph(line, new_col);
+
+        if (dir == 1) {
+            while (g != new_g) {
+                g           = ((void*)g) + yed_get_glyph_len(*g);
+                glyph_dist += 1;
+            }
+        } else {
+            while (new_g != g) {
+                new_g       = ((void*)new_g) + yed_get_glyph_len(*new_g);
+                glyph_dist += 1;
+            }
+        }
+
+        glyph_dist *= dir;
+        _yed_move_cursor_within_frame(f, 0, glyph_dist);
+    }
+}
+
+void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
+    yed_event event;
+
+    if (f->buffer == NULL) { return; }
+
+    event.kind  = EVENT_CURSOR_PRE_MOVE;
+    event.frame = f;
+    yed_trigger_event(&event);
+    if (event.cancel) { return; }
+
+    _yed_set_cursor_within_frame(f, new_row, new_col);
+
+    event.kind = EVENT_CURSOR_POST_MOVE;
+    yed_trigger_event(&event);
 }
 
 void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col) {

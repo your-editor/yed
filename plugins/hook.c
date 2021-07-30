@@ -109,7 +109,7 @@ int hook_event(char *arg) {
 #define CHECK_EV(str, enu) \
     if (strcmp(arg, (str)) == 0) { return (enu); }
 
-    CHECK_EV("cursor-moved", EVENT_CURSOR_MOVED);
+    CHECK_EV("cursor-moved", EVENT_CURSOR_POST_MOVE);
     CHECK_EV("post-write",   EVENT_BUFFER_POST_WRITE);
 
     return -1;

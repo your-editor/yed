@@ -19,8 +19,8 @@ void yed_cmd_buff_push(char c);
 void yed_cmd_buff_pop(void);
 void yed_cmd_buff_insert(int idx, char c);
 void yed_cmd_buff_delete(int idx);
-void yed_append_text_to_cmd_buff(char *s);
-void yed_append_non_text_to_cmd_buff(char *s);
+void yed_append_text_to_cmd_buff(const char *s);
+void yed_append_non_text_to_cmd_buff(const char *s);
 void yed_append_int_to_cmd_buff(int i);
 
 void yed_cprint(char *fmt, ...);

@@ -777,6 +777,22 @@ void vimish_insert(int key, char *key_str) {
             YEXE("cursor-right");
             break;
 
+        case PAGE_UP:
+            YEXE("cursor-page-up");
+            break;
+
+        case PAGE_DOWN:
+            YEXE("cursor-page-down");
+            break;
+
+        case HOME_KEY:
+            YEXE("cursor-line-begin");
+            break;
+
+        case END_KEY:
+            YEXE("cursor-line-end");
+            break;
+
         case BACKSPACE:
             YEXE("delete-back");
             break;

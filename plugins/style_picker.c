@@ -25,7 +25,7 @@ int yed_plugin_boot(yed_plugin *self) {
     key.kind  = EVENT_KEY_PRESSED;
     key.fn    = style_picker_key_pressed_handler;
 
-    move.kind = EVENT_CURSOR_MOVED;
+    move.kind = EVENT_CURSOR_POST_MOVE;
     move.fn   = style_picker_cursor_moved_handler;
 
     del.kind  = EVENT_FRAME_PRE_DELETE;
@@ -95,9 +95,11 @@ void style_picker_make_buffer(void) {
     if (!buff) {
         buff = yed_create_buffer("*style-picker-list");
         buff->flags |= BUFF_RD_ONLY;
-    } else {
-        yed_buff_clear_no_undo(buff);
     }
+
+    buff->flags &= ~BUFF_RD_ONLY;
+
+    yed_buff_clear_no_undo(buff);
 
     ASSERT(buff, "did not create '*style-picker-list' buffer");
 
@@ -112,6 +114,7 @@ void style_picker_make_buffer(void) {
 
     yed_buff_delete_line_no_undo(buff, yed_buff_n_lines(buff));
 
+    buff->flags |= BUFF_RD_ONLY;
 }
 
 void style_picker_make_frame(void) {
