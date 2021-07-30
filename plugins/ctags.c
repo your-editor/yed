@@ -11,13 +11,13 @@ use_tree(ctags_str_t, int);
 #define TAG_KIND_TYPE       (2)
 #define TAG_KIND_ENUMERATOR (3)
 
-
 int                     gen_thread_started;
 int                     gen_thread_finished;
 int                     gen_thread_exit_status;
-int                     should_reparse;
-
+int                     parse_thread_started;
+int                     parse_thread_finished;
 int                     has_parsed;
+
 tree(ctags_str_t, int)  tags;
 
 highlight_info          hinfo;
@@ -34,11 +34,11 @@ yed_buffer *get_or_make_buff(void) {
 
     return buff;
 }
-void ensure_parsed(void);
 
 void ctags_gen(int n_args, char **args);
 void ctags_find(int n_args, char **args);
 void ctags_jump_to_definition(int n_args, char **args);
+void ctags_hl_parse(void);
 void ctags_hl_reparse(int n_args, char **args);
 
 void unload(yed_plugin *self);
@@ -56,6 +56,9 @@ int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
 
     yed_plugin_set_unload_fn(self, unload);
+
+    highlight_info_make(&hinfo);
+    tags = tree_make_c(ctags_str_t, int, strcmp);
 
     key_pressed.kind   = EVENT_KEY_PRESSED;
     key_pressed.fn     = ctags_find_key_pressed_handler;
@@ -80,8 +83,7 @@ int yed_plugin_boot(yed_plugin *self) {
     }
 
     if (yed_var_is_truthy("ctags-enable-extra-highlighting")) {
-        ensure_parsed();
-        ys->redraw = 1;
+        ctags_hl_parse();
     }
 
     return 0;
@@ -119,7 +121,7 @@ int parse_tag_line(char *line, char **tag, char **file, char **kind) {
     return 1;
 }
 
-void parse_tags(void) {
+void * ctags_hl_parse_thread(void *arg) {
     FILE *f;
     char  line[4096];
     char *tag;
@@ -127,15 +129,13 @@ void parse_tags(void) {
     char *kind;
     int   k;
 
-LOG_FN_ENTER();
+    /* Wait on the gen thread if it's running so that we parse up-to-date tags. */
+    while (gen_thread_started && !gen_thread_finished) { usleep(1000); }
 
     tags = tree_make_c(ctags_str_t, int, strcmp);
 
     f = fopen("tags", "r");
-    if (f == NULL) {
-        yed_log("[!] (ctags.c:" STR(__LINE__) ") could not open tags file");
-        goto out;
-    }
+    if (f == NULL) { goto out; }
 
     while (fgets(line, sizeof(line), f)) {
         if (parse_tag_line(line, &tag, &file, &kind)) {
@@ -163,13 +163,13 @@ LOG_FN_ENTER();
     fclose(f);
 
 out:;
-LOG_EXIT();
+    parse_thread_finished = 1;
+    return NULL;
 }
 
-void ctags_hl_parse(void) {
+void ctags_highlight_from_parse(void) {
     tree_it(ctags_str_t, int) it;
 
-    parse_tags();
     highlight_info_make(&hinfo);
 
     tree_traverse(tags, it) {
@@ -185,33 +185,53 @@ void ctags_hl_parse(void) {
                 break;
         }
     }
-
-    has_parsed = 1;
-}
-
-void ensure_parsed(void) {
-    if (!has_parsed) {
-        ctags_hl_parse();
-    }
 }
 
 void ctags_hl_cleanup(void) {
+    highlight_info_free(&hinfo);
+    ys->redraw = 1;
+}
+
+void ctags_hl_parse_cleanup(void) {
     tree_it(ctags_str_t, int) it;
 
-    if (has_parsed) {
-        tree_traverse(tags, it) {
-            free(tree_it_key(it));
-        }
-        tree_free(tags);
+    tree_traverse(tags, it) {
+        free(tree_it_key(it));
+    }
+    tree_free(tags);
+}
 
-        highlight_info_free(&hinfo);
-        ys->redraw = 1;
+void ctags_finish_parse(void) {
+LOG_CMD_ENTER("ctags");
+    parse_thread_started = parse_thread_finished = 0;
+    ctags_hl_cleanup();
+    ctags_highlight_from_parse();
+    yed_cprint("tags have been parsed for highlighting");
+    has_parsed = 1;
+    ys->redraw = 1;
+LOG_EXIT();
+}
+
+void ctags_hl_parse(void) {
+    pthread_t p;
+
+
+    if (!parse_thread_started) {
+        parse_thread_finished = 0;
+        parse_thread_started  = 1;
+        ctags_hl_parse_cleanup();
+        pthread_create(&p, NULL, ctags_hl_parse_thread, NULL);
     }
 
-    has_parsed = 0;
+    /* See if the thread can finish in 1ms... if so, we can avoid the pump delay. */
+    usleep(1000);
+
+    if (parse_thread_finished) { ctags_finish_parse(); }
+
 }
 
 void unload(yed_plugin *self) {
+    ctags_hl_parse_cleanup();
     ctags_hl_cleanup();
 }
 
@@ -338,28 +358,25 @@ void ctags_find_key_pressed_handler(yed_event *event) {
 void ctags_hl_line_handler(yed_event *event) {
     if (!yed_var_is_truthy("ctags-enable-extra-highlighting")) { return; }
 
-    ensure_parsed();
+    if (!has_parsed) { ctags_hl_parse(); }
 
     highlight_line(&hinfo, event);
 }
 
 void ctags_pump_handler(yed_event *event) {
-LOG_CMD_ENTER("ctags-gen");
+LOG_CMD_ENTER("ctags");
 
     if (gen_thread_started && gen_thread_finished) {
         if (gen_thread_exit_status) {
             yed_cerr("ctags failed with exit status %d", gen_thread_exit_status);
         } else {
-            yed_cprint("ctags has completed");
+            yed_cprint("ctags-gen has completed");
         }
         gen_thread_started = gen_thread_finished = gen_thread_exit_status = 0;
     }
 
-    if (should_reparse && !gen_thread_started) {
-        ctags_hl_cleanup();
-        ctags_hl_parse();
-        ys->redraw     = 1;
-        should_reparse = 0;
+    if (!gen_thread_started && parse_thread_started && parse_thread_finished) {
+        ctags_finish_parse();
     }
 
 LOG_EXIT();
@@ -462,23 +479,28 @@ void ctags_find_filter(void) {
     array_zero_term(ys->cmd_buff);
     tag_start = array_data(ys->cmd_buff);
 
-    if (strlen(tag_start) == 0) { return; }
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
+
+    yed_buff_clear_no_undo(get_or_make_buff());
+
+    if (strlen(tag_start) == 0) { goto out; }
+
 
     /* Try with binary search flag first. */
     sprintf(cmd_buff, "look -b '%s' tags", tag_start);
 
     if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
-        return;
+        goto out;
     }
 
     if (status != 0) {
         /* Failed.. so try without the flag. */
         sprintf(cmd_buff, "look '%s' tags", tag_start);
         if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
-            return;
+            goto out;
         }
         if (status != 0) {
-            return;
+            goto out;
         }
     }
 
@@ -526,6 +548,7 @@ void ctags_find_filter(void) {
     }
 
 out:;
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
 }
 
 int ctags_find_start(char *start) {
@@ -534,7 +557,9 @@ int ctags_find_start(char *start) {
     ys->interactive_command = "ctags-find";
     ys->cmd_prompt          = "(ctags-find) ";
 
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
     yed_buff_clear_no_undo(get_or_make_buff());
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
     YEXE("special-buffer-prepare-focus", "*ctags-find-list");
     yed_frame_set_buff(ys->active_frame, get_or_make_buff());
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
@@ -594,6 +619,7 @@ void ctags_find(int n_args, char **args) {
         if (n_args) {
             ys->interactive_command = NULL;
             ys->active_frame->dirty = 1;
+
             yed_clear_cmd_buff();
             if (yed_buff_n_lines(get_or_make_buff()) == 1) {
                 ctag_find_select();
@@ -706,5 +732,5 @@ out:
 }
 
 void ctags_hl_reparse(int n_args, char **args) {
-    should_reparse = 1;
+    ctags_hl_parse();
 }
