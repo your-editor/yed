@@ -5,7 +5,7 @@ struct yed_state_t;
 
 #define YED_NORMAL (0x1)
 #define YED_QUIT   (0x2)
-	#define YED_RELOAD (0x3)
+#define YED_RELOAD (0x3)
 
 typedef struct yed_lib {
     void                *handle;

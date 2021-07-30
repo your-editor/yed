@@ -160,6 +160,12 @@ static int parse_options(int argc, char **argv) {
             } else if (strcmp(argv[i], "--version") == 0) {
                 printf("%d\n", yed_version);
                 exit(0);
+            } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
+                printf("%s\n", INSTALLED_LIB_DIR);
+                exit(0);
+            } else if (strcmp(argv[i], "--print-default-plugin-dir") == 0) {
+                printf("%s\n", DEFAULT_PLUG_DIR);
+                exit(0);
             } else if (strcmp(argv[i], "--instrument") == 0) {
                 ys->options.instrument = 1;
             } else if (strcmp(argv[i], "--no-init") == 0) {
