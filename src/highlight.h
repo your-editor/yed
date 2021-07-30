@@ -724,7 +724,8 @@ static inline int _highlight_get_next_ml_state(highlight_info *info, int row, ye
 
 #define SENTINAL ((char*)(void*)UINT64_MAX)
 
-    state = prev_state;
+    state        = prev_state;
+    found_within = NULL;
 
     line = yed_buff_get_line(frame->buffer, row);
 
