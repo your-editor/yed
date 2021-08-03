@@ -246,7 +246,7 @@ static void builder_report(void) {
     }
 
     if ((notif_cmd = yed_get_var("builder-notify-command"))) {
-        strncpy(builder_notif_cmd, notif_cmd, sizeof(builder_notif_cmd));
+        strncpy(builder_notif_cmd, notif_cmd, sizeof(builder_notif_cmd) - 1);
         pthread_create(&p, NULL, builder_bg_cmd_thread_fn, notif_cmd);
     } else {
         notif_start();
