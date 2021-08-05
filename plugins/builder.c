@@ -724,7 +724,7 @@ static void builder_start(int n_args, char **args) {
 
     get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
     if (yed_start_read_subproc_into_buffer_nb(cmd_buff, buff, &nb_subproc)) {
-        get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
+        get_or_make_buffer()->flags |= BUFF_RD_ONLY;
         yed_cerr("there was an error when calling yed_start_read_subproc_into_buffer_nb()");
         return;
     }
