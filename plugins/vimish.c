@@ -825,7 +825,6 @@ void vimish_delete(int key, char *key_str) {
     }
 
     switch (key) {
-        case ESC:
         case 'd':
             vimish_change_mode(MODE_NORMAL, 0, 0);
             break;
@@ -835,6 +834,7 @@ void vimish_delete(int key, char *key_str) {
             vimish_change_mode(MODE_INSERT, 0, 0);
             break;
 
+        case ESC:
         case CTRL_C:
             vimish_change_mode(MODE_NORMAL, 0, 1);
             break;
@@ -851,11 +851,11 @@ void vimish_yank(int key, char *key_str) {
     }
 
     switch (key) {
-        case ESC:
         case 'y':
             vimish_change_mode(MODE_NORMAL, 0, 0);
             break;
 
+        case ESC:
         case CTRL_C:
             vimish_change_mode(MODE_NORMAL, 0, 1);
             break;
