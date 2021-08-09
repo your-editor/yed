@@ -2310,7 +2310,7 @@ void yed_default_command_delete_forward(int n_args, char **args) {
     yed_frame *frame;
     yed_line  *line,
               *next_line;
-    int        row, col;
+    int        col;
     int        r1, c1, r2, c2;
     int        buff_n_lines;
     yed_glyph *git;
@@ -2337,7 +2337,6 @@ void yed_default_command_delete_forward(int n_args, char **args) {
         return;
     }
 
-    row = frame->cursor_line;
     col = frame->cursor_col;
 
     yed_start_undo_record(frame, frame->buffer);
