@@ -959,7 +959,7 @@ static void buffer_post_mod_handler(yed_event *event) {
                 last_val = val;
 
                 if (val.type == TYPE_INT) {
-                    sprintf(line_buff, "ans: %lld, 0x%llx", val.i, (u64)val.i);
+                    sprintf(line_buff, "ans: %ld, 0x%lx", val.i, (u64)val.i);
                 } else if (val.type == TYPE_FLOAT) {
                     sprintf(line_buff, "ans: %f", val.f);
                 }
@@ -1022,7 +1022,7 @@ static void key_pressed_handler(yed_event *event) {
             buff[0] = 0;
             snprintf(name, sizeof(name), "ans_%d", ans);
             if (last_val.type == TYPE_INT) {
-                snprintf(buff, sizeof(buff), "%s:%s  %s  = %lld, 0x%llx", name, ans < 10 ? " " : "", last, last_val.i, (u64)last_val.i);
+                snprintf(buff, sizeof(buff), "%s:%s  %s  = %ld, 0x%lx", name, ans < 10 ? " " : "", last, last_val.i, (u64)last_val.i);
                 set_int_var(name, last_val.i);
             } else if (last_val.type == TYPE_FLOAT) {
                 snprintf(buff, sizeof(buff), "%s:%s  %s  = %f", name, ans < 10 ? " " : "", last, last_val.f);

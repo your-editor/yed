@@ -246,7 +246,7 @@ static void builder_report(void) {
     }
 
     if ((notif_cmd = yed_get_var("builder-notify-command"))) {
-        strncpy(builder_notif_cmd, notif_cmd, sizeof(builder_notif_cmd));
+        strncpy(builder_notif_cmd, notif_cmd, sizeof(builder_notif_cmd) - 1);
         pthread_create(&p, NULL, builder_bg_cmd_thread_fn, notif_cmd);
     } else {
         notif_start();
@@ -724,7 +724,7 @@ static void builder_start(int n_args, char **args) {
 
     get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
     if (yed_start_read_subproc_into_buffer_nb(cmd_buff, buff, &nb_subproc)) {
-        get_or_make_buffer()->flags &= ~BUFF_RD_ONLY;
+        get_or_make_buffer()->flags |= BUFF_RD_ONLY;
         yed_cerr("there was an error when calling yed_start_read_subproc_into_buffer_nb()");
         return;
     }

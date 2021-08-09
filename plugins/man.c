@@ -89,16 +89,22 @@ void man(int n_args, char **args) {
     strcat(cmd_buff, pre_cmd_buff);
     strcat(cmd_buff, "'");
 
+    get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
+
     if (yed_read_subproc_into_buffer(cmd_buff, get_or_make_buff(), &status) != 0) {
+        get_or_make_buff()->flags |= BUFF_RD_ONLY;
         YEXE("special-buffer-prepare-unfocus", "*man-page");
         yed_cerr("failed to invoke '%s'", cmd_buff);
         return;
     }
     if (status != 0) {
+        get_or_make_buff()->flags |= BUFF_RD_ONLY;
         YEXE("special-buffer-prepare-unfocus", "*man-page");
         yed_cerr("command '%s' failed", err_buff);
         return;
     }
+
+    get_or_make_buff()->flags |= BUFF_RD_ONLY;
 
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     YEXE("buffer", "*man-page");
