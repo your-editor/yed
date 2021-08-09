@@ -730,7 +730,6 @@ static int eval_expr(calc_expr_t *expr, calc_val_t *val) {
                     is_compare = 1;
                     break;
 
-                case OP_MOD:
                 case OP_IDIV:
                 case OP_BSHL:
                 case OP_BSHR:
@@ -758,25 +757,25 @@ static int eval_expr(calc_expr_t *expr, calc_val_t *val) {
             }
 
             switch (expr->op.op) {
-                case OP_NEG:   result_i =     -ri;   result_f =     -rf;  break;
-                case OP_PLUS:  result_i = li + ri;   result_f = lf + rf;  break;
-                case OP_MINUS: result_i = li - ri;   result_f = lf - rf;  break;
-                case OP_MULT:  result_i = li * ri;   result_f = lf * rf;  break;
-                case OP_DIV:   result_i = li / ri;   result_f = lf / rf;  break;
-                case OP_IDIV:  result_i = li / ri;                        break;
-                case OP_MOD:   result_i = li % ri;                        break;
-                case OP_LEQ:   cmp_i    = li <= ri;  cmp_f    = lf <= rf; break;
-                case OP_GEQ:   cmp_i    = li >= ri;  cmp_f    = lf >= rf; break;
-                case OP_LSS:   cmp_i    = li <  ri;  cmp_f    = lf <  rf; break;
-                case OP_GTR:   cmp_i    = li >  ri;  cmp_f    = lf >  rf; break;
-                case OP_EQU:   cmp_i    = li == ri;  cmp_f    = lf == rf; break;
-                case OP_NEQ:   cmp_i    = li != ri;  cmp_f    = lf != rf; break;
-                case OP_BSHL:  result_i = li << ri;                       break;
-                case OP_BSHR:  result_i = li >> ri;                       break;
-                case OP_BAND:  result_i = li &  ri;                       break;
-                case OP_BXOR:  result_i = li ^ ri;                        break;
-                case OP_BOR:   result_i = li | ri;                        break;
-                case OP_BNEG:  result_i =     ~ri;                        break;
+                case OP_NEG:   result_i =     -ri;   result_f =     -rf;      break;
+                case OP_PLUS:  result_i = li + ri;   result_f = lf + rf;      break;
+                case OP_MINUS: result_i = li - ri;   result_f = lf - rf;      break;
+                case OP_MULT:  result_i = li * ri;   result_f = lf * rf;      break;
+                case OP_DIV:   result_i = li / ri;   result_f = lf / rf;      break;
+                case OP_IDIV:  result_i = li / ri;                            break;
+                case OP_MOD:   result_i = li % ri;   result_f = fmod(lf, rf); break;
+                case OP_LEQ:   cmp_i    = li <= ri;  cmp_f    = lf <= rf;     break;
+                case OP_GEQ:   cmp_i    = li >= ri;  cmp_f    = lf >= rf;     break;
+                case OP_LSS:   cmp_i    = li <  ri;  cmp_f    = lf <  rf;     break;
+                case OP_GTR:   cmp_i    = li >  ri;  cmp_f    = lf >  rf;     break;
+                case OP_EQU:   cmp_i    = li == ri;  cmp_f    = lf == rf;     break;
+                case OP_NEQ:   cmp_i    = li != ri;  cmp_f    = lf != rf;     break;
+                case OP_BSHL:  result_i = li << ri;                           break;
+                case OP_BSHR:  result_i = li >> ri;                           break;
+                case OP_BAND:  result_i = li &  ri;                           break;
+                case OP_BXOR:  result_i = li ^ ri;                            break;
+                case OP_BOR:   result_i = li | ri;                            break;
+                case OP_BNEG:  result_i =     ~ri;                            break;
 
                 case OP_EXP:
                     if (result_type == TYPE_INT) {
