@@ -354,6 +354,14 @@ int yed_reload_plugins(void) {
 
     yed_unload_plugins();
 
+    if (!ys->options.no_init) {
+        if (ys->options.init) {
+            load_init(ys->options.init);
+        } else {
+            load_default_init();
+        }
+    }
+
     array_traverse(plugs, name_it) {
         it = tree_lookup(ys->plugins, *name_it);
         if (!tree_it_good(it)) {

@@ -11,12 +11,15 @@ use_tree(ctags_str_t, int);
 #define TAG_KIND_TYPE       (2)
 #define TAG_KIND_ENUMERATOR (3)
 
-int                     gen_thread_started;
-int                     gen_thread_finished;
-int                     gen_thread_exit_status;
-int                     parse_thread_started;
-int                     parse_thread_finished;
-int                     has_parsed;
+static int                     gen_thread_started;
+static int                     gen_thread_finished;
+static int                     gen_thread_exit_status;
+static int                     parse_thread_started;
+static int                     parse_thread_finished;
+static int                     has_parsed;
+static pthread_t               gen_pthread;
+static pthread_t               parse_pthread;
+
 
 tree(ctags_str_t, int)  tags;
 
@@ -163,6 +166,7 @@ void * ctags_hl_parse_thread(void *arg) {
     fclose(f);
 
 out:;
+    parse_pthread         = 0;
     parse_thread_finished = 1;
     return NULL;
 }
@@ -213,24 +217,25 @@ LOG_EXIT();
 }
 
 void ctags_hl_parse(void) {
-    pthread_t p;
+    if (parse_thread_started) { return; }
 
+    parse_thread_finished = 0;
+    parse_thread_started  = 1;
+    ctags_hl_parse_cleanup();
+    pthread_create(&parse_pthread, NULL, ctags_hl_parse_thread, NULL);
 
-    if (!parse_thread_started) {
-        parse_thread_finished = 0;
-        parse_thread_started  = 1;
-        ctags_hl_parse_cleanup();
-        pthread_create(&p, NULL, ctags_hl_parse_thread, NULL);
-    }
-
-    /* See if the thread can finish in 1ms... if so, we can avoid the pump delay. */
-    usleep(1000);
+    /* See if the thread can finish in 5ms... if so, we can avoid the pump delay. */
+    usleep(5000);
 
     if (parse_thread_finished) { ctags_finish_parse(); }
 
 }
 
 void unload(yed_plugin *self) {
+    pthread_cancel(gen_pthread);
+    pthread_cancel(parse_pthread);
+    usleep(1000);
+
     ctags_hl_parse_cleanup();
     ctags_hl_cleanup();
 }
@@ -428,6 +433,7 @@ void *ctags_gen_thread(void *arg) {
     gen_thread_exit_status = system(cmd);
 
     free(cmd);
+    gen_pthread         = 0;
     gen_thread_finished = 1;
 
     return NULL;
@@ -436,7 +442,6 @@ void *ctags_gen_thread(void *arg) {
 void ctags_gen(int n_args, char **args) {
     char       cmd_buff[1024];
     char      *ctags_flags;
-    pthread_t  p;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments but got %d -- set cflags options in 'ctags-flags'", n_args);
@@ -459,7 +464,7 @@ void ctags_gen(int n_args, char **args) {
     yed_cprint("running 'ctags %s' in background...", ctags_flags);
     gen_thread_finished = 0;
     gen_thread_started  = 1;
-    pthread_create(&p, NULL, ctags_gen_thread, strdup(cmd_buff));
+    pthread_create(&gen_pthread, NULL, ctags_gen_thread, strdup(cmd_buff));
 }
 
 void ctags_find_filter(void) {
