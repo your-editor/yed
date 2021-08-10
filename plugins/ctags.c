@@ -361,7 +361,17 @@ void ctags_find_key_pressed_handler(yed_event *event) {
 }
 
 void ctags_hl_line_handler(yed_event *event) {
+    yed_frame *frame;
+
     if (!yed_var_is_truthy("ctags-enable-extra-highlighting")) { return; }
+
+    frame = event->frame;
+
+    if (!frame
+    ||  !frame->buffer
+    ||  frame->buffer->flags & BUFF_SPECIAL) {
+        return;
+    }
 
     if (!has_parsed) { ctags_hl_parse(); }
 
