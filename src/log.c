@@ -54,7 +54,7 @@ int yed_vlog(char *fmt, va_list args) {
     new_header = 0;
 
     /* If we don't have the names, do the new header. */
-    if (!log_name || !ys->cur_log_name || strcmp(log_name, "???")) {
+    if (!log_name || !ys->cur_log_name || strcmp(log_name, "???") == 0) {
         new_header = 1;
     }
 
