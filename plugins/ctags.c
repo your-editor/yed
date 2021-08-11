@@ -379,7 +379,11 @@ void ctags_hl_line_handler(yed_event *event) {
 }
 
 void ctags_pump_handler(yed_event *event) {
+    int did_gen_thread;
+
 LOG_CMD_ENTER("ctags");
+
+    did_gen_thread = 0;
 
     if (gen_thread_started && gen_thread_finished) {
         if (gen_thread_exit_status) {
@@ -388,9 +392,11 @@ LOG_CMD_ENTER("ctags");
             yed_cprint("ctags-gen has completed");
         }
         gen_thread_started = gen_thread_finished = gen_thread_exit_status = 0;
+        did_gen_thread = 1;
     }
 
     if (!gen_thread_started && parse_thread_started && parse_thread_finished) {
+        if (did_gen_thread) { yed_cprint("\n"); }
         ctags_finish_parse();
     }
 

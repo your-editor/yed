@@ -278,7 +278,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
 
     /*
-     * Check if some configuration chaged the tab width
+     * Check if some configuration changed the tab width
      * and set it in ys before loading buffers and doing
      * the first draw.
      */

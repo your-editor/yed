@@ -1,7 +1,8 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-char * yed_word_under_cursor(void); /* DO free result. */
+char * yed_word_under_cursor(void);                           /* DO free result. */
+char * yed_word_at_point(yed_frame *frame, int row, int col); /* DO free result. */
 
 char * abs_path(char *path, char *buff);
 char * relative_path_if_subtree(char *path, char *buff);
@@ -22,6 +23,7 @@ int file_exists_in_PATH(char *name);
 array_t sh_split(char *s);
 
 void free_string_array(array_t array);
+array_t copy_string_array(array_t array);
 
 char *last_strstr(const char *haystack, const char *needle);
 char *last_strnstr(const char *haystack, const char *needle, size_t len);

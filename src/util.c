@@ -1,26 +1,21 @@
-char *yed_word_under_cursor(void) {
-    yed_frame  *frame;
+char * yed_word_at_point(yed_frame *frame, int row, int col) {
     yed_buffer *buff;
     yed_line   *line;
-    int         col, word_len;
+    int         word_len;
     char        c, *word_start, *ret;
 
-    if (!ys->active_frame)    { return NULL; }
-    frame = ys->active_frame;
+    if (frame == NULL || frame->buffer == NULL) { return NULL; }
 
-    if (!frame->buffer)       { return NULL; }
     buff = frame->buffer;
 
-    line = yed_buff_get_line(buff, frame->cursor_line);
-    if (!line)                { return NULL; }
+    line = yed_buff_get_line(buff, row);
+    if (!line) { return NULL; }
 
-    col = frame->cursor_col;
-
-    if (col == line->visual_width + 1)     { return NULL; }
+    if (col == line->visual_width + 1) { return NULL; }
 
     c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-    if (isspace(c))           { return NULL; }
+    if (isspace(c)) { return NULL; }
 
     word_len = 0;
 
@@ -69,6 +64,15 @@ char *yed_word_under_cursor(void) {
     ret[word_len] = 0;
 
     return ret;
+}
+
+char *yed_word_under_cursor(void) {
+    yed_frame  *frame;
+
+    if (!ys->active_frame)    { return NULL; }
+    frame = ys->active_frame;
+
+    return yed_word_at_point(frame, frame->cursor_line, frame->cursor_col);
 }
 
 char * abs_path(char *path, char *buff) {
@@ -458,6 +462,21 @@ void free_string_array(array_t array) {
     }
 
     array_free(array);
+}
+
+array_t copy_string_array(array_t array) {
+    array_t   new;
+    char    **it;
+
+    new = array_make(char*);
+
+    array_copy(new, array);
+
+    array_traverse(new, it) {
+        *it = strdup(*it);
+    }
+
+    return new;
 }
 
 char * last_strstr(const char *haystack, const char *needle) {
