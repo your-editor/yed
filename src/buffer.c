@@ -110,6 +110,22 @@ void yed_line_pop_glyph(yed_line *line) {
     line->n_glyphs     -= 1;
 }
 
+static int yed_buffer_add_line_no_undo_no_events(yed_buffer *buff) {
+    u32      n_lines;
+    yed_line new_line;
+
+    n_lines  = yed_buff_n_lines(buff);
+    new_line = yed_new_line();
+
+    bucket_array_push(buff->lines, new_line);
+
+    yed_mark_dirty_frames(buff);
+    buff->get_line_cache     = NULL;
+    buff->get_line_cache_row = 0;
+
+    return n_lines + 1;
+}
+
 yed_buffer yed_new_buff(void) {
     yed_buffer  buff;
 
@@ -126,7 +142,7 @@ yed_buffer yed_new_buff(void) {
     buff.last_cursor_col      = 1;
     buff.ft                   = FT_UNKNOWN;
 
-    yed_buffer_add_line_no_undo(&buff);
+    yed_buffer_add_line_no_undo_no_events(&buff);
 
     return buff;
 }
