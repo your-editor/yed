@@ -1175,7 +1175,9 @@ void _yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
               save_cursor_line;
     yed_line *line;
 
-    buff_n_lines              = bucket_array_len(f->buffer->lines);
+    buff_n_lines = bucket_array_len(f->buffer->lines);
+    if (buff_n_lines < 1) { return; }
+
     buff_big_enough_to_scroll = buff_n_lines > 2 * NORM_SCROLL_OFF(f);
 
     save_cursor_line = f->cursor_line;
@@ -1268,6 +1270,8 @@ void _yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 
     if (new_row <= 0) { new_row = 1; }
     if (new_col <= 0) { new_col = 1; }
+
+    if (yed_buff_n_lines(f->buffer) < 1) { return; }
 
     row = new_row - f->cursor_line;
     _yed_move_cursor_within_frame(f, row, 0);
