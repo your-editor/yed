@@ -269,6 +269,41 @@ static void setup_highlighting(int man_section) {
                 highlight_to_eol_from(hinfo, "//", HL_COMMENT);
             add_section_highlighter("EXAMPLE", hinfo);
 
+            hinfo = malloc(sizeof(*hinfo));
+            highlight_info_make(hinfo);
+                ARRAY_LOOP(c_kwds)
+                    highlight_add_kwd(hinfo, *it, HL_KEY);
+                ARRAY_LOOP(c_pp_kwds)
+                    highlight_add_prefixed_kwd(hinfo, '#', *it, HL_PP);
+                ARRAY_LOOP(c_control_flow)
+                    highlight_add_kwd(hinfo, *it, HL_CF);
+                ARRAY_LOOP(c_typenames)
+                    highlight_add_kwd(hinfo, *it, HL_TYPE);
+                highlight_add_kwd(hinfo, "__VA_ARGS__", HL_PP);
+                highlight_add_kwd(hinfo, "__FILE__", HL_PP);
+                highlight_add_kwd(hinfo, "__func__", HL_PP);
+                highlight_add_kwd(hinfo, "__FUNCTION__", HL_PP);
+                highlight_add_kwd(hinfo, "__LINE__", HL_PP);
+                highlight_add_kwd(hinfo, "__DATE__", HL_PP);
+                highlight_add_kwd(hinfo, "__TIME__", HL_PP);
+                highlight_add_kwd(hinfo, "__STDC__", HL_PP);
+                highlight_add_kwd(hinfo, "__STDC_VERSION__", HL_PP);
+                highlight_add_kwd(hinfo, "__STDC_HOSTED__", HL_PP);
+                highlight_add_kwd(hinfo, "_plusplus", HL_PP);
+                highlight_add_kwd(hinfo, "__OBJC__", HL_PP);
+                highlight_add_kwd(hinfo, "__ASSEMBLER__", HL_PP);
+                highlight_add_kwd(hinfo, "NULL", HL_CON);
+                highlight_add_kwd(hinfo, "stdin", HL_CON);
+                highlight_add_kwd(hinfo, "stdout", HL_CON);
+                highlight_add_kwd(hinfo, "stderr", HL_CON);
+                highlight_suffixed_words(hinfo, '(', HL_CALL);
+                highlight_numbers(hinfo);
+                highlight_within(hinfo, "\"", "\"", '\\', -1, HL_STR);
+                highlight_within(hinfo, "'", "'", '\\', 1, HL_CHAR);
+                highlight_within(hinfo, "/*", "*/", 0, -1, HL_COMMENT);
+                highlight_to_eol_from(hinfo, "//", HL_COMMENT);
+            add_section_highlighter("EXAMPLES", hinfo);
+
             break;
 
         default:
@@ -298,15 +333,26 @@ void man(int n_args, char **args) {
     cmd_buff[0]     = 0;
     err_buff[0]     = 0;
 
+#ifdef __APPLE__
+    strcat(pre_cmd_buff, "man");
+#else
     strcat(pre_cmd_buff, "man --ascii");
+#endif
+
     strcat(err_buff,     "man");
+
     for (i = 0; i < n_args; i += 1) {
         strcat(pre_cmd_buff, " ");
         strcat(pre_cmd_buff, args[i]);
         strcat(err_buff, " ");
         strcat(err_buff, args[i]);
     }
+
+#ifdef __APPLE__
+    strcat(pre_cmd_buff, " | col -bx; exit ${PIPESTATUS[0]} 2>/dev/null");
+#else
     strcat(pre_cmd_buff, " 2>/dev/null");
+#endif
 
     strcat(cmd_buff, pre_cmd_buff);
     strcat(cmd_buff, " >/dev/null");
@@ -354,21 +400,25 @@ void man(int n_args, char **args) {
     yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
     YEXE("buffer", "*man-page");
 
-    man_section = 0;
-    line = yed_buff_get_line(get_or_make_buff(), 1);
-    if (line != NULL) {
-        yed_line_glyph_traverse(*line, git) {
-            if (isdigit(git->c)) {
-                man_section = git->c - '0';
-                break;
-            }
-        }
-    }
-
     clear_sections();
+again:;
     row = 1;
     bucket_array_traverse(ys->active_frame->buffer->lines, line) {
-        if (line->visual_width >= 1) {
+        if (row == 1 && line->visual_width == 0) {
+            get_or_make_buff()->flags &= ~BUFF_RD_ONLY;
+            yed_buff_delete_line_no_undo(get_or_make_buff(), row);
+            get_or_make_buff()->flags |= BUFF_RD_ONLY;
+            goto again;
+        }
+
+        if (row == 1) {
+            yed_line_glyph_traverse(*line, git) {
+                if (isdigit(git->c)) {
+                    man_section = git->c - '0';
+                    break;
+                }
+            }
+        } else if (line->visual_width >= 1) {
             git = yed_line_col_to_glyph(line, 1);
 
             if (git->c != ' ') {
@@ -436,11 +486,9 @@ void man_line_handler(yed_event *event) {
 
         if (git->c != ' ') {
             attn = yed_active_style_get_attention();
-            i    = 0;
-            yed_line_glyph_traverse(*line, git) {
-                attrs = array_item(event->line_attrs, i);
+            for (i = 1; i <= line->visual_width; i += 1) {
+                attrs = array_item(event->line_attrs, i - 1);
                 yed_combine_attrs(attrs, &attn);
-                i += 1;
             }
             return;
         }
@@ -448,11 +496,9 @@ void man_line_handler(yed_event *event) {
 
     if (row_is_in_name_section(event->row)) {
         attn = yed_active_style_get_attention();
-        i    = 0;
-        yed_line_glyph_traverse(*line, git) {
+        for (i = 1; i <= line->visual_width; i += 1) {
             attrs = array_item(event->line_attrs, i);
             yed_combine_attrs(attrs, &attn);
-            i += 1;
         }
     }
 
