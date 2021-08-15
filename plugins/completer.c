@@ -284,7 +284,9 @@ static int completer_no_auto_popup(void) {
         }
         yed_end_undo_record(frame, buff);
 
-        completer_start_popup(frame, cpl, results.strings);
+        if (compl_num_items > 1) {
+            completer_start_popup(frame, cpl, results.strings);
+        }
 
         free_string_array(results.strings);
     }
