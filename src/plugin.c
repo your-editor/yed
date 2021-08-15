@@ -163,14 +163,7 @@ int yed_load_plugin(char *plug_name) {
     plug->boot = dlsym(plug->handle, "yed_plugin_boot");
     if (!plug->boot) {
         dlclose(plug->handle);
-        array_free(plug->added_bindings);
-        array_free(plug->acquired_keys);
-        array_free(plug->added_cmds);
-        array_free(plug->added_key_sequences);
-        array_free(plug->added_event_handlers);
-        array_free(plug->added_styles);
-        array_free(plug->added_fts);
-        array_free(plug->added_compls);
+        yed_plugin_uninstall_features(plug);
         free(plug);
         return YED_PLUG_NO_BOOT;
     }
@@ -180,14 +173,7 @@ int yed_load_plugin(char *plug_name) {
     err = plug->boot(plug);
     if (err) {
         dlclose(plug->handle);
-        array_free(plug->added_bindings);
-        array_free(plug->acquired_keys);
-        array_free(plug->added_cmds);
-        array_free(plug->added_key_sequences);
-        array_free(plug->added_event_handlers);
-        array_free(plug->added_styles);
-        array_free(plug->added_fts);
-        array_free(plug->added_compls);
+        yed_plugin_uninstall_features(plug);
         free(plug);
 
         if (err == YED_PLUG_VER_MIS) {

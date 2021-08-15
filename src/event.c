@@ -41,17 +41,38 @@ void yed_delete_event_handler(yed_event_handler handler) {
 }
 
 void yed_trigger_event(yed_event *event) {
+    int                i;
     yed_event_handler *handler_it;
+    yed_event_handler  handler;
+    int                len_before;
+    int                len_after;
+    int                j;
 
     event->cancel = 0;
 
-    array_rtraverse(ys->event_handlers[event->kind], handler_it) {
-        ASSERT(handler_it->kind == event->kind, "event/handler kind mismatch");
+    i = array_len(ys->event_handlers[event->kind]) - 1;
+    while (i >= 0) {
+        handler_it = array_item(ys->event_handlers[event->kind], i);
+        handler    = *handler_it;
 
-        handler_it->fn(event);
+        ASSERT(handler.kind == event->kind, "event/handler kind mismatch");
 
-        if (event->cancel) {
-            break;
+        len_before = array_len(ys->event_handlers[event->kind]);
+
+        handler.fn(event);
+
+        if (event->cancel) { break; }
+
+        len_after = array_len(ys->event_handlers[event->kind]);
+
+        if (len_after < len_before) {
+            j = 0;
+            while (j < len_after) {
+                handler_it = array_item(ys->event_handlers[event->kind], j);
+                if (handler_it->fn == handler.fn) { i = j - 1; break; }
+            }
+        } else {
+            i -= 1;
         }
     }
 }
