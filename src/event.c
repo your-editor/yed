@@ -66,8 +66,7 @@ void yed_trigger_event(yed_event *event) {
         len_after = array_len(ys->event_handlers[event->kind]);
 
         if (len_after < len_before) {
-            j = 0;
-            while (j < len_after) {
+            for (j = 0; j < len_after; j += 1) {
                 handler_it = array_item(ys->event_handlers[event->kind], j);
                 if (handler_it->fn == handler.fn) { i = j - 1; break; }
             }
