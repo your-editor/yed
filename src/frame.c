@@ -1226,12 +1226,6 @@ void _yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
         f->cursor_line_is_dirty = 1;
     }
 
-
-    if (f->buffer->has_selection && !f->buffer->selection.locked) {
-        f->buffer->selection.cursor_row = f->cursor_line;
-        f->buffer->selection.cursor_col = f->cursor_col;
-    }
-
     /*
      * Do some more of this sanity checking in case something wacky
      * happens and yed_move_cursor_once_x_within_frame() never gets
@@ -1267,6 +1261,11 @@ void yed_move_cursor_within_frame(yed_frame *_f, int row, int n_glyphs) {
     if (event.cancel) { return; }
 
     memcpy(_f, f, sizeof(*_f));
+
+    if (_f->buffer->has_selection && !_f->buffer->selection.locked) {
+        _f->buffer->selection.cursor_row = _f->cursor_line;
+        _f->buffer->selection.cursor_col = _f->cursor_col;
+    }
 
     event.kind = EVENT_CURSOR_POST_MOVE;
     yed_trigger_event(&event);
@@ -1329,6 +1328,11 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
     if (event.cancel) { return; }
 
     _yed_set_cursor_within_frame(f, new_row, new_col);
+
+    if (f->buffer->has_selection && !f->buffer->selection.locked) {
+        f->buffer->selection.cursor_row = f->cursor_line;
+        f->buffer->selection.cursor_col = f->cursor_col;
+    }
 
     event.kind    = EVENT_CURSOR_POST_MOVE;
     event.new_row = 0;
