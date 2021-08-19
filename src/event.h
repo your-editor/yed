@@ -55,7 +55,8 @@ typedef struct {
     yed_event_kind_t  kind;
     yed_frame        *frame;
     yed_buffer       *buffer;
-    int               row, col;
+    union { int       row, new_row; };
+    union { int       col, new_col; };
     yed_attrs         row_base_attr;
     array_t           line_attrs;
     array_t           gutter_glyphs;

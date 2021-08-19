@@ -1246,17 +1246,27 @@ void _yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
     }
 }
 
-void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
-    yed_event event;
+void yed_move_cursor_within_frame(yed_frame *_f, int row, int n_glyphs) {
+    yed_frame  tmp_frame;
+    yed_frame *f;
+    yed_event  event;
+
+    f = &tmp_frame;
+    memcpy(f, _f, sizeof(*f));
 
     if (f->buffer == NULL) { return; }
 
-    event.kind  = EVENT_CURSOR_PRE_MOVE;
-    event.frame = f;
+    _yed_move_cursor_within_frame(f, row, n_glyphs);
+
+    event.kind    = EVENT_CURSOR_PRE_MOVE;
+    event.frame   = _f;
+    event.new_row = f->cursor_line;
+    event.new_col = f->cursor_col;
+
     yed_trigger_event(&event);
     if (event.cancel) { return; }
 
-    _yed_move_cursor_within_frame(f, row, n_glyphs);
+    memcpy(_f, f, sizeof(*_f));
 
     event.kind = EVENT_CURSOR_POST_MOVE;
     yed_trigger_event(&event);
@@ -1311,14 +1321,18 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 
     if (f->buffer == NULL) { return; }
 
-    event.kind  = EVENT_CURSOR_PRE_MOVE;
-    event.frame = f;
+    event.kind    = EVENT_CURSOR_PRE_MOVE;
+    event.frame   = f;
+    event.new_row = new_row;
+    event.new_col = new_col;
     yed_trigger_event(&event);
     if (event.cancel) { return; }
 
     _yed_set_cursor_within_frame(f, new_row, new_col);
 
-    event.kind = EVENT_CURSOR_POST_MOVE;
+    event.kind    = EVENT_CURSOR_POST_MOVE;
+    event.new_row = 0;
+    event.new_col = 0;
     yed_trigger_event(&event);
 }
 
