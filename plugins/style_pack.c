@@ -35,6 +35,7 @@
 #include "styles/mordechai.c"
 #include "styles/humanoid.c"
 #include "styles/forest.c"
+#include "styles/drift.c"
 
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
@@ -73,6 +74,7 @@ int yed_plugin_boot(yed_plugin *self) {
     PACK_STYLE(self, mordechai);
     PACK_STYLE(self, humanoid);
     PACK_STYLE(self, forest);
+    PACK_STYLE(self, drift);
 
     return 0;
 }
