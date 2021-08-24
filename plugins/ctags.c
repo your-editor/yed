@@ -1,11 +1,9 @@
 #include <yed/plugin.h>
 #include <yed/highlight.h>
 
-#define inline static inline
 #include <yed/tree.h>
 typedef char *ctags_str_t;
-use_tree(ctags_str_t, int);
-#undef inline
+use_tree_c(ctags_str_t, int, strcmp);
 
 #define TAG_KIND_MACRO      (1)
 #define TAG_KIND_TYPE       (2)
@@ -61,7 +59,7 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_unload_fn(self, unload);
 
     highlight_info_make(&hinfo);
-    tags = tree_make_c(ctags_str_t, int, strcmp);
+    tags = tree_make(ctags_str_t, int);
 
     key_pressed.kind   = EVENT_KEY_PRESSED;
     key_pressed.fn     = ctags_find_key_pressed_handler;
@@ -135,7 +133,7 @@ void * ctags_hl_parse_thread(void *arg) {
     /* Wait on the gen thread if it's running so that we parse up-to-date tags. */
     while (gen_thread_started && !gen_thread_finished) { usleep(1000); }
 
-    tags = tree_make_c(ctags_str_t, int, strcmp);
+    tags = tree_make(ctags_str_t, int);
 
     f = fopen("tags", "r");
     if (f == NULL) { goto out; }

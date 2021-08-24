@@ -544,6 +544,7 @@ static yed_key_binding default_key_bindings[] = {
     { DEL_KEY,     "delete-forward",      0, NULL },
     { CTRL_C,      "yank-selection",      0, NULL },
     { CTRL_L,      "frame-next",          0, NULL },
+    { CTRL_K,      "frame-delete",        0, NULL },
     { CTRL_D,      "delete-line",         0, NULL },
     { CTRL_S,      "select",              0, NULL },
     { CTRL_V,      "paste-yank-buffer",   0, NULL },
@@ -955,6 +956,18 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             key_i = ARROW_UP;
         } else if (strcmp(key_str, "down") == 0) {
             key_i = ARROW_DOWN;
+        } else if (strcmp(key_str, "del") == 0) {
+            key_i = DEL_KEY;
+        } else if (strcmp(key_str, "home") == 0) {
+            key_i = HOME_KEY;
+        } else if (strcmp(key_str, "end") == 0) {
+            key_i = END_KEY;
+        } else if (strcmp(key_str, "pageup") == 0) {
+            key_i = PAGE_UP;
+        } else if (strcmp(key_str, "pagedown") == 0) {
+            key_i = PAGE_DOWN;
+        } else if (strcmp(key_str, "shift-tab") == 0) {
+            key_i = SHIFT_TAB;
         } else if (strcmp(key_str, "ctrl-tab") == 0) {
             key_i = CTRL_TAB;
         } else if (strcmp(key_str, "ctrl-enter") == 0) {
@@ -1025,4 +1038,165 @@ out:;
 
 int yed_string_to_keys(const char *str, int *keys) {
     return _yed_string_to_keys(str, keys, 1);
+}
+
+char *yed_keys_to_string(int n, int *keys) {
+    char        buff[1024];
+    const char *lazy_space;
+    int         i;
+    int         key;
+    char       *key_str;
+    char        key_buff[16];
+    int         n_real_keys;
+    int         real_keys[MAX_SEQ_LEN];
+    char       *binding_string;
+
+    buff[0]    = 0;
+    lazy_space = "";
+
+    for (i = 0; i < n; i += 1) {
+        key     = keys[i];
+        key_str = key_buff;
+
+        switch (key) {
+            case CTRL_A:
+            case CTRL_B:
+            case CTRL_C:
+            case CTRL_D:
+            case CTRL_E:
+            case CTRL_F:
+            case CTRL_G:
+            case CTRL_H:
+            case CTRL_J:
+            case CTRL_K:
+            case CTRL_L:
+            case CTRL_N:
+            case CTRL_O:
+            case CTRL_P:
+            case CTRL_Q:
+            case CTRL_R:
+            case CTRL_S:
+            case CTRL_T:
+            case CTRL_U:
+            case CTRL_V:
+            case CTRL_W:
+            case CTRL_X:
+            case CTRL_Y:
+            case CTRL_Z:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-%c", 'a' + (key - CTRL_A));
+                break;
+
+            case TAB:
+                snprintf(key_buff, sizeof(key_buff), "tab");
+                break;
+
+            case ' ':
+                snprintf(key_buff, sizeof(key_buff), "spc");
+                break;
+
+            case ENTER:
+                snprintf(key_buff, sizeof(key_buff), "enter");
+                break;
+
+            case ESC:
+                snprintf(key_buff, sizeof(key_buff), "esc");
+                break;
+
+            case CTRL_FS:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-/");
+                break;
+            case CTRL_TAB:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-tab");
+                break;
+            case CTRL_ENTER:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-enter");
+                break;
+            case CTRL_SPACE:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-spc");
+                break;
+
+            case BACKSPACE:
+                snprintf(key_buff, sizeof(key_buff), "bsp");
+                break;
+
+            case ARROW_LEFT:
+                snprintf(key_buff, sizeof(key_buff), "left");
+                break;
+            case ARROW_RIGHT:
+                snprintf(key_buff, sizeof(key_buff), "right");
+                break;
+            case ARROW_UP:
+                snprintf(key_buff, sizeof(key_buff), "up");
+                break;
+            case ARROW_DOWN:
+                snprintf(key_buff, sizeof(key_buff), "down");
+                break;
+
+            case DEL_KEY:
+                snprintf(key_buff, sizeof(key_buff), "del");
+                break;
+
+            case HOME_KEY:
+                snprintf(key_buff, sizeof(key_buff), "home");
+                break;
+            case END_KEY:
+                snprintf(key_buff, sizeof(key_buff), "end");
+                break;
+            case PAGE_UP:
+                snprintf(key_buff, sizeof(key_buff), "pageup");
+                break;
+            case PAGE_DOWN:
+                snprintf(key_buff, sizeof(key_buff), "pagedown");
+                break;
+
+            case SHIFT_TAB:
+                snprintf(key_buff, sizeof(key_buff), "shift-tab");
+                break;
+
+            case FN1:
+            case FN2:
+            case FN3:
+            case FN4:
+            case FN5:
+            case FN6:
+            case FN7:
+            case FN8:
+            case FN9:
+            case FN10:
+            case FN11:
+            case FN12:
+                snprintf(key_buff, sizeof(key_buff), "fn-%d", 1 + (key - FN1));
+                break;
+
+            default:
+                if (!yed_is_key(key)) { goto bad; }
+
+                if (key < ASCII_KEY_MAX) {
+                    if (!isprint(key)) { goto bad; }
+                    snprintf(key_buff, sizeof(key_buff), "%c", (char)key);
+                } else if (key >= VIRT_KEY_START) {
+                    if (!yed_get_real_keys(key, &n_real_keys, real_keys)) { goto bad; }
+
+                    if (n_real_keys == 2 && real_keys[0] == ESC) {
+                        binding_string = yed_keys_to_string(1, &real_keys[1]);
+                        snprintf(key_buff, sizeof(key_buff), "meta-%s", binding_string);
+                        free(binding_string);
+                    } else {
+                        binding_string = yed_keys_to_string(n_real_keys, real_keys);
+                        if (binding_string == NULL) { goto bad; }
+                        key_str = binding_string;
+                    }
+                } else {
+bad:;
+                    return NULL;
+                }
+        }
+
+        strcat(buff, lazy_space); lazy_space = " ";
+        strcat(buff, key_str);
+
+        if (key_str != key_buff) { free(key_str); }
+    }
+
+    return strdup(buff);
 }

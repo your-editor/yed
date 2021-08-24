@@ -2,10 +2,8 @@
 
 static yed_plugin *Self;
 
-#define inline static inline
 #include <yed/tree.h>
 use_tree(int, array_t);
-#undef inline
 
 static tree(int, array_t) hooks_by_event;
 

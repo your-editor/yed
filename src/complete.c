@@ -1,6 +1,6 @@
 void yed_init_completions(void) {
-    ys->completions         = tree_make_c(yed_completion_name_t, yed_completion, strcmp);
-    ys->default_completions = tree_make_c(yed_completion_name_t, yed_completion, strcmp);
+    ys->completions         = tree_make(yed_completion_name_t, yed_completion);
+    ys->default_completions = tree_make(yed_completion_name_t, yed_completion);
     yed_set_default_completions();
 }
 
@@ -166,7 +166,7 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
     }
     cpy    = strdup(string);
     dirn   = dirname(cpy);
-    t      = tree_make_c(str_t, empty_t, strcmp);
+    t      = tree_make(str_t, empty_t);
 
     if (strlen(string) > 0) {
         if (string[strlen(string) - 1] == '/') {
@@ -288,17 +288,17 @@ static int yed_default_completion_words(char *string, yed_completion_results *re
     int                      status;
     char                    *key;
 
-    t = tree_make_c(str_t, empty_t, strcmp);
+    t = tree_make(str_t, empty_t);
     get_all_buff_words(t);
 
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
-    while (tree_len(t)) {                                                 \
-        it  = tree_begin(t);                                            \
-        key = tree_it_key(it);                                          \
-        tree_delete(t, key);                                            \
-        free(key);                                                        \
-    }                                                                       \
+    while (tree_len(t)) {
+        it  = tree_begin(t);
+        key = tree_it_key(it);
+        tree_delete(t, key);
+        free(key);
+    }
     tree_free(t);
 
     return status;
@@ -420,7 +420,7 @@ int get_buff_word_completion(char *in, char ***out) {
     char                    **items,
                              *key;
 
-    words   = tree_make_c(str_t, empty_t, strcmp);
+    words   = tree_make(str_t, empty_t);
     in_len  = strlen(in);
     n_items = 0;
 
@@ -501,7 +501,7 @@ int yed_complete_multiple(int n, char **compl_names, char *string, yed_completio
 
 
     status = COMPL_ERR_NO_ERR;
-    t      = tree_make_c(str_t, empty_t, strcmp);
+    t      = tree_make(str_t, empty_t);
 
     for (i = 0; i < n; i += 1) {
         status = yed_complete(compl_names[i], string, &tmp_results);

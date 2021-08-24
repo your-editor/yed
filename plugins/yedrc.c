@@ -1,10 +1,8 @@
 #include <yed/plugin.h>
 
-#define inline static inline
 #include <yed/tree.h>
 typedef char *yedrc_path_t;
-use_tree(yedrc_path_t, int);
-#undef inline
+use_tree_c(yedrc_path_t, int, strcmp);
 
 
 #include <stdio.h>
@@ -94,7 +92,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_unload_fn(self, unload);
 
-    loading = tree_make_c(yedrc_path_t, int, strcmp);
+    loading = tree_make(yedrc_path_t, int);
 
     yed_plugin_set_command(self, "yedrc-load", yedrc_load);
 

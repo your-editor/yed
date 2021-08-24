@@ -5,11 +5,12 @@ void yed_init_styles(void) {
 
     ys->scomp_strings = array_make(char*);
 
+    s = strdup(""); array_push(ys->scomp_strings, s);
 #define __SCOMP(comp) { s = strdup(#comp); array_push(ys->scomp_strings, s); }
     __STYLE_COMPONENTS
 #undef __SCOMP
 
-    for (i = 0; i < N_SCOMPS; i += 1) {
+    for (i = 1; i < N_SCOMPS; i += 1) {
         s = *(char**)array_item(ys->scomp_strings, i);
         len = strlen(s);
         for (j = 0; j < len; j += 1) {
@@ -19,7 +20,7 @@ void yed_init_styles(void) {
         }
     }
 
-    ys->styles = tree_make_c(yed_style_name_t, yed_style_ptr_t, strcmp);
+    ys->styles = tree_make(yed_style_name_t, yed_style_ptr_t);
     yed_set_default_styles();
 
 }

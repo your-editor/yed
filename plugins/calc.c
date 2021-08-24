@@ -118,11 +118,9 @@ typedef struct calc_expr {
 
 typedef calc_val_t (*convert_t)(calc_val_t, u32 to_unit);
 
-#define inline static inline
 #include <yed/tree.h>
 typedef char *varname_t;
-use_tree(varname_t, calc_val_t);
-#undef inline
+use_tree_c(varname_t, calc_val_t, strcmp);
 
 
 
@@ -1124,7 +1122,7 @@ int yed_plugin_boot(yed_plugin *self) {
 
     yed_plugin_set_unload_fn(self, unload);
 
-    vars = tree_make_c(varname_t, calc_val_t, strcmp);
+    vars = tree_make(varname_t, calc_val_t);
 
     set_float_var("pi", M_PI);
     set_float_var("e",  M_E);

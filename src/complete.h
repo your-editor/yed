@@ -60,7 +60,7 @@ tree_it(str_t, empty_t)  _it_;                                          \
 int                      _i_;                                           \
 char                    *_key_;                                         \
                                                                         \
-_t_ = tree_make_c(str_t, empty_t, strcmp);                              \
+_t_ = tree_make(str_t, empty_t);                                        \
                                                                         \
 for (_i_ = 0; _i_ < (_n); _i_ += 1) {                                   \
     _it_ = tree_lookup(_t_, (_ptr)[_i_]);                               \

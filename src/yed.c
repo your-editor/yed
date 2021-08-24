@@ -142,6 +142,10 @@ static void print_usage(void) {
 "    Print the path of the directory containing the yed header files and exit.\n"
 "--print-default-plugin-dir\n"
 "    Print the path of the directory containing the yed default yed plugins and exit.\n"
+"--print-cflags\n"
+"    Print flags necessary to pass to a C compiler when compiling a plugin.\n"
+"--print-ldflags\n"
+"    Print flags necessary to pass to the linker when linking a plugin.\n"
 "--help\n"
 "    Show this information and exit.\n"
 "\n"
@@ -174,6 +178,12 @@ static int parse_options(int argc, char **argv) {
                 exit(0);
             } else if (strcmp(argv[i], "--print-default-plugin-dir") == 0) {
                 printf("%s\n", DEFAULT_PLUG_DIR);
+                exit(0);
+            } else if (strcmp(argv[i], "--print-cflags") == 0) {
+                printf("-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                exit(0);
+            } else if (strcmp(argv[i], "--print-ldflags") == 0) {
+                printf("-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
                 exit(0);
             } else if (strcmp(argv[i], "--instrument") == 0) {
                 ys->options.instrument = 1;
@@ -350,7 +360,7 @@ void yed_fini(yed_state *state) {
     bytes = pretty_bytes(getPeakRSS());
 
     printf("Startup time: %llums\nPeak RSS:     %s\nThanks for using yed!\n", startup_time, bytes);
-/*     printf("Average draw time: %.1fus\n", ((float)ys->draw_accum_us) / ((float)ys->n_pumps)); */
+    printf("Average draw time: %.1fus\n", ((float)ys->draw_accum_us) / ((float)ys->n_pumps));
 
     free(bytes);
 }

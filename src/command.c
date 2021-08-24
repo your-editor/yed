@@ -1,6 +1,6 @@
 void yed_init_commands(void) {
-    ys->commands         = tree_make_c(yed_command_name_t, yed_command, strcmp);
-    ys->default_commands = tree_make_c(yed_command_name_t, yed_command, strcmp);
+    ys->commands         = tree_make(yed_command_name_t, yed_command);
+    ys->default_commands = tree_make(yed_command_name_t, yed_command);
     yed_set_default_commands();
 
     ys->cmd_buff       = array_make(char);
@@ -157,6 +157,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("suspend",                            suspend);
     SET_DEFAULT_COMMAND("scomps-list",                        scomps_list);
     SET_DEFAULT_COMMAND("version",                            version);
+    SET_DEFAULT_COMMAND("show-bindings",                      show_bindings);
     SET_DEFAULT_COMMAND("special-buffer-prepare-focus",       special_buffer_prepare_focus);
     SET_DEFAULT_COMMAND("special-buffer-prepare-jump-focus",  special_buffer_prepare_jump_focus);
     SET_DEFAULT_COMMAND("special-buffer-prepare-unfocus",     special_buffer_prepare_unfocus);
@@ -941,6 +942,8 @@ void yed_default_command_cursor_prev_word(int n_args, char **args) {
     yed_line  *line;
     int        col, row;
     char       c;
+    int        save_row;
+    int        save_col;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -1018,12 +1021,16 @@ skip_lines:
         } while (line && !line->visual_width);
 
         if (line) {
+            save_row = frame->cursor_line;
+            save_col = frame->cursor_col;
             yed_move_cursor_within_frame(frame, row - frame->cursor_line, line->visual_width);
+            if (save_row == frame->cursor_line && save_col == frame->cursor_col) { goto out; }
             goto again;
         }
     } else {
         yed_set_cursor_within_frame(frame, frame->cursor_line, col);
     }
+out:;
 }
 
 void yed_default_command_cursor_next_word(int n_args, char **args) {
@@ -1031,6 +1038,8 @@ void yed_default_command_cursor_next_word(int n_args, char **args) {
     yed_line  *line;
     int        col, row;
     char       c;
+    int        save_row;
+    int        save_col;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -1106,7 +1115,13 @@ skip_lines:
         } while (line && !line->visual_width);
 
         if (line) {
+            save_row = frame->cursor_line;
+            save_col = frame->cursor_col;
+
             yed_set_cursor_far_within_frame(frame, row, 1);
+
+            if (save_row == frame->cursor_line && save_col == frame->cursor_col) { goto out; }
+
             line = yed_buff_get_line(frame->buffer, row);
             c    = ((yed_glyph*)yed_line_col_to_glyph(line, 1))->c;
             if (c && isspace(c)) {
@@ -1116,6 +1131,7 @@ skip_lines:
     } else {
         yed_set_cursor_within_frame(frame, frame->cursor_line, col);
     }
+out:;
 }
 
 void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
@@ -1230,6 +1246,7 @@ void yed_default_command_cursor_page_up(int n_args, char **args) {
     yed_frame  *frame;
     int         top_line;
     int         want_top_line;
+    int         save_row;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -1265,7 +1282,9 @@ void yed_default_command_cursor_page_up(int n_args, char **args) {
         want_top_line = 1;
     }
     while (top_line != want_top_line) {
+        save_row = frame->cursor_line;
         yed_move_cursor_within_frame(frame, -1, 0);
+        if (save_row == frame->cursor_line) { break; }
         top_line = frame->buffer_y_offset + 1;
     }
 }
@@ -1275,6 +1294,7 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
     int         top_line;
     int         want_top_line;
     int         max_top_line;
+    int         save_row;
 
     if (n_args != 0) {
         yed_cerr("expected 0 arguments, but got %d", n_args);
@@ -1311,7 +1331,9 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
         want_top_line = max_top_line;
     }
     while (top_line != want_top_line) {
+        save_row = frame->cursor_line;
         yed_move_cursor_within_frame(frame, 1, 0);
+        if (save_row == frame->cursor_line) { break; }
         top_line = frame->buffer_y_offset + 1;
     }
 }
@@ -2561,6 +2583,9 @@ void yed_default_command_plugin_load(int n_args, char **args) {
             case YED_PLUG_VER_MIS:
                 yed_log("\n[!] the plugin was rejected because it was compiled against an older version of yed and is not compatible with this version");
                 break;
+            case YED_PLUG_LOAD_CANCEL:
+                yed_log("\n[!] the plugin was not loaded because an event handler cancelled the load");
+                break;
         }
 
         yed_cerr("%s", err_buff);
@@ -2582,8 +2607,11 @@ void yed_default_command_plugin_unload(int n_args, char **args) {
         return;
     }
 
-    yed_unload_plugin(args[0]);
-    yed_cprint("successfully unloaded plugin '%s'", args[0]);
+    if (yed_unload_plugin(args[0]) == 0) {
+        yed_cprint("successfully unloaded plugin '%s'", args[0]);
+    } else {
+        yed_cerr("did not unload plugin '%s'", args[0]);
+    }
 }
 
 void yed_default_command_plugins_list(int n_args, char **args) {
@@ -3696,6 +3724,73 @@ void yed_default_command_version(int n_args, char **args) {
     }
 
     yed_cprint("%d", YED_VERSION);
+}
+
+void yed_default_command_show_bindings(int n_args, char **args) {
+    int                                  row;
+    int                                  key;
+    yed_key_binding                     *binding;
+    char                                *key_str;
+    int                                  i;
+    char                                 line_buff[1024];
+    tree_it(int, yed_key_binding_ptr_t)  it;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    ys->bindings_buff->flags &= ~BUFF_RD_ONLY;
+
+    yed_buff_clear_no_undo(ys->bindings_buff);
+
+    row = 1;
+    for (key = 0; key < REAL_KEY_MAX; key += 1) {
+        binding = ys->real_key_map[key];
+        if (binding == NULL) { continue; }
+
+        key_str = yed_keys_to_string(1, &key);
+        if (key_str == NULL) { continue; }
+
+        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
+        free(key_str);
+
+        for (i = 0; i < binding->n_args; i += 1) {
+            strcat(line_buff, " \"");
+            strcat(line_buff, binding->args[i]);
+            strcat(line_buff, "\"");
+        }
+
+        yed_buff_insert_string_no_undo(ys->bindings_buff, line_buff, row, 1);
+
+        row += 1;
+    }
+
+    tree_traverse(ys->vkey_binding_map, it) {
+        binding = tree_it_val(it);
+
+        key_str = yed_keys_to_string(1, &binding->key);
+        if (key_str == NULL) { continue; }
+
+        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
+        free(key_str);
+
+        for (i = 0; i < binding->n_args; i += 1) {
+            strcat(line_buff, " '");
+            strcat(line_buff, binding->args[i]);
+            strcat(line_buff, "'");
+        }
+
+        yed_buff_insert_string_no_undo(ys->bindings_buff, line_buff, row, 1);
+
+        row += 1;
+    }
+
+    ys->bindings_buff->flags |= BUFF_RD_ONLY;
+
+    YEXE("special-buffer-prepare-focus", "*bindings");
+    YEXE("buffer", "*bindings");
+    yed_set_cursor_far_within_frame(ys->active_frame, 1, 1);
 }
 
 void yed_default_command_special_buffer_prepare_focus(int n_args, char **args) {

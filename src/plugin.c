@@ -90,7 +90,7 @@ void load_default_init(void) {
 
 void yed_init_plugins(void) {
     ys->plugin_dirs = array_make(char*);
-    ys->plugins     = tree_make_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
+    ys->plugins     = tree_make(yed_plugin_name_t, yed_plugin_ptr_t);
 
     if (strlen(DEFAULT_PLUG_DIR)) {
         LOG_FN_ENTER();
@@ -118,12 +118,19 @@ void yed_plugin_force_lib_unload(yed_plugin *plug) {
 }
 
 int yed_load_plugin(char *plug_name) {
+    yed_event                   evt;
     int                         err;
     char                        path_buff[4096];
     char                      **dir_it;
     yed_plugin                 *plug;
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)   it;
+
+    evt.kind        = EVENT_PLUGIN_PRE_LOAD;
+    evt.plugin_name = plug_name;
+
+    yed_trigger_event(&evt);
+    if (evt.cancel == 1) { return YED_PLUG_LOAD_CANCEL; }
 
     it = tree_lookup(ys->plugins, plug_name);
 
@@ -183,6 +190,9 @@ int yed_load_plugin(char *plug_name) {
     }
 
     tree_insert(ys->plugins, strdup(plug_name), plug);
+
+    evt.kind = EVENT_PLUGIN_POST_UNLOAD;
+    yed_trigger_event(&evt);
 
     return YED_PLUG_SUCCESS;
 }
@@ -251,10 +261,17 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
 }
 
 int yed_unload_plugin(char *plug_name) {
+    yed_event                     evt;
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)     it;
     char                         *old_key;
     yed_plugin                   *old_plug;
+
+    evt.kind        = EVENT_PLUGIN_PRE_UNLOAD;
+    evt.plugin_name = plug_name;
+
+    yed_trigger_event(&evt);
+    if (evt.cancel == 1) { return 1; }
 
     it = tree_lookup(ys->plugins, plug_name);
 
@@ -278,6 +295,9 @@ int yed_unload_plugin(char *plug_name) {
     }
 
     free(old_key);
+
+    evt.kind = EVENT_PLUGIN_POST_UNLOAD;
+    yed_trigger_event(&evt);
 
     return 0;
 }

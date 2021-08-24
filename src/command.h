@@ -113,6 +113,7 @@ DEF_DEFAULT_COMMAND(if);
 DEF_DEFAULT_COMMAND(suspend);
 DEF_DEFAULT_COMMAND(scomps_list);
 DEF_DEFAULT_COMMAND(version);
+DEF_DEFAULT_COMMAND(show_bindings);
 DEF_DEFAULT_COMMAND(special_buffer_prepare_focus);
 DEF_DEFAULT_COMMAND(special_buffer_prepare_jump_focus);
 DEF_DEFAULT_COMMAND(special_buffer_prepare_unfocus);

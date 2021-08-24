@@ -32,6 +32,10 @@ typedef enum {
     EVENT_POST_PUMP,
     EVENT_STYLE_CHANGE,
     EVENT_PRE_QUIT,
+    EVENT_PLUGIN_PRE_LOAD,
+    EVENT_PLUGIN_POST_LOAD,
+    EVENT_PLUGIN_PRE_UNLOAD,
+    EVENT_PLUGIN_POST_UNLOAD,
 
     N_EVENTS,
 } yed_event_kind_t;
@@ -67,6 +71,7 @@ typedef struct {
     char             *path;
     int               buffer_is_new_file;
     int               buff_mod_event;
+    const char       *plugin_name;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

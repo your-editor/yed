@@ -53,13 +53,8 @@ typedef struct {
     array_t kwds_by_len;
 } highlight_kwd_set;
 
-/*
- * Really sorry.
- */
-#define inline static inline
 #include <yed/tree.h>
 use_tree(char, highlight_kwd_set);
-#undef inline
 
 
 #include <yed/internal.h>
@@ -729,7 +724,7 @@ static inline int _highlight_get_next_ml_state(highlight_info *info, int row, ye
 
     line = yed_buff_get_line(frame->buffer, row);
 
-    if (line->visual_width == 0) {
+    if (line == NULL || line->visual_width == 0) {
         return state;
     }
 

@@ -1,10 +1,11 @@
 void yed_init_buffers(void) {
     yed_buffer *yank_buff;
     yed_buffer *log_buff;
+    yed_buffer *bindings_buff;
 
     LOG_FN_ENTER();
 
-    ys->buffers = tree_make_c(yed_buffer_name_t, yed_buffer_ptr_t, strcmp);
+    ys->buffers = tree_make(yed_buffer_name_t, yed_buffer_ptr_t);
 
     yank_buff         = yed_create_buffer("*yank");
     yank_buff->kind   = BUFF_KIND_YANK;
@@ -15,6 +16,10 @@ void yed_init_buffers(void) {
     log_buff->kind    = BUFF_KIND_LOG;
     log_buff->flags  |= BUFF_RD_ONLY | BUFF_SPECIAL;
     ys->log_buff      = log_buff;
+
+    bindings_buff         = yed_create_buffer("*bindings");
+    bindings_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
+    ys->bindings_buff     = bindings_buff;
 }
 
 yed_line yed_new_line(void) {

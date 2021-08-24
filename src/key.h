@@ -137,4 +137,9 @@ int yed_get_real_keys(int key, int *len, int *real_keys);
 */
 int yed_string_to_keys(const char *str, int *keys);
 
+/* Returns a malloc() (you should free() it) allocated string on success,
+** NULL if invalid keys.
+*/
+char *yed_keys_to_string(int n, int *keys);
+
 #endif

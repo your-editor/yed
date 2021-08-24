@@ -133,17 +133,16 @@ typedef struct { } empty_t;
 #include "typedefs.h"
 
 #include "tree.h"
-#define inline
+
 use_tree(int, yed_key_binding_ptr_t);
-use_tree(yed_buffer_name_t, yed_buffer_ptr_t);
-use_tree(yed_command_name_t, yed_command);
-use_tree(yed_plugin_name_t, yed_plugin_ptr_t);
-use_tree(yed_var_name_t, yed_var_val_t);
-use_tree(yed_style_name_t, yed_style_ptr_t);
-use_tree(str_t, empty_t);
-use_tree(yed_completion_name_t, yed_completion);
-use_tree(yed_ft_name_t, empty_t);
-#undef inline
+use_tree_c(yed_buffer_name_t, yed_buffer_ptr_t, strcmp);
+use_tree_c(yed_command_name_t, yed_command, strcmp);
+use_tree_c(yed_plugin_name_t, yed_plugin_ptr_t, strcmp);
+use_tree_c(yed_var_name_t, yed_var_val_t, strcmp);
+use_tree_c(yed_style_name_t, yed_style_ptr_t, strcmp);
+use_tree_c(str_t, empty_t, strcmp);
+use_tree_c(yed_completion_name_t, yed_completion, strcmp);
+use_tree_c(yed_ft_name_t, empty_t, strcmp);
 
 #include "array.h"
 #include "bucket_array.h"
@@ -205,7 +204,8 @@ typedef struct yed_state_t {
          yed_buffer_ptr_t)       buffers;
     int                          unnamed_buff_counter;
     yed_buffer                  *yank_buff,
-                                *log_buff;
+                                *log_buff,
+                                *bindings_buff;
     array_t                      log_name_stack;
     const char                  *cur_log_name;
     int                          clear_cmd_output;

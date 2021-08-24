@@ -29,6 +29,8 @@
     __SCOMP(code_character)
 
 enum {
+    NO_SCOMP,
+
     #define __SCOMP(comp) STYLE_##comp,
     __STYLE_COMPONENTS
     #undef __SCOMP
