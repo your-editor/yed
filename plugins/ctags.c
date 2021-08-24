@@ -230,9 +230,14 @@ void ctags_hl_parse(void) {
 }
 
 void unload(yed_plugin *self) {
-    pthread_cancel(gen_pthread);
-    pthread_cancel(parse_pthread);
-    usleep(1000);
+    int cancelled;
+
+    cancelled = 0;
+
+    if (gen_pthread)   { pthread_cancel(gen_pthread);   cancelled = 1; }
+    if (parse_pthread) { pthread_cancel(parse_pthread); cancelled = 1; }
+
+    if (cancelled) { usleep(1000); }
 
     ctags_hl_parse_cleanup();
     ctags_hl_cleanup();
