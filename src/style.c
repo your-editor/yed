@@ -105,6 +105,7 @@ int yed_activate_style(char *name) {
         }
     }
 
+    memset(&event, 0, sizeof(event));
     event.kind = EVENT_STYLE_CHANGE;
     yed_trigger_event(&event);
 

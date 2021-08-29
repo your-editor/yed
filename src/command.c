@@ -1352,6 +1352,8 @@ void yed_default_command_buffer(int n_args, char **args) {
         return;
     }
 
+    memset(&event, 0, sizeof(event));
+
     if (!ys->active_frame
     &&  array_len(ys->frames) == 0) {
         YEXE("frame-new");
@@ -2078,6 +2080,8 @@ void yed_default_command_insert(int n_args, char **args) {
 
     col = frame->cursor_col;
 
+    memset(&event, 0, sizeof(event));
+
     event.kind   = EVENT_BUFFER_PRE_INSERT;
     event.frame  = frame;
     event.buffer = frame->buffer;
@@ -2254,6 +2258,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
         return;
     }
 
+    memset(&event, 0, sizeof(event));
     event.kind   = EVENT_BUFFER_PRE_DELETE_BACK;
     event.frame  = frame;
     event.buffer = frame->buffer;
@@ -3497,6 +3502,7 @@ void yed_default_command_style_off(int n_args, char **args) {
         ys->active_style = NULL;
     }
 
+    memset(&event, 0, sizeof(event));
     event.kind = EVENT_STYLE_CHANGE;
     yed_trigger_event(&event);
 
@@ -3876,6 +3882,7 @@ int yed_execute_command(char *name, int n_args, char **args) {
     yed_command                                cmd;
     yed_attrs                                  cmd_attr, attn_attr;
     char                                       attr_buff[128];
+    yed_event                                  evt;
     char                                       name_cpy[256];
 
     cprinted_len   = 0;
@@ -3914,11 +3921,24 @@ LOG_EXIT();
         cprinted_len = 3 + strlen(name);
     }
 
-    name_cpy[0] = 0;
-    strcat(name_cpy, name);
-    LOG_CMD_ENTER(name_cpy);
-    cmd(n_args, args);
-    LOG_EXIT();
+    memset(&evt, 0, sizeof(evt));
+    evt.kind     = EVENT_CMD_PRE_RUN;
+    evt.cmd_name = name;
+    evt.n_args   = n_args;
+    evt.args     = (const char * const *)args;
+    yed_trigger_event(&evt);
+
+    if (!evt.cancel) {
+        name_cpy[0] = 0;
+        strcat(name_cpy, name);
+        LOG_CMD_ENTER(name_cpy);
+        cmd(n_args, args);
+        LOG_EXIT();
+
+        evt.kind = EVENT_CMD_POST_RUN;
+        yed_trigger_event(&evt);
+    }
+
 
     yed_draw_command_line();
 

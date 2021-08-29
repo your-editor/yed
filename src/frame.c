@@ -106,6 +106,7 @@ void yed_delete_frame(yed_frame *frame) {
     yed_event       event;
     yed_frame_tree *next_leaf;
 
+    memset(&event, 0, sizeof(event));
     event.kind  = EVENT_FRAME_PRE_DELETE;
     event.frame = frame;
 
@@ -216,6 +217,7 @@ void yed_activate_frame(yed_frame *frame) {
     int       buff_n_lines;
     int       save_cursor_line;
 
+    memset(&event, 0, sizeof(event));
     event.kind  = EVENT_FRAME_ACTIVATED;
     event.frame = frame;
 
@@ -412,6 +414,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     }
 
 
+    memset(&event, 0, sizeof(event));
     event.kind          = EVENT_ROW_PRE_CLEAR;
     event.frame         = frame;
     event.row           = row;
@@ -471,6 +474,7 @@ again_gutter:
      * We're about to start drawing.
      * Do the pre-draw event.
      */
+    memset(&event, 0, sizeof(event));
     event.kind           = EVENT_LINE_PRE_DRAW;
     event.frame          = frame;
     event.row            = row;
@@ -866,6 +870,7 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
         return;
     }
 
+    memset(&event, 0, sizeof(event));
     event.kind  = EVENT_FRAME_PRE_SET_BUFFER;
     event.frame = frame;
 
@@ -1019,6 +1024,9 @@ void yed_frame_update(yed_frame *frame) {
     if (frame->dirty && frame->buffer) {
         yed_mark_dirty_frames(frame->buffer);
     }
+
+    memset(&update_event, 0, sizeof(update_event));
+    memset(&buff_draw_event, 0, sizeof(buff_draw_event));
 
     update_event.kind     = EVENT_FRAME_PRE_UPDATE;
     update_event.frame    = frame;
@@ -1252,6 +1260,7 @@ void yed_move_cursor_within_frame(yed_frame *_f, int row, int n_glyphs) {
 
     _yed_move_cursor_within_frame(f, row, n_glyphs);
 
+    memset(&event, 0, sizeof(event));
     event.kind    = EVENT_CURSOR_PRE_MOVE;
     event.frame   = _f;
     event.new_row = f->cursor_line;
@@ -1320,6 +1329,7 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 
     if (f->buffer == NULL) { return; }
 
+    memset(&event, 0, sizeof(event));
     event.kind    = EVENT_CURSOR_PRE_MOVE;
     event.frame   = f;
     event.new_row = new_row;

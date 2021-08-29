@@ -512,6 +512,7 @@ void yed_handle_resize(void) {
 
     ys->has_resized = 0;
 
+    memset(&event, 0, sizeof(event));
     event.kind = EVENT_TERMINAL_RESIZED;
     yed_trigger_event(&event);
 }

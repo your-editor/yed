@@ -205,6 +205,7 @@ void yed_free_buffer(yed_buffer *buffer) {
     yed_event  event;
     yed_line  *line;
 
+    memset(&event, 0, sizeof(event));
     event.kind   = EVENT_BUFFER_PRE_DELETE;
     event.buffer = buffer;
     yed_trigger_event(&event);
@@ -246,6 +247,8 @@ void yed_buffer_set_ft(yed_buffer *buffer, int ft) {
     ||  buffer->flags & BUFF_SPECIAL) {
         return;
     }
+
+    memset(&event, 0, sizeof(event));
 
     event.kind   = EVENT_BUFFER_PRE_SET_FT;
     event.buffer = buffer;
@@ -307,6 +310,7 @@ do {                                                 \
 #define DO_PRE_MOD_EVT(_buff, _kind, _row, _col)     \
 do {                                                 \
     yed_event _event;                                \
+    memset(&_event, 0, sizeof(_event));              \
     _event.kind           = EVENT_BUFFER_PRE_MOD;    \
     _event.buffer         = (_buff);                 \
     _event.buff_mod_event = (_kind);                 \
@@ -318,6 +322,7 @@ do {                                                 \
 #define DO_POST_MOD_EVT(_buff, _kind, _row, _col)    \
 do {                                                 \
     yed_event _event;                                \
+    memset(&_event, 0, sizeof(_event));              \
     _event.kind           = EVENT_BUFFER_POST_MOD;   \
     _event.buffer         = (_buff);                 \
     _event.buff_mod_event = (_kind);                 \
@@ -1114,6 +1119,7 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
     int        status;
     char       a_path[4096];
 
+    memset(&event, 0, sizeof(event));
     event.kind   = EVENT_BUFFER_PRE_WRITE;
     event.buffer = buff;
     yed_trigger_event(&event);

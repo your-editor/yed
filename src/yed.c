@@ -377,6 +377,7 @@ int yed_pump(void) {
     int                  skip_keys;
 
     if (ys->status == YED_QUIT) {
+        memset(&event, 0, sizeof(event));
         event.kind = EVENT_PRE_QUIT;
         yed_trigger_event(&event);
         return ys->status;
@@ -429,6 +430,7 @@ int yed_pump(void) {
 
 
 
+    memset(&event, 0, sizeof(event));
     event.kind = EVENT_PRE_PUMP;
     yed_trigger_event(&event);
 
@@ -490,6 +492,7 @@ int yed_pump(void) {
         append_to_output_buff(TERM_RESET);
     }
 
+    memset(&event, 0, sizeof(event));
     event.kind = EVENT_POST_PUMP;
     yed_trigger_event(&event);
 

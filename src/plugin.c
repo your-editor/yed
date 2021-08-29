@@ -126,6 +126,7 @@ int yed_load_plugin(char *plug_name) {
     tree_it(yed_plugin_name_t,
             yed_plugin_ptr_t)   it;
 
+    memset(&evt, 0, sizeof(evt));
     evt.kind        = EVENT_PLUGIN_PRE_LOAD;
     evt.plugin_name = plug_name;
 
@@ -267,6 +268,7 @@ int yed_unload_plugin(char *plug_name) {
     char                         *old_key;
     yed_plugin                   *old_plug;
 
+    memset(&evt, 0, sizeof(evt));
     evt.kind        = EVENT_PLUGIN_PRE_UNLOAD;
     evt.plugin_name = plug_name;
 

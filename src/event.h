@@ -36,6 +36,12 @@ typedef enum {
     EVENT_PLUGIN_POST_LOAD,
     EVENT_PLUGIN_PRE_UNLOAD,
     EVENT_PLUGIN_POST_UNLOAD,
+    EVENT_CMD_PRE_RUN,
+    EVENT_CMD_POST_RUN,
+    EVENT_VAR_PRE_SET,
+    EVENT_VAR_POST_SET,
+    EVENT_VAR_PRE_UNSET,
+    EVENT_VAR_POST_UNSET,
 
     N_EVENTS,
 } yed_event_kind_t;
@@ -56,22 +62,29 @@ typedef enum {
 } yed_buff_mod_event;
 
 typedef struct {
-    yed_event_kind_t  kind;
-    yed_frame        *frame;
-    yed_buffer       *buffer;
-    union { int       row, new_row; };
-    union { int       col, new_col; };
-    yed_attrs         row_base_attr;
-    array_t           line_attrs;
-    array_t           gutter_glyphs;
-    array_t           gutter_attrs;
-    int               key;
-    char             *glyph;
-    int               cancel;
-    char             *path;
-    int               buffer_is_new_file;
-    int               buff_mod_event;
-    const char       *plugin_name;
+    yed_event_kind_t            kind;
+    yed_frame                  *frame;
+    yed_buffer                 *buffer;
+    union { int                 row;
+            int                 new_row; };
+    union { int                 col;
+            int                 new_col; };
+    yed_attrs                   row_base_attr;
+    array_t                     line_attrs;
+    array_t                     gutter_glyphs;
+    array_t                     gutter_attrs;
+    int                         key;
+    char                       *glyph;
+    int                         cancel;
+    char                       *path;
+    int                         buffer_is_new_file;
+    int                         buff_mod_event;
+    union { const char         *plugin_name;
+            const char         *cmd_name;
+            const char         *var_name; };
+    int                         n_args;
+    union { const char * const *args;
+            const char         *var_val; };
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

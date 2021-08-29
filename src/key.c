@@ -500,6 +500,7 @@ void yed_take_key(int key) {
         return;
     }
 
+    memset(&event, 0, sizeof(event));
     event.kind = EVENT_KEY_PRESSED;
     event.key  = key;
     yed_trigger_event(&event);
