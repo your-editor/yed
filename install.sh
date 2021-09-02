@@ -157,7 +157,7 @@ ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_di
 
 if ! [ -d plugins ]; then
     echo "Grabbing plugins.."
-    git clone git@github.com:kammerdienerb/yed-plugins plugins
+    git clone https://github.com/kammerdienerb/yed-plugins plugins
 fi
 
 echo "Compiling plugins.."
