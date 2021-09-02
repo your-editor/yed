@@ -138,7 +138,7 @@ void flush_writer_buff(void) {
     if (!array_len(ys->writer_buffer)) {
         return;
     }
-    write(1, array_data(ys->writer_buffer), array_len(ys->writer_buffer));
+    (void)write(1, array_data(ys->writer_buffer), array_len(ys->writer_buffer));
     array_clear(ys->writer_buffer);
 }
 
@@ -146,7 +146,7 @@ void flush_output_buff(void) {
     if (!array_len(ys->output_buffer)) {
         return;
     }
-    write(1, array_data(ys->output_buffer), array_len(ys->output_buffer));
+    (void)write(1, array_data(ys->output_buffer), array_len(ys->output_buffer));
     array_clear(ys->output_buffer);
 }
 

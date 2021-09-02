@@ -32,6 +32,12 @@ fi
 
 source install.options
 
+mkdir -p ${lib_dir} || exit 1
+mkdir -p ${plug_dir} || exit 1
+mkdir -p ${inc_dir}/yed || exit 1
+mkdir -p ${bin_dir} || exit 1
+mkdir -p ${share_dir}/yed || exit 1
+
 if [ -z $cfg_name ]; then
     cfg_name="release"
 fi
@@ -78,9 +84,7 @@ export cfg=${cfg}
 
 
 echo "Compiling libyed.so.."
-mkdir -p ${lib_dir} || exit 1
-mkdir -p ${plug_dir} || exit 1
-${CC} ${LIB_C_FLAGS} ${cfg} src/yed.c -o ${lib_dir}/libyed.so.new || exit $?
+${CC} src/yed.c -o ${lib_dir}/libyed.so.new ${LIB_C_FLAGS} ${cfg} || exit $?
 
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped libyed.so"
@@ -121,14 +125,12 @@ mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
 echo "Installed 'libyed.so':             ${lib_dir}"
 
 echo "Creating include directory.."
-mkdir -p ${inc_dir}/yed
 cp src/*.h ${inc_dir}/yed || exit 1
 echo "Installed headers:                 ${inc_dir}/yed"
 
 echo "Compiling the driver.."
-mkdir -p ${bin_dir} || exit 1
 
-${CC} ${DRIVER_C_FLAGS} ${cfg} src/yed_driver.c -o ${bin_dir}/yed.new || exit $?
+${CC} src/yed_driver.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
 
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped yed"
@@ -150,7 +152,6 @@ mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
 echo "Installed 'yed':                   ${bin_dir}"
 
 echo "Creating default configuration.."
-mkdir -p ${share_dir}/yed
 cp -r share/* ${share_dir}/yed
 ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
 

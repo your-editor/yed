@@ -155,9 +155,9 @@ int _yed_write_buffer_to_subproc_2(yed_buffer *buff, char *cmd, int *exit_status
     n_lines = yed_buff_n_lines(buff);
     row     = 1;
     bucket_array_traverse(buff->lines, line) {
-        write(fds_to_child[1], array_data(line->chars), array_len(line->chars));
+        (void)write(fds_to_child[1], array_data(line->chars), array_len(line->chars));
         if (row < n_lines) {
-            write(fds_to_child[1], "\n", 1);
+            (void)write(fds_to_child[1], "\n", 1);
         }
         row += 1;
     }
