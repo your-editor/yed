@@ -1,25 +1,12 @@
 void yed_init_buffers(void) {
-    yed_buffer *yank_buff;
-    yed_buffer *log_buff;
-    yed_buffer *bindings_buff;
-
     LOG_FN_ENTER();
 
     ys->buffers = tree_make(yed_buffer_name_t, yed_buffer_ptr_t);
 
-    yank_buff         = yed_create_buffer("*yank");
-    yank_buff->kind   = BUFF_KIND_YANK;
-    yank_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    ys->yank_buff     = yank_buff;
-
-    log_buff          = yed_create_buffer("*log");
-    log_buff->kind    = BUFF_KIND_LOG;
-    log_buff->flags  |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    ys->log_buff      = log_buff;
-
-    bindings_buff         = yed_create_buffer("*bindings");
-    bindings_buff->flags |= BUFF_RD_ONLY | BUFF_SPECIAL;
-    ys->bindings_buff     = bindings_buff;
+    yed_get_yank_buffer();
+    yed_get_log_buffer();
+    yed_get_bindings_buffer();
+    yed_get_vars_buffer();
 }
 
 yed_line yed_new_line(void) {
@@ -201,6 +188,18 @@ yed_buffer * yed_get_buffer_by_path(char *path) {
     return NULL;
 }
 
+yed_buffer * yed_get_or_create_special_rdonly_buffer(char *name) {
+    yed_buffer *buff;
+
+    buff = yed_get_buffer(name);
+    if (buff == NULL) {
+        buff = yed_create_buffer(name);
+        buff->flags |= BUFF_SPECIAL | BUFF_RD_ONLY;
+    }
+
+    return buff;
+}
+
 void yed_free_buffer(yed_buffer *buffer) {
     yed_event  event;
     yed_line  *line;
@@ -238,6 +237,120 @@ void yed_free_buffer(yed_buffer *buffer) {
 
 
 
+yed_buffer *yed_get_yank_buffer(void) {
+    yed_buffer *b;
+    b = yed_get_or_create_special_rdonly_buffer("*yank");
+    b->kind = BUFF_KIND_YANK;
+    return b;
+}
+
+yed_buffer *yed_get_log_buffer(void) {
+    yed_buffer *b;
+    b = yed_get_or_create_special_rdonly_buffer("*log");
+    b->kind = BUFF_KIND_LOG;
+    return b;
+}
+
+yed_buffer *yed_get_bindings_buffer(void) {
+    yed_buffer *b;
+    b = yed_get_or_create_special_rdonly_buffer("*bindings");
+    return b;
+}
+
+void yed_update_bindings_buffer(void) {
+    yed_buffer                          *bind_buff;
+    int                                  row;
+    int                                  key;
+    yed_key_binding                     *binding;
+    char                                *key_str;
+    int                                  i;
+    char                                 line_buff[1024];
+    tree_it(int, yed_key_binding_ptr_t)  it;
+
+    bind_buff = yed_get_bindings_buffer();
+
+    bind_buff->flags &= ~BUFF_RD_ONLY;
+
+    yed_buff_clear_no_undo(bind_buff);
+
+    row = 1;
+    for (key = 0; key < REAL_KEY_MAX; key += 1) {
+        binding = ys->real_key_map[key];
+        if (binding == NULL) { continue; }
+
+        key_str = yed_keys_to_string(1, &key);
+        if (key_str == NULL) { continue; }
+
+        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
+        free(key_str);
+
+        for (i = 0; i < binding->n_args; i += 1) {
+            strcat(line_buff, " \"");
+            strcat(line_buff, binding->args[i]);
+            strcat(line_buff, "\"");
+        }
+
+        yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
+
+        row += 1;
+    }
+
+    tree_traverse(ys->vkey_binding_map, it) {
+        binding = tree_it_val(it);
+
+        key_str = yed_keys_to_string(1, &binding->key);
+        if (key_str == NULL) { continue; }
+
+        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
+        free(key_str);
+
+        for (i = 0; i < binding->n_args; i += 1) {
+            strcat(line_buff, " '");
+            strcat(line_buff, binding->args[i]);
+            strcat(line_buff, "'");
+        }
+
+        yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
+
+        row += 1;
+    }
+
+    bind_buff->flags |= BUFF_RD_ONLY;
+}
+
+yed_buffer *yed_get_vars_buffer(void) {
+    yed_buffer *b;
+    b = yed_get_or_create_special_rdonly_buffer("*vars");
+    return b;
+}
+
+void yed_update_vars_buffer(void) {
+    yed_buffer                             *vars_buff;
+    int                                     max_width;
+    tree_it(yed_var_name_t, yed_var_val_t)  vit;
+    char                                    line_buff[1024];
+    int                                     row;
+
+    vars_buff = yed_get_vars_buffer();
+
+    vars_buff->flags &= ~BUFF_RD_ONLY;
+
+    yed_buff_clear_no_undo(vars_buff);
+
+    max_width = 0;
+    tree_traverse(ys->vars, vit) {
+        max_width = MAX(max_width, strlen(tree_it_key(vit)));
+    }
+
+    row = 1;
+    tree_traverse(ys->vars, vit) {
+        snprintf(line_buff, sizeof(line_buff), "%-*s = %s", max_width, tree_it_key(vit), tree_it_val(vit));
+        yed_buff_insert_string_no_undo(vars_buff, line_buff, row, 1);
+        row += 1;
+    }
+
+    vars_buff->flags |= BUFF_RD_ONLY;
+}
 
 
 void yed_buffer_set_ft(yed_buffer *buffer, int ft) {

@@ -20,3 +20,4 @@ do {                               \
 int yed_vlog(char *fmt, va_list args);
 int yed_log(char *fmt, ...);
 const char *yed_top_log_name(void);
+yed_buffer *yed_get_log_buffer(void);

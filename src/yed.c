@@ -132,6 +132,8 @@ static void print_usage(void) {
 "    Do not load an init plugin.\n"
 "-i, --init=<path>\n"
 "    Load the init plugin from this path instead of finding one automatically.\n"
+"-c, --command=<command>\n"
+"    Run the command after any init plugin is loaded. (repeatable)\n"
 "--instrument\n"
 "    Pause the editor at startup to allow an external tool to attach to it.\n"
 "--version\n"
@@ -153,13 +155,16 @@ static void print_usage(void) {
     fprintf(stderr, "%s", usage);
 }
 
+static array_t cmd_line_commands;
 static int parse_options(int argc, char **argv) {
-    int i;
-    int seen_double_dash;
+    int   i;
+    int   seen_double_dash;
+    char *s;
 
     seen_double_dash = 0;
 
     ys->options.files = array_make(char*);
+    cmd_line_commands = array_make(char*);
 
     for (i = 1; i < argc; i += 1) {
         if (seen_double_dash) {
@@ -180,10 +185,20 @@ static int parse_options(int argc, char **argv) {
                 printf("%s\n", DEFAULT_PLUG_DIR);
                 exit(0);
             } else if (strcmp(argv[i], "--print-cflags") == 0) {
-                printf("-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                printf(
+#ifdef YED_DEBUG
+                "-g -O0 "
+#endif
+                "-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+
                 exit(0);
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
-                printf("-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
+                printf(
+#ifdef YED_DEBUG
+                "-g -O0 "
+#endif
+                "-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
+
                 exit(0);
             } else if (strcmp(argv[i], "--instrument") == 0) {
                 ys->options.instrument = 1;
@@ -195,6 +210,14 @@ static int parse_options(int argc, char **argv) {
                 i += 1;
             } else if (strncmp(argv[i], "--init=", 7) == 0) {
                 ys->options.init = argv[i] + 7;
+            } else if (strcmp(argv[i], "-c") == 0) {
+                if (i == argc - 1)    { return 0; }
+                s = argv[i + 1];
+                array_push(cmd_line_commands, s);
+                i += 1;
+            } else if (strncmp(argv[i], "--command=", 10) == 0) {
+                s = argv[i] + 7;
+                array_push(cmd_line_commands, s);
             } else if (strcmp(argv[i], "--help") == 0) {
                 ys->options.help = 1;
             } else if (strncmp(argv[i], "-", 1) == 0) {
@@ -215,10 +238,12 @@ void yed_tool_attach(void) {
 }
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
-    char                cwd[4096];
-    int                 has_frames;
-    char              **file_it;
-    unsigned long long  start_time;
+    char                 cwd[4096];
+    int                  has_frames;
+    char               **file_it;
+    unsigned long long   start_time;
+    char               **it;
+    array_t              split;
 
     ys = malloc(sizeof(*ys));
     memset(ys, 0, sizeof(*ys));
@@ -249,13 +274,13 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     getcwd(cwd, sizeof(cwd));
     ys->working_dir = strdup(cwd);
 
-    yed_init_vars();
-    ys->tabw = yed_get_tab_width(); /* Set again after plugins are loaded. */
-    yed_init_styles();
+    yed_init_events();
     yed_init_ft();
     yed_init_buffers();
-    yed_init_log();
     yed_init_frames();
+    yed_init_vars();
+    yed_init_styles();
+    yed_init_log();
     yed_init_frame_trees();
     yed_init_direct_draw();
 
@@ -276,7 +301,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     pthread_create(&ys->writer_id, NULL, writer, NULL);
     yed_init_commands();
     yed_init_keys();
-    yed_init_events();
     yed_init_search();
     yed_init_completions();
 
@@ -286,13 +310,12 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     yed_init_plugins();
 
-
-    /*
-     * Check if some configuration changed the tab width
-     * and set it in ys before loading buffers and doing
-     * the first draw.
-     */
-    ys->tabw = yed_get_tab_width();
+    array_traverse(cmd_line_commands, it) {
+        split = sh_split(*it);
+        yed_execute_command_from_split(split);
+        free_string_array(split);
+    }
+    array_free(cmd_line_commands);
 
     has_frames = !!array_len(ys->frames);
 
@@ -371,9 +394,8 @@ yed_state * yed_get_state(void)         { return ys;  }
 
 int yed_pump(void) {
     yed_event            event;
-    int                  keys[16], n_keys, i, tabw_var_val;
+    int                  keys[16], n_keys, i;
     unsigned long long   start_us;
-    yed_frame          **frame;
     int                  skip_keys;
 
     if (ys->status == YED_QUIT) {
@@ -441,21 +463,6 @@ int yed_pump(void) {
     for (i = 0; i < n_keys; i += 1) {
         yed_take_key(keys[i]);
     }
-
-    if ((tabw_var_val = yed_get_tab_width()) != ys->tabw) {
-        ys->tabw = tabw_var_val;
-        yed_update_line_visual_widths();
-        ys->redraw = 1;
-    }
-
-    array_traverse(ys->frames, frame) {
-        if ((*frame) != ys->active_frame
-        &&  (*frame)->buffer == ys->log_buff) {
-            yed_set_cursor_far_within_frame((*frame), yed_buff_n_lines(ys->log_buff), 1);
-            (*frame)->dirty = 1;
-        }
-    }
-
 
     start_us = measure_time_now_us();
 

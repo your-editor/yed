@@ -7,25 +7,27 @@ void yed_init_log(void) {
 }
 
 void yed__log_prints(char *s, int len) {
-    int       row, i;
-    yed_glyph g;
+    yed_buffer *buff;
+    int         row, i;
+    yed_glyph   g;
 
-    row = yed_buff_n_lines(ys->log_buff);
+    buff = yed_get_log_buffer();
+    row  = yed_buff_n_lines(buff);
 
-    ys->log_buff->flags &= ~BUFF_RD_ONLY;
+    buff->flags &= ~BUFF_RD_ONLY;
 
     for (i = 0; i < len; i += 1) {
         g.c = s[i];
         if (g.c == '\n') {
-            row = yed_buffer_add_line_no_undo(ys->log_buff);
+            row = yed_buffer_add_line_no_undo(buff);
         } else {
-            yed_append_to_line_no_undo(ys->log_buff, row, g);
+            yed_append_to_line_no_undo(buff, row, g);
         }
     }
 
-    ys->log_buff->flags |= BUFF_RD_ONLY;
+    buff->flags |= BUFF_RD_ONLY;
 
-    yed_mark_dirty_frames(ys->log_buff);
+    yed_mark_dirty_frames(buff);
 }
 
 const char *yed_top_log_name(void) {
@@ -72,8 +74,8 @@ int yed_vlog(char *fmt, va_list args) {
         tm = localtime(&t);
         strftime(tm_buff, sizeof(tm_buff), "%D %I:%M:%S", tm);
 
-        if (yed_buff_n_lines(ys->log_buff) == 1
-        &&  yed_buff_get_line(ys->log_buff, 1)->visual_width == 0) {
+        if (yed_buff_n_lines(yed_get_log_buffer()) == 1
+        &&  yed_buff_get_line(yed_get_log_buffer(), 1)->visual_width == 0) {
             header_fmt = "[%s](%s) ";
         } else {
             header_fmt = "\n[%s](%s) ";
@@ -114,4 +116,19 @@ int yed_log(char *fmt, ...) {
     va_end(va);
 
     return r;
+}
+
+void yed_log_buff_mod_handler(yed_event *event) {
+    yed_frame **fit;
+
+    if (event->buffer != yed_get_log_buffer()) { return; }
+
+    array_traverse(ys->frames, fit) {
+        if ((*fit) != ys->active_frame
+        &&  (*fit)->buffer == yed_get_log_buffer()) {
+            yed_set_cursor_far_within_frame((*fit), yed_buff_n_lines(yed_get_log_buffer()), 1);
+            (*fit)->dirty = 1;
+        }
+    }
+
 }

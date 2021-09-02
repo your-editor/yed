@@ -1,0 +1,8 @@
+plugin-load 'lang/c'
+plugin-load 'lang/python'
+plugin-load 'lang/sh'
+plugin-load 'lang/conf'
+plugin-load 'lang/yedrc'
+
+plugin-load 'style_pack'
+style 'casey'

@@ -4,19 +4,32 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd $DIR
 
+if [ "$(uname)" == "Darwin" ]; then
+    function realpath() {
+        [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+    }
+fi
+
+while getopts "c:p:" flag
+do
+    case "${flag}" in
+        p) prefix=$(realpath ${OPTARG});;
+        \?) echo "usage: $0 [-p PREFIX]" && exit 1;;
+    esac
+done
+
 if ! [ -f install.options ]; then
-    echo "uninstall.sh: [!] Missing 'install.options'."
+    echo "install.sh: [!] Missing 'install.options'."
     exit 1
 fi
 
 source install.options
 
+
 function uninstall {
     yes | rm ${bin_dir}/yed || exit 1
     echo "Uninstalled ${bin_dir}/yed"
-    yes | rm ${bin_dir}/yedconf || exit 1
-    echo "Uninstalled ${bin_dir}/yedconf"
-    yes | rm ${lib_dir}/libyed.so || exit 1
+    yes | rm -rf ${lib_dir}/libyed.so ${lib_dir}/libyed.so.dSYM || exit 1
     echo "Uninstalled ${lib_dir}/libyed.so"
     yes | rm -rf ${inc_dir}/yed || exit 1
     echo "Uninstalled ${inc_dir}/yed"
@@ -29,7 +42,6 @@ function uninstall {
 function confirm {
     echo "The following files/directories will be removed:
 ${bin_dir}/yed
-${bin_dir}/yedconf
 ${lib_dir}/libyed.so
 ${inc_dir}/yed
 ${share_dir}/yed

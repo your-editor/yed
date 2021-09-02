@@ -26,6 +26,14 @@ _path_patch_guide_installed_include_dir = {
     { 'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'v', 'a', 'p', 'y', 'h', 'q', 'r', '_', 'q', 'v', 'e' }
 };
 
+__attribute__((used))
+_path_patch_guide
+_path_patch_guide_installed_share_dir = {
+    {},
+    /* rot13 of "installed_share_dir" */
+    { 'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'f', 'u', 'n', 'e', 'r', '_', 'q', 'v', 'e' }
+};
+
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
@@ -447,6 +455,7 @@ int s_to_i(const char *s) {
 #include "command.c"
 #include "getRSS.c"
 #include "measure_time.c"
+#include "default_event_handlers.c"
 #include "event.c"
 #include "plugin.c"
 #include "boyer_moore.c"

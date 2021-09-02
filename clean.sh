@@ -2,4 +2,4 @@
 
 SO=$(find . -name "*.so")
 DSYM=$(find . -name "*.dSYM")
-rm -rf ${SO} ${DSYM} _yed include lib
+rm -rf ${SO} ${DSYM} yed include lib

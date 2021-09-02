@@ -66,8 +66,16 @@ yed_line * yed_copy_line(yed_line *line);
 yed_buffer yed_new_buff(void);
 yed_buffer * yed_create_buffer(char *name);
 yed_buffer * yed_get_buffer(char *name);
+yed_buffer * yed_get_or_create_special_rdonly_buffer(char *name);
 yed_buffer * yed_get_buffer_by_path(char *path);
 void yed_free_buffer(yed_buffer *buffer);
+
+
+yed_buffer *yed_get_log_buffer(void);
+yed_buffer *yed_get_yank_buffer(void);
+yed_buffer *yed_get_bindings_buffer(void);
+yed_buffer *yed_get_vars_buffer(void);
+
 
 void yed_buffer_set_ft(yed_buffer *buffer, int ft);
 

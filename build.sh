@@ -25,7 +25,6 @@ if [ $(uname) = "Darwin" ]; then
 fi
 export LIB_C_FLAGS="-rdynamic -shared -fPIC -ldl -lm -lpthread"
 export DRIVER_C_FLAGS="-rdynamic -ldl -lm -lpthread -Wl,${DTAGS},-rpath,${lib_dir}"
-export PLUGIN_C_FLAGS="-rdynamic -shared -fPIC -I${DIR}/include -L${DIR}/lib -lyed -Wl,-rpath,${lib_dir}"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
@@ -55,15 +54,27 @@ fi
 
 export cfg=${cfg}
 
-mkdir -p lib
-make all -j$(corecount) || exit 1
+rm -rf build/*
 
-if [ "${strip}x" = "yesx" ]; then
-    echo "Stripping binaries..."
-    for f in $(find . -type f -name "*.so"); do
-        strip "$f" || exit 1
-    done
+echo "Compiling libyed.so.."
+echo ${CC} ${LIB_C_FLAGS} ${cfg} src/yed.c -o lib/libyed.so || exit $?
+${CC} ${LIB_C_FLAGS} ${cfg} src/yed.c -o build/libyed.so || exit $?
+echo "Creating include directory.."
+mkdir -p build/include/yed
+cp src/*.h build/include/yed
 
-    strip libyed.so || exit 1
-    strip _yed || exit 1
+echo "Compiling the driver.."
+echo ${CC} ${DRIVER_C_FLAGS} ${cfg} src/yed_driver.c -o yed || exit $?
+${CC} ${DRIVER_C_FLAGS} ${cfg} src/yed_driver.c -o build/yed || exit $?
+
+if ! [ -d plugins ]; then
+    echo "Grabbing plugins.."
+    git clone git@github.com:kammerdienerb/yed-plugins plugins
 fi
+
+cd plugins
+git pull
+
+./install.sh run
+
+echo "Done."

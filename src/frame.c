@@ -213,13 +213,9 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
 }
 
 void yed_activate_frame(yed_frame *frame) {
-    yed_event event;
     int       buff_n_lines;
     int       save_cursor_line;
-
-    memset(&event, 0, sizeof(event));
-    event.kind  = EVENT_FRAME_ACTIVATED;
-    event.frame = frame;
+    yed_event event;
 
     if (ys->active_frame && ys->active_frame != frame) {
         ys->prev_active_frame = ys->active_frame;
@@ -246,7 +242,18 @@ void yed_activate_frame(yed_frame *frame) {
     ys->active_frame->dirty = 1;
     ys->redraw              = 1;
 
+    memset(&event, 0, sizeof(event));
+    event.kind  = EVENT_FRAME_ACTIVATED;
+    event.frame = frame;
     yed_trigger_event(&event);
+
+    if (frame->buffer != NULL) {
+        memset(&event, 0, sizeof(event));
+        event.kind   = EVENT_BUFFER_FOCUSED;
+        event.frame  = frame;
+        event.buffer = frame->buffer;
+        yed_trigger_event(&event);
+    }
 }
 
 #define FRAME_CELL(f, y_off, x_off)                                 \
@@ -404,7 +411,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     if (frame == ys->active_frame
     &&  frame->cursor_line == row
     &&  !frame->buffer->has_selection
-    &&  yed_get_var("cursor-line")) {
+    &&  yed_var_is_truthy("cursor-line")) {
 
         base_attr = yed_active_style_get_cursor_line();
     } else if (frame == ys->active_frame) {
@@ -873,7 +880,6 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     memset(&event, 0, sizeof(event));
     event.kind  = EVENT_FRAME_PRE_SET_BUFFER;
     event.frame = frame;
-
     yed_trigger_event(&event);
 
     frame->buffer = buff;
@@ -893,6 +899,14 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
 
     event.kind = EVENT_FRAME_POST_SET_BUFFER;
     yed_trigger_event(&event);
+
+    if (frame == ys->active_frame) {
+        memset(&event, 0, sizeof(event));
+        event.kind   = EVENT_BUFFER_FOCUSED;
+        event.frame  = frame;
+        event.buffer = buff;
+        yed_trigger_event(&event);
+    }
 }
 
 void yed_frame_draw_border(yed_frame *frame) {

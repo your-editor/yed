@@ -18,7 +18,34 @@ void yed_reload_default_event_handlers(void) {
 
     h.kind = EVENT_LINE_PRE_DRAW;
     h.fn   = yed_search_line_handler;
+    yed_add_event_handler(h);
 
+    h.kind = EVENT_BUFFER_POST_MOD;
+    h.fn   = yed_log_buff_mod_handler;
+    yed_add_event_handler(h);
+
+    h.kind = EVENT_KEY_POST_BIND;
+    h.fn = yed_key_bind_handler;
+    yed_add_event_handler(h);
+
+    h.kind = EVENT_KEY_POST_UNBIND;
+    h.fn = yed_key_bind_handler;
+    yed_add_event_handler(h);
+
+    h.kind = EVENT_BUFFER_FOCUSED;
+    h.fn   = yed_bindings_buffer_focus_handler;
+    yed_add_event_handler(h);
+
+    h.kind = EVENT_VAR_POST_SET;
+    h.fn = yed_var_change_handler;
+    yed_add_event_handler(h);
+
+    h.kind = EVENT_VAR_POST_UNSET;
+    h.fn = yed_var_change_handler;
+    yed_add_event_handler(h);
+
+    h.kind = EVENT_BUFFER_FOCUSED;
+    h.fn   = yed_var_buffer_focus_handler;
     yed_add_event_handler(h);
 }
 

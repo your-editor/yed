@@ -4,20 +4,19 @@ static void * yed_get_handle_for_plug(char *plug_path) {
     return dlopen(plug_path, RTLD_NOW | RTLD_LOCAL);
 }
 
-void load_init(char *path) {
-    int        err;
-    char       full_path[4096];
-    char      *msg;
-    yed_attrs  cmd_attr;
-    yed_attrs  attn_attr;
-    yed_attrs  err_attr;
-    char       attr_buff[128];
+int load_init(char *path) {
+    int   loaded;
+    int   err;
+    char  full_path[4096];
+    char *msg;
 
     LOG_FN_ENTER();
 
+    loaded = 0;
+
     if (!path)    { goto not_found; }
 
-    yed_log("attempting to load init plugin from '%s'", path);
+    yed_cprint("attempting to load init plugin from '%s'", path);
 
     snprintf(full_path, sizeof(full_path), "%s/init.so", path);
     if (access(full_path, F_OK) != -1) {
@@ -31,48 +30,238 @@ void load_init(char *path) {
             case YED_PLUG_DLOAD_FAIL:
                 msg = dlerror();
                 if (msg == NULL) {
-                    msg = "[!] failed to load init plugin for unknown reason";
+                    msg = "failed to load init plugin for unknown reason";
                 }
                 break;
             case YED_PLUG_SUCCESS:
                 msg = "loaded init";
                 break;
             case YED_PLUG_NO_BOOT:
-                msg = "[!] init missing 'yed_plugin_boot'";
+                msg = "init missing 'yed_plugin_boot'";
                 break;
             case YED_PLUG_BOOT_FAIL:
-                msg = "[!] init 'yed_plugin_boot' failed";
+                msg = "init 'yed_plugin_boot' failed";
                 break;
             case YED_PLUG_VER_MIS:
-                msg = "[!] init plugin was rejected because it was compiled against an older version of yed and is not compatible with this version";
+                msg = "init plugin was rejected because it was compiled against an older version of yed and is not compatible with this version";
                 break;
         }
 
-        yed_log("\n%s", msg);
-
-        if (err != YED_PLUG_SUCCESS) {
-            cmd_attr    = yed_active_style_get_command_line();
-            attn_attr   = yed_active_style_get_attention();
-            err_attr    = cmd_attr;
-            err_attr.fg = attn_attr.fg;
-            yed_get_attr_str(err_attr, attr_buff);
-
-            yed_clear_cmd_buff();
-            yed_append_non_text_to_cmd_buff(attr_buff);
-            yed_append_text_to_cmd_buff(msg);
+        if (err == YED_PLUG_SUCCESS) {
+            yed_cprint("\n%s", msg);
+            loaded = 1;
+        } else {
+            yed_cerr("%s", msg);
         }
     } else {
 not_found:;
-        yed_log("\n[!] init plugin not found");
+        yed_cerr("init plugin not found at '%s'", path);
     }
 
     LOG_EXIT();
+
+    return loaded;
+}
+
+static array_t    dds;
+yed_event_handler h;
+static int        which_menu;
+
+void create_default_init_menu1(void) {
+    yed_attrs          attrs;
+    int                width;
+    char               buff[256];
+    const char        *msg1;
+    const char        *msg2;
+    const char        *msg3;
+    yed_direct_draw_t *dd;
+
+    dds = array_make(yed_direct_draw_t*);
+
+    attrs = yed_active_style_get_active();
+    attrs.flags ^= ATTR_INVERSE;
+    width = 48;
+    memset(buff, 0, sizeof(buff));
+    memset(buff, ' ', width);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) - 3, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    msg1 =
+"It looks like you don't have a ~/.yed";
+    memset(buff, ' ', width);
+    memcpy(buff + (width / 2) - (strlen(msg1) / 2), msg1, strlen(msg1));
+    dd = yed_direct_draw((ys->term_rows / 2) - 2, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) - 1, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    msg2 =
+"Would you like me to create one with a";
+    memset(buff, ' ', width);
+    memcpy(buff + (width / 2) - (strlen(msg2) / 2), msg2, strlen(msg2));
+    dd = yed_direct_draw((ys->term_rows / 2) + 0, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) + 1, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    msg3 =
+"simple example configuration? [y/n]";
+    memset(buff, ' ', width);
+    memcpy(buff + (width / 2) - (strlen(msg3) / 2), msg3, strlen(msg3));
+    dd = yed_direct_draw((ys->term_rows / 2) + 2, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) + 3, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    which_menu = 1;
+}
+
+void create_default_init_menu2(void) {
+    yed_attrs          attrs;
+    int                width;
+    char               buff[256];
+    const char        *msg1;
+    const char        *msg2;
+    const char        *msg3;
+    yed_direct_draw_t *dd;
+
+    dds = array_make(yed_direct_draw_t*);
+
+    attrs = yed_active_style_get_active();
+    attrs.flags ^= ATTR_INVERSE;
+    width = 48;
+    memset(buff, 0, sizeof(buff));
+    memset(buff, ' ', width);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) - 3, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    msg1 =
+"Really create these files?";
+    memset(buff, ' ', width);
+    memcpy(buff + (width / 2) - (strlen(msg1) / 2), msg1, strlen(msg1));
+    dd = yed_direct_draw((ys->term_rows / 2) - 2, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) - 1, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    msg2 =
+"~/.yed/init.c  ~/.yed/init.so  ~/.yed/yedrc";
+    memset(buff, ' ', width);
+    memcpy(buff + (width / 2) - (strlen(msg2) / 2), msg2, strlen(msg2));
+    dd = yed_direct_draw((ys->term_rows / 2) + 0, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) + 1, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    msg3 =
+"[y/n]";
+    memset(buff, ' ', width);
+    memcpy(buff + (width / 2) - (strlen(msg3) / 2), msg3, strlen(msg3));
+    dd = yed_direct_draw((ys->term_rows / 2) + 2, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    memset(buff, ' ', width);
+    dd = yed_direct_draw((ys->term_rows / 2) + 3, (ys->term_cols / 2) - (width / 2),
+                         attrs, buff);
+    array_push(dds, dd);
+
+    which_menu = 2;
+}
+
+void do_create_default_init(void) {
+    char  buff[4096];
+    char *output;
+    int   output_len;
+    int   status;
+
+LOG_FN_ENTER();
+    snprintf(buff, sizeof(buff),
+             "(mkdir -p ~/.yed "
+             "&& find %s/yed/start/* -maxdepth 1 -type f -exec cp {} ~/.yed/. \\; ) 2>&1",
+             INSTALLED_SHARE_DIR);
+
+    output = yed_run_subproc(buff, &output_len, &status);
+
+    if (output != NULL) {
+        if (status == 0) {
+            ys->status = YED_RELOAD;
+        } else {
+            yed_cerr(output);
+        }
+        free(output);
+    }
+
+LOG_EXIT();
+}
+
+void create_default_init_key_handler(yed_event *event) {
+    yed_direct_draw_t **dit;
+
+    if (event->key == 'y' || event->key == 'Y') {
+        if (which_menu == 1) {
+            array_traverse(dds, dit) {
+                yed_kill_direct_draw(*dit);
+            }
+            create_default_init_menu2();
+        } else if (which_menu == 2) {
+            array_traverse(dds, dit) {
+                yed_kill_direct_draw(*dit);
+            }
+            array_free(dds);
+            yed_delete_event_handler(h);
+            do_create_default_init();
+            ys->redraw_cls = 1;
+        }
+    } else if (event->key == 'n' || event->key == 'N') {
+        array_traverse(dds, dit) {
+            yed_kill_direct_draw(*dit);
+        }
+        array_free(dds);
+        yed_delete_event_handler(h);
+        ys->redraw_cls = 1;
+    }
+    event->cancel = 1;
+}
+
+void create_default_init(void) {
+    create_default_init_menu1();
+
+    h.kind = EVENT_KEY_PRESSED;
+    h.fn = create_default_init_key_handler;
+    yed_add_event_handler(h);
 }
 
 void load_default_init(void) {
-    char     buff[256];
-    char    *home,
-            *yed_dir;
+    char        buff[256];
+    char       *home,
+               *yed_dir;
 
     home = getenv("HOME");
 
@@ -85,7 +274,11 @@ void load_default_init(void) {
     strcat(buff, "/.yed");
     yed_dir = buff;
 
-    load_init(yed_dir);
+    if (!load_init(yed_dir)) {
+        if (access(yed_dir, F_OK) == -1) {
+            create_default_init();
+        }
+    }
 }
 
 void yed_init_plugins(void) {
