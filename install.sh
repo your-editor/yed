@@ -79,6 +79,7 @@ export cfg=${cfg}
 
 echo "Compiling libyed.so.."
 mkdir -p ${lib_dir} || exit 1
+mkdir -p ${plug_dir} || exit 1
 ${CC} ${LIB_C_FLAGS} ${cfg} src/yed.c -o ${lib_dir}/libyed.so.new || exit $?
 
 if [ "${strip}x" = "yesx" ]; then

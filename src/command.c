@@ -283,7 +283,7 @@ void yed_vcerr(char *fmt, va_list args) {
 /*     should_clear = yed_vlog(fmt, args) || ys->clear_cmd_output; */
 /*     if (should_clear) { ys->clear_cmd_output = 0; } */
 
-    yed_vlog(fmt, args) || ys->clear_cmd_output;
+    yed_vlog(fmt, args);
     should_clear = 1;
     ys->clear_cmd_output = 0;
 

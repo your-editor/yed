@@ -196,7 +196,7 @@ void create_default_init_menu2(void) {
 }
 
 void do_create_default_init(void) {
-    char  buff[4096];
+    char  buff[4096 + 256];
     char *output;
     int   output_len;
     int   status;
