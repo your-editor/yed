@@ -1,8 +1,17 @@
-plugin-load 'lang/c'
-plugin-load 'lang/python'
-plugin-load 'lang/sh'
-plugin-load 'lang/conf'
-plugin-load 'lang/yedrc'
+# If you're not using YPM, you can load more plugins here.
+# For example, some language support:
 
-plugin-load 'style_pack'
-style 'casey'
+# plugin-load 'lang/c'
+# plugin-load 'lang/syntax/c'
+# plugin-load 'lang/python'
+# plugin-load 'lang/syntax/python'
+# plugin-load 'lang/sh'
+# plugin-load 'lang/syntax/sh'
+# plugin-load 'lang/conf'
+# plugin-load 'lang/syntax/conf'
+# plugin-load 'lang/yedrc'
+# plugin-load 'lang/syntax/yedrc'
+
+# some nicer colors
+plugin-load 'styles/casey'
+style casey
