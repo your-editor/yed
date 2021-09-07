@@ -327,9 +327,12 @@ void yed_set_default_completions(void) {
     SET_DEFAULT_COMPL("set-compl-arg-0",             yed_default_completion_variables);
     SET_DEFAULT_COMPL("get-compl-arg-0",             yed_default_completion_variables);
     SET_DEFAULT_COMPL("unset-compl-arg-0",           yed_default_completion_variables);
+    SET_DEFAULT_COMPL("toggle-var-compl-arg-0",      yed_default_completion_variables);
     SET_DEFAULT_COMPL("style-compl-arg-0",           yed_default_completion_styles);
     SET_DEFAULT_COMPL("buffer-set-ft-compl-arg-0",   yed_default_completion_fts);
     SET_DEFAULT_COMPL("plugin-unload-compl-arg-0",   yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("plugin-toggle-compl-arg-0",   yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("plugin-path-compl-arg-0",     yed_default_completion_plugins);
     SET_DEFAULT_COMPL("find-in-buffer-compl-arg-0",  yed_default_completion_words);
     SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0", yed_default_completion_files);
 }

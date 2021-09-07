@@ -607,6 +607,7 @@ void yed_set_default_key_bindings(void) {
 }
 
 void yed_bind_key(yed_key_binding binding) {
+    yed_event         event;
     yed_key_binding  *b;
     char            **args;
     int               i;
@@ -614,6 +615,16 @@ void yed_bind_key(yed_key_binding binding) {
     LOG_FN_ENTER();
 
     if (binding.key == KEY_NULL)    { goto out; }
+
+    memset(&event, 0, sizeof(event));
+    event.kind     = EVENT_KEY_PRE_BIND;
+    event.key      = binding.key;
+    event.cmd_name = binding.cmd;
+    event.n_args   = binding.n_args;
+    event.args     = (const char * const*)binding.args;
+    yed_trigger_event(&event);
+    if (event.cancel) { return; }
+
     if (binding.key == CTRL_H
     &&  yed_var_is_truthy("ctrl-h-is-backspace")) {
         yed_log("[!] warning: Binding ctrl-h to '%s' while 'ctrl-h-is-backspace' is set.\n"
@@ -641,16 +652,26 @@ void yed_bind_key(yed_key_binding binding) {
         tree_insert(ys->vkey_binding_map, binding.key, b);
     }
 
+    event.kind = EVENT_KEY_POST_BIND;
+    yed_trigger_event(&event);
+
 out:
     LOG_EXIT();
 }
 
 void yed_unbind_key(int key) {
+    yed_event                            event;
     tree_it(int, yed_key_binding_ptr_t)  it;
     yed_key_binding                     *old_binding;
     int                                  i;
 
     if (key == KEY_NULL)    { return; }
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_KEY_PRE_UNBIND;
+    event.key  = key;
+    yed_trigger_event(&event);
+    if (event.cancel) { return; }
 
     if (key < REAL_KEY_MAX) {
         old_binding = ys->real_key_map[key];
@@ -681,6 +702,9 @@ void yed_unbind_key(int key) {
             free(old_binding);
         }
     }
+
+    event.kind = EVENT_KEY_POST_UNBIND;
+    yed_trigger_event(&event);
 }
 
 yed_key_binding * yed_get_key_binding(int key) {

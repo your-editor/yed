@@ -48,10 +48,12 @@ typedef struct __attribute__((__packed__)) {
 extern _path_patch_guide _path_patch_guide_default_plug_dir;
 extern _path_patch_guide _path_patch_guide_installed_lib_dir;
 extern _path_patch_guide _path_patch_guide_installed_include_dir;
+extern _path_patch_guide _path_patch_guide_installed_share_dir;
 
 #define DEFAULT_PLUG_DIR      (_path_patch_guide_default_plug_dir.path)
 #define INSTALLED_LIB_DIR     (_path_patch_guide_installed_lib_dir.path)
 #define INSTALLED_INCLUDE_DIR (_path_patch_guide_installed_include_dir.path)
+#define INSTALLED_SHARE_DIR   (_path_patch_guide_installed_share_dir.path)
 
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
@@ -203,9 +205,6 @@ typedef struct yed_state_t {
     tree(yed_buffer_name_t,
          yed_buffer_ptr_t)       buffers;
     int                          unnamed_buff_counter;
-    yed_buffer                  *yank_buff,
-                                *log_buff,
-                                *bindings_buff;
     array_t                      log_name_stack;
     const char                  *cur_log_name;
     int                          clear_cmd_output;

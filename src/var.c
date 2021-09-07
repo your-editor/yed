@@ -1,5 +1,6 @@
 void yed_init_vars(void) {
     ys->vars = tree_make(yed_var_name_t, yed_var_val_t);
+
     yed_set_default_vars();
 }
 
