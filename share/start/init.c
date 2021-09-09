@@ -20,7 +20,6 @@ int yed_plugin_boot(yed_plugin *self) {
     /* This makes the recompile_init function available as a command. */
     yed_plugin_set_command(self, "recompile-init", recompile_init);
 
-    YEXE("plugin-load", "ypm");
     YEXE("plugin-load", "yedrc");
     YEXE("yedrc-load",  "~/.yed/yedrc");
 
