@@ -296,13 +296,10 @@ out:;
 }
 
 void yed_service_reload(void) {
-    tree_it(yed_plugin_name_t, yed_plugin_ptr_t)     plug_it;
     tree_it(yed_command_name_t, yed_command)         cmd_it;
     tree_it(yed_completion_name_t, yed_completion)   compl_it;
-    tree_it(yed_var_name_t, yed_var_val_t)           var_it;
     tree_it(yed_style_name_t, yed_style_ptr_t)       style_it;
-    char                                            *key,
-                                                    *val;
+    char                                            *key;
     yed_style                                       *style;
     char                                           **ft_name_it;
 
@@ -318,32 +315,10 @@ void yed_service_reload(void) {
 
     ys->cur_log_name = NULL; /* This could be memory from a plugin that got unloaded. */
 
-    tree_traverse(ys->plugins, plug_it) {
-        yed_plugin_uninstall_features(tree_it_val(plug_it));
-    }
-
     array_traverse(ys->ft_array, ft_name_it) {
         free(ft_name_it);
     }
     array_clear(ys->ft_array);
-
-    /*
-     * Clear out all of the old vars.
-     */
-     (void)var_it;
-     (void)val;
-/*     while (tree_len(ys->vars)) { */
-/*         var_it = tree_begin(ys->vars); */
-/*         key = tree_it_key(var_it); */
-/*         val = tree_it_val(var_it); */
-/*         tree_delete(ys->vars, key); */
-/*         free(key); */
-/*         free(val); */
-/*     } */
-    /*
-     * Reset the defaults.
-     */
-/*     yed_set_default_vars(); */
 
     /*
      * Clear out all of the old styles.
