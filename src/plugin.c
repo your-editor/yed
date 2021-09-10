@@ -391,6 +391,18 @@ int yed_load_plugin(char *plug_name) {
     return YED_PLUG_SUCCESS;
 }
 
+#define FREE_AND_ZERO_PLUGIN_ARRAY(_a) \
+do {                                   \
+    array_free(_a);                    \
+    memset(&(_a), 0, sizeof(_a));      \
+} while (0)
+
+#define FREE_AND_ZERO_PLUGIN_STRING_ARRAY(_a) \
+do {                                          \
+    free_string_array(_a);                    \
+    memset(&(_a), 0, sizeof(_a));             \
+} while (0)
+
 void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
             yed_command)             cmd_it;
@@ -410,37 +422,37 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
             yed_set_command(tree_it_key(cmd_it), tree_it_val(cmd_it));
         }
     }
-    free_string_array(plug->added_cmds);
+    FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_cmds);
 
     array_traverse(plug->acquired_keys, key_it) {
         yed_release_virt_key(*key_it);
     }
-    array_free(plug->acquired_keys);
+    FREE_AND_ZERO_PLUGIN_ARRAY(plug->acquired_keys);
 
     array_traverse(plug->added_bindings, key_it) {
         yed_set_default_key_binding(*key_it);
     }
-    array_free(plug->added_bindings);
+    FREE_AND_ZERO_PLUGIN_ARRAY(plug->added_bindings);
 
     array_traverse(plug->added_key_sequences, key_it) {
         yed_delete_key_sequence(*key_it);
     }
-    array_free(plug->added_key_sequences);
+    FREE_AND_ZERO_PLUGIN_ARRAY(plug->added_key_sequences);
 
     array_traverse(plug->added_event_handlers, handler_it) {
         yed_delete_event_handler(*handler_it);
     }
-    array_free(plug->added_event_handlers);
+    FREE_AND_ZERO_PLUGIN_ARRAY(plug->added_event_handlers);
 
     array_traverse(plug->added_styles, style_name_it) {
         yed_remove_style(*style_name_it);
     }
-    free_string_array(plug->added_styles);
+    FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_styles);
 
     array_traverse(plug->added_fts, ft_name_it) {
         yed_delete_ft(*ft_name_it);
     }
-    free_string_array(plug->added_fts);
+    FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_fts);
 
     array_traverse(plug->added_compls, compl_name_it) {
         yed_unset_completion(*compl_name_it);
@@ -451,7 +463,7 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
             yed_set_completion(tree_it_key(compl_it), tree_it_val(compl_it));
         }
     }
-    free_string_array(plug->added_compls);
+    FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_compls);
 }
 
 int yed_unload_plugin(char *plug_name) {
