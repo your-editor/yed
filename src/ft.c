@@ -27,7 +27,7 @@ void yed_delete_ft(char *name) {
 
     tree_traverse(ys->buffers, bit) {
         if (tree_it_val(bit)->ft == ft) {
-            tree_it_val(bit)->ft = FT_UNKNOWN;
+            yed_buffer_set_ft(tree_it_val(bit), FT_UNKNOWN);
         }
     }
 

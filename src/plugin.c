@@ -410,7 +410,7 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
             yed_set_command(tree_it_key(cmd_it), tree_it_val(cmd_it));
         }
     }
-    array_free(plug->added_cmds);
+    free_string_array(plug->added_cmds);
 
     array_traverse(plug->acquired_keys, key_it) {
         yed_release_virt_key(*key_it);
@@ -435,12 +435,12 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
     array_traverse(plug->added_styles, style_name_it) {
         yed_remove_style(*style_name_it);
     }
-    array_free(plug->added_styles);
+    free_string_array(plug->added_styles);
 
     array_traverse(plug->added_fts, ft_name_it) {
         yed_delete_ft(*ft_name_it);
     }
-    array_free(plug->added_fts);
+    free_string_array(plug->added_fts);
 
     array_traverse(plug->added_compls, compl_name_it) {
         yed_unset_completion(*compl_name_it);
@@ -451,7 +451,7 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
             yed_set_completion(tree_it_key(compl_it), tree_it_val(compl_it));
         }
     }
-    array_free(plug->added_compls);
+    free_string_array(plug->added_compls);
 }
 
 int yed_unload_plugin(char *plug_name) {
@@ -577,18 +577,11 @@ int yed_reload_plugins(void) {
 }
 
 void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
-    tree_it(yed_command_name_t, yed_command)  it;
-    char                                     *old_name, *name_dup;
+    char *name_dup;
 
-    it = tree_lookup(ys->commands, name);
-    if (tree_it_good(it)) {
-        old_name = tree_it_key(it);
-        tree_delete(ys->commands, name);
-        free(old_name);
-    }
+    yed_set_command(name, command);
 
     name_dup = strdup(name);
-    tree_insert(ys->commands, strdup(name), command);
     array_push(plug->added_cmds, name_dup);
 }
 
@@ -647,8 +640,8 @@ void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler) {
 void yed_plugin_set_style(yed_plugin *plug, char *name, yed_style *style) {
     char *name_dup;
 
-    name_dup = strdup(name);
     yed_set_style(name, style);
+    name_dup = strdup(name);
     array_push(plug->added_styles, name_dup);
 }
 
@@ -656,8 +649,8 @@ int yed_plugin_make_ft(yed_plugin *plug, const char *ft_name) {
     char *name_dup;
     int   result;
 
-    name_dup = strdup(ft_name);
     result = yed_make_ft((char*)ft_name);
+    name_dup = strdup(ft_name);
     array_push(plug->added_fts, name_dup);
 
     return result;
@@ -690,18 +683,10 @@ void yed_add_plugin_dir(char *s) {
 }
 
 void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion compl) {
-    tree_it(yed_completion_name_t, yed_completion)  it;
-    char                                           *old_name, *name_dup;
+    char *name_dup;
 
-    it = tree_lookup(ys->completions, name);
-    if (tree_it_good(it)) {
-        old_name = tree_it_key(it);
-        tree_delete(ys->completions, name);
-        free(old_name);
-    }
-
+    yed_set_completion(name, compl);
     name_dup = strdup(name);
-    tree_insert(ys->completions, strdup(name), compl);
     array_push(plug->added_compls, name_dup);
 }
 
