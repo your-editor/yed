@@ -522,6 +522,12 @@ int yed_complete_multiple(int n, char **compl_names, char *string, yed_completio
 
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
+    results->common_prefix_len =
+        compute_common_prefix_len(string,
+                                  array_len(results->strings),
+                                  array_data(results->strings));
+
+
 out:;
     while (tree_len(t)) {
         it  = tree_begin(t);

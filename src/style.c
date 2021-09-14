@@ -151,7 +151,7 @@ fail:
     return ZERO_ATTR;
 }
 
-int yed_get_active_style_scomp_nr_by_name(const char *name) {
+int yed_scomp_nr_by_name(const char *name) {
     int    i;
     char **it;
 

@@ -29,7 +29,7 @@ void yed_delete_ft(char *name) {
         if (tree_it_val(bit)->ft == ft) {
             yed_buffer_set_ft(tree_it_val(bit), FT_UNKNOWN);
         } else if (tree_it_val(bit)->ft > ft) {
-            yed_buffer_set_ft(tree_it_val(bit), tree_it_val(bit)->ft - 1);
+            tree_it_val(bit)->ft -= 1;
         }
     }
 

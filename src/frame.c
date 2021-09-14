@@ -755,7 +755,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     if (fill_scomp == NULL) {
         fill_attr = base_attr;
     } else {
-        fill_scomp_nr = yed_get_active_style_scomp_nr_by_name(fill_scomp);
+        fill_scomp_nr = yed_scomp_nr_by_name(fill_scomp);
         if (fill_scomp_nr >= 0) {
             fill_attr_pre = base_attr;
             fill_attr = yed_get_active_style_scomp(fill_scomp_nr);
