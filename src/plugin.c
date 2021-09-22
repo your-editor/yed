@@ -4,7 +4,7 @@ static void * yed_get_handle_for_plug(char *plug_path) {
     return dlopen(plug_path, RTLD_NOW | RTLD_LOCAL);
 }
 
-int load_init(char *path) {
+int load_init(const char *path) {
     int   loaded;
     int   err;
     char  full_path[4096];
@@ -68,19 +68,34 @@ yed_event_handler h;
 static int        which_menu;
 
 void create_default_init_menu1(void) {
+    char               files_buff[256];
+    char               f_buff[128];
+    char               msg1_buff[256];
     yed_attrs          attrs;
     int                width;
+    yed_direct_draw_t *dd;
     char               buff[256];
     const char        *msg1;
     const char        *msg2;
     const char        *msg3;
-    yed_direct_draw_t *dd;
 
     dds = array_make(yed_direct_draw_t*);
 
+    files_buff[0] = 0;
+    f_buff[0]     = 0;
+    homeify_path(get_config_path(), f_buff);
+    strcat(files_buff, f_buff);
+    strcat(files_buff, "/{init.c init.so yedrc}");
+
+    homeify_path(get_config_path(), f_buff);
+    snprintf(msg1_buff, sizeof(msg1_buff),
+             "It looks like you don't have a config at %s",
+             f_buff);
+
+
     attrs = yed_active_style_get_active();
     attrs.flags ^= ATTR_INVERSE;
-    width = 48;
+    width = MAX(46, MAX(strlen(files_buff), strlen(msg1_buff))) + 2;
     memset(buff, 0, sizeof(buff));
     memset(buff, ' ', width);
 
@@ -89,8 +104,8 @@ void create_default_init_menu1(void) {
                          attrs, buff);
     array_push(dds, dd);
 
-    msg1 =
-"It looks like you don't have a ~/.yed";
+    msg1 = msg1_buff;
+
     memset(buff, ' ', width);
     memcpy(buff + (width / 2) - (strlen(msg1) / 2), msg1, strlen(msg1));
     dd = yed_direct_draw((ys->term_rows / 2) - 2, (ys->term_cols / 2) - (width / 2),
@@ -132,19 +147,34 @@ void create_default_init_menu1(void) {
 }
 
 void create_default_init_menu2(void) {
+    char               files_buff[256];
+    char               f_buff[128];
+    char               msg1_buff[256];
     yed_attrs          attrs;
     int                width;
     char               buff[256];
+    yed_direct_draw_t *dd;
     const char        *msg1;
     const char        *msg2;
     const char        *msg3;
-    yed_direct_draw_t *dd;
 
     dds = array_make(yed_direct_draw_t*);
 
+    files_buff[0] = 0;
+    f_buff[0]     = 0;
+    homeify_path(get_config_path(), f_buff);
+    strcat(files_buff, f_buff);
+    strcat(files_buff, "/{init.c init.so yedrc}");
+
+    homeify_path(get_config_path(), f_buff);
+    snprintf(msg1_buff, sizeof(msg1_buff),
+             "It looks like you don't have a config at %s",
+             f_buff);
+
+
     attrs = yed_active_style_get_active();
     attrs.flags ^= ATTR_INVERSE;
-    width = 48;
+    width = MAX(46, MAX(strlen(files_buff), strlen(msg1_buff))) + 2;
     memset(buff, 0, sizeof(buff));
     memset(buff, ' ', width);
 
@@ -166,8 +196,7 @@ void create_default_init_menu2(void) {
                          attrs, buff);
     array_push(dds, dd);
 
-    msg2 =
-"~/.yed/init.c  ~/.yed/init.so  ~/.yed/yedrc";
+    msg2 = files_buff;
     memset(buff, ' ', width);
     memcpy(buff + (width / 2) - (strlen(msg2) / 2), msg2, strlen(msg2));
     dd = yed_direct_draw((ys->term_rows / 2) + 0, (ys->term_cols / 2) - (width / 2),
@@ -203,9 +232,9 @@ void do_create_default_init(void) {
 
 LOG_FN_ENTER();
     snprintf(buff, sizeof(buff),
-             "(mkdir -p ~/.yed "
-             "&& find %s/yed/start/* -maxdepth 1 -type f -exec cp {} ~/.yed/. \\; ) 2>&1",
-             INSTALLED_SHARE_DIR);
+             "(mkdir -p %s "
+             "&& find %s/yed/start/* -maxdepth 1 -type f -exec cp {} %s/. \\; ) 2>&1",
+             get_config_path(), INSTALLED_SHARE_DIR, get_config_path());
 
     output = yed_run_subproc(buff, &output_len, &status);
 
@@ -259,20 +288,9 @@ void create_default_init(void) {
 }
 
 void load_default_init(void) {
-    char        buff[256];
-    char       *home,
-               *yed_dir;
+    const char *yed_dir;
 
-    home = getenv("HOME");
-
-    if (!home) {
-        load_init(NULL);
-    }
-
-    buff[0] = 0;
-    strcat(buff, home);
-    strcat(buff, "/.yed");
-    yed_dir = buff;
+    yed_dir = get_config_path();
 
     if (!load_init(yed_dir)) {
         if (access(yed_dir, F_OK) == -1) {
@@ -668,7 +686,7 @@ int yed_plugin_make_ft(yed_plugin *plug, const char *ft_name) {
     return result;
 }
 
-void yed_add_plugin_dir(char *s) {
+void yed_add_plugin_dir(const char *s) {
     char   buff[1024], *s_dup;
     char **it;
     int    idx;

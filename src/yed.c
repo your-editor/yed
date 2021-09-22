@@ -144,10 +144,12 @@ static void print_usage(void) {
 "    Print the path of the directory containing the yed header files and exit.\n"
 "--print-default-plugin-dir\n"
 "    Print the path of the directory containing the yed default yed plugins and exit.\n"
+"--print-config-dir\n"
+"    Print the path of the directory where yed should look for configuration files and exit.\n"
 "--print-cflags\n"
-"    Print flags necessary to pass to a C compiler when compiling a plugin.\n"
+"    Print flags necessary to pass to a C compiler when compiling a plugin and exit.\n"
 "--print-ldflags\n"
-"    Print flags necessary to pass to the linker when linking a plugin.\n"
+"    Print flags necessary to pass to the linker when linking a plugin and exit.\n"
 "--help\n"
 "    Show this information and exit.\n"
 "\n"
@@ -157,10 +159,12 @@ static void print_usage(void) {
 
 static array_t cmd_line_commands;
 static int parse_options(int argc, char **argv) {
-    int   i;
+    int   do_exit;
     int   seen_double_dash;
+    int   i;
     char *s;
 
+    do_exit          = 0;
     seen_double_dash = 0;
 
     ys->options.files = array_make(char*);
@@ -174,16 +178,19 @@ static int parse_options(int argc, char **argv) {
                 seen_double_dash = 1;
             } else if (strcmp(argv[i], "--version") == 0) {
                 printf("%d\n", yed_version);
-                exit(0);
+                do_exit = 1;
             } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
                 printf("%s\n", INSTALLED_LIB_DIR);
-                exit(0);
+                do_exit = 1;
             } else if (strcmp(argv[i], "--print-include-dir") == 0) {
                 printf("%s\n", INSTALLED_INCLUDE_DIR);
-                exit(0);
+                do_exit = 1;
             } else if (strcmp(argv[i], "--print-default-plugin-dir") == 0) {
                 printf("%s\n", DEFAULT_PLUG_DIR);
-                exit(0);
+                do_exit = 1;
+            } else if (strcmp(argv[i], "--print-config-dir") == 0) {
+                printf("%s\n", get_config_path());
+                do_exit = 1;
             } else if (strcmp(argv[i], "--print-cflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
@@ -191,7 +198,7 @@ static int parse_options(int argc, char **argv) {
 #endif
                 "-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
 
-                exit(0);
+                do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
@@ -199,7 +206,7 @@ static int parse_options(int argc, char **argv) {
 #endif
                 "-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
 
-                exit(0);
+                do_exit = 1;
             } else if (strcmp(argv[i], "--instrument") == 0) {
                 ys->options.instrument = 1;
             } else if (strcmp(argv[i], "--no-init") == 0) {
@@ -227,6 +234,8 @@ static int parse_options(int argc, char **argv) {
             }
         }
     }
+
+    if (do_exit) { exit(0); }
 
     return 1;
 }

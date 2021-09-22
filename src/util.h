@@ -4,23 +4,26 @@
 char * yed_word_under_cursor(void);                           /* DO free result. */
 char * yed_word_at_point(yed_frame *frame, int row, int col); /* DO free result. */
 
-char * abs_path(char *path, char *buff);
-char * relative_path_if_subtree(char *path, char *buff);
-char * homeify_path(char *path, char *buff);
-char * get_path_ext(char *path);      /* Don't free result. */
-char * get_path_basename(char *path); /* Don't free result. */
-char * path_without_ext(char *path);  /* DO free result. */
+char * abs_path(const char *path, char *buff);
+char * relative_path_if_subtree(const char *path, char *buff);
+char * homeify_path(const char *path, char *buff);
+const char * get_path_ext(const char *path);      /* Don't free result. */
+const char * get_path_basename(const char *path); /* Don't free result. */
+char * path_without_ext(const char *path);  /* DO free result. */
 
-char *exe_path(char *prg); /* Free the result. */
+const char * get_config_path(void); /* Don't free result. */
+char * get_config_item_path(const char *item); /* DO free result. */
+
+char *exe_path(const char *prg); /* Free the result. */
 
 int perc_subst(char *pattern, char *subst, char *buff, int buff_len);
 
-void expand_path(char *path, char *buff);
+void expand_path(const char *path, char *buff);
 
-int file_exists_in_path(char *path, char *name);
-int file_exists_in_PATH(char *name);
+int file_exists_in_path(const char *path, const char *name);
+int file_exists_in_PATH(const char *name);
 
-array_t sh_split(char *s);
+array_t sh_split(const char *s);
 
 void free_string_array(array_t array);
 array_t copy_string_array(array_t array);
