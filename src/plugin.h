@@ -55,6 +55,6 @@ int yed_plugin_make_ft(yed_plugin *plug, const char *ft_name);
 void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion compl);
 void yed_plugin_set_unload_fn(yed_plugin *plug, yed_plugin_unload_fn_t fn);
 
-void yed_add_plugin_dir(char *s);
+void yed_add_plugin_dir(const char *s);
 
 #endif

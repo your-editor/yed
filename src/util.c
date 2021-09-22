@@ -75,7 +75,7 @@ char *yed_word_under_cursor(void) {
     return yed_word_at_point(frame, frame->cursor_line, frame->cursor_col);
 }
 
-char * abs_path(char *path, char *buff) {
+char * abs_path(const char *path, char *buff) {
     char exp_path[4096];
 
     exp_path[0] = buff[0] = 0;
@@ -88,7 +88,7 @@ char * abs_path(char *path, char *buff) {
     return buff;
 }
 
-char * relative_path_if_subtree(char *path, char *buff) {
+char * relative_path_if_subtree(const char *path, char *buff) {
     int  is_subtree;
     char a_path[4096];
     int  cwd_len;
@@ -130,7 +130,7 @@ abs:
     return buff;
 }
 
-char * homeify_path(char *path, char *buff) {
+char * homeify_path(const char *path, char *buff) {
     int   len,
           home_len;
     char *home;
@@ -144,13 +144,14 @@ char * homeify_path(char *path, char *buff) {
     if (strncmp(path, home, home_len) == 0) {
         buff[0] = '~';
         memcpy(buff + 1, path + home_len, len - home_len + 1);
-        return buff;
+    } else {
+        memcpy(buff, path, len + 1);
     }
 
-    return NULL;
+    return buff;
 }
 
-char * get_path_ext(char *path) {
+const char * get_path_ext(const char *path) {
     char *ext;
 
     ext = strrchr(path, '.');
@@ -164,7 +165,7 @@ char * get_path_ext(char *path) {
     return ext;
 }
 
-char * get_path_basename(char *path) {
+const char * get_path_basename(const char *path) {
     char *slash;
 
     slash = strrchr(path, '/');
@@ -178,10 +179,10 @@ char * get_path_basename(char *path) {
     return slash;
 }
 
-char * path_without_ext(char *path) {
-    char *ext;
-    char *cpy;
-    int   len;
+char * path_without_ext(const char *path) {
+    const char *ext;
+    char       *cpy;
+    int         len;
 
     cpy = strdup(path);
     len = strlen(cpy);
@@ -195,7 +196,39 @@ char * path_without_ext(char *path) {
     return cpy;
 }
 
-char *exe_path(char *prg) {
+static char config_path_buff[4096];
+static int  has_config_path;
+
+const char * get_config_path(void) {
+    char *dir;
+
+    if (!has_config_path) {
+        dir = NULL;
+
+        if ((dir = getenv("YED_CONFIG_DIR")) != NULL) {
+            expand_path(dir, config_path_buff);
+        } else if ((dir = getenv("XDG_CONFIG_HOME")) != NULL) {
+            expand_path(dir, config_path_buff);
+            strcat(config_path_buff, "/yed");
+        } else {
+            expand_path("~/.config/yed", config_path_buff);
+        }
+
+        has_config_path = 1;
+    }
+
+    return config_path_buff;
+}
+
+char * get_config_item_path(const char *item) {
+    char buff[4096];
+
+    snprintf(buff, sizeof(buff), "%s/%s", get_config_path(), item);
+
+    return strdup(buff);
+}
+
+char *exe_path(const char *prg) {
     char  cmd_buff[256];
     char *path;
     int   len;
@@ -219,7 +252,7 @@ char *exe_path(char *prg) {
     return path;
 }
 
-int file_exists_in_path(char *path, char *name) {
+int file_exists_in_path(const char *path, const char *name) {
     char *_path, *next;
     int   found;
     int   has_next;
@@ -257,7 +290,7 @@ out:
     return found;
 }
 
-int file_exists_in_PATH(char *name) {
+int file_exists_in_PATH(const char *name) {
     char *path;
 
     path = getenv("PATH");
@@ -330,7 +363,7 @@ int perc_subst(char *pattern, char *subst, char *buff, int buff_len) {
     return new_len;
 }
 
-void expand_path(char *path, char *buff) {
+void expand_path(const char *path, char *buff) {
     int   len,
           i,
           home_len;
@@ -364,7 +397,7 @@ void expand_path(char *path, char *buff) {
     *buff_p = 0;
 }
 
-array_t sh_split(char *s) {
+array_t sh_split(const char *s) {
     array_t  r;
     char    *copy,
             *sub,

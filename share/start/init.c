@@ -9,6 +9,8 @@ void recompile_init(int n_args, char **args);
 
 /* This is the entry point for this file when yed loads it. */
 int yed_plugin_boot(yed_plugin *self) {
+    char *path;
+
     /*
      * This macro ensures that our init plugin isn't loaded into an
      * incompatible version of yed.
@@ -21,11 +23,25 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "recompile-init", recompile_init);
 
     YEXE("plugin-load", "yedrc");
-    YEXE("yedrc-load",  "~/.yed/yedrc");
+
+    path = get_config_item_path("yedrc");
+
+    YEXE("yedrc-load", path);
+
+    free(path);
 
     return 0;
 }
 
 void recompile_init(int n_args, char **args) {
-    YEXE("sh", "gcc -o ~/.yed/init.so ~/.yed/init.c $(yed --print-cflags) $(yed --print-ldflags) && echo success");
+    const char *config_path;
+    char        buff[4096];
+
+    config_path = get_config_path();
+
+    snprintf(buff, sizeof(buff),
+             "gcc -o %s/init.so %s/init.c $(yed --print-cflags --print-ldflags) && echo success",
+             config_path, config_path);
+
+    YEXE("sh", buff);
 }
