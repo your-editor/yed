@@ -1,7 +1,7 @@
 char * yed_run_subproc(char *cmd, int *output_len, int *status) {
     FILE    *stream;
     array_t  out;
-    char     c;
+    int      c;
 
     stream = popen(cmd, "r");
 
