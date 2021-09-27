@@ -191,7 +191,7 @@ void sigstop_handler(int sig) {
     sigaction(SIGTSTP, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     ys->stopped = 1;
@@ -208,7 +208,7 @@ void sigcont_handler(int sig) {
 
         ys->stopped = 0;
         yed_term_enter();
-        pthread_mutex_unlock(&ys->write_mtx);
+        pthread_mutex_unlock(&ys->write_ready_mtx);
         ys->redraw = ys->redraw_cls = 1;
     }
 }
@@ -222,7 +222,7 @@ void sigterm_handler(int sig) {
     sigaction(SIGTERM, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -240,7 +240,7 @@ void sigquit_handler(int sig) {
     sigaction(SIGQUIT, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -272,7 +272,7 @@ void sigsegv_handler(int sig) {
     sigaction(SIGSEGV, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -292,7 +292,7 @@ void sigill_handler(int sig) {
     sigaction(SIGILL, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -312,7 +312,7 @@ void sigfpe_handler(int sig) {
     sigaction(SIGFPE, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -332,7 +332,7 @@ void sigbus_handler(int sig) {
     sigaction(SIGBUS, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();

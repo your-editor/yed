@@ -189,10 +189,9 @@ typedef struct yed_state_t {
     char                        *argv0;
     array_t                      output_buffer;
     array_t                      writer_buffer;
-    pthread_mutex_t              write_mtx, write_ready_mtx;
-    pthread_cond_t               write_signal;
+    pthread_mutex_t              write_ready_mtx;
+    pthread_cond_t               write_ready_cond;
     pthread_t                    writer_id;
-    int                          writer_done;
     char                         _4096_spaces[4096];
     struct termios               sav_term;
     int                          term_cols,
@@ -300,7 +299,7 @@ void yed_service_reload(void);
 
 int s_to_i(const char *s);
 
-const char * u8_to_s[] = {
+const char * _u8_to_s[] = {
 "0",   "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8",   "9",   "10",   "11", "12",  "13",  "14",  "15",
 "16",  "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24",  "25",  "26",  "27",  "28",  "29",  "30",  "31",
 "32",  "33",  "34",  "35",  "36",  "37",  "38",  "39",  "40",  "41",  "42",  "43",  "44",  "45",  "46",  "47",
@@ -318,6 +317,8 @@ const char * u8_to_s[] = {
 "224", "225", "226", "227", "228", "229", "230", "231", "232", "233", "234", "235", "236", "237", "238", "239",
 "240", "241", "242", "243", "244", "245", "246", "247", "248", "249", "250", "251", "252", "253", "254", "255"
 };
+
+const char *u8_to_s(u8 u);
 
 #define YEXE(cmd_name, ...)                                  \
 do {                                                         \
