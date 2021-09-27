@@ -148,19 +148,19 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
             if (attr.flags & ATTR_16_LIGHT_BG) {
                 b16 += 60;
             }
-            BUFFCAT(buff_p, u8_to_s[10 + b16]);
+            BUFFCAT(buff_p, u8_to_s(10 + b16));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[f16]);
+            BUFFCAT(buff_p, u8_to_s(f16));
         } else if (f16) {
             if (attr.flags & ATTR_16_LIGHT_FG) {
                 f16 += 60;
             }
-            BUFFCAT(buff_p, u8_to_s[f16]);
+            BUFFCAT(buff_p, u8_to_s(f16));
         } else if (b16) {
             if (attr.flags & ATTR_16_LIGHT_BG) {
                 b16 += 60;
             }
-            BUFFCAT(buff_p, u8_to_s[10 + b16]);
+            BUFFCAT(buff_p, u8_to_s(10 + b16));
         }
     } else if (attr.flags & ATTR_256) {
         LIMIT(attr.fg, 0, 255);
@@ -172,16 +172,16 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
 
         if (attr.fg && attr.bg) {
             BUFFCATN(buff_p, "38;5;", 5);
-            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+            BUFFCAT(buff_p, u8_to_s(attr.fg));
             BUFFCATN(buff_p, ";", 1);
             BUFFCATN(buff_p, "48;5;", 5);
-            BUFFCAT(buff_p, u8_to_s[attr.bg]);
+            BUFFCAT(buff_p, u8_to_s(attr.bg));
         } else if (attr.fg) {
             BUFFCATN(buff_p, "38;5;", 5);
-            BUFFCAT(buff_p, u8_to_s[attr.fg]);
+            BUFFCAT(buff_p, u8_to_s(attr.fg));
         } else if (attr.bg) {
             BUFFCATN(buff_p, "48;5;", 5);
-            BUFFCAT(buff_p, u8_to_s[attr.bg]);
+            BUFFCAT(buff_p, u8_to_s(attr.bg));
         }
     } else if (attr.flags & ATTR_RGB) {
         if (attr.fg || attr.bg) {
@@ -197,32 +197,32 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
 
         if (attr.fg && attr.bg) {
             BUFFCATN(buff_p, "38;2;", 5);
-            BUFFCAT(buff_p, u8_to_s[fr]);
+            BUFFCAT(buff_p, u8_to_s(fr));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[fg]);
+            BUFFCAT(buff_p, u8_to_s(fg));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[fb]);
+            BUFFCAT(buff_p, u8_to_s(fb));
             BUFFCATN(buff_p, ";", 1);
             BUFFCATN(buff_p, "48;2;", 5);
-            BUFFCAT(buff_p, u8_to_s[br]);
+            BUFFCAT(buff_p, u8_to_s(br));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[bg]);
+            BUFFCAT(buff_p, u8_to_s(bg));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[bb]);
+            BUFFCAT(buff_p, u8_to_s(bb));
         } else if (attr.fg) {
             BUFFCATN(buff_p, "38;2;", 5);
-            BUFFCAT(buff_p, u8_to_s[fr]);
+            BUFFCAT(buff_p, u8_to_s(fr));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[fg]);
+            BUFFCAT(buff_p, u8_to_s(fg));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[fb]);
+            BUFFCAT(buff_p, u8_to_s(fb));
         } else if (attr.bg) {
             BUFFCATN(buff_p, "48;2;", 5);
-            BUFFCAT(buff_p, u8_to_s[br]);
+            BUFFCAT(buff_p, u8_to_s(br));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[bg]);
+            BUFFCAT(buff_p, u8_to_s(bg));
             BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s[bb]);
+            BUFFCAT(buff_p, u8_to_s(bb));
         }
     }
 
@@ -242,4 +242,133 @@ int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
     return    (attr1.fg    == attr2.fg)
            && (attr1.bg    == attr2.bg)
            && (attr1.flags == attr2.flags);
+}
+
+yed_attrs yed_parse_attrs(char *string) {
+    yed_attrs  attrs;
+    array_t    words;
+    int        idx;
+    char      *word;
+    int        scomp;
+    unsigned   color;
+    char       rgb_str[9];
+
+#define WORD_OR_NULL(_idx) \
+    (((_idx) >= array_len(words)) ? NULL : *(char**)array_item(words, (_idx)))
+
+    memset(&attrs, 0, sizeof(attrs));
+
+    words = sh_split(string);
+
+    if (array_len(words) == 0) { goto out; }
+
+    idx = 0;
+
+    while (idx < array_len(words)) {
+        word = WORD_OR_NULL(idx);
+        if (word == NULL) { goto out; }
+
+        if (word[0] == '&') {
+            scomp = yed_scomp_nr_by_name(word + 1);
+            if (scomp != -1) {
+                attrs = yed_get_active_style_scomp(scomp);
+            }
+        } else if (strcmp(word, "fg") == 0) {
+            idx += 1;
+            word = WORD_OR_NULL(idx);
+            if (word == NULL) { goto out; }
+
+            if (word[0] == '!') {
+                if (sscanf(word + 1, "%u", &color)) {
+                    attrs.flags |=  ATTR_16;
+                    attrs.flags &= ~ATTR_256;
+                    attrs.flags &= ~ATTR_RGB;
+                    attrs.fg     = ATTR_16_BLACK + color;
+                }
+            } else if (word[0] == '@') {
+                if (sscanf(word + 1, "%u", &color)) {
+                    attrs.flags &= ~ATTR_16;
+                    attrs.flags |=  ATTR_256;
+                    attrs.flags &= ~ATTR_RGB;
+                    attrs.fg     = color;
+                }
+            } else {
+                snprintf(rgb_str, sizeof(rgb_str), "0x%s", word);
+                if (sscanf(rgb_str, "%x", &color)) {
+                    if (color != 0) {
+                        attrs.flags &= ~ATTR_16;
+                        attrs.flags &= ~ATTR_256;
+                        attrs.flags |=  ATTR_RGB;
+                    }
+                    attrs.fg = color;
+                }
+            }
+        } else if (strcmp(word, "bg") == 0) {
+            idx += 1;
+            word = WORD_OR_NULL(idx);
+            if (word == NULL) { goto out; }
+
+            if (word[0] == '!') {
+                if (sscanf(word + 1, "%u", &color)) {
+                    attrs.flags |=  ATTR_16;
+                    attrs.flags &= ~ATTR_256;
+                    attrs.flags &= ~ATTR_RGB;
+                    attrs.bg     = ATTR_16_BLACK + color;
+                }
+            } else if (word[0] == '@') {
+                if (sscanf(word + 1, "%u", &color)) {
+                    attrs.flags &= ~ATTR_16;
+                    attrs.flags |=  ATTR_256;
+                    attrs.flags &= ~ATTR_RGB;
+                    attrs.bg     = color;
+                }
+            } else {
+                snprintf(rgb_str, sizeof(rgb_str), "0x%s", word);
+                if (sscanf(rgb_str, "%x", &color)) {
+                    if (color != 0) {
+                        attrs.flags &= ~ATTR_16;
+                        attrs.flags &= ~ATTR_256;
+                        attrs.flags |=  ATTR_RGB;
+                    }
+                    attrs.bg = color;
+                }
+            }
+        } else if (strcmp(word, "normal") == 0) {
+            attrs.flags &= ~ATTR_INVERSE;
+            attrs.flags &= ~ATTR_BOLD;
+            attrs.flags &= ~ATTR_UNDERLINE;
+            attrs.flags &= ~ATTR_16_LIGHT_FG;
+            attrs.flags &= ~ATTR_16_LIGHT_BG;
+        } else if (strcmp(word, "inverse") == 0) {
+            attrs.flags |= ATTR_INVERSE;
+        } else if (strcmp(word, "no-inverse") == 0) {
+            attrs.flags &= ~ATTR_INVERSE;
+        } else if (strcmp(word, "bold") == 0) {
+            attrs.flags |= ATTR_BOLD;
+        } else if (strcmp(word, "no-bold") == 0) {
+            attrs.flags &= ~ATTR_BOLD;
+        } else if (strcmp(word, "underline") == 0) {
+            attrs.flags |= ATTR_UNDERLINE;
+        } else if (strcmp(word, "no-underline") == 0) {
+            attrs.flags &= ~ATTR_UNDERLINE;
+        } else if (strcmp(word, "16-light-fg") == 0) {
+            attrs.flags |= ATTR_16_LIGHT_FG;
+        } else if (strcmp(word, "no-16-light-fg") == 0) {
+            attrs.flags &= ~ATTR_16_LIGHT_FG;
+        } else if (strcmp(word, "16-light-bg") == 0) {
+            attrs.flags |= ATTR_16_LIGHT_BG;
+        } else if (strcmp(word, "no-16-light-bg") == 0) {
+            attrs.flags &= ~ATTR_16_LIGHT_BG;
+        } else if (strcmp(word, "swap") == 0) {
+            attrs.fg ^= attrs.bg;
+            attrs.bg ^= attrs.fg;
+            attrs.fg ^= attrs.bg;
+        }
+
+        idx += 1;
+    }
+
+out:;
+    free_string_array(words);
+    return attrs;
 }
