@@ -320,12 +320,13 @@ void yed_init_plugins(void) {
 }
 
 void yed_plugin_force_lib_unload(yed_plugin *plug) {
-    void *try_handle;
-
-    while ((try_handle = dlopen(plug->path, RTLD_NOW | RTLD_NOLOAD))) {
-        dlclose(try_handle);
-        dlclose(plug->handle);
-    }
+/*     void *try_handle; */
+/*  */
+/*     while ((try_handle = dlopen(plug->path, RTLD_NOW | RTLD_NOLOAD))) { */
+/*         dlclose(try_handle); */
+/*         dlclose(plug->handle); */
+/*     } */
+    dlclose(plug->handle);
 }
 
 int yed_load_plugin(char *plug_name) {
