@@ -35,12 +35,6 @@ if [ -z $cfg_name ]; then
     cfg_name="release"
 fi
 
-if [ "$(uname)" == "Darwin" ]; then
-    DTAGS="-headerpad_max_install_names"
-else
-    DTAGS="--enable-new-dtags"
-fi
-
 export CC=${CC}
 if [ $(uname) = "Darwin" ]; then
     if uname -a | grep "arm64" >/dev/null 2>&1; then
@@ -49,7 +43,7 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 LIB_C_FLAGS="-rdynamic -shared -fPIC -lm -lpthread"
-DRIVER_C_FLAGS="-rdynamic -lm -lpthread -Wl,${DTAGS},-rpath,$(apath ${lib_dir})"
+DRIVER_C_FLAGS="-rdynamic -lm -lpthread -Wl,-rpath,$(apath ${lib_dir})"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
