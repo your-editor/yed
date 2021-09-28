@@ -251,9 +251,11 @@ void sigquit_handler(int sig) {
 
 void print_fatal_signal_message_and_backtrace(char *sig_name) {
     printf("\n" TERM_RED "yed has received a fatal signal (%s).\n", sig_name);
+#ifdef HAS_BACKTRACE
     printf("Here is a backtrace of its execution (most recent first):" TERM_RESET "\n\n");
     printf(TERM_BLUE);
     print_backtrace();
+#endif
     printf(TERM_RESET);
     printf("\n");
     printf(TERM_GREEN);

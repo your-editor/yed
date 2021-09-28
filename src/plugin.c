@@ -85,7 +85,7 @@ void create_default_init_menu1(void) {
     f_buff[0]     = 0;
     homeify_path(get_config_path(), f_buff);
     strcat(files_buff, f_buff);
-    strcat(files_buff, "/{init.c init.so yedrc}");
+    strcat(files_buff, "/{init.c init.so build_init.sh yedrc}");
 
     homeify_path(get_config_path(), f_buff);
     snprintf(msg1_buff, sizeof(msg1_buff),
@@ -164,7 +164,7 @@ void create_default_init_menu2(void) {
     f_buff[0]     = 0;
     homeify_path(get_config_path(), f_buff);
     strcat(files_buff, f_buff);
-    strcat(files_buff, "/{init.c init.so yedrc}");
+    strcat(files_buff, "/{init.c init.so build_init.sh yedrc}");
 
     homeify_path(get_config_path(), f_buff);
     snprintf(msg1_buff, sizeof(msg1_buff),

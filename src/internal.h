@@ -25,10 +25,14 @@
 #include <stdint.h>
 #include <math.h>
 #include <pthread.h>
-#include <execinfo.h>
 
 #define _GNU_SOURCE
 #include <dlfcn.h>
+
+#ifdef RTLD_NOLOAD
+#define CAN_RELOAD_CORE
+#endif
+
 #include <unistd.h>
 #include <libgen.h>
 
@@ -39,21 +43,6 @@
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
-
-typedef struct __attribute__((__packed__)) {
-    char path[4096];
-    char id[32];
-} _path_patch_guide;
-
-extern _path_patch_guide _path_patch_guide_default_plug_dir;
-extern _path_patch_guide _path_patch_guide_installed_lib_dir;
-extern _path_patch_guide _path_patch_guide_installed_include_dir;
-extern _path_patch_guide _path_patch_guide_installed_share_dir;
-
-#define DEFAULT_PLUG_DIR      (_path_patch_guide_default_plug_dir.path)
-#define INSTALLED_LIB_DIR     (_path_patch_guide_installed_lib_dir.path)
-#define INSTALLED_INCLUDE_DIR (_path_patch_guide_installed_include_dir.path)
-#define INSTALLED_SHARE_DIR   (_path_patch_guide_installed_share_dir.path)
 
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
@@ -295,7 +284,7 @@ void yed_write_status_bar(int key);
 void yed_write_welcome(void);
 
 int yed_check_version_breaking(void);
-void yed_service_reload(void);
+void yed_service_reload(int core);
 
 int s_to_i(const char *s);
 

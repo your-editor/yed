@@ -1,3 +1,7 @@
+#ifdef HAS_BACKTRACE
+
+#include <execinfo.h>
+
 void print_backtrace(void) {
     int    n;
     void  *bt_buff[MAX_BT_LEN];
@@ -18,3 +22,5 @@ void print_backtrace(void) {
 
     free(strs);
 }
+
+#endif

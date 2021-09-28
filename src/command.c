@@ -86,6 +86,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("command-prompt",                     command_prompt);
     SET_DEFAULT_COMMAND("quit",                               quit);
     SET_DEFAULT_COMMAND("reload",                             reload);
+    SET_DEFAULT_COMMAND("reload-core",                        reload_core);
     SET_DEFAULT_COMMAND("redraw",                             redraw);
     SET_DEFAULT_COMMAND("set",                                set);
     SET_DEFAULT_COMMAND("get",                                get);
@@ -166,6 +167,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("special-buffer-prepare-jump-focus",  special_buffer_prepare_jump_focus);
     SET_DEFAULT_COMMAND("special-buffer-prepare-unfocus",     special_buffer_prepare_unfocus);
     SET_DEFAULT_COMMAND("log",                                log);
+    SET_DEFAULT_COMMAND("nop",                                nop);
+    SET_DEFAULT_COMMAND("crash",                              crash);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -440,6 +443,15 @@ void yed_default_command_quit(int n_args, char **args) {
 void yed_default_command_reload(int n_args, char **args) {
     ys->status = YED_RELOAD;
     yed_cprint("issued reload");
+}
+
+void yed_default_command_reload_core(int n_args, char **args) {
+#ifdef CAN_RELOAD_CORE
+    ys->status = YED_RELOAD_CORE;
+    yed_cprint("issued core reload");
+#else
+    yed_cerr("core reloading is not supported on this platform");
+#endif
 }
 
 void yed_default_command_redraw(int n_args, char **args) {
@@ -3918,6 +3930,17 @@ void yed_default_command_log(int n_args, char **args) {
 
     YEXE("special-buffer-prepare-focus", "*log");
     YEXE("buffer",                       "*log");
+}
+
+void yed_default_command_nop(int n_args, char **args) {}
+
+void yed_default_command_crash(int n_args, char **args) {
+    volatile int *x;
+    int           y;
+
+    x  = NULL;
+    y  = *x;
+    *x = y;
 }
 
 int yed_execute_command_from_split(array_t split) {

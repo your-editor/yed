@@ -1,39 +1,3 @@
-/*
- * This memory is overwritten by a sneaky dd in install.sh
- */
-
-__attribute__((used))
-_path_patch_guide
-_path_patch_guide_default_plug_dir = {
-    {},
-    /* rot13 of "default_plug_dir" */
-    {'q', 'r', 's', 'n', 'h', 'y', 'g', '_', 'c', 'y', 'h', 't', '_', 'q', 'v', 'e'}
-};
-
-__attribute__((used))
-_path_patch_guide
-_path_patch_guide_installed_lib_dir = {
-    {},
-    /* rot13 of "installed_lib_dir" */
-    {'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'y', 'v', 'o', '_', 'q', 'v', 'e'}
-};
-
-__attribute__((used))
-_path_patch_guide
-_path_patch_guide_installed_include_dir = {
-    {},
-    /* rot13 of "installed_include_dir" */
-    { 'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'v', 'a', 'p', 'y', 'h', 'q', 'r', '_', 'q', 'v', 'e' }
-};
-
-__attribute__((used))
-_path_patch_guide
-_path_patch_guide_installed_share_dir = {
-    {},
-    /* rot13 of "installed_share_dir" */
-    { 'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'f', 'u', 'n', 'e', 'r', '_', 'q', 'v', 'e' }
-};
-
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
@@ -295,7 +259,7 @@ out:;
     return breaks;
 }
 
-void yed_service_reload(void) {
+void yed_service_reload(int core) {
     tree_it(yed_command_name_t, yed_command)         cmd_it;
     tree_it(yed_completion_name_t, yed_completion)   compl_it;
     tree_it(yed_style_name_t, yed_style_ptr_t)       style_it;
@@ -303,15 +267,17 @@ void yed_service_reload(void) {
     yed_style                                       *style;
     char                                           **ft_name_it;
 
-    tree_reset_fns(yed_style_name_t,      yed_style_ptr_t,       ys->styles);
-    tree_reset_fns(yed_var_name_t,        yed_var_val_t,         ys->vars);
-    tree_reset_fns(yed_buffer_name_t,     yed_buffer_ptr_t,      ys->buffers);
-    tree_reset_fns(int,                   yed_key_binding_ptr_t, ys->vkey_binding_map);
-    tree_reset_fns(yed_command_name_t,    yed_command,           ys->commands);
-    tree_reset_fns(yed_command_name_t,    yed_command,           ys->default_commands);
-    tree_reset_fns(yed_completion_name_t, yed_completion,        ys->completions);
-    tree_reset_fns(yed_completion_name_t, yed_completion,        ys->default_completions);
-    tree_reset_fns(yed_plugin_name_t,     yed_plugin_ptr_t,      ys->plugins);
+    if (core) {
+        tree_reset_fns(yed_style_name_t,      yed_style_ptr_t,       ys->styles);
+        tree_reset_fns(yed_var_name_t,        yed_var_val_t,         ys->vars);
+        tree_reset_fns(yed_buffer_name_t,     yed_buffer_ptr_t,      ys->buffers);
+        tree_reset_fns(int,                   yed_key_binding_ptr_t, ys->vkey_binding_map);
+        tree_reset_fns(yed_command_name_t,    yed_command,           ys->commands);
+        tree_reset_fns(yed_command_name_t,    yed_command,           ys->default_commands);
+        tree_reset_fns(yed_completion_name_t, yed_completion,        ys->completions);
+        tree_reset_fns(yed_completion_name_t, yed_completion,        ys->default_completions);
+        tree_reset_fns(yed_plugin_name_t,     yed_plugin_ptr_t,      ys->plugins);
+    }
 
     ys->cur_log_name = NULL; /* This could be memory from a plugin that got unloaded. */
 
@@ -380,9 +346,11 @@ void yed_service_reload(void) {
     yed_reload_default_event_handlers();
     yed_reload_plugins();
 
-    yed_register_sigwinch_handler();
-    yed_register_sigstop_handler();
-    yed_register_sigcont_handler();
+    if (core) {
+        yed_register_sigwinch_handler();
+        yed_register_sigstop_handler();
+        yed_register_sigcont_handler();
+    }
 
     ys->redraw = ys->redraw_cls = 1;
     append_to_output_buff(TERM_CURSOR_HIDE);

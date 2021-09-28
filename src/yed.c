@@ -80,7 +80,7 @@ static void * writer(void *arg) {
     while (1) {
         writer_wait_until_ready();
         flush_writer_buff();
-        if (ys->status == YED_RELOAD) { break; }
+        if (ys->status == YED_RELOAD_CORE) { break; }
     }
 
     return NULL;
@@ -180,7 +180,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 "
 #endif
-                "-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                "-std=gnu99 -shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
@@ -400,7 +400,9 @@ int yed_pump(void) {
     }
 
     if (ys->status == YED_RELOAD) {
-        yed_service_reload();
+        yed_service_reload(0);
+    } else if (ys->status == YED_RELOAD_CORE) {
+        yed_service_reload(1);
         restart_writer();
     }
 
@@ -482,6 +484,11 @@ int yed_pump(void) {
     yed_trigger_event(&event);
 
     if (ys->status == YED_RELOAD) {
+        yed_unload_plugin_libs();
+    }
+
+#ifdef CAN_RELOAD_CORE
+    else if (ys->status == YED_RELOAD_CORE) {
 
         if (yed_check_version_breaking()) {
 LOG_CMD_ENTER("reload");
@@ -494,6 +501,7 @@ LOG_EXIT();
             kill_writer();
         }
     }
+#endif
 
     if (ys->status == YED_QUIT) {
         event.kind = EVENT_PRE_QUIT;
