@@ -169,7 +169,6 @@ typedef struct {
     array_t  files;
     char     instrument;
     char     no_init;
-    char    *init;
     char     help;
 } options_t;
 

@@ -71,12 +71,16 @@ void call_yed_fini(void)    { yed_lib._fini(state); }
  * the additional reference.
  */
 void force_yed_unload(void *handle) {
+#ifdef CAN_RELOAD_CORE
     void *try_handle;
 
     while ((try_handle = dlopen(lib_path, RTLD_NOW | RTLD_NOLOAD))) {
         dlclose(try_handle);
         dlclose(handle);
     }
+#else
+    dlclose(handle);
+#endif
 }
 
 int load_yed_lib(void) {
@@ -87,7 +91,11 @@ int load_yed_lib(void) {
     }                                                           \
 } while (0)
 
-/*     yed_lib.handle = dlopen(lib_path, RTLD_NOW | RTLD_LOCAL); */
+    if (yed_lib.handle) {
+	state = yed_lib._get_state();
+	force_yed_unload(yed_lib.handle);
+    }
+
     yed_lib.handle = dlopen(lib_path, RTLD_NOW | RTLD_GLOBAL);
 
     if (yed_lib.handle == NULL) {

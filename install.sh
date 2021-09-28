@@ -48,18 +48,8 @@ if [ $(uname) = "Darwin" ]; then
     fi
 fi
 
-LIB_C_FLAGS="-fno-gnu-unique -rdynamic -shared -fPIC -ldl -lm -lpthread"
-LIB_C_FLAGS+=" -DDEFAULT_PLUG_DIR=\"$(apath ${plug_dir})\""
-LIB_C_FLAGS+=" -DINSTALLED_LIB_DIR=\"$(apath ${lib_dir})\""
-LIB_C_FLAGS+=" -DINSTALLED_INCLUDE_DIR=\"$(apath ${inc_dir})\""
-LIB_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
-
-DRIVER_C_FLAGS="-rdynamic -ldl -lm -lpthread -Wl,${DTAGS},-rpath,$(apath ${lib_dir})"
-DRIVER_C_FLAGS+=" -DDEFAULT_PLUG_DIR=\"$(apath ${plug_dir})\""
-DRIVER_C_FLAGS+=" -DINSTALLED_LIB_DIR=\"$(apath ${lib_dir})\""
-DRIVER_C_FLAGS+=" -DINSTALLED_INCLUDE_DIR=\"$(apath ${inc_dir})\""
-DRIVER_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
-
+LIB_C_FLAGS="-rdynamic -shared -fPIC -lm -lpthread"
+DRIVER_C_FLAGS="-rdynamic -lm -lpthread -Wl,${DTAGS},-rpath,$(apath ${lib_dir})"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
@@ -70,11 +60,27 @@ if [ -z "${execinfo_prefix}" ]; then
     backtrace_test_prg="#include <execinfo.h>\nint main() { void *p[1]; backtrace(p, 1); return 0; }"
     if echo -e "${backtrace_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
         LIB_C_FLAGS+=" -DHAS_BACKTRACE"
+        DRIVER_C_FLAGS+=" -DHAS_BACKTRACE"
     fi
 else
     LIB_C_FLAGS+=" -DHAS_BACKTRACE -I${execinfo_prefix}/include -L${execinfo_prefix}/lib -lexecinfo"
+    DRIVER_C_FLAGS+=" -DHAS_BACKTRACE -I${execinfo_prefix}/include -L${execinfo_prefix}/lib -lexecinfo"
 fi
 
+if ! uname | grep "BSD" >/dev/null 2>&1; then
+    LIB_C_FLAGS+=" -ldl"
+    DRIVER_C_FLAGS+=" -ldl"
+fi
+
+LIB_C_FLAGS+=" -DDEFAULT_PLUG_DIR=\"$(apath ${plug_dir})\""
+LIB_C_FLAGS+=" -DINSTALLED_LIB_DIR=\"$(apath ${lib_dir})\""
+LIB_C_FLAGS+=" -DINSTALLED_INCLUDE_DIR=\"$(apath ${inc_dir})\""
+LIB_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
+
+DRIVER_C_FLAGS+=" -DDEFAULT_PLUG_DIR=\"$(apath ${plug_dir})\""
+DRIVER_C_FLAGS+=" -DINSTALLED_LIB_DIR=\"$(apath ${lib_dir})\""
+DRIVER_C_FLAGS+=" -DINSTALLED_INCLUDE_DIR=\"$(apath ${inc_dir})\""
+DRIVER_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
 
 export LIB_C_FLAGS
 export DRIVER_C_FLAGS
@@ -144,10 +150,14 @@ if ! [ -d plugins ]; then
     echo "Grabbing plugins.."
     git clone https://github.com/kammerdienerb/yed-plugins plugins
 else
-    echo "Updating plugins.."
-    cd plugins
-    git pull
-    cd ${DIR}
+    if [ -d plugins/.git ]; then
+        echo "Updating plugins.."
+        cd plugins
+        git pull
+        cd ${DIR}
+    else
+	echo "Found plugins."
+    fi
 fi
 
 echo "Compiling plugins.."

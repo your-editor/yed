@@ -195,12 +195,6 @@ static int parse_options(int argc, char **argv) {
                 ys->options.instrument = 1;
             } else if (strcmp(argv[i], "--no-init") == 0) {
                 ys->options.no_init = 1;
-            } else if (strcmp(argv[i], "-i") == 0) {
-                if (i == argc - 1)    { return 0; }
-                ys->options.init = argv[i + 1];
-                i += 1;
-            } else if (strncmp(argv[i], "--init=", 7) == 0) {
-                ys->options.init = argv[i] + 7;
             } else if (strcmp(argv[i], "-c") == 0) {
                 if (i == argc - 1)    { return 0; }
                 s = argv[i + 1];
