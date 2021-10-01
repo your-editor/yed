@@ -168,7 +168,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("special-buffer-prepare-unfocus",     special_buffer_prepare_unfocus);
     SET_DEFAULT_COMMAND("log",                                log);
     SET_DEFAULT_COMMAND("nop",                                nop);
-    SET_DEFAULT_COMMAND("crash",                              crash);
+    SET_DEFAULT_COMMAND("cursor-style",                       cursor_style);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -3934,13 +3934,26 @@ void yed_default_command_log(int n_args, char **args) {
 
 void yed_default_command_nop(int n_args, char **args) {}
 
-void yed_default_command_crash(int n_args, char **args) {
-    volatile int *x;
-    int           y;
+void yed_default_command_cursor_style(int n_args, char **args) {
+    char *style;
 
-    x  = NULL;
-    y  = *x;
-    *x = y;
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    style = args[0];
+
+    if (     strcmp(style, "default")            == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_DEFAULT);            }
+    else if (strcmp(style, "blinking-block")     == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_BLINKING_BLOCK);     }
+    else if (strcmp(style, "steady-block")       == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_STEADY_BLOCK);       }
+    else if (strcmp(style, "blinking-underline") == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_BLINKING_UNDERLINE); }
+    else if (strcmp(style, "steady-underline")   == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_STEADY_UNDERLINE);   }
+    else if (strcmp(style, "blinking-bar")       == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_BLINKING_BAR);       }
+    else if (strcmp(style, "steady-bar")         == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_STEADY_BAR);         }
+    else {
+        yed_cerr("invalid cursor style '%s'. Options are default, blinking-block, steady-block, blinking-underline, steady-underline, blinking-bar, and steady-bar.", style);
+    }
 }
 
 int yed_execute_command_from_split(array_t split) {

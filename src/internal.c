@@ -4,10 +4,10 @@ void yed_assert_fail(const char *msg, const char *fname, int line, const char *c
 
     yed_term_exit();
 
-    fprintf(stderr, "Assertion failed -- %s\n"
-                    "at  %s :: line %d\n"
-                    "    Condition: '%s'\n",
-                    msg, fname, line, cond_str);
+    printf("Assertion failed -- %s\n"
+           "at  %s :: line %d\n"
+           "    Condition: '%s'\n",
+           msg, fname, line, cond_str);
 
     trap = 0;
     (void)*trap;

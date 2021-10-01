@@ -81,6 +81,7 @@ int yed_term_exit(void) {
         return 0;
     }
 
+    printf("\e[%d q", TERM_CURSOR_STYLE_DEFAULT);
     printf(TERM_DISABLE_BRACKETED_PASTE);
     printf(TERM_STD_SCREEN);
     printf(TERM_CURSOR_SHOW);
@@ -173,6 +174,23 @@ void yed_set_cursor(int col, int row) {
     append_to_output_buff(TERM_CURSOR_MOVE_SEP);
     append_int_to_output_buff(col);
     append_to_output_buff(TERM_CURSOR_MOVE_END);
+}
+
+void yed_set_cursor_style(int style) {
+    switch (style) {
+        case TERM_CURSOR_STYLE_DEFAULT:
+        case TERM_CURSOR_STYLE_BLINKING_BLOCK:
+        case TERM_CURSOR_STYLE_STEADY_BLOCK:
+        case TERM_CURSOR_STYLE_BLINKING_UNDERLINE:
+        case TERM_CURSOR_STYLE_STEADY_UNDERLINE:
+        case TERM_CURSOR_STYLE_BLINKING_BAR:
+        case TERM_CURSOR_STYLE_STEADY_BAR:
+            append_to_output_buff("\e[");
+            append_int_to_output_buff(style);
+            append_to_output_buff(" q");
+            break;
+        default:;
+    }
 }
 
 void sigwinch_handler(int sig) {

@@ -68,18 +68,19 @@ void yed_write_welcome(void) {
     }
 }
 
-static void writer_wait_until_ready(void) {
-    pthread_mutex_lock(&ys->write_ready_mtx);
-    pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
-    pthread_mutex_unlock(&ys->write_ready_mtx);
-}
+static int writer_started;
 
 static void * writer(void *arg) {
     (void)arg;
 
     while (1) {
-        writer_wait_until_ready();
+        pthread_mutex_lock(&ys->write_ready_mtx);
+
+        writer_started = 1;
+
+        pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
         flush_writer_buff();
+        pthread_mutex_unlock(&ys->write_ready_mtx);
         if (ys->status == YED_RELOAD_CORE) { break; }
     }
 
@@ -284,6 +285,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     pthread_cond_init(&ys->write_ready_cond, NULL);
 
     pthread_create(&ys->writer_id, NULL, writer, NULL);
+    while (!writer_started) { usleep(100); }
     yed_init_commands();
     yed_init_keys();
     yed_init_search();
@@ -343,9 +345,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
      * but we don't really need to here.
      */
     ys->redraw_cls = 0;
-
-    kick_off_write();
-/*     signal_write_ready(); */
 
     ys->start_time_ms = measure_time_now_ms() - start_time;
 
@@ -446,7 +445,6 @@ int yed_pump(void) {
             yed_set_attr(yed_active_style_get_active());
             yed_clear_screen();
             yed_cursor_home();
-/*             yed_write_welcome(); */
             append_to_output_buff(TERM_RESET);
             write_status_bar(keys[0]);
         }
