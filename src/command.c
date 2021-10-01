@@ -119,6 +119,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("buffer-name",                        buffer_name);
     SET_DEFAULT_COMMAND("buffer-path",                        buffer_path);
     SET_DEFAULT_COMMAND("buffer-set-ft",                      buffer_set_ft);
+    SET_DEFAULT_COMMAND("buffer-reload",                      buffer_reload);
     SET_DEFAULT_COMMAND("frame-new",                          frame_new);
     SET_DEFAULT_COMMAND("frame-delete",                       frame_delete);
     SET_DEFAULT_COMMAND("frame-vsplit",                       frame_vsplit);
@@ -1412,11 +1413,11 @@ void yed_default_command_buffer(int n_args, char **args) {
             yed_frame_set_buff(ys->active_frame, buffer);
         }
     } else {
-        event.kind  = EVENT_BUFFER_PRE_LOAD;
-        event.frame = ys->active_frame;
-        event.path  = path;
-
+        event.kind = EVENT_BUFFER_PRE_LOAD;
+        event.path = path;
         yed_trigger_event(&event);
+
+        if (event.cancel) { goto out; }
 
         buffer = yed_create_buffer(name);
         status = yed_fill_buff_from_file(buffer, path);
@@ -1731,6 +1732,85 @@ void yed_default_command_buffer_set_ft(int n_args, char **args) {
     yed_buffer_set_ft(buffer, ft_new);
 
     ys->redraw = 1;
+}
+
+void yed_default_command_buffer_reload(int n_args, char **args) {
+    yed_frame                                    *frame;
+    yed_buffer                                   *buffer;
+    tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    yed_event                                     event;
+    int                                           status;
+
+    frame = NULL;
+
+    if (n_args == 0) {
+        if (!ys->active_frame) {
+            yed_cerr("no active frame");
+            return;
+        }
+
+        frame = ys->active_frame;
+
+        if (!frame->buffer) {
+            yed_cerr("active frame has no buffer");
+            return;
+        }
+
+        buffer = frame->buffer;
+    } else if (n_args == 1) {
+        it = tree_lookup(ys->buffers, args[0]);
+        if (tree_it_good(it)) {
+            buffer = tree_it_val(it);
+        } else {
+            yed_cerr("no such buffer '%s'", args[0]);
+            return;
+        }
+    } else {
+        yed_cerr("expected 0 or 1 arguments, but got %d");
+        return;
+    }
+
+    if (buffer->path == NULL) {
+        yed_cerr("buffer has no path");
+        return;
+    }
+
+    event.kind = EVENT_BUFFER_PRE_LOAD;
+    event.path = buffer->path;
+    yed_trigger_event(&event);
+
+    if (event.cancel) { return; }
+
+    status = yed_fill_buff_from_file(buffer, buffer->path);
+
+    switch (status) {
+        case BUFF_FILL_STATUS_ERR_DIR:
+            yed_cerr("did not reload buffer '%s' -- path is a directory", buffer->path);
+            break;
+        case BUFF_FILL_STATUS_ERR_PER:
+            yed_cerr("did not reload buffer '%s' -- permission denied", buffer->path);
+            break;
+        case BUFF_FILL_STATUS_ERR_MAP:
+            yed_cerr("did not reload buffer '%s' -- mmap() failed", buffer->path);
+            break;
+        case BUFF_FILL_STATUS_ERR_NOF:
+            yed_cerr("did not reload buffer '%s' -- file not found", buffer->path);
+            break;
+        case BUFF_FILL_STATUS_ERR_UNK:
+            yed_cerr("did not reload buffer '%s' -- unknown error", buffer->path);
+            break;
+        case BUFF_FILL_STATUS_SUCCESS:
+            event.buffer             = buffer;
+            event.buffer_is_new_file = 0;
+            event.kind               = EVENT_BUFFER_POST_LOAD;
+            yed_trigger_event(&event);
+
+            if (frame != NULL && frame->buffer == buffer) {
+                yed_frame_reset_cursor(frame);
+            }
+
+            break;
+    }
 }
 
 void yed_default_command_frame_new(int n_args, char **args) {
