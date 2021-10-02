@@ -115,8 +115,6 @@ static void print_usage(void) {
 "\n"
 "--no-init\n"
 "    Do not load an init plugin.\n"
-"-i, --init=<path>\n"
-"    Load the init plugin from this path instead of finding one automatically.\n"
 "-c, --command=<command>\n"
 "    Run the command after any init plugin is loaded. (repeatable)\n"
 "--instrument\n"
