@@ -6,24 +6,6 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-typedef struct __attribute__((__packed__)) {
-    char path[4096];
-    char id[32];
-} _path_patch_guide;
-
-/*
- * This memory is overwritten by a sneaky dd in install.sh
- */
-__attribute__((used))
-_path_patch_guide
-_path_patch_guide_installed_lib_dir = {
-    {},
-    /* rot13 of "installed_lib_dir" */
-    {'v', 'a', 'f', 'g', 'n', 'y', 'y', 'r', 'q', '_', 'y', 'v', 'o', '_', 'q', 'v', 'e'}
-};
-
-#define INSTALLED_LIB_DIR (_path_patch_guide_installed_lib_dir.path)
-
 char lib_path[4096];
 
 static yed_lib_t           yed_lib;
@@ -56,11 +38,16 @@ int main(int argc, char **argv) {
 
         if (status == YED_QUIT) {
             break;
-        } else if (status == YED_RELOAD) {
+        }
+
+#ifdef CAN_RELOAD_CORE
+        else if (status == YED_RELOAD_CORE) {
             if (load_yed_lib() != 0) {
                 return 1;
             }
         }
+#endif
+
     }
 }
 
@@ -75,21 +62,25 @@ void call_yed_fini(void)    { yed_lib._fini(state); }
  * As long as that other reference exists, the system
  * won't unload our mapped image...
  *
- * So, this function will clear out essentially acquire
- * _all_ of the references to the library once by one
+ * So, this function will essentially acquire
+ * _all_ of the references to the library one by one
  * and remove them so that the ref count eventually goes
  * to zero and the library is unloaded.
  *
  * This works, but it will probably screw up whoever took
- * the additional reference. Tough.
+ * the additional reference.
  */
 void force_yed_unload(void *handle) {
+#ifdef CAN_RELOAD_CORE
     void *try_handle;
 
     while ((try_handle = dlopen(lib_path, RTLD_NOW | RTLD_NOLOAD))) {
         dlclose(try_handle);
         dlclose(handle);
     }
+#else
+    dlclose(handle);
+#endif
 }
 
 int load_yed_lib(void) {
@@ -101,11 +92,11 @@ int load_yed_lib(void) {
 } while (0)
 
     if (yed_lib.handle) {
-        state = yed_lib._get_state();
-        force_yed_unload(yed_lib.handle);
+	state = yed_lib._get_state();
+	force_yed_unload(yed_lib.handle);
     }
 
-    yed_lib.handle = dlopen(lib_path, RTLD_NOW | RTLD_LOCAL);
+    yed_lib.handle = dlopen(lib_path, RTLD_NOW | RTLD_GLOBAL);
 
     if (yed_lib.handle == NULL) {
         printf("[yed]! could not load 'libyed.so'\n%s\n", dlerror());

@@ -41,6 +41,7 @@ void yed_add_command(char *name, yed_command cmd);
 DEF_DEFAULT_COMMAND(command_prompt);
 DEF_DEFAULT_COMMAND(quit);
 DEF_DEFAULT_COMMAND(reload);
+DEF_DEFAULT_COMMAND(reload_core);
 DEF_DEFAULT_COMMAND(redraw);
 DEF_DEFAULT_COMMAND(set);
 DEF_DEFAULT_COMMAND(get);
@@ -74,6 +75,7 @@ DEF_DEFAULT_COMMAND(buffer_prev);
 DEF_DEFAULT_COMMAND(buffer_name);
 DEF_DEFAULT_COMMAND(buffer_path);
 DEF_DEFAULT_COMMAND(buffer_set_ft);
+DEF_DEFAULT_COMMAND(buffer_reload);
 DEF_DEFAULT_COMMAND(frame_new);
 DEF_DEFAULT_COMMAND(frame_delete);
 DEF_DEFAULT_COMMAND(frame_vsplit);
@@ -122,5 +124,7 @@ DEF_DEFAULT_COMMAND(special_buffer_prepare_focus);
 DEF_DEFAULT_COMMAND(special_buffer_prepare_jump_focus);
 DEF_DEFAULT_COMMAND(special_buffer_prepare_unfocus);
 DEF_DEFAULT_COMMAND(log);
+DEF_DEFAULT_COMMAND(nop);
+DEF_DEFAULT_COMMAND(cursor_style);
 
 #endif

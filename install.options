@@ -14,6 +14,8 @@ test="${common} -O1 -g"
 
 strip="no"
 
+execinfo_prefix=""
+
 
 if [ -z "$prefix" ]; then
     if [ "$(uname)" == "Darwin" ]; then
@@ -35,4 +37,4 @@ bin_dir=${prefix}/bin
 inc_dir=${prefix}/include
 share_dir=${prefix}/share
 
-export CC common debug release strip prefix lib_dir plug_dir bin_dir inc_dir share_dir
+export CC common debug release strip execinfo_prefix prefix lib_dir plug_dir bin_dir inc_dir share_dir

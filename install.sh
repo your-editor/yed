@@ -4,15 +4,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd $DIR
 
-if [ "$(uname)" == "Darwin" ]; then
-    function realpath() {
-        [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
-    }
-fi
-
-function dd_fail() {
-    echo "install.sh: [!] dd failed"
-    exit 1
+function apath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
 
@@ -20,7 +13,7 @@ while getopts "c:p:" flag
 do
     case "${flag}" in
         c) cfg_name=${OPTARG};;
-        p) prefix=$(realpath ${OPTARG});;
+        p) prefix=$(apath ${OPTARG});;
         \?) echo "usage: $0 [-c CONFIG] [-p PREFIX]" && exit 1;;
     esac
 done
@@ -42,25 +35,49 @@ if [ -z $cfg_name ]; then
     cfg_name="release"
 fi
 
-if [ "$(uname)" == "Darwin" ]; then
-    DTAGS="-headerpad_max_install_names"
-else
-    DTAGS="--enable-new-dtags"
-fi
-
 export CC=${CC}
 if [ $(uname) = "Darwin" ]; then
     if uname -a | grep "arm64" >/dev/null 2>&1; then
         CC+=" -arch arm64"
     fi
 fi
-export LIB_C_FLAGS="-rdynamic -shared -fPIC -ldl -lm -lpthread"
-export DRIVER_C_FLAGS="-rdynamic -ldl -lm -lpthread -Wl,${DTAGS},-rpath,$(realpath ${lib_dir})"
+
+LIB_C_FLAGS="-rdynamic -shared -fPIC -lm -lpthread"
+DRIVER_C_FLAGS="-rdynamic -lm -lpthread -Wl,-rpath,$(apath ${lib_dir})"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
     LIB_C_FLAGS+=" -DNEED_STRNSTR"
 fi
+
+if [ -z "${execinfo_prefix}" ]; then
+    backtrace_test_prg="#include <execinfo.h>\nint main() { void *p[1]; backtrace(p, 1); return 0; }"
+    if echo -e "${backtrace_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
+        LIB_C_FLAGS+=" -DHAS_BACKTRACE"
+        DRIVER_C_FLAGS+=" -DHAS_BACKTRACE"
+    fi
+else
+    LIB_C_FLAGS+=" -DHAS_BACKTRACE -I${execinfo_prefix}/include -L${execinfo_prefix}/lib -lexecinfo"
+    DRIVER_C_FLAGS+=" -DHAS_BACKTRACE -I${execinfo_prefix}/include -L${execinfo_prefix}/lib -lexecinfo"
+fi
+
+if ! uname | grep "BSD" >/dev/null 2>&1; then
+    LIB_C_FLAGS+=" -ldl"
+    DRIVER_C_FLAGS+=" -ldl"
+fi
+
+LIB_C_FLAGS+=" -DDEFAULT_PLUG_DIR=\"$(apath ${plug_dir})\""
+LIB_C_FLAGS+=" -DINSTALLED_LIB_DIR=\"$(apath ${lib_dir})\""
+LIB_C_FLAGS+=" -DINSTALLED_INCLUDE_DIR=\"$(apath ${inc_dir})\""
+LIB_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
+
+DRIVER_C_FLAGS+=" -DDEFAULT_PLUG_DIR=\"$(apath ${plug_dir})\""
+DRIVER_C_FLAGS+=" -DINSTALLED_LIB_DIR=\"$(apath ${lib_dir})\""
+DRIVER_C_FLAGS+=" -DINSTALLED_INCLUDE_DIR=\"$(apath ${inc_dir})\""
+DRIVER_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
+
+export LIB_C_FLAGS
+export DRIVER_C_FLAGS
 
 # Add this framework to the Mac debug build so
 # that we can use Instruments.app to profile yed
@@ -69,9 +86,6 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 cfg=${!cfg_name}
-
-# I hate getting spammed with error messages
-ERR_LIM=" -fmax-errors=3 -Wno-unused-command-line-argument"
 
 ${CC} --version ${ERR_LIM} 2>&1 > /dev/null
 
@@ -91,32 +105,8 @@ if [ "${strip}x" = "yesx" ]; then
     strip ${lib_dir}/libyed.so.new
 fi
 
-# Patch default_plug_dir in lib
-patch_offset=$(strings -t d ${lib_dir}/libyed.so.new | grep qrsnhyg_cyht_qve | awk '{ print $1 - 4096; }')
-dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-dd if=<(printf $(realpath "${plug_dir}")) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-echo "    patched default plugin path"
-
-# Patch installed_lib_dir in lib
-patch_offset=$(strings -t d ${lib_dir}/libyed.so.new | grep vafgnyyrq_yvo_qve | awk '{ print $1 - 4096; }')
-dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-dd if=<(printf $(realpath "${lib_dir}")) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-echo "    patched installed lib path"
-
-# Patch installed_include_dir in lib
-patch_offset=$(strings -t d ${lib_dir}/libyed.so.new | grep vafgnyyrq_vapyhqr_qve | awk '{ print $1 - 4096; }')
-dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-dd if=<(printf $(realpath "${inc_dir}")) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-echo "    patched installed include path"
-
-# Patch installed_share_dir in lib
-patch_offset=$(strings -t d ${lib_dir}/libyed.so.new | grep vafgnyyrq_funer_qve | awk '{ print $1 - 4096; }')
-dd if=<(head -c 4096 /dev/zero) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-dd if=<(printf $(realpath "${share_dir}")) of="${lib_dir}/libyed.so.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-echo "    patched installed share path"
-
 if [ $(uname) = "Darwin" ]; then
-    install_name_tool -id $(realpath "${lib_dir}/libyed.so") "${lib_dir}/libyed.so.new"
+    install_name_tool -id $(apath "${lib_dir}/libyed.so") "${lib_dir}/libyed.so.new"
     codesign -s - -f ${lib_dir}/libyed.so.new >/dev/null 2>&1 || exit 1
     echo "    performed codesign fixup"
 fi
@@ -137,12 +127,6 @@ if [ "${strip}x" = "yesx" ]; then
     strip ${bin_dir}/yed.new
 fi
 
-# Patch installed_lib_dir in driver
-patch_offset=$(strings -t d ${bin_dir}/yed.new | grep vafgnyyrq_yvo_qve | awk '{ print $1 - 4096; }')
-dd if=<(head -c 4096 /dev/zero) of="${bin_dir}/yed.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-dd if=<(printf $(realpath "${lib_dir}")) of="${bin_dir}/yed.new" obs=1 seek=${patch_offset} conv=notrunc >/dev/null 2>&1 || dd_fail
-echo "    patched installed lib path"
-
 if [ $(uname) = "Darwin" ]; then
     codesign -s - -f ${bin_dir}/yed.new >/dev/null 2>&1 || exit 1
     echo "    performed codesign fixup"
@@ -154,14 +138,20 @@ echo "Installed 'yed':                   ${bin_dir}"
 echo "Creating default configuration.."
 cp -r share/* ${share_dir}/yed
 ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
+echo "Installed share items:             ${share_dir}/yed"
 
 if ! [ -d plugins ]; then
     echo "Grabbing plugins.."
     git clone https://github.com/kammerdienerb/yed-plugins plugins
 else
-    cd plugins
-    git pull
-    cd ${DIR}
+    if [ -d plugins/.git ]; then
+        echo "Updating plugins.."
+        cd plugins
+        git pull
+        cd ${DIR}
+    else
+	echo "Found plugins."
+    fi
 fi
 
 echo "Compiling plugins.."

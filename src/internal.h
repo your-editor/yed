@@ -25,10 +25,14 @@
 #include <stdint.h>
 #include <math.h>
 #include <pthread.h>
-#include <execinfo.h>
 
 #define _GNU_SOURCE
 #include <dlfcn.h>
+
+#ifdef RTLD_NOLOAD
+#define CAN_RELOAD_CORE
+#endif
+
 #include <unistd.h>
 #include <libgen.h>
 
@@ -39,21 +43,6 @@
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
-
-typedef struct __attribute__((__packed__)) {
-    char path[4096];
-    char id[32];
-} _path_patch_guide;
-
-extern _path_patch_guide _path_patch_guide_default_plug_dir;
-extern _path_patch_guide _path_patch_guide_installed_lib_dir;
-extern _path_patch_guide _path_patch_guide_installed_include_dir;
-extern _path_patch_guide _path_patch_guide_installed_share_dir;
-
-#define DEFAULT_PLUG_DIR      (_path_patch_guide_default_plug_dir.path)
-#define INSTALLED_LIB_DIR     (_path_patch_guide_installed_lib_dir.path)
-#define INSTALLED_INCLUDE_DIR (_path_patch_guide_installed_include_dir.path)
-#define INSTALLED_SHARE_DIR   (_path_patch_guide_installed_share_dir.path)
 
 #ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str);
@@ -180,7 +169,6 @@ typedef struct {
     array_t  files;
     char     instrument;
     char     no_init;
-    char    *init;
     char     help;
 } options_t;
 
@@ -189,10 +177,9 @@ typedef struct yed_state_t {
     char                        *argv0;
     array_t                      output_buffer;
     array_t                      writer_buffer;
-    pthread_mutex_t              write_mtx, write_ready_mtx;
-    pthread_cond_t               write_signal;
+    pthread_mutex_t              write_ready_mtx;
+    pthread_cond_t               write_ready_cond;
     pthread_t                    writer_id;
-    int                          writer_done;
     char                         _4096_spaces[4096];
     struct termios               sav_term;
     int                          term_cols,
@@ -296,11 +283,11 @@ void yed_write_status_bar(int key);
 void yed_write_welcome(void);
 
 int yed_check_version_breaking(void);
-void yed_service_reload(void);
+void yed_service_reload(int core);
 
 int s_to_i(const char *s);
 
-const char * u8_to_s[] = {
+const char * _u8_to_s[] = {
 "0",   "1",   "2",   "3",   "4",   "5",   "6",   "7",   "8",   "9",   "10",   "11", "12",  "13",  "14",  "15",
 "16",  "17",  "18",  "19",  "20",  "21",  "22",  "23",  "24",  "25",  "26",  "27",  "28",  "29",  "30",  "31",
 "32",  "33",  "34",  "35",  "36",  "37",  "38",  "39",  "40",  "41",  "42",  "43",  "44",  "45",  "46",  "47",
@@ -318,6 +305,8 @@ const char * u8_to_s[] = {
 "224", "225", "226", "227", "228", "229", "230", "231", "232", "233", "234", "235", "236", "237", "238", "239",
 "240", "241", "242", "243", "244", "245", "246", "247", "248", "249", "250", "251", "252", "253", "254", "255"
 };
+
+const char *u8_to_s(u8 u);
 
 #define YEXE(cmd_name, ...)                                  \
 do {                                                         \

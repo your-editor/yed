@@ -2,6 +2,7 @@ char * yed_run_subproc(char *cmd, int *output_len, int *status) {
     FILE    *stream;
     array_t  out;
     int      c;
+    int      w;
 
     stream = popen(cmd, "r");
 
@@ -22,8 +23,15 @@ char * yed_run_subproc(char *cmd, int *output_len, int *status) {
         array_pop(out);
     }
 
-    *output_len = array_len(out);
-    *status     = pclose(stream);
+    if (output_len != NULL) {
+        *output_len = array_len(out);
+    }
+
+    w = pclose(stream);
+
+    if (status != NULL) {
+        *status = WIFEXITED(w) ? WEXITSTATUS(w) : -1;
+    }
 
     array_zero_term(out);
 
@@ -33,6 +41,7 @@ char * yed_run_subproc(char *cmd, int *output_len, int *status) {
 int yed_read_subproc_into_buffer(char *cmd, yed_buffer *buff, int *exit_status) {
     FILE *stream;
     int   status;
+    int   w;
 
     stream = popen(cmd, "r");
     if (stream == NULL) {
@@ -47,15 +56,15 @@ int yed_read_subproc_into_buffer(char *cmd, yed_buffer *buff, int *exit_status) 
         return -status;
     }
 
-    status = pclose(stream);
-    if (status == -1) {
+    w = pclose(stream);
+    if (w == -1) {
         status = errno;
         errno  = 0;
         return status;
     }
 
     if (exit_status != NULL) {
-        *exit_status = status;
+        *exit_status = WIFEXITED(w) ? WEXITSTATUS(w) : -1;
     }
 
     return 0;
@@ -67,6 +76,7 @@ int _yed_write_buffer_to_subproc(yed_buffer *buff, char *cmd, int *exit_status) 
     int       n_lines;
     int       row;
     yed_line *line;
+    int       w;
 
     stream = popen(cmd, "w");
     if (stream == NULL) {
@@ -85,15 +95,15 @@ int _yed_write_buffer_to_subproc(yed_buffer *buff, char *cmd, int *exit_status) 
         row += 1;
     }
 
-    status = pclose(stream);
-    if (status == -1) {
+    w = pclose(stream);
+    if (w == -1) {
         status = errno;
         errno  = 0;
         return status;
     }
 
     if (exit_status != NULL) {
-        *exit_status = status;
+        *exit_status = WIFEXITED(w) ? WEXITSTATUS(w) : -1;
     }
 
     return 0;

@@ -508,7 +508,7 @@ int yed_complete_multiple(int n, char **compl_names, char *string, yed_completio
 
     for (i = 0; i < n; i += 1) {
         status = yed_complete(compl_names[i], string, &tmp_results);
-        if (status != COMPL_ERR_NO_ERR) { goto out; }
+        if (status != COMPL_ERR_NO_ERR && status != COMPL_ERR_NO_MATCH) { goto out; }
         array_traverse(tmp_results.strings, str_it) {
             it = tree_lookup(t, *str_it);
             if (!tree_it_good(it)) {

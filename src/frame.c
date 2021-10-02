@@ -10,6 +10,8 @@ yed_frame * yed_add_new_frame(float top_f, float left_f, float height_f, float w
 
     array_push(ys->frames, frame);
 
+    ys->redraw = 1;
+
     return frame;
 }
 
@@ -19,6 +21,8 @@ yed_frame * yed_add_new_frame_full(void) {
     frame = yed_new_frame(0.0, 0.0, 1.0, 1.0);
 
     array_push(ys->frames, frame);
+
+    ys->redraw = 1;
 
     return frame;
 }

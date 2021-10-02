@@ -81,6 +81,7 @@ int yed_term_exit(void) {
         return 0;
     }
 
+    printf("\e[%d q", TERM_CURSOR_STYLE_DEFAULT);
     printf(TERM_DISABLE_BRACKETED_PASTE);
     printf(TERM_STD_SCREEN);
     printf(TERM_CURSOR_SHOW);
@@ -175,6 +176,23 @@ void yed_set_cursor(int col, int row) {
     append_to_output_buff(TERM_CURSOR_MOVE_END);
 }
 
+void yed_set_cursor_style(int style) {
+    switch (style) {
+        case TERM_CURSOR_STYLE_DEFAULT:
+        case TERM_CURSOR_STYLE_BLINKING_BLOCK:
+        case TERM_CURSOR_STYLE_STEADY_BLOCK:
+        case TERM_CURSOR_STYLE_BLINKING_UNDERLINE:
+        case TERM_CURSOR_STYLE_STEADY_UNDERLINE:
+        case TERM_CURSOR_STYLE_BLINKING_BAR:
+        case TERM_CURSOR_STYLE_STEADY_BAR:
+            append_to_output_buff("\e[");
+            append_int_to_output_buff(style);
+            append_to_output_buff(" q");
+            break;
+        default:;
+    }
+}
+
 void sigwinch_handler(int sig) {
     yed_check_for_resize();
 }
@@ -191,7 +209,7 @@ void sigstop_handler(int sig) {
     sigaction(SIGTSTP, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     ys->stopped = 1;
@@ -208,7 +226,7 @@ void sigcont_handler(int sig) {
 
         ys->stopped = 0;
         yed_term_enter();
-        pthread_mutex_unlock(&ys->write_mtx);
+        pthread_mutex_unlock(&ys->write_ready_mtx);
         ys->redraw = ys->redraw_cls = 1;
     }
 }
@@ -222,7 +240,7 @@ void sigterm_handler(int sig) {
     sigaction(SIGTERM, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -240,7 +258,7 @@ void sigquit_handler(int sig) {
     sigaction(SIGQUIT, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -251,9 +269,11 @@ void sigquit_handler(int sig) {
 
 void print_fatal_signal_message_and_backtrace(char *sig_name) {
     printf("\n" TERM_RED "yed has received a fatal signal (%s).\n", sig_name);
+#ifdef HAS_BACKTRACE
     printf("Here is a backtrace of its execution (most recent first):" TERM_RESET "\n\n");
     printf(TERM_BLUE);
     print_backtrace();
+#endif
     printf(TERM_RESET);
     printf("\n");
     printf(TERM_GREEN);
@@ -272,7 +292,7 @@ void sigsegv_handler(int sig) {
     sigaction(SIGSEGV, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -292,7 +312,7 @@ void sigill_handler(int sig) {
     sigaction(SIGILL, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -312,7 +332,7 @@ void sigfpe_handler(int sig) {
     sigaction(SIGFPE, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -332,7 +352,7 @@ void sigbus_handler(int sig) {
     sigaction(SIGBUS, &act, NULL);
 
     /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_mtx);
+    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();

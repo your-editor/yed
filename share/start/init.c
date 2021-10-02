@@ -34,14 +34,14 @@ int yed_plugin_boot(yed_plugin *self) {
 }
 
 void recompile_init(int n_args, char **args) {
-    const char *config_path;
-    char        buff[4096];
+    char *build_sh_path;
+    char  buff[4096];
 
-    config_path = get_config_path();
+    build_sh_path = get_config_item_path("build_init.sh");
 
-    snprintf(buff, sizeof(buff),
-             "gcc -o %s/init.so %s/init.c $(yed --print-cflags --print-ldflags) && echo success",
-             config_path, config_path);
+    snprintf(buff, sizeof(buff), "%s && echo success", build_sh_path);
+
+    free(build_sh_path);
 
     YEXE("sh", buff);
 }

@@ -50,6 +50,14 @@
 
 #define TERM_DEFAULT_READ_TIMEOUT (3)
 
+#define TERM_CURSOR_STYLE_DEFAULT            (0)
+#define TERM_CURSOR_STYLE_BLINKING_BLOCK     (1)
+#define TERM_CURSOR_STYLE_STEADY_BLOCK       (2)
+#define TERM_CURSOR_STYLE_BLINKING_UNDERLINE (3)
+#define TERM_CURSOR_STYLE_STEADY_UNDERLINE   (4)
+#define TERM_CURSOR_STYLE_BLINKING_BAR       (5)
+#define TERM_CURSOR_STYLE_STEADY_BAR         (6)
+
 int yed_term_enter(void);
 int yed_term_exit(void);
 
@@ -67,6 +75,7 @@ void yed_term_set_rgb(int fr, int fg, int fb, int br, int bg, int bb);
 void yed_clear_screen(void);
 void yed_cursor_home(void);
 void yed_set_cursor(int col, int row);
+void yed_set_cursor_style(int style);
 
 void yed_register_sigwinch_handler(void);
 void yed_register_sigstop_handler(void);

@@ -85,7 +85,7 @@ void create_default_init_menu1(void) {
     f_buff[0]     = 0;
     homeify_path(get_config_path(), f_buff);
     strcat(files_buff, f_buff);
-    strcat(files_buff, "/{init.c init.so yedrc}");
+    strcat(files_buff, "/{init.c init.so build_init.sh yedrc}");
 
     homeify_path(get_config_path(), f_buff);
     snprintf(msg1_buff, sizeof(msg1_buff),
@@ -164,7 +164,7 @@ void create_default_init_menu2(void) {
     f_buff[0]     = 0;
     homeify_path(get_config_path(), f_buff);
     strcat(files_buff, f_buff);
-    strcat(files_buff, "/{init.c init.so yedrc}");
+    strcat(files_buff, "/{init.c init.so build_init.sh yedrc}");
 
     homeify_path(get_config_path(), f_buff);
     snprintf(msg1_buff, sizeof(msg1_buff),
@@ -311,21 +311,18 @@ void yed_init_plugins(void) {
     }
 
     if (!ys->options.no_init) {
-        if (ys->options.init) {
-            load_init(ys->options.init);
-        } else {
-            load_default_init();
-        }
+        load_default_init();
     }
 }
 
 void yed_plugin_force_lib_unload(yed_plugin *plug) {
-    void *try_handle;
-
-    while ((try_handle = dlopen(plug->path, RTLD_NOW | RTLD_NOLOAD))) {
-        dlclose(try_handle);
-        dlclose(plug->handle);
-    }
+/*     void *try_handle; */
+/*  */
+/*     while ((try_handle = dlopen(plug->path, RTLD_NOW | RTLD_NOLOAD))) { */
+/*         dlclose(try_handle); */
+/*         dlclose(plug->handle); */
+/*     } */
+    dlclose(plug->handle);
 }
 
 int yed_load_plugin(char *plug_name) {
@@ -586,11 +583,7 @@ int yed_reload_plugins(void) {
     yed_unload_plugins();
 
     if (!ys->options.no_init) {
-        if (ys->options.init) {
-            load_init(ys->options.init);
-        } else {
-            load_default_init();
-        }
+        load_default_init();
     }
 
     array_traverse(plugs, name_it) {
