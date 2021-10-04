@@ -228,6 +228,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     int                  has_frames;
     char               **file_it;
     unsigned long long   start_time;
+    int                  dev_null_fd;
     char               **it;
     array_t              split;
 
@@ -250,10 +251,12 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     start_time = measure_time_now_ms();
 
     /*
-    ** Close stderr so that we don't get all kinds of unintended output
+    ** Redirect stderr so that we don't get all kinds of unintended output
     ** when running subprocesses.
     */
-    close(2);
+    dev_null_fd = open("/dev/null", O_WRONLY);
+    dup2(dev_null_fd, 2);
+    close(dev_null_fd);
 
     setlocale(LC_ALL, "en_US.utf8");
 

@@ -29,8 +29,15 @@ char * yed_run_subproc(char *cmd, int *output_len, int *status) {
 
     w = pclose(stream);
 
-    if (status != NULL) {
-        *status = WIFEXITED(w) ? WEXITSTATUS(w) : -1;
+    if (w == -1) {
+        if (status != NULL) {
+            *status = errno;
+        }
+        errno = 0;
+    } else {
+        if (status != NULL) {
+            *status = WIFEXITED(w) ? WEXITSTATUS(w) : -1;
+        }
     }
 
     array_zero_term(out);
