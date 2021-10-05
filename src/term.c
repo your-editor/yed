@@ -161,13 +161,13 @@ void yed_cursor_home(void) {
     ys->cur_y = ys->cur_x = 1;
 }
 
-void yed_set_cursor(int col, int row) {
+void yed_set_cursor(int row, int col) {
 
-    if (col < 1)    { col = 1; }
     if (row < 1)    { row = 1; }
+    if (col < 1)    { col = 1; }
 
-    ys->cur_x = col;
     ys->cur_y = row;
+    ys->cur_x = col;
 
     append_to_output_buff(TERM_CURSOR_MOVE_BEG);
     append_int_to_output_buff(row);

@@ -66,7 +66,7 @@ void yed_do_direct_draws(void) {
 
         if (dd->live) {
             if (dd->dirty) {
-                yed_set_cursor(dd->col, dd->row);
+                yed_set_cursor(dd->row, dd->col);
                 if (dd->scomp != -1) {
                     attrs = yed_get_active_style_scomp(dd->scomp);
                 } else {
@@ -88,7 +88,7 @@ void yed_do_direct_draws(void) {
     array_free(ys->direct_draws);
     ys->direct_draws = new;
 
-    yed_set_cursor(save_cur_x, save_cur_y);
+    yed_set_cursor(save_cur_y, save_cur_x);
 }
 
 void yed_kill_direct_draw(yed_direct_draw_t *dd) {

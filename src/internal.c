@@ -126,100 +126,6 @@ void yed_set_small_message(char *msg) {
     }
 }
 
-static void write_status_bar(int key) {
-    int         sav_x, sav_y;
-    char       *path;
-    char       *status_line_var;
-    char        right_side_buff[256];
-    char       *ft_name;
-    int         i;
-    yed_frame **fit;
-
-    (void)key; /* We don't show this on the status bar any more. */
-
-    sav_x = ys->cur_x;
-    sav_y = ys->cur_y;
-
-    yed_set_cursor(1, ys->term_rows - 1);
-    if (ys->active_style) {
-        yed_set_attr(yed_active_style_get_status_line());
-    } else {
-        append_to_output_buff(TERM_INVERSE);
-    }
-    append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
-
-    right_side_buff[0] = 0;
-
-    if (ys->active_frame) {
-        yed_set_cursor(1, ys->term_rows - 1);
-        append_n_to_output_buff(" ", 1);
-
-        i = 0;
-        array_traverse(ys->frames, fit) {
-            if (*fit == ys->active_frame) {
-                append_n_to_output_buff("[", 1);
-                append_int_to_output_buff(i);
-                append_n_to_output_buff("]", 2);
-            } else {
-                append_n_to_output_buff(" ", 1);
-                append_int_to_output_buff(i);
-                append_n_to_output_buff(" ", 1);
-            }
-            i += 1;
-        }
-        append_n_to_output_buff(" ", 1);
-
-        ft_name = "";
-        if (ys->active_frame->buffer) {
-            path     = ys->active_frame->buffer->name;
-            append_to_output_buff(path);
-
-            if (ys->active_frame->buffer->flags & BUFF_SPECIAL) {
-                ft_name = "<special>";
-            } else {
-                ft_name = yed_get_ft_name(ys->active_frame->buffer->ft);
-                if (ft_name == NULL) {
-                    ft_name = "<unknown file type>";
-                }
-            }
-        }
-
-        snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)),
-                 "%s  %7d :: %-3d",
-                 ft_name, ys->active_frame->cursor_line, ys->active_frame->cursor_col);
-    }
-
-    yed_set_cursor(ys->term_cols - strlen(right_side_buff) - 2, ys->term_rows - 1);
-    append_to_output_buff(right_side_buff);
-
-
-    if ((status_line_var = yed_get_var("status-line-var"))) {
-        status_line_var = yed_get_var(status_line_var);
-        if (status_line_var) {
-            yed_set_small_message(status_line_var);
-        } else {
-            yed_set_small_message(NULL);
-        }
-    } else {
-        yed_set_small_message(NULL);
-    }
-
-    if (ys->small_message) {
-        yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows - 1);
-        if (ys->active_style) {
-            yed_set_attr(yed_active_style_get_status_line());
-        } else {
-            append_to_output_buff(TERM_INVERSE);
-        }
-        append_to_output_buff(ys->small_message);
-    }
-
-
-    append_to_output_buff(TERM_RESET);
-    append_to_output_buff(TERM_CURSOR_HIDE);
-    yed_set_cursor(sav_x, sav_y);
-}
-
 int yed_check_version_breaking(void) {
     int   breaks;
     char *env;
@@ -363,12 +269,12 @@ void yed_service_reload(int core) {
     yed_update_frames();
 
     yed_draw_command_line();
-    write_status_bar(0);
+    yed_write_status_line();
 
     ys->redraw = ys->redraw_cls = 0;
 
     if (ys->interactive_command) {
-        yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
+        yed_set_cursor(ys->term_rows, ys->cmd_cursor_x);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else if (ys->active_frame) {
         append_to_output_buff(TERM_CURSOR_SHOW);
@@ -415,3 +321,4 @@ const char *u8_to_s(u8 u) { return _u8_to_s[u]; }
 #include "version.c"
 #include "print_backtrace.c"
 #include "cmd_line.c"
+#include "status_line.c"
