@@ -96,8 +96,16 @@ static void write_status_bar(void) {
 
 static char *get_expanded(char *s) {
     switch (*s) {
-        case 'a': return strdup("abc");
-        case 'b': return strdup("barbarbar");
+        case 'b':
+            if (ys->active_frame && ys->active_frame->buffer) {
+                return strdup(ys->active_frame->buffer->name);
+            }
+            break;
+        case 'B':
+            if (ys->active_frame && ys->active_frame->buffer && ys->active_frame->buffer->path) {
+                return strdup(ys->active_frame->buffer->path);
+            }
+            break;
         case 'c': return strdup("catcatcatcatcat");
     }
 
@@ -117,7 +125,7 @@ static int get_status_line_string_width(char *s) {
     end           = s + strlen(s);
     last_was_perc = 0;
 
-    while ((&(git->c) + sizeof(yed_glyph) - 1) < end) {
+    while ((&(git->c) < end)) {
         len = yed_get_glyph_len(*git);
 
         if (len == 1) {
@@ -137,7 +145,7 @@ static int get_status_line_string_width(char *s) {
             width += yed_get_glyph_width(*git);
         }
 
-        git += len;
+        git = (yed_glyph*)((&git->c) + len);
     }
 
     return width;
@@ -159,7 +167,7 @@ static void put_status_line_string(char *s, int start_col) {
     end           = s + strlen(s);
     last_was_perc = 0;
 
-    while ((&(git->c) + sizeof(yed_glyph) - 1) < end) {
+    while ((&(git->c) < end)) {
         width = 0;
         len   = yed_get_glyph_len(*git);
 
@@ -168,7 +176,7 @@ static void put_status_line_string(char *s, int start_col) {
                 expanded = get_expanded(&git->c);
                 if (expanded != NULL) {
                     width = yed_get_string_width(expanded);
-                    if (col + width <= ys->term_cols) {
+                    if (col + (width - 1) <= ys->term_cols) {
                         append_to_output_buff(expanded);
                         free(expanded);
                     } else {
@@ -181,17 +189,17 @@ static void put_status_line_string(char *s, int start_col) {
                 last_was_perc = 1;
             } else {
                 width = yed_get_glyph_width(*git);
-                if (col + width > ys->term_cols) { break; }
+                if (col + (width - 1) > ys->term_cols) { break; }
                 append_n_to_output_buff(&git->c, len);
             }
         } else {
             width = yed_get_glyph_width(*git);
-            if (col + width > ys->term_cols) { break; }
+            if (col + (width - 1) > ys->term_cols) { break; }
             append_n_to_output_buff(&git->c, len);
         }
 
         col += width;
-        git += len;
+        git  = (yed_glyph*)((&git->c) + len);
     }
 }
 
