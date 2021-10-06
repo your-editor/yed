@@ -74,7 +74,7 @@ void yed_term_set_rgb(int fr, int fg, int fb, int br, int bg, int bb);
 
 void yed_clear_screen(void);
 void yed_cursor_home(void);
-void yed_set_cursor(int col, int row);
+void yed_set_cursor(int row, int col);
 void yed_set_cursor_style(int style);
 
 void yed_register_sigwinch_handler(void);

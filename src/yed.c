@@ -63,7 +63,7 @@ void yed_write_welcome(void) {
         if (l + i == ys->term_rows - 1) {
             break;
         }
-        yed_set_cursor((ys->term_cols / 2) - (oct_width / 2), l + i);
+        yed_set_cursor(l + i, (ys->term_cols / 2) - (oct_width / 2));
         append_to_output_buff(oct[i]);
     }
 }
@@ -337,8 +337,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         append_to_output_buff(TERM_RESET);
     }
 
-    write_status_bar(0);
     yed_draw_command_line();
+    yed_write_status_line();
 
     ys->redraw = 1;
     /*
@@ -402,7 +402,7 @@ int yed_pump(void) {
 
     /* Not sure why this is necessary, but... */
     if (!ys->interactive_command && ys->active_frame) {
-        yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
+        yed_set_cursor(ys->active_frame->cur_y, ys->active_frame->cur_x);
         append_to_output_buff(TERM_CURSOR_SHOW);
     }
 
@@ -447,7 +447,7 @@ int yed_pump(void) {
             yed_clear_screen();
             yed_cursor_home();
             append_to_output_buff(TERM_RESET);
-            write_status_bar(keys[0]);
+            yed_write_status_line();
         }
         yed_mark_direct_draws_as_dirty();
     }
@@ -462,12 +462,12 @@ int yed_pump(void) {
     yed_draw_command_line();
 
     if (ys->interactive_command) {
-        write_status_bar(keys[0]);
-        yed_set_cursor(ys->cmd_cursor_x, ys->term_rows);
+        yed_write_status_line();
+        yed_set_cursor(ys->term_rows, ys->cmd_cursor_x);
         append_to_output_buff(TERM_RESET);
         append_to_output_buff(TERM_CURSOR_SHOW);
     } else {
-        write_status_bar(keys[0]);
+        yed_write_status_line();
         append_to_output_buff(TERM_CURSOR_HIDE);
         append_to_output_buff(TERM_RESET);
     }

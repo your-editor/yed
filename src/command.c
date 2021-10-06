@@ -401,10 +401,10 @@ void yed_draw_command_line() {
     int i;
     int j;
 
-    yed_set_cursor(1, ys->term_rows);
+    yed_set_cursor(ys->term_rows, 1);
     yed_set_attr(yed_active_style_get_command_line());
     append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
-    yed_set_cursor(1, ys->term_rows);
+    yed_set_cursor(ys->term_rows, 1);
 
     if (ys->interactive_command) {
         if (ys->cmd_prompt) {

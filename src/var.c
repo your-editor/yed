@@ -15,6 +15,9 @@ void yed_set_default_vars(void) {
     yed_set_var("fill-string",               DEFAULT_FILL_STRING);
     yed_set_var("cursor-move-clears-search", "yes");
     yed_set_var("use-boyer-moore",           "no");
+    yed_set_var("status-line-left",           DEFAULT_STATUS_LINE_LEFT);
+    yed_set_var("status-line-center",         DEFAULT_STATUS_LINE_CENTER);
+    yed_set_var("status-line-right",          DEFAULT_STATUS_LINE_RIGHT);
 }
 
 void yed_set_var(char *var, char *val) {

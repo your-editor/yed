@@ -164,6 +164,7 @@ int mk_wcwidth(wchar_t ucs);
 #include "direct_draw.h"
 #include "version.h"
 #include "print_backtrace.h"
+#include "status_line.h"
 
 typedef struct {
     array_t  files;
@@ -279,7 +280,6 @@ void append_int_to_output_buff(int i);
 void flush_output_buff(void);
 
 void yed_set_small_message(char *msg);
-void yed_write_status_bar(int key);
 void yed_write_welcome(void);
 
 int yed_check_version_breaking(void);

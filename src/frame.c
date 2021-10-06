@@ -282,11 +282,11 @@ void yed_clear_frame(yed_frame *frame) {
         base_attr = yed_active_style_get_inactive();
     }
 
-    yed_set_cursor(frame->left, frame->top);
+    yed_set_cursor(frame->top, frame->left);
     yed_set_attr(base_attr);
 
     for (i = 0; i < frame->height; i += 1) {
-        yed_set_cursor(frame->left, frame->top + i);
+        yed_set_cursor(frame->top + i, frame->left);
 
         run_len     = 0;
         run_start_n = 0;
@@ -294,7 +294,7 @@ void yed_clear_frame(yed_frame *frame) {
             cell = FRAME_CELL(frame, i, n);
 
             if (*cell) {
-                yed_set_cursor(frame->left + run_start_n, frame->top + i);
+                yed_set_cursor(frame->top + i, frame->left + run_start_n);
                 append_n_to_output_buff(ys->_4096_spaces, run_len);
                 run_len     = -1;
                 run_start_n = n + 1;
@@ -303,14 +303,14 @@ void yed_clear_frame(yed_frame *frame) {
             run_len += 1;
         }
 
-        yed_set_cursor(frame->left + run_start_n, frame->top + i);
+        yed_set_cursor(frame->top + i, frame->left + run_start_n);
         append_n_to_output_buff(ys->_4096_spaces, run_len);
     }
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
 
-    yed_set_cursor(x, y);
+    yed_set_cursor(y, x);
 }
 
 void yed_undraw_frame(yed_frame *frame) {
@@ -324,7 +324,7 @@ void yed_undraw_frame(yed_frame *frame) {
     append_to_output_buff(TERM_CURSOR_HIDE);
 
     for (i = 0; i < frame->bheight; i += 1) {
-        yed_set_cursor(frame->bleft, frame->btop + i);
+        yed_set_cursor(frame->btop + i, frame->bleft);
 
         run_len     = 0;
         run_start_n = 0;
@@ -332,7 +332,7 @@ void yed_undraw_frame(yed_frame *frame) {
             cell = FRAME_CELL(frame, i, n);
 
             if (*cell) {
-                yed_set_cursor(frame->bleft + run_start_n, frame->btop + i);
+                yed_set_cursor(frame->btop + i, frame->bleft + run_start_n);
                 append_n_to_output_buff(ys->_4096_spaces, run_len);
                 run_len     = -1;
                 run_start_n = n + 1;
@@ -341,14 +341,14 @@ void yed_undraw_frame(yed_frame *frame) {
             run_len += 1;
         }
 
-        yed_set_cursor(frame->bleft + run_start_n, frame->btop + i);
+        yed_set_cursor(frame->btop + i, frame->bleft + run_start_n);
         append_n_to_output_buff(ys->_4096_spaces, run_len);
     }
 
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
 
-    yed_set_cursor(x, y);
+    yed_set_cursor(y, x);
 }
 
 char _get_nprint_char(unsigned char nprint) {
@@ -379,8 +379,8 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
     /* Helper macros */
     #define DUMP_RUN()                                                    \
     do {                                                                  \
-        yed_set_cursor(frame->left + run_col_off + frame->gutter_width,   \
-                       frame->top + y_offset);                            \
+        yed_set_cursor(frame->top + y_offset,                             \
+                        frame->left + run_col_off + frame->gutter_width); \
         yed_set_attr(cur_attr);                                           \
         append_n_to_output_buff(run_start, run_len);                      \
     } while (0)
@@ -394,8 +394,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
 
     #define DUMP_RUN_GUTTER()                                             \
     do {                                                                  \
-        yed_set_cursor(frame->left + run_col_off,                         \
-                       frame->top + y_offset);                            \
+        yed_set_cursor(frame->top + y_offset, frame->left + run_col_off); \
         yed_set_attr(cur_attr);                                           \
         append_n_to_output_buff(run_start, run_len);                      \
     } while (0)
@@ -637,7 +636,7 @@ again_gutter:
                         yed_set_attr(tmp_attr);
                         cur_attr = tmp_attr;
                     }
-                    yed_set_cursor(frame->left + frame->gutter_width + col_off, frame->top + y_offset);
+                    yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
                     append_n_to_output_buff(" ", 1);
                 }
                 col_off += 1;
@@ -662,7 +661,7 @@ again_gutter:
                         yed_set_attr(tmp_attr);
                         cur_attr = tmp_attr;
                     }
-                    yed_set_cursor(frame->left + frame->gutter_width + col_off, frame->top + y_offset);
+                    yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
                     append_n_to_output_buff(nprint_chars + nprint_glyph_pos, 1);
                 }
                 col_off          += 1;
@@ -773,7 +772,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     /* This isn't right.. it should be it's own style component. */
     fill_attr = base_attr;
 
-    yed_set_cursor(frame->left, frame->top + y_offset);
+    yed_set_cursor(frame->top + y_offset, frame->left);
 
     if (frame->gutter_width > 0) {
         yed_set_attr(gut_attr);
@@ -783,7 +782,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
         for (j = 0; j < frame->gutter_width; j += 1) {
             cell = FRAME_CELL(frame, y_offset + i, j);
             if (!*cell) {
-                yed_set_cursor(frame->left + j, frame->top + y_offset + i);
+                yed_set_cursor(frame->top + y_offset + i, frame->left + j);
                 append_n_to_output_buff(" ", 1);
             }
         }
@@ -794,7 +793,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
     for (i = 0; i < frame->height - y_offset; i += 1) {
         cell = FRAME_CELL(frame, y_offset + i, 0);
 
-        yed_set_cursor(frame->left, frame->top + i);
+        yed_set_cursor(frame->top + i, frame->left);
 
         run_len     = 0;
         run_start_n = frame->gutter_width;
@@ -802,7 +801,7 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
             cell = FRAME_CELL(frame, y_offset + i, n);
 
             if (*cell) {
-                yed_set_cursor(frame->left + run_start_n, frame->top + y_offset + i);
+                yed_set_cursor(frame->top + y_offset + i, frame->left + run_start_n);
                 append_n_to_output_buff(ys->_4096_spaces, run_len);
                 run_len     = -1;
                 run_start_n = n + 1;
@@ -811,14 +810,14 @@ void yed_frame_draw_fill(yed_frame *frame, int y_offset) {
             run_len += 1;
         }
 
-        yed_set_cursor(frame->left + run_start_n, frame->top + y_offset + i);
+        yed_set_cursor(frame->top + y_offset + i, frame->left + run_start_n);
         append_n_to_output_buff(ys->_4096_spaces, run_len);
     }
 
     for (i = 0; i < frame->height - y_offset; i += 1) {
         cell = FRAME_CELL(frame, y_offset + i, frame->gutter_width);
         if (!*cell) {
-            yed_set_cursor(frame->left + frame->gutter_width, frame->top + y_offset + i);
+            yed_set_cursor(frame->top + y_offset + i, frame->left + frame->gutter_width);
             append_n_to_output_buff(fill_str, fill_str_len);
         }
     }
@@ -950,7 +949,7 @@ void yed_frame_draw_border(yed_frame *frame) {
             cell = FRAME_BCELL(frame, 0, i);
 
             if (!*cell) {
-                yed_set_cursor(frame->bleft + i, frame->btop);
+                yed_set_cursor(frame->btop, frame->bleft + i);
                 if (i == 0 && frame->bleft > 1) {
                     append_to_output_buff(tl);
                 } else if (i == frame->bwidth - 1 && frame->bleft + frame->bwidth - 1 < ys->term_cols) {
@@ -969,7 +968,7 @@ void yed_frame_draw_border(yed_frame *frame) {
             cell = FRAME_BCELL(frame, frame->bheight - 1, i);
 
             if (!*cell) {
-                yed_set_cursor(frame->bleft + i, frame->btop + frame->bheight - 1);
+                yed_set_cursor(frame->btop + frame->bheight - 1, frame->bleft + i);
                 if (i == 0 && frame->bleft > 1) {
                     append_to_output_buff(bl);
                 } else if (i == frame->bwidth - 1 && frame->bleft + frame->bwidth - 1 < ys->term_cols) {
@@ -988,7 +987,7 @@ void yed_frame_draw_border(yed_frame *frame) {
             cell = FRAME_BCELL(frame, i, 0);
 
             if (!*cell) {
-                yed_set_cursor(frame->bleft, frame->btop + i);
+                yed_set_cursor(frame->btop + i, frame->bleft);
                 append_to_output_buff(l);
                 *cell = 1;
             }
@@ -1001,7 +1000,7 @@ void yed_frame_draw_border(yed_frame *frame) {
             cell = FRAME_BCELL(frame, i, frame->bwidth - 1);
 
             if (!*cell) {
-                yed_set_cursor(frame->bleft + frame->bwidth - 1, frame->btop + i);
+                yed_set_cursor(frame->btop + i, frame->bleft + frame->bwidth - 1);
                 append_to_output_buff(r);
                 *cell = 1;
             }
@@ -1483,7 +1482,7 @@ void yed_update_frames(void) {
     }
 
     if (ys->active_frame) {
-        yed_set_cursor(ys->active_frame->cur_x, ys->active_frame->cur_y);
+        yed_set_cursor(ys->active_frame->cur_y, ys->active_frame->cur_x);
     }
 
     /*
