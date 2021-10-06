@@ -94,7 +94,10 @@ void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
         dst->bg = src->bg;
     }
 
-    dst->flags &= ~(ATTR_BOLD);
+/*     dst->flags &= ~(ATTR_BOLD); */
+/*     dst->flags &= ~(ATTR_INVERSE); */
+/*     dst->flags &= ~(ATTR_UNDERLINE); */
+
     dst->flags |= src->flags;
 }
 
@@ -250,6 +253,8 @@ yed_attrs yed_parse_attrs(char *string) {
     int        idx;
     char      *word;
     int        scomp;
+    yed_attrs  ref_attrs;
+    char      *field_start;
     unsigned   color;
     char       rgb_str[9];
 
@@ -269,9 +274,45 @@ yed_attrs yed_parse_attrs(char *string) {
         if (word == NULL) { goto out; }
 
         if (word[0] == '&') {
+            field_start = word;
+            while (*field_start && *field_start != '.') { field_start += 1; }
+            if (*field_start) {
+                *field_start  = 0;
+                field_start  += 1;
+            } else {
+                field_start = NULL;
+            }
             scomp = yed_scomp_nr_by_name(word + 1);
             if (scomp != -1) {
-                attrs = yed_get_active_style_scomp(scomp);
+                ref_attrs = yed_get_active_style_scomp(scomp);
+                if (field_start == NULL) {
+                    attrs = ref_attrs;
+                } else {
+                    if (strcmp(field_start, "fg") == 0) {
+                        attrs.fg     = ref_attrs.fg;
+                        attrs.flags &= ~(ATTR_16 | ATTR_256 | ATTR_RGB);
+                        attrs.flags |= ref_attrs.flags & (ATTR_16 | ATTR_256 | ATTR_RGB);
+                    } else if (strcmp(field_start, "bg") == 0) {
+                        attrs.bg     = ref_attrs.bg;
+                        attrs.flags &= ~(ATTR_16 | ATTR_256 | ATTR_RGB);
+                        attrs.flags |= ref_attrs.flags & (ATTR_16 | ATTR_256 | ATTR_RGB);
+                    } else if (strcmp(word, "inverse") == 0) {
+                        attrs.flags &= ~(ATTR_INVERSE);
+                        attrs.flags |= ref_attrs.flags & ATTR_INVERSE;
+                    } else if (strcmp(word, "bold") == 0) {
+                        attrs.flags &= ~(ATTR_BOLD);
+                        attrs.flags |= ref_attrs.flags & ATTR_BOLD;
+                    } else if (strcmp(word, "underline") == 0) {
+                        attrs.flags &= ~(ATTR_UNDERLINE);
+                        attrs.flags |= ref_attrs.flags & ATTR_UNDERLINE;
+                    } else if (strcmp(word, "16-light-fg") == 0) {
+                        attrs.flags &= ~(ATTR_16_LIGHT_FG);
+                        attrs.flags |= ref_attrs.flags & ATTR_16_LIGHT_FG;
+                    } else if (strcmp(word, "16-light-bg") == 0) {
+                        attrs.flags &= ~(ATTR_16_LIGHT_BG);
+                        attrs.flags |= ref_attrs.flags & ATTR_16_LIGHT_BG;
+                    }
+                }
             }
         } else if (strcmp(word, "fg") == 0) {
             idx += 1;

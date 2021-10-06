@@ -1,100 +1,17 @@
 #include "status_line.h"
 
-static void write_status_bar(void) {
-#if 0
-    int         sav_x, sav_y;
-    char       *path;
-    char       *status_line_var;
-    char        right_side_buff[256];
-    char       *ft_name;
-    int         i;
-    yed_frame **fit;
-
-    sav_x = ys->cur_x;
-    sav_y = ys->cur_y;
-
-    yed_set_cursor(1, ys->term_rows - 1);
-    if (ys->active_style) {
-        yed_set_attr(yed_active_style_get_status_line());
-    } else {
-        append_to_output_buff(TERM_INVERSE);
-    }
-    append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
-
-    right_side_buff[0] = 0;
-
-    if (ys->active_frame) {
-        yed_set_cursor(1, ys->term_rows - 1);
-        append_n_to_output_buff(" ", 1);
-
-        i = 0;
-        array_traverse(ys->frames, fit) {
-            if (*fit == ys->active_frame) {
-                append_n_to_output_buff("[", 1);
-                append_int_to_output_buff(i);
-                append_n_to_output_buff("]", 2);
-            } else {
-                append_n_to_output_buff(" ", 1);
-                append_int_to_output_buff(i);
-                append_n_to_output_buff(" ", 1);
-            }
-            i += 1;
-        }
-        append_n_to_output_buff(" ", 1);
-
-        ft_name = "";
-        if (ys->active_frame->buffer) {
-            path     = ys->active_frame->buffer->name;
-            append_to_output_buff(path);
-
-            if (ys->active_frame->buffer->flags & BUFF_SPECIAL) {
-                ft_name = "<special>";
-            } else {
-                ft_name = yed_get_ft_name(ys->active_frame->buffer->ft);
-                if (ft_name == NULL) {
-                    ft_name = "<unknown file type>";
-                }
-            }
-        }
-
-        snprintf(right_side_buff, MIN(ys->term_cols, sizeof(right_side_buff)),
-                 "%s  %7d :: %-3d",
-                 ft_name, ys->active_frame->cursor_line, ys->active_frame->cursor_col);
-    }
-
-    yed_set_cursor(ys->term_cols - strlen(right_side_buff) - 2, ys->term_rows - 1);
-    append_to_output_buff(right_side_buff);
-
-
-    if ((status_line_var = yed_get_var("status-line-var"))) {
-        status_line_var = yed_get_var(status_line_var);
-        if (status_line_var) {
-            yed_set_small_message(status_line_var);
-        } else {
-            yed_set_small_message(NULL);
-        }
-    } else {
-        yed_set_small_message(NULL);
-    }
-
-    if (ys->small_message) {
-        yed_set_cursor((ys->term_cols / 2) - (strlen(ys->small_message) / 2), ys->term_rows - 1);
-        if (ys->active_style) {
-            yed_set_attr(yed_active_style_get_status_line());
-        } else {
-            append_to_output_buff(TERM_INVERSE);
-        }
-        append_to_output_buff(ys->small_message);
-    }
-
-
-    append_to_output_buff(TERM_RESET);
-    append_to_output_buff(TERM_CURSOR_HIDE);
-    yed_set_cursor(sav_x, sav_y);
-#endif
-}
-
 static char *get_expanded(char *s) {
+    array_t     chars;
+    int         i;
+    char        c;
+    yed_frame **fit;
+    char        ibuff[32];
+    char       *istr;
+    char       *str;
+    struct tm  *tm;
+    time_t      t;
+    char        tbuff[256];
+
     switch (*s) {
         case 'b':
             if (ys->active_frame && ys->active_frame->buffer) {
@@ -106,11 +23,120 @@ static char *get_expanded(char *s) {
                 return strdup(ys->active_frame->buffer->path);
             }
             break;
-        case 'c': return strdup("catcatcatcatcat");
+        case 'c':
+            if (ys->active_frame) {
+                istr = itoa(ibuff, ys->active_frame->cursor_col);
+                return strdup(istr);
+            } else {
+                return strdup("-");
+            }
+            break;
+        case 'f':
+            chars = array_make(char);
+            i = 0;
+            array_traverse(ys->frames, fit) {
+                if (*fit == ys->active_frame) {
+                    c = '['; array_push(chars, c);
+                    istr = itoa(ibuff, i);
+                    array_push_n(chars, istr, strlen(istr));
+                    c = ']'; array_push(chars, c);
+                } else {
+                    c = ' ';
+                    array_push(chars, c);
+                    istr = itoa(ibuff, i);
+                    array_push_n(chars, istr, strlen(istr));
+                    array_push(chars, c);
+                }
+                i += 1;
+            }
+            array_zero_term(chars);
+            str = strdup(array_data(chars));
+            array_free(chars);
+            return str;
+            break;
+        case 'l':
+            if (ys->active_frame) {
+                istr = itoa(ibuff, ys->active_frame->cursor_line);
+                return strdup(istr);
+            } else {
+                return strdup("-");
+            }
+            break;
+        case 'p':
+            if (ys->active_frame && ys->active_frame->buffer) {
+                istr = itoa(ibuff,
+                              (100.0 * ys->active_frame->cursor_line)
+                            / (yed_buff_n_lines(ys->active_frame->buffer)));
+                return strdup(istr);
+            } else {
+                return strdup("-");
+            }
+            break;
+        case 't':
+            if (ys->active_frame && ys->active_frame->buffer) {
+                str = yed_get_ft_name(ys->active_frame->buffer->ft);
+                if (str == NULL) {
+                    return strdup("?");
+                }
+                return strdup(str);
+            }
+            break;
+        case 'T':
+            t  = time(NULL);
+            tm = localtime(&t);
+            strftime(tbuff, sizeof(tbuff), "%I:%M:%S", tm);
+            return strdup(tbuff);
+            break;
+        case '(':
+            chars = array_make(char);
+            s += 1;
+            while (*s && *s != ')') { array_push(chars, *s); s += 1; }
+            if (*s) {
+                array_zero_term(chars);
+                str = (char*)array_data(chars);
+                str = yed_get_var(str);
+                if (str != NULL) {
+                    array_free(chars);
+                    return strdup(str);
+                }
+            }
+            array_free(chars);
+            break;
+        case '%':
+            return strdup("%");
+            break;
     }
 
     return NULL;
 }
+
+static void parse_and_put_attrs(char *s) {
+    array_t    chars;
+    char      *str;
+    yed_attrs  base;
+    yed_attrs  attrs;
+
+    chars = array_make(char);
+
+    s += 1;
+    while (*s && *s != ']') { array_push(chars, *s); s += 1; }
+
+    base = yed_active_style_get_status_line();
+
+    if (*s) {
+        array_zero_term(chars);
+
+        str   = (char*)array_data(chars);
+        attrs = yed_parse_attrs(str);
+        yed_combine_attrs(&base, &attrs);
+    }
+
+    yed_set_attr(base);
+
+    array_free(chars);
+}
+
+#define GBUMP(_g, _l) ((yed_glyph*)((&((_g)->c)) + (_l)))
 
 static int get_status_line_string_width(char *s) {
     int         width;
@@ -135,6 +161,21 @@ static int get_status_line_string_width(char *s) {
                     width += yed_get_string_width(expanded);
                     free(expanded);
                 }
+                if (git->c == '(') {
+                    while (git->c != ')') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                } else if (git->c == '[') {
+                    while (git->c != ']') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                }
                 last_was_perc = 0;
             } else if (git->c == '%') {
                 last_was_perc = 1;
@@ -145,9 +186,11 @@ static int get_status_line_string_width(char *s) {
             width += yed_get_glyph_width(*git);
         }
 
-        git = (yed_glyph*)((&git->c) + len);
+        git = GBUMP(git, len);
+skip:;
     }
 
+out:;
     return width;
 }
 
@@ -161,6 +204,12 @@ static void put_status_line_string(char *s, int start_col) {
     int         len;
 
     yed_set_cursor(ys->term_rows - 1, start_col);
+
+    if (ys->active_style) {
+        yed_set_attr(yed_active_style_get_status_line());
+    } else {
+        append_to_output_buff(TERM_INVERSE);
+    }
 
     col           = start_col;
     git           = (yed_glyph*)s;
@@ -184,6 +233,24 @@ static void put_status_line_string(char *s, int start_col) {
                         break;
                     }
                 }
+
+                if (git->c == '(') {
+                    while (git->c != ')') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                } else if (git->c == '[') {
+                    parse_and_put_attrs((char*)&git->c);
+                    while (git->c != ']') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                }
+
                 last_was_perc = 0;
             } else if (git->c == '%') {
                 last_was_perc = 1;
@@ -199,8 +266,10 @@ static void put_status_line_string(char *s, int start_col) {
         }
 
         col += width;
-        git  = (yed_glyph*)((&git->c) + len);
+        git = GBUMP(git, len);
+skip:;
     }
+out:;
 }
 
 static void write_status_line_left(void) {
@@ -221,7 +290,7 @@ static void write_status_line_center(void) {
     if (var == NULL) { return; }
 
     width = get_status_line_string_width(var);
-    col   = MAX(1, (ys->term_cols / 2) - (width / 2));
+    col   = MAX(1, 1 + (ys->term_cols / 2) - (width / 2));
 
     put_status_line_string(var, col);
 }
