@@ -96,8 +96,10 @@ static char *get_expanded(char *s) {
                 str = (char*)array_data(chars);
                 str = yed_get_var(str);
                 if (str != NULL) {
+                    str = strdup(str);
+                    for (s = str; *s; s += 1) { if (*s == '\n') { *s = 0; break; } }
                     array_free(chars);
-                    return strdup(str);
+                    return str;
                 }
             }
             array_free(chars);
@@ -177,6 +179,8 @@ static int get_status_line_string_width(char *s) {
                     goto skip;
                 }
                 last_was_perc = 0;
+            } else if (git->c == '\n') {
+                goto out;
             } else if (git->c == '%') {
                 last_was_perc = 1;
             } else {
@@ -252,6 +256,8 @@ static void put_status_line_string(char *s, int start_col) {
                 }
 
                 last_was_perc = 0;
+            } else if (git->c == '\n') {
+                goto out;
             } else if (git->c == '%') {
                 last_was_perc = 1;
             } else {

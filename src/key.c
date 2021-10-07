@@ -9,7 +9,7 @@ void yed_init_keys(void) {
     yed_set_default_key_bindings();
 }
 
-int esc_timeout(int *input) {
+static int esc_timeout(int *input) {
     int  seq_key;
     char c;
 
@@ -42,7 +42,7 @@ int esc_timeout(int *input) {
     return 3;
 }
 
-int esc_sequence(int *input) {
+static int esc_sequence(int *input) {
     char c;
 
     /* the input length is 3 */
@@ -283,6 +283,7 @@ int esc_sequence(int *input) {
     if (input[1] == ESC) {
         if (read(0, &c, 1)) {
             input[3] = c;
+            if (input[2] == ESC && input[3] == ESC) { return 4; }
             return 1 + esc_sequence(input + 1);
         }
     }
@@ -436,7 +437,7 @@ do_seq:;
     return len;
 }
 
-int handle_bracketed_paste(int key) {
+static int handle_bracketed_paste(int key) {
     char *str;
     int   key_ch;
     int   i;
