@@ -8,7 +8,7 @@ Check out our web page for more info!
 ```
 git clone https://github.com/kammerdienerb/yed && cd yed
 ./install.sh -p ./test
-test/yed
+test/bin/yed
 ```
 
 ![yed](screenshots/1.png)
