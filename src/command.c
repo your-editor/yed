@@ -1739,6 +1739,8 @@ void yed_default_command_buffer_reload(int n_args, char **args) {
     yed_buffer                                   *buffer;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
     yed_event                                     event;
+    int                                           line;
+    int                                           col;
     int                                           status;
 
     frame = NULL;
@@ -1781,6 +1783,11 @@ void yed_default_command_buffer_reload(int n_args, char **args) {
 
     if (event.cancel) { return; }
 
+    if (frame != NULL) {
+        line = frame->cursor_line;
+        col  = frame->cursor_col;
+    }
+
     status = yed_fill_buff_from_file(buffer, buffer->path);
 
     switch (status) {
@@ -1806,7 +1813,8 @@ void yed_default_command_buffer_reload(int n_args, char **args) {
             yed_trigger_event(&event);
 
             if (frame != NULL && frame->buffer == buffer) {
-                yed_frame_reset_cursor(frame);
+                yed_set_cursor_far_within_frame(frame, 1, 1);
+                yed_set_cursor_far_within_frame(frame, line, col);
             }
 
             break;
