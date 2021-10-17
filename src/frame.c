@@ -1026,8 +1026,8 @@ void yed_frame_update(yed_frame *frame) {
             save_cursor_line = frame->cursor_line;
             yed_set_cursor_far_within_frame(frame, 1, 1);
             yed_set_cursor_far_within_frame(frame, save_cursor_line, 1);
-        } else if (frame->buffer->kind == BUFF_KIND_YANK) {
-            yed_set_cursor_far_within_frame(frame, 1, 1);
+/*         } else if (frame->buffer->kind == BUFF_KIND_YANK) { */
+/*             yed_set_cursor_far_within_frame(frame, 1, 1); */
         }
     }
 
