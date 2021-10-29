@@ -1026,8 +1026,8 @@ void yed_frame_update(yed_frame *frame) {
             save_cursor_line = frame->cursor_line;
             yed_set_cursor_far_within_frame(frame, 1, 1);
             yed_set_cursor_far_within_frame(frame, save_cursor_line, 1);
-        } else if (frame->buffer->kind == BUFF_KIND_YANK) {
-            yed_set_cursor_far_within_frame(frame, 1, 1);
+/*         } else if (frame->buffer->kind == BUFF_KIND_YANK) { */
+/*             yed_set_cursor_far_within_frame(frame, 1, 1); */
         }
     }
 
@@ -1543,27 +1543,18 @@ void yed_frame_update_cursor_line(yed_frame *frame) {
     yed_line *line;
     int       y;
 
-    if (!frame->cursor_line || !frame->cursor_line_is_dirty) {
+    if (!frame->cursor_line) {
         return;
     }
 
     y = yed_frame_line_to_y(frame, frame->cursor_line);
     if (y) {
 
-/*         if (frame == ys->active_frame && !frame->buffer->has_selection) { */
-/*             append_to_output_buff("\e[0;30;46m"); */
-/*             append_to_output_buff(TERM_BG_GREEN); */
-/*             append_to_output_buff(TERM_BLACK); */
-/*         } */
         line = yed_buff_get_line(frame->buffer, frame->cursor_line);
 
         ASSERT(line != NULL, "didn't get a cursor line");
 
         yed_frame_draw_line(frame, line, frame->cursor_line, y - frame->top, frame->buffer_x_offset);
-/*         if (frame == ys->active_frame && !frame->buffer->has_selection) { */
-/*             append_to_output_buff(TERM_RESET); */
-/*             append_to_output_buff(TERM_CURSOR_HIDE); */
-/*         } */
 
         yed_mark_dirty_direct_draws(y,           y,
                                     frame->left, frame->left + frame->width  - 1);
