@@ -69,6 +69,7 @@ void yed_write_welcome(void) {
 }
 
 static int writer_started;
+static int write_pending;
 
 static void * writer(void *arg) {
     (void)arg;
@@ -78,8 +79,12 @@ static void * writer(void *arg) {
 
         writer_started = 1;
 
-        pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
+        while (!write_pending) {
+            pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
+        }
         flush_writer_buff();
+        write_pending = 0;
+
         pthread_mutex_unlock(&ys->write_ready_mtx);
         if (ys->status == YED_RELOAD_CORE) { break; }
     }
@@ -88,9 +93,15 @@ static void * writer(void *arg) {
 }
 
 static void kick_off_write(void) {
+try_again:;
     pthread_mutex_lock(&ys->write_ready_mtx);
+    if (write_pending) {
+        pthread_mutex_unlock(&ys->write_ready_mtx);
+        goto try_again;
+    }
     array_copy(ys->writer_buffer, ys->output_buffer);
     array_clear(ys->output_buffer);
+    write_pending = 1;
     pthread_cond_signal(&ys->write_ready_cond);
     pthread_mutex_unlock(&ys->write_ready_mtx);
 }
