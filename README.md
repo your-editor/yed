@@ -3,6 +3,8 @@
 Check out our web page for more info!
 [your-editor.org](https://your-editor.org)
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/your-editor.svg)](https://repology.org/project/your-editor/versions)
+
 # TL;DR
 **A fast, fully customizable text-mode editor with zero dependencies.**
 ```
