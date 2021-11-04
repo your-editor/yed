@@ -1,7 +1,7 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define YED_VERSION (1204)
+#define YED_VERSION (1205)
 
 extern int yed_version;
 

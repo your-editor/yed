@@ -96,6 +96,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("sh-silent",                          sh_silent);
     SET_DEFAULT_COMMAND("less",                               less);
     SET_DEFAULT_COMMAND("echo",                               echo);
+    SET_DEFAULT_COMMAND("cursor-move",                        cursor_move);
     SET_DEFAULT_COMMAND("cursor-down",                        cursor_down);
     SET_DEFAULT_COMMAND("cursor-up",                          cursor_up);
     SET_DEFAULT_COMMAND("cursor-left",                        cursor_left);
@@ -170,6 +171,9 @@ do {                                                              \
     SET_DEFAULT_COMMAND("log",                                log);
     SET_DEFAULT_COMMAND("nop",                                nop);
     SET_DEFAULT_COMMAND("cursor-style",                       cursor_style);
+    SET_DEFAULT_COMMAND("alias",                              alias);
+    SET_DEFAULT_COMMAND("unalias",                            unalias);
+    SET_DEFAULT_COMMAND("repeat",                             repeat);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -630,6 +634,46 @@ void yed_default_command_echo(int n_args, char **args) {
         yed_cprint("%s", args[i]);
         space = " ";
     }
+}
+
+void yed_default_command_cursor_move(int n_args, char **args) {
+    yed_frame *frame;
+    int        rows;
+    int        cols;
+
+    if (n_args < 1 || n_args > 2) {
+        yed_cerr("expected 1 or 2 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    if (ys->current_search) {
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+            frame->dirty = 1;
+        }
+    }
+
+    rows = s_to_i(args[0]);
+
+    if (n_args == 1) {
+        cols = 0;
+    } else {
+        cols = s_to_i(args[1]);
+    }
+
+    yed_move_cursor_within_active_frame(rows, cols);
 }
 
 void yed_default_command_cursor_down(int n_args, char **args) {
@@ -4043,6 +4087,51 @@ void yed_default_command_cursor_style(int n_args, char **args) {
         yed_cerr("invalid cursor style '%s'. Options are default, blinking-block, steady-block, blinking-underline, steady-underline, blinking-bar, and steady-bar.", style);
     }
 }
+
+void yed_default_command_alias(int n_args, char **args) {
+    yed_command cmd;
+
+    if (n_args != 2) {
+        yed_cerr("expected 2 arguments, but got %d", n_args);
+        return;
+    }
+
+    cmd = yed_get_command(args[1]);
+
+    if (cmd == NULL) {
+        yed_cerr("unknown command '%s'", args[1]);
+        return;
+    }
+
+    yed_set_command(args[0], cmd);
+}
+
+void yed_default_command_unalias(int n_args, char **args) {
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    yed_unset_command(args[0]);
+}
+
+void yed_default_command_repeat(int n_args, char **args) {
+    int i;
+
+    if (n_args < 2) {
+        yed_cerr("expected 2 or more arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!sscanf(args[0], "%d", &i)) {
+        yed_cerr("cound't parse int from argument '%s'", args[0]);
+    }
+
+    for (; i > 0; i -= 1) {
+        yed_execute_command(args[1], n_args - 2, args + 2);
+    }
+}
+
 
 int yed_execute_command_from_split(array_t split) {
     char  *cmd_name,

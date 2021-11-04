@@ -52,6 +52,7 @@ DEF_DEFAULT_COMMAND(sh_silent);
 DEF_DEFAULT_COMMAND(buff_sh);
 DEF_DEFAULT_COMMAND(less);
 DEF_DEFAULT_COMMAND(echo);
+DEF_DEFAULT_COMMAND(cursor_move);
 DEF_DEFAULT_COMMAND(cursor_down);
 DEF_DEFAULT_COMMAND(cursor_up);
 DEF_DEFAULT_COMMAND(cursor_left);
@@ -126,5 +127,8 @@ DEF_DEFAULT_COMMAND(special_buffer_prepare_unfocus);
 DEF_DEFAULT_COMMAND(log);
 DEF_DEFAULT_COMMAND(nop);
 DEF_DEFAULT_COMMAND(cursor_style);
+DEF_DEFAULT_COMMAND(alias);
+DEF_DEFAULT_COMMAND(unalias);
+DEF_DEFAULT_COMMAND(repeat);
 
 #endif
