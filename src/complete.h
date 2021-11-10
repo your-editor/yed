@@ -16,7 +16,7 @@ void yed_set_default_completions(void);
 int yed_complete(char *compl_name, char *string, yed_completion_results *results);
 int yed_complete_multiple(int n, char **compl_names, char *string, yed_completion_results *results);
 
-void yed_set_completion(char *name, yed_completion compl);
+void yed_set_completion(char *name, yed_completion comp);
 void yed_unset_completion(char *name);
 yed_completion yed_get_completion(char *name);
 
