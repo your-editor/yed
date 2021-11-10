@@ -4,15 +4,15 @@ void yed_init_completions(void) {
     yed_set_default_completions();
 }
 
-void yed_set_completion(char *name, yed_completion compl) {
+void yed_set_completion(char *name, yed_completion comp) {
     tree_it(yed_completion_name_t, yed_completion) it;
 
     it = tree_lookup(ys->completions, name);
 
     if (tree_it_good(it)) {
-        tree_insert(ys->completions, name, compl);
+        tree_insert(ys->completions, name, comp);
     } else {
-        tree_insert(ys->completions, strdup(name), compl);
+        tree_insert(ys->completions, strdup(name), comp);
     }
 }
 
@@ -41,15 +41,15 @@ yed_completion yed_get_completion(char *name) {
     return tree_it_val(it);
 }
 
-void yed_set_default_completion(char *name, yed_completion compl) {
+void yed_set_default_completion(char *name, yed_completion comp) {
     tree_it(yed_completion_name_t, yed_completion) it;
 
     it = tree_lookup(ys->default_completions, name);
 
     if (tree_it_good(it)) {
-        tree_insert(ys->default_completions, name, compl);
+        tree_insert(ys->default_completions, name, comp);
     } else {
-        tree_insert(ys->default_completions, strdup(name), compl);
+        tree_insert(ys->default_completions, strdup(name), comp);
     }
 }
 
@@ -469,7 +469,7 @@ none:
 
 int yed_complete(char *compl_name, char *string, yed_completion_results *results) {
     tree_it(yed_completion_name_t, yed_completion) it;
-    yed_completion                                 compl;
+    yed_completion                                 comp;
     int                                            status;
 
     it = tree_lookup(ys->completions, compl_name);
@@ -478,10 +478,10 @@ int yed_complete(char *compl_name, char *string, yed_completion_results *results
         return COMPL_ERR_NO_COMPL;
     }
 
-    compl            = tree_it_val(it);
+    comp             = tree_it_val(it);
     results->strings = array_make(char*);
 
-    status = compl(string, results);
+    status = comp(string, results);
 
     if (status == COMPL_ERR_NO_ERR) {
         results->common_prefix_len =
