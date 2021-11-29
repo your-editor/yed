@@ -705,10 +705,10 @@ void yed_add_plugin_dir(const char *s) {
     array_insert(ys->plugin_dirs, 0, s_dup);
 }
 
-void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion compl) {
+void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion comp) {
     char *name_dup;
 
-    yed_set_completion(name, compl);
+    yed_set_completion(name, comp);
     name_dup = strdup(name);
     array_push(plug->added_compls, name_dup);
 }

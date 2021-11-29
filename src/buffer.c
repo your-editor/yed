@@ -442,6 +442,7 @@ do {                                                 \
     _event.row            = (_row);                  \
     _event.col            = (_col);                  \
     yed_trigger_event(&_event);                      \
+    (_buff)->flags |= BUFF_MODIFIED;                 \
 } while (0)
 
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g) {
@@ -1079,7 +1080,8 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
 
     yed_buffer_set_ft(buff, FT_UNKNOWN);
 
-    buff->kind = BUFF_KIND_FILE;
+    buff->kind   = BUFF_KIND_FILE;
+    buff->flags &= ~BUFF_MODIFIED;
     yed_mark_dirty_frames(buff);
 
 cleanup:
@@ -1286,6 +1288,7 @@ int yed_write_buff_to_file(yed_buffer *buff, char *path) {
         event.kind   = EVENT_BUFFER_POST_WRITE;
         event.buffer = buff;
         yed_trigger_event(&event);
+        buff->flags &= ~BUFF_MODIFIED;
     }
 
     return status;
