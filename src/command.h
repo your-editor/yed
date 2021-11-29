@@ -126,5 +126,6 @@ DEF_DEFAULT_COMMAND(special_buffer_prepare_unfocus);
 DEF_DEFAULT_COMMAND(log);
 DEF_DEFAULT_COMMAND(nop);
 DEF_DEFAULT_COMMAND(cursor_style);
+DEF_DEFAULT_COMMAND(feed_keys);
 
 #endif

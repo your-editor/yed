@@ -170,6 +170,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("log",                                log);
     SET_DEFAULT_COMMAND("nop",                                nop);
     SET_DEFAULT_COMMAND("cursor-style",                       cursor_style);
+    SET_DEFAULT_COMMAND("feed-keys",                          feed_keys);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -4041,6 +4042,19 @@ void yed_default_command_cursor_style(int n_args, char **args) {
     else if (strcmp(style, "steady-bar")         == 0) { yed_set_cursor_style(TERM_CURSOR_STYLE_STEADY_BAR);         }
     else {
         yed_cerr("invalid cursor style '%s'. Options are default, blinking-block, steady-block, blinking-underline, steady-underline, blinking-bar, and steady-bar.", style);
+    }
+}
+
+void yed_default_command_feed_keys(int n_args, char **args) {
+    int i;
+    int n;
+    int keys[MAX_SEQ_LEN];
+
+    for (i = 0; i < n_args; i += 1) {
+        n = yed_string_to_keys(args[i], keys);
+        if (n <= 0) { continue; }
+
+        yed_feed_keys(n, keys);
     }
 }
 
