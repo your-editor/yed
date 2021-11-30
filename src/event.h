@@ -47,6 +47,7 @@ typedef enum {
     EVENT_VAR_POST_SET,
     EVENT_VAR_PRE_UNSET,
     EVENT_VAR_POST_UNSET,
+    EVENT_STATUS_LINE_PRE_UPDATE,
 
     N_EVENTS,
 } yed_event_kind_t;

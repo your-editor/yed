@@ -316,18 +316,10 @@ static void write_status_line_right(void) {
 }
 
 void yed_write_status_line(void) {
-/*     int        sav_x; */
-/*     int        sav_y; */
-/*     int        width; */
-/*     int        n_bytes; */
-/*     char      *buff; */
-/*     int        str_width; */
-/*     yed_glyph *git; */
-/*     int        col; */
+    yed_event event;
 
-/*     sav_x = ys->cur_x; */
-/*     sav_y = ys->cur_y; */
-/*     width = ys->term_cols; */
+    event.kind = EVENT_STATUS_LINE_PRE_UPDATE;
+    yed_trigger_event(&event);
 
     yed_set_cursor(ys->term_rows - 1, 1);
 
