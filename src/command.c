@@ -1057,11 +1057,11 @@ again:
 
     c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-    if (isspace(c)) {
+    if (is_space(c)) {
         while (col > 1) {
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
-            if (!isspace(c)) {
+            if (!is_space(c)) {
                 break;
             }
 
@@ -1069,11 +1069,11 @@ again:
         }
     }
 
-    if (isalnum(c) || c == '_') {
+    if (is_alnum(c) || c == '_') {
         while (col > 1) {
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
-            if (!isalnum(c) && c != '_') {
+            if (!is_alnum(c) && c != '_') {
                 break;
             }
 
@@ -1083,7 +1083,7 @@ again:
         while (col > 1) {
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
-            if (isalnum(c) || c == '_' || isspace(c)) {
+            if (is_alnum(c) || c == '_' || is_space(c)) {
                 break;
             }
 
@@ -1091,7 +1091,7 @@ again:
         }
     }
 
-    if (col == 0 || (col == 1 && (isspace(c)))) {
+    if (col == 0 || (col == 1 && (is_space(c)))) {
 skip_lines:
         row = frame->cursor_line;
         do {
@@ -1154,32 +1154,32 @@ again:
 
     c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-    if (isalnum(c) || c == '_') {
+    if (is_alnum(c) || c == '_') {
         while (col <= line->visual_width) {
             col += 1;
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-            if (!isalnum(c) && c != '_') {
+            if (!is_alnum(c) && c != '_') {
                 break;
             }
         }
-    } else if (!isspace(c)) {
+    } else if (!is_space(c)) {
         while (col <= line->visual_width) {
             col += 1;
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-            if (isalnum(c) || c == '_' || isspace(c)) {
+            if (is_alnum(c) || c == '_' || is_space(c)) {
                 break;
             }
         }
     }
 
-    if (isspace(c)) {
+    if (is_space(c)) {
         while (col <= line->visual_width) {
             col += 1;
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-            if (!isspace(c)) {
+            if (!is_space(c)) {
                 break;
             }
         }
@@ -1203,7 +1203,7 @@ skip_lines:
 
             line = yed_buff_get_line(frame->buffer, row);
             c    = ((yed_glyph*)yed_line_col_to_glyph(line, 1))->c;
-            if (c && isspace(c)) {
+            if (c && is_space(c)) {
                 goto again;
             }
         }

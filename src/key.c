@@ -268,7 +268,7 @@ static int esc_sequence(int *input) {
         }
     } else if (input[1] == 'O') { /* ESC O sequences. */
         switch (input[2]) {
-            case 'A':    { input[0] = ARROW_UP; break; }
+            case 'A':    { input[0] = ARROW_UP;   break; }
             case 'B':    { input[0] = ARROW_DOWN; break; }
             case 'H':    { input[0] = HOME_KEY;   break; }
             case 'F':    { input[0] = END_KEY;    break; }
@@ -945,7 +945,7 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             goto out;
         }
 
-        if (isspace(*key_str)) {
+        if (is_space(*key_str)) {
             key_str += 1;
             continue;
         }

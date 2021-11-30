@@ -231,12 +231,12 @@ static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
 
         c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-        if (isalnum(c) || c == '_') {
+        if (is_alnum(c) || c == '_') {
             while (col <= line->visual_width) {
                 col += 1;
                 c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-                if (!isalnum(c) && c != '_') {
+                if (!is_alnum(c) && c != '_') {
                     break;
                 }
             }
@@ -247,23 +247,23 @@ static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
             word = strndup(word_start, col - start_col);
 
             tree_insert(words, word, (empty_t){});
-        } else if (!isspace(c)) {
+        } else if (!is_space(c)) {
             while (col <= line->visual_width) {
                 col += 1;
                 c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-                if (isalnum(c) || c == '_' || isspace(c)) {
+                if (is_alnum(c) || c == '_' || is_space(c)) {
                     break;
                 }
             }
         }
 
-        if (isspace(c)) {
+        if (is_space(c)) {
             while (col <= line->visual_width) {
                 col += 1;
                 c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-                if (!isspace(c)) {
+                if (!is_space(c)) {
                     break;
                 }
             }

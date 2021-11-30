@@ -15,15 +15,15 @@ char * yed_word_at_point(yed_frame *frame, int row, int col) {
 
     c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-    if (isspace(c)) { return NULL; }
+    if (is_space(c)) { return NULL; }
 
     word_len = 0;
 
-    if (isalnum(c) || c == '_') {
+    if (is_alnum(c) || c == '_') {
         while (col > 1) {
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
-            if (!isalnum(c) && c != '_') {
+            if (!is_alnum(c) && c != '_') {
                 break;
             }
 
@@ -32,7 +32,7 @@ char * yed_word_at_point(yed_frame *frame, int row, int col) {
         word_start = array_item(line->chars, yed_line_col_to_idx(line, col));
         c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         while (col <= line->visual_width
-        &&    (isalnum(c) || c == '_')) {
+        &&    (is_alnum(c) || c == '_')) {
 
             word_len += 1;
             col      += 1;
@@ -42,7 +42,7 @@ char * yed_word_at_point(yed_frame *frame, int row, int col) {
         while (col > 1) {
             c = ((yed_glyph*)yed_line_col_to_glyph(line, col - 1))->c;
 
-            if (isalnum(c) || c == '_' || isspace(c)) {
+            if (is_alnum(c) || c == '_' || is_space(c)) {
                 break;
             }
 
@@ -51,7 +51,7 @@ char * yed_word_at_point(yed_frame *frame, int row, int col) {
         word_start = array_item(line->chars, yed_line_col_to_idx(line, col));
         c          = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         while (col <= line->visual_width
-        &&    (!isalnum(c) && c != '_' && !isspace(c))) {
+        &&    (!is_alnum(c) && c != '_' && !is_space(c))) {
 
             word_len += 1;
             col      += 1;
@@ -417,7 +417,7 @@ array_t sh_split(const char *s) {
     end   = 0;
     prev  = 0;
 
-    while (start < len && isspace(copy[start])) { start += 1; }
+    while (start < len && is_space(copy[start])) { start += 1; }
 
     while (start < len) {
         c   = copy[start];
@@ -446,7 +446,7 @@ array_t sh_split(const char *s) {
             q = 1;
         } else {
             while (end + 1 < len
-            &&     !isspace(copy[end + 1])) {
+            &&     !is_space(copy[end + 1])) {
                 end += 1;
             }
         }
@@ -479,7 +479,7 @@ array_t sh_split(const char *s) {
         end  += q;
         start = end + 1;
 
-        while (start < len && isspace(copy[start])) { start += 1; }
+        while (start < len && is_space(copy[start])) { start += 1; }
     }
 
     free(copy);
