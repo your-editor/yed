@@ -10,7 +10,6 @@ if [ "$(uname)" == "Darwin" ] && uname -a | grep "arm64" >/dev/null 2>&1; then
 else
     release="${common} -O3 -march=native -mtune=native"
 fi
-test="${common} -O1 -g"
 
 strip="no"
 

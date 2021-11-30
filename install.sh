@@ -79,12 +79,6 @@ DRIVER_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
 export LIB_C_FLAGS
 export DRIVER_C_FLAGS
 
-# Add this framework to the Mac debug build so
-# that we can use Instruments.app to profile yed
-if [ "$(uname)" == "Darwin" ]; then
-    debug+=" -framework CoreFoundation"
-fi
-
 cfg=${!cfg_name}
 
 ${CC} --version ${ERR_LIM} 2>&1 > /dev/null
@@ -112,6 +106,11 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
+if [ $(uname) = "Darwin" ] && [ -d "${lib_dir}/libyed.so.new.dSYM" ]; then
+    rm -rf "${lib_dir}/libyed.so.dSYM" || exit 1
+    mv "${lib_dir}/libyed.so.new.dSYM" "${lib_dir}/libyed.so.dSYM" || exit 1
+    mv "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so.new" "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so" || exit 1
+fi
 echo "Installed 'libyed.so':             ${lib_dir}"
 
 echo "Creating include directory.."
@@ -133,6 +132,11 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
+if [ $(uname) = "Darwin" ] && [ -d "${bin_dir}/yed.new.dSYM" ]; then
+    rm -rf "${bin_dir}/yed.dSYM" || exit 1
+    mv "${bin_dir}/yed.new.dSYM" "${bin_dir}/yed.dSYM" || exit 1
+    mv "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed.new" "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed" || exit 1
+fi
 echo "Installed 'yed':                   ${bin_dir}"
 
 echo "Creating default configuration.."
@@ -150,7 +154,7 @@ else
         git pull
         cd ${DIR}
     else
-	echo "Found plugins."
+    echo "Found plugins."
     fi
 fi
 
