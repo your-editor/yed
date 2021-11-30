@@ -188,7 +188,7 @@ static int parse_options(int argc, char **argv) {
             } else if (strcmp(argv[i], "--print-cflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
-                "-g -O0 "
+                "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
                 "-std=gnu99 -shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
 
@@ -196,7 +196,7 @@ static int parse_options(int argc, char **argv) {
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
-                "-g -O0 "
+                "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
                 "-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
 
@@ -260,6 +260,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
 
     start_time = measure_time_now_ms();
+
+    srand(time(NULL));
 
     /*
     ** Redirect stderr so that we don't get all kinds of unintended output
