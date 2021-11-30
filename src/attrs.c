@@ -247,7 +247,7 @@ int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
            && (attr1.flags == attr2.flags);
 }
 
-yed_attrs yed_parse_attrs(char *string) {
+yed_attrs yed_parse_attrs(const char *string) {
     yed_attrs  attrs;
     array_t    words;
     int        idx;
