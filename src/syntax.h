@@ -425,7 +425,7 @@ static inline void _yed_syntax_remove_cache(yed_syntax *syntax, yed_buffer *buff
     }
 }
 
-static inline void yed_syntax_cache_evict_if_full(yed_syntax *syntax, _yed_syntax_cache *cache) {
+static inline void _yed_syntax_cache_evict_one(yed_syntax *syntax, _yed_syntax_cache *cache) {
     _yed_syntax_cache_entry *it;
     int                      min_row;
     int                      max_row;
@@ -437,7 +437,7 @@ static inline void yed_syntax_cache_evict_if_full(yed_syntax *syntax, _yed_synta
     int                      i;
     int                      idx;
 
-    if (array_len(cache->entries) == cache->size) {
+    if (array_len(cache->entries) > 0) {
         it       = array_item(cache->entries, 0);
         min_row  = it->row;
         it       = array_last(cache->entries);
@@ -469,6 +469,13 @@ static inline void yed_syntax_cache_evict_if_full(yed_syntax *syntax, _yed_synta
 
         idx = (array_len(cache->entries) * max_bucket_idx) / YED_SYN_N_EVICTION_BUCKETS;
         array_delete(cache->entries, idx);
+    }
+}
+
+
+static inline void _yed_syntax_cache_evict_if_full(yed_syntax *syntax, _yed_syntax_cache *cache) {
+    if (array_len(cache->entries) == cache->size) {
+        _yed_syntax_cache_evict_one(syntax, cache);
     }
 }
 
@@ -582,13 +589,13 @@ static inline _yed_syntax_cache_entry *_yed_syntax_add_to_cache(yed_syntax *synt
     if (it == NULL) {
         new_entry.row       = row;
         new_entry.range_idx = range_idx;
-        yed_syntax_cache_evict_if_full(syntax, cache);
+        _yed_syntax_cache_evict_if_full(syntax, cache);
         return array_push(cache->entries, new_entry);
     } else {
         if (it->row < row) {
             new_entry.row       = row;
             new_entry.range_idx = range_idx;
-            yed_syntax_cache_evict_if_full(syntax, cache);
+            _yed_syntax_cache_evict_if_full(syntax, cache);
             return array_push(cache->entries, new_entry);
         } else if (it->row == row) {
             it->range_idx = range_idx;
@@ -604,7 +611,7 @@ static inline _yed_syntax_cache_entry *_yed_syntax_add_to_cache(yed_syntax *synt
     }
 
     /* Nope, so we might have to evict. */
-    yed_syntax_cache_evict_if_full(syntax, cache);
+    _yed_syntax_cache_evict_if_full(syntax, cache);
 
     idx                 = _yed_syntax_cache_insert_point(syntax, cache, row);
     new_entry.row       = row;
@@ -707,28 +714,32 @@ static _yed_syntax_range *_yed_syntax_get_start_state(yed_syntax *syntax, yed_bu
 }
 
 static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer, _yed_syntax_cache *cache, int row) {
+    int                      started_at_top;
     _yed_syntax_cache_entry *it;
+    int                      changed;
+    int                      count;
     _yed_syntax_range       *start_range;
     yed_line                *line;
     _yed_syntax_range       *end_range;
     int                      end_range_idx;
     _yed_syntax_cache_entry  new_entry;
-    int                      count;
-    int                      changed;
 
     if (array_len(cache->entries) == 0) {
         return 0;
     }
 
+    started_at_top = 0;
+
     it = _yed_syntax_cache_lookup_nearest(syntax, cache, row);
     if (it == NULL) {
-        it = array_data(cache->entries);
+        it = _yed_syntax_add_to_cache(syntax, cache, 1, syntax->global);
+        started_at_top = 1;
     }
 
     DBG("fixup: row %d ->", it->row);
 
-    count   = 0;
     changed = 0;
+    count   = 0;
     while (it != array_last(cache->entries)) {
         start_range = *(_yed_syntax_range**)array_item(syntax->ranges, it->range_idx);
         line        = yed_buff_get_line(buffer, it->row);
@@ -763,11 +774,12 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
 out:;
     DBG(" %d entries", count);
 
-    return changed;
+    return changed | started_at_top;
 }
 
 static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cache *cache, yed_buffer *buffer, int row, int mod_event) {
     yed_line                *line;
+    _yed_syntax_cache_entry *cache_entry;
     _yed_syntax_range       *cached_state;
     _yed_syntax_range       *start_state;
     _yed_syntax_range       *end_state;
@@ -789,15 +801,21 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
             line = yed_buff_get_line(buffer, row);
             array_zero_term(line->chars);
 
-            /* What is the state at the end of this line? Look at the known state of the next line. */
-            cached_state = _yed_syntax_get_start_state(syntax, buffer, row + 1);
+            start_state  = _yed_syntax_get_start_state(syntax, buffer, row);
+            end_state    = _yed_syntax_get_line_end_state(syntax, buffer, line, start_state);
+            cache_entry  = _yed_syntax_cache_lookup_exact(syntax, cache, row + 1);
+            cached_state = (cache_entry == NULL)
+                            ? NULL
+                            : *(_yed_syntax_range**)array_item(syntax->ranges, cache_entry->range_idx);
 
-            /* What does a parse tell us is the state at the end of this line? */
-            start_state = _yed_syntax_get_start_state(syntax, buffer, row);
-            end_state   = _yed_syntax_get_line_end_state(syntax, buffer, line, start_state);
+            if (cached_state != end_state) {
+                mark_dirty  = _yed_syntax_fixup_cache(syntax, buffer, cache, row);
+            }
 
+            _yed_syntax_cache_evict_one(syntax, cache);
+            _yed_syntax_cache_evict_one(syntax, cache);
             _yed_syntax_add_to_cache(syntax, cache, row + 1, end_state);
-            mark_dirty = _yed_syntax_fixup_cache(syntax, buffer, cache, row + 1);
+            _yed_syntax_add_to_cache(syntax, cache, row,     start_state);
 
             break;
 
@@ -834,8 +852,6 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
             }
 
 
-/*             start_state = _yed_syntax_get_start_state(syntax, buffer, row); */
-/*             _yed_syntax_add_to_cache(syntax, cache, row, start_state); */
             if (row == 1) {
                 _yed_syntax_add_to_cache(syntax, cache, row, syntax->global);
             }
@@ -850,6 +866,7 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
     }
 
     if (mark_dirty) {
+        DBG("DIRTY");
         yed_mark_dirty_frames(buffer);
     }
 }
@@ -1469,8 +1486,6 @@ static inline void yed_syntax_line_event(yed_syntax *syntax, yed_event *event) {
     yed_line          *line;
     array_t            line_attrs;
     _yed_syntax_range *start_range;
-    _yed_syntax_range *end_range;
-    _yed_syntax_cache *cache;
 
     if (!syntax->finalized) { return; }
 
@@ -1483,13 +1498,7 @@ static inline void yed_syntax_line_event(yed_syntax *syntax, yed_event *event) {
 
     start_range = _yed_syntax_get_start_state(syntax, event->frame->buffer, event->row);
 
-    end_range = _yed_syntax_line(syntax, line, line_attrs, start_range);
-
-    cache = _yed_syntax_get_cache(syntax, event->frame->buffer);
-
-    if (end_range->one_line) { end_range = syntax->global; }
-
-    _yed_syntax_add_to_cache(syntax, cache, event->row + 1, end_range);
+    _yed_syntax_line(syntax, line, line_attrs, start_range);
 }
 
 static inline void yed_syntax_style_event(yed_syntax *syntax, yed_event *event) {
