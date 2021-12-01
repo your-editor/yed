@@ -1437,3 +1437,100 @@ void yed_update_line_visual_widths(void) {
         }
     }
 }
+
+char *yed_get_selection_text(yed_buffer *buffer) {
+    char      nl;
+    array_t   chars;
+    int       r1;
+    int       c1;
+    int       r2;
+    int       c2;
+    int       r;
+    yed_line *line;
+    int       cstart;
+    int       cend;
+    int       i;
+    int       n;
+    char     *data;
+
+    if (!buffer->has_selection) { return NULL; }
+
+    nl    = '\n';
+    chars = array_make(char);
+
+    yed_range_sorted_points(&buffer->selection, &r1, &c1, &r2, &c2);
+
+    if (buffer->selection.kind == RANGE_LINE) {
+        for (r = r1; r <= r2; r += 1) {
+            line = yed_buff_get_line(buffer, r);
+            if (line == NULL) { break; } /* should not happen */
+
+            data = (char*)array_data(line->chars);
+            array_push_n(chars, data, array_len(line->chars));
+            array_push(chars, nl);
+        }
+    } else {
+        for (r = r1; r <= r2; r += 1) {
+            line = yed_buff_get_line(buffer, r);
+            if (line == NULL) { break; } /* should not happen */
+
+            if (line->visual_width > 0) {
+                cstart = r == r1 ? c1 : 1;
+                cend   = r == r2 ? c2 : line->visual_width + 1;
+
+                i    = yed_line_col_to_idx(line, cstart);
+                n    = yed_line_col_to_idx(line, cend) - i;
+                data = array_item(line->chars, i);
+
+                array_push_n(chars, data, n);
+            }
+
+            if (r < r2) {
+                array_push(chars, nl);
+            }
+        }
+    }
+
+    array_zero_term(chars);
+
+    return (char*)array_data(chars);
+}
+
+char *yed_get_line_text(yed_buffer *buffer, int row) {
+    yed_line *line;
+
+    line = yed_buff_get_line(buffer, row);
+
+    if (line == NULL) { return NULL; }
+
+    array_zero_term(line->chars);
+
+    return strdup(line->chars.data);
+}
+
+char *yed_get_buffer_text(yed_buffer *buffer) {
+    char      nl;
+    array_t   chars;
+    int       n_lines;
+    int       row;
+    yed_line *line;
+    char     *data;
+
+    nl      = '\n';
+    chars   = array_make(char);
+    n_lines = yed_buff_n_lines(buffer);
+    row     = 1;
+
+    bucket_array_traverse(buffer->lines, line) {
+        data = (char*)array_data(line->chars);
+        array_push_n(chars, data, array_len(line->chars));
+        if (row < n_lines) {
+            array_push(chars, nl);
+        }
+        row += 1;
+    }
+
+    array_zero_term(chars);
+
+    return (char*)array_data(chars);
+}
