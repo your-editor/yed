@@ -77,14 +77,149 @@ char *yed_word_under_cursor(void) {
 
 char * abs_path(const char *path, char *buff) {
     char exp_path[4096];
+    int  exp_len;
+    u64  i;
+    u64  k;
+    u64  j;
 
     exp_path[0] = buff[0] = 0;
 
     expand_path(path, exp_path);
-    if (!realpath(exp_path, buff)) {
-        memcpy(buff, exp_path, strlen(exp_path) + 1);
+    exp_len = strlen(exp_path);
+
+    if (exp_len == 0) { goto out; }
+
+    if (exp_path[0] != '/') {
+        strcat(buff, ys->working_dir);
+        strcat(buff, "/");
     }
 
+    strcat(buff, exp_path);
+
+    /* Move to the beginning of the string */
+    i = 0;
+    k = 0;
+
+    /* Replace backslashes with forward slashes */
+    while (buff[i] != '\0') {
+        /* Forward slash or backslash separator found? */
+        if (buff[i] == '/' || buff[i] == '\\') {
+            buff[k++] = '/';
+            while (buff[i] == '/' || buff[i] == '\\')
+                i++;
+        } else {
+            buff[k++] = buff[i++];
+        }
+    }
+
+    /* Properly terminate the string with a NULL character */
+    buff[k] = '\0';
+
+    /* Move back to the beginning of the string */
+    i = 0;
+    j = 0;
+    k = 0;
+
+    /* Parse the entire string */
+    do {
+        /* Forward slash separator found? */
+        if (buff[i] == '/' || buff[i] == '\0') {
+            /* "." element found? */
+            if ((i - j) == 1 && !strncmp (buff + j, ".", 1)) {
+                /* Check whether the pathname is empty? */
+                if (k == 0) {
+                    if (buff[i] == '\0') {
+                        buff[k++] = '.';
+                    } else if (buff[i] == '/' && buff[i + 1] == '\0') {
+                        buff[k++] = '.';
+                        buff[k++] = '/';
+                    }
+                } else if (k > 1) {
+                    /* Remove the final slash if necessary */
+                    if (buff[i] == '\0')
+                        k--;
+                }
+            }
+            /* ".." element found? */
+            else if ((i - j) == 2 && !strncmp (buff + j, "..", 2)) {
+                /* Check whether the pathname is empty? */
+                if (k == 0) {
+                    buff[k++] = '.';
+                    buff[k++] = '.';
+
+                    /* Append a slash if necessary */
+                    if (buff[i] == '/')
+                        buff[k++] = '/';
+                } else if (k > 1) {
+                    /* Search the path for the previous slash */
+                    for (j = 1; j < k; j++) {
+                        if (buff[k - j - 1] == '/')
+                            break;
+                    }
+
+                    /* Slash separator found? */
+                    if (j < k) {
+                        if (!strncmp (buff + k - j, "..", 2)) {
+                            buff[k++] = '.';
+                            buff[k++] = '.';
+                        } else {
+                            k = k - j - 1;
+                        }
+
+                        /* Append a slash if necessary */
+                        if (k == 0 && buff[0] == '/')
+                            buff[k++] = '/';
+                        else if (buff[i] == '/')
+                            buff[k++] = '/';
+                    }
+                    /* No slash separator found? */
+                    else {
+                        if (k == 3 && !strncmp (buff, "..", 2)) {
+                            buff[k++] = '.';
+                            buff[k++] = '.';
+
+                            /* Append a slash if necessary */
+                            if (buff[i] == '/')
+                                buff[k++] = '/';
+                        } else if (buff[i] == '\0') {
+                            k = 0;
+                            buff[k++] = '.';
+                        } else if (buff[i] == '/' && buff[i + 1] == '\0') {
+                            k = 0;
+                            buff[k++] = '.';
+                            buff[k++] = '/';
+                        } else {
+                            k = 0;
+                        }
+                    }
+                }
+            } else {
+                /* Copy directory name */
+                memmove (buff + k, buff + j, i - j);
+                /* Advance write pointer */
+                k += i - j;
+
+                /* Append a slash if necessary */
+                if (buff[i] == '/')
+                    buff[k++] = '/';
+            }
+
+            /* Move to the next token */
+            while (buff[i] == '/')
+                i++;
+            j = i;
+        }
+        else if (k == 0) {
+            while (buff[i] == '.' || buff[i] == '/') {
+                 j++,i++;
+            }
+        }
+    } while (buff[i++] != '\0');
+
+    /* Properly terminate the string with a NULL character */
+    buff[k] = '\0';
+
+out:;
     return buff;
 }
 
