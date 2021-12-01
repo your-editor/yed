@@ -187,7 +187,7 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
         }
 
         full_path[0] = 0;
-        if (strcmp(dirn, ".") != 0) {
+        if (strcmp(string, "./") == 0 || strcmp(dirn, ".") != 0) {
             strcat(full_path, dirn);
             if (strcmp(dirn, "/") != 0) {
                 strcat(full_path, "/");
