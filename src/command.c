@@ -159,7 +159,6 @@ do {                                                              \
     SET_DEFAULT_COMMAND("bind",                               bind);
     SET_DEFAULT_COMMAND("unbind",                             unbind);
     SET_DEFAULT_COMMAND("multi",                              multi);
-    SET_DEFAULT_COMMAND("if",                                 if);
     SET_DEFAULT_COMMAND("suspend",                            suspend);
     SET_DEFAULT_COMMAND("scomps-list",                        scomps_list);
     SET_DEFAULT_COMMAND("version",                            version);
@@ -1420,7 +1419,8 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
 void yed_default_command_buffer(int n_args, char **args) {
     yed_buffer                                   *buffer;
     yed_buffer                                   *lookup;
-    char                                          path[4096];
+    char                                          a_path[4096];
+    char                                          r_path[4096];
     char                                          h_path[4096];
     char                                         *name;
     yed_event                                     event;
@@ -1438,17 +1438,18 @@ void yed_default_command_buffer(int n_args, char **args) {
         YEXE("frame-new");
     }
 
-    relative_path_if_subtree(args[0], path);
-    if (homeify_path(path, h_path)) {
+    abs_path(args[0], a_path);
+    relative_path_if_subtree(a_path, r_path);
+    if (homeify_path(r_path, h_path)) {
         name = h_path;
     } else {
-        name = path;
+        name = r_path;
     }
 
     lookup = yed_get_buffer(name);
 
     if (!lookup) {
-        lookup = yed_get_buffer_by_path(path);
+        lookup = yed_get_buffer_by_path(a_path);
     }
 
     if (lookup) {
@@ -1459,26 +1460,26 @@ void yed_default_command_buffer(int n_args, char **args) {
         }
     } else {
         event.kind = EVENT_BUFFER_PRE_LOAD;
-        event.path = path;
+        event.path = a_path;
         yed_trigger_event(&event);
 
         if (event.cancel) { goto out; }
 
         buffer = yed_create_buffer(name);
-        status = yed_fill_buff_from_file(buffer, path);
+        status = yed_fill_buff_from_file(buffer, a_path);
 
         switch (status) {
             case BUFF_FILL_STATUS_ERR_DIR:
-                yed_cerr("did not create buffer '%s' -- path is a directory", path);
+                yed_cerr("did not create buffer '%s' -- path is a directory", a_path);
                 goto cleanup;
             case BUFF_FILL_STATUS_ERR_PER:
-                yed_cerr("did not create buffer '%s' -- permission denied", path);
+                yed_cerr("did not create buffer '%s' -- permission denied", a_path);
                 goto cleanup;
             case BUFF_FILL_STATUS_ERR_MAP:
-                yed_cerr("did not create buffer '%s' -- mmap() failed", path);
+                yed_cerr("did not create buffer '%s' -- mmap() failed", a_path);
                 goto cleanup;
             case BUFF_FILL_STATUS_ERR_UNK:
-                yed_cerr("did not create buffer '%s' -- unknown error", path);
+                yed_cerr("did not create buffer '%s' -- unknown error", a_path);
                 goto cleanup;
             case BUFF_FILL_STATUS_ERR_NOF:
             case BUFF_FILL_STATUS_SUCCESS:
@@ -1488,7 +1489,7 @@ void yed_default_command_buffer(int n_args, char **args) {
 
                 if (status == BUFF_FILL_STATUS_ERR_NOF) {
                     yed_cprint(" (new file)");
-                    buffer->path = strdup(path);
+                    buffer->path = strdup(a_path);
                     buffer->kind = BUFF_KIND_FILE;
                     yed_buffer_set_ft(buffer, FT_UNKNOWN);
 
@@ -3917,29 +3918,6 @@ void yed_default_command_multi(int n_args, char **args) {
 
     for (i = 0; i < n_args; i += 1) {
         split = sh_split(args[i]);
-        if (array_len(split)) {
-            yed_execute_command_from_split(split);
-        }
-        free_string_array(split);
-    }
-}
-
-void yed_default_command_if(int n_args, char **args) {
-    array_t split;
-
-    if (n_args < 2 || n_args > 3) {
-        yed_cerr("expected 2 or 3 arguments, but got %d", n_args);
-        return;
-    }
-
-    if (yed_var_is_truthy(args[0])) {
-        split = sh_split(args[1]);
-        if (array_len(split)) {
-            yed_execute_command_from_split(split);
-        }
-        free_string_array(split);
-    } else if (n_args == 3) {
-        split = sh_split(args[2]);
         if (array_len(split)) {
             yed_execute_command_from_split(split);
         }
