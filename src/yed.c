@@ -198,7 +198,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
+                "-rdynamic -shared -fPIC -L%s -lyed\n", INSTALLED_LIB_DIR);
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--instrument") == 0) {

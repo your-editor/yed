@@ -15,9 +15,27 @@ int load_yed_lib(void);
 void call_yed_fini(void);
 
 int main(int argc, char **argv) {
-    int status;
+    int   status;
+    char *ld_lib_path;
+    char *new_ld_lib_path;
+
+#ifdef __APPLE__
+    #define LIB_PATH_ENV_VAR "DYLD_LIBRARY_PATH"
+#else
+    #define LIB_PATH_ENV_VAR "LD_LIBRARY_PATH"
+#endif
 
     if (strlen(INSTALLED_LIB_DIR)) {
+        ld_lib_path      = getenv(LIB_PATH_ENV_VAR);
+        new_ld_lib_path  = malloc((ld_lib_path ? strlen(ld_lib_path) : 0) + 1 + strlen(INSTALLED_LIB_DIR) + 1);
+        *new_ld_lib_path = 0;
+        strcat(new_ld_lib_path, INSTALLED_LIB_DIR);
+        if (ld_lib_path != NULL) {
+            strcat(new_ld_lib_path, ":");
+            strcat(new_ld_lib_path, ld_lib_path);
+        }
+        setenv(LIB_PATH_ENV_VAR, new_ld_lib_path, 1);
+
         strcat(lib_path, INSTALLED_LIB_DIR);
         strcat(lib_path, "/");
     }
