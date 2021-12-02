@@ -138,6 +138,34 @@ static void parse_and_put_attrs(char *s) {
     array_free(chars);
 }
 
+static void parse_var_and_put_attrs(char *s) {
+    array_t    chars;
+    char      *str;
+    yed_attrs  base;
+    yed_attrs  attrs;
+
+    chars = array_make(char);
+
+    s += 1;
+    while (*s && *s != '}') { array_push(chars, *s); s += 1; }
+
+    base = yed_active_style_get_status_line();
+
+    if (*s) {
+        array_zero_term(chars);
+
+        str = yed_get_var((char*)array_data(chars));
+        if (str != NULL) {
+            attrs = yed_parse_attrs(str);
+            yed_combine_attrs(&base, &attrs);
+        }
+    }
+
+    yed_set_attr(base);
+
+    array_free(chars);
+}
+
 #define GBUMP(_g, _l) ((yed_glyph*)((&((_g)->c)) + (_l)))
 
 static int get_status_line_string_width(char *s) {
@@ -172,6 +200,13 @@ static int get_status_line_string_width(char *s) {
                     goto skip;
                 } else if (git->c == '[') {
                     while (git->c != ']') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                } else if (git->c == '{') {
+                    while (git->c != '}') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
                         len = yed_get_glyph_len(*git);
@@ -248,6 +283,14 @@ static void put_status_line_string(char *s, int start_col) {
                 } else if (git->c == '[') {
                     parse_and_put_attrs((char*)&git->c);
                     while (git->c != ']') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                } else if (git->c == '{') {
+                    parse_var_and_put_attrs((char*)&git->c);
+                    while (git->c != '}') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
                         len = yed_get_glyph_len(*git);
