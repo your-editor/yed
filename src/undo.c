@@ -37,6 +37,11 @@ void yed_free_undo_history(yed_undo_history *history) {
     array_free(history->redo);
 }
 
+void yed_reset_undo_history(yed_undo_history *history) {
+    yed_free_undo_history(history);
+    *history = yed_new_undo_history();
+}
+
 int yed_num_undo_records(yed_buffer *buffer) {
     return array_len(buffer->undo_history.undo);
 }
