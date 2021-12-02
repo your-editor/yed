@@ -636,13 +636,13 @@ void yed_buff_clear_no_undo(yed_buffer *buff) {
     }
     bucket_array_clear(buff->lines);
 
+    DO_POST_MOD_EVT(buff, BUFF_MOD_CLEAR, 0, 0);
+
     yed_buffer_add_line_no_undo(buff);
 
     yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
-
-    DO_POST_MOD_EVT(buff, BUFF_MOD_CLEAR, 0, 0);
 
 out:;
 }
@@ -1079,6 +1079,8 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
     }
 
     yed_buffer_set_ft(buff, FT_UNKNOWN);
+
+    yed_reset_undo_history(&buff->undo_history);
 
     buff->kind   = BUFF_KIND_FILE;
     buff->flags &= ~BUFF_MODIFIED;
