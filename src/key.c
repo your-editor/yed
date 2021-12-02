@@ -44,6 +44,12 @@ static int esc_timeout(int *input) {
 
 static int esc_sequence(int *input) {
     char c;
+    char buff[64];
+    int  i;
+    int  k;
+    int  b;
+    int  x;
+    int  y;
 
     /* the input length is 3 */
     /* input[0] is ESC */
@@ -263,6 +269,39 @@ static int esc_sequence(int *input) {
                 case 'F':    { input[0] = END_KEY;     break; }
                 case 'P':    { input[0] = DEL_KEY;     break; }
                 case 'Z':    { input[0] = SHIFT_TAB;   break; }
+                case '<':    {
+                    k = 0;
+
+                    memset(buff, 0, sizeof(buff));
+                    for (i = 0; read(0, &c, 1) && c != ';'; i += 1) { buff[i] = c; }
+                    buff[i] = 0;
+                    b = s_to_i(buff);
+
+                    if (b >= 64) {
+                        b = MOUSE_WHEEL_UP + (b - 64);
+                    } else if (b >= 32) {
+                        k  = MOUSE_DRAG;
+                        b -= 32;
+                    }
+
+                    memset(buff, 0, sizeof(buff));
+                    for (i = 0; read(0, &c, 1) && c != ';'; i += 1) { buff[i] = c; }
+                    buff[i] = 0;
+                    x = s_to_i(buff);
+
+                    memset(buff, 0, sizeof(buff));
+                    for (i = 0; read(0, &c, 1) && toupper(c) != 'M'; i += 1) { buff[i] = c; }
+                    buff[i] = 0;
+                    y = s_to_i(buff);
+
+                    if (k != MOUSE_DRAG) {
+                        k = (c == 'M') ? MOUSE_PRESS : MOUSE_RELEASE;
+                    }
+
+                    input[0] = MK_MOUSE(k, b, y, x);
+
+                    break;
+                }
             }
             return 1;
         }
@@ -517,7 +556,7 @@ void yed_take_key(int key) {
         yed_execute_command(ys->interactive_command, 1, &key_str);
     } else if (binding) {
         yed_execute_command(binding->cmd, binding->n_args, binding->args);
-    } else if (key < REAL_KEY_MAX
+    } else if (key > 0 && key < REAL_KEY_MAX
       &&      (key == ENTER || key == TAB || key == MBYTE || !iscntrl(key))) {
         yed_execute_command("insert", 1, &key_str);
     }
@@ -711,7 +750,7 @@ void yed_unbind_key(int key) {
 yed_key_binding * yed_get_key_binding(int key) {
     tree_it(int, yed_key_binding_ptr_t) it;
 
-    if (key == KEY_NULL)    { return NULL; }
+    if (key == KEY_NULL || IS_MOUSE(key))    { return NULL; }
 
     if (key < REAL_KEY_MAX) {
         return ys->real_key_map[key];

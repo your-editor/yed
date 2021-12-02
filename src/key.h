@@ -5,7 +5,7 @@
 
 
 
-enum KEY_ACTION {
+enum {
     KEY_NULL  = 0,    /* NULL      */
     CTRL_A    = 1,    /* Ctrl-a    */
     CTRL_B    = 2,    /* Ctrl-b    */
@@ -88,6 +88,32 @@ enum KEY_ACTION {
 #define MAX_SEQ_LEN (8)
 
 #define IS_ARROW(k) ((k) >= ARROW_LEFT && (k) <= ARROW_DOWN)
+
+#define MOUSE_PRESS        (0)
+#define MOUSE_RELEASE      (1)
+#define MOUSE_DRAG         (2)
+
+#define MOUSE_BUTTON_LEFT   (0)
+#define MOUSE_BUTTON_MIDDLE (1)
+#define MOUSE_BUTTON_RIGHT  (2)
+#define MOUSE_WHEEL_UP      (3)
+#define MOUSE_WHEEL_DOWN    (4)
+
+
+#define IS_MOUSE(k) ((k) < 0)
+
+#define MOUSE_KIND(k)   (((k) >> 29) & 0x3)
+#define MOUSE_BUTTON(k) (((k) >> 26) & 0x7)
+#define MOUSE_ROW(k)    (((k) >> 13) & 0x1fff)
+#define MOUSE_COL(k)    (((k) >> 0)  & 0x1fff)
+
+#define MK_MOUSE(k, b, r, c) \
+    (((((k) & 0x3)    << 29) \
+    | (((b) & 0x7)    << 26) \
+    | (((r) & 0x1fff) << 13) \
+    | (((c) & 0x1fff) << 0)) \
+    | 0x80000000)
+
 
 void yed_init_keys(void);
 

@@ -48,6 +48,13 @@
 #define TERM_ENABLE_BRACKETED_PASTE  "\e[?2004h"
 #define TERM_DISABLE_BRACKETED_PASTE "\e[?2004l"
 
+#define TERM_MOUSE_BUTTON_ENABLE     "\e[?1002h"
+#define TERM_MOUSE_BUTTON_DISABLE    "\e[?1002l"
+#define TERM_MOUSE_ANY_ENABLE        "\e[?1003h"
+#define TERM_MOUSE_ANY_DISABLE       "\e[?1003l"
+#define TERM_SGR_1006_ENABLE         "\e[?1006h"
+#define TERM_SGR_1006_DISABLE        "\e[?1006l"
+
 #define TERM_DEFAULT_READ_TIMEOUT (3)
 
 #define TERM_CURSOR_STYLE_DEFAULT            (0)
@@ -88,5 +95,8 @@ void yed_register_sigfpe_handler(void);
 void yed_register_sigbus_handler(void);
 int yed_check_for_resize(void);
 void yed_handle_resize(void);
+void yed_term_enable_mouse_reporting(void);
+void yed_term_disable_mouse_reporting(void);
+int yed_term_mouse_reporting_enabled(void);
 
 #endif

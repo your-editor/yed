@@ -85,6 +85,7 @@ int yed_term_exit(void) {
     printf(TERM_DISABLE_BRACKETED_PASTE);
     printf(TERM_STD_SCREEN);
     printf(TERM_CURSOR_SHOW);
+    printf(TERM_MOUSE_BUTTON_DISABLE);
 
     tcsetattr(0, TCSAFLUSH, &ys->sav_term);
 
@@ -535,4 +536,24 @@ void yed_handle_resize(void) {
     memset(&event, 0, sizeof(event));
     event.kind = EVENT_TERMINAL_RESIZED;
     yed_trigger_event(&event);
+}
+
+void yed_term_enable_mouse_reporting(void) {
+    append_to_output_buff(TERM_MOUSE_BUTTON_ENABLE);
+    append_to_output_buff(TERM_SGR_1006_ENABLE);
+    LOG_FN_ENTER();
+    yed_log("mouse on");
+    LOG_EXIT();
+}
+
+void yed_term_disable_mouse_reporting(void) {
+    append_to_output_buff(TERM_MOUSE_BUTTON_DISABLE);
+    append_to_output_buff(TERM_SGR_1006_DISABLE);
+    LOG_FN_ENTER();
+    yed_log("mouse off");
+    LOG_EXIT();
+}
+
+int yed_term_mouse_reporting_enabled(void) {
+    return !!ys->mouse_reporting_ref_count;
 }
