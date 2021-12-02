@@ -43,7 +43,7 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 LIB_C_FLAGS="-rdynamic -shared -fPIC -lm -lpthread"
-DRIVER_C_FLAGS="-rdynamic -lm -lpthread"
+DRIVER_C_FLAGS="-Isrc -rdynamic -lm -lpthread"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
@@ -119,7 +119,7 @@ echo "Installed headers:                 ${inc_dir}/yed"
 
 echo "Compiling the driver.."
 
-${CC} src/yed_driver.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
+${CC} src/yed_driver.c src/whereami.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
 
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped yed"
