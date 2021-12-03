@@ -785,6 +785,46 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
   return length;
 }
 
+#elif defined(__sun) && defined(__SVR4)
+
+#include <stdlib.h>
+#include <limits.h>
+
+WAI_FUNCSPEC
+int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
+{
+  char buffer[PATH_MAX];
+  int  length;
+
+  if (realpath(getexecname(), buffer) == NULL) {
+    return -1;
+  }
+
+  length = (int)strlen(buffer);
+
+  if (length <= capacity) {
+    memcpy(out, buffer, length);
+    if (dirname_length)
+    {
+      int i;
+
+      for (i = length - 1; i >= 0; --i)
+      {
+        if (out[i] == '/')
+        {
+          *dirname_length = i;
+          break;
+        }
+      }
+    }
+  }
+
+  return length;
+}
+
+WAI_NOINLINE WAI_FUNCSPEC
+int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length) { return -1; }
+
 #else
 
 #error unsupported platform

@@ -41,13 +41,18 @@ int main(int argc, char **argv) {
             }
 
             exe_path_length = wai_getExecutablePath(NULL, 0, NULL);
-            exe_path        = malloc(exe_path_length + 1);
-            wai_getExecutablePath(exe_path, exe_path_length, NULL);
-            exe_path[exe_path_length] = 0;
+            if (exe_path_length == -1) {
+                exe_path = argv[0];
+            } else {
+                exe_path        = malloc(exe_path_length + 1);
+                wai_getExecutablePath(exe_path, exe_path_length, NULL);
+                exe_path[exe_path_length] = 0;
+            }
 
             setenv(LIB_PATH_ENV_VAR, new_ld_lib_path, 1);
             setenv("_YED_DRIVER_CHLD", "1", 1);
             execvp(exe_path, argv);
+            return 1;
         }
     } else {
         if (strlen(INSTALLED_LIB_DIR)) {
