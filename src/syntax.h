@@ -472,9 +472,12 @@ static inline void _yed_syntax_cache_evict_one(yed_syntax *syntax, _yed_syntax_c
     }
 }
 
+static inline int _yed_syntax_cache_is_full(yed_syntax *syntax, _yed_syntax_cache *cache) {
+    return array_len(cache->entries) == cache->size;
+}
 
 static inline void _yed_syntax_cache_evict_if_full(yed_syntax *syntax, _yed_syntax_cache *cache) {
-    if (array_len(cache->entries) == cache->size) {
+    if (_yed_syntax_cache_is_full(syntax, cache)) {
         _yed_syntax_cache_evict_one(syntax, cache);
     }
 }
@@ -812,8 +815,12 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
                 mark_dirty  = _yed_syntax_fixup_cache(syntax, buffer, cache, row);
             }
 
-            _yed_syntax_cache_evict_one(syntax, cache);
-            _yed_syntax_cache_evict_one(syntax, cache);
+            if (array_len(cache->entries) == cache->size - 1) {
+                _yed_syntax_cache_evict_one(syntax, cache);
+            } else if (array_len(cache->entries) == cache->size) {
+                _yed_syntax_cache_evict_one(syntax, cache);
+                _yed_syntax_cache_evict_one(syntax, cache);
+            }
             _yed_syntax_add_to_cache(syntax, cache, row + 1, end_state);
             _yed_syntax_add_to_cache(syntax, cache, row,     start_state);
 
