@@ -132,6 +132,8 @@ static void print_usage(void) {
 "    Pause the editor at startup to allow an external tool to attach to it.\n"
 "--version\n"
 "    Print the version number and exit.\n"
+"--major-version\n"
+"    Print the major version number and exit.\n"
 "--print-lib-dir\n"
 "    Print the path of the directory containing the yed library and exit.\n"
 "--print-include-dir\n"
@@ -171,7 +173,10 @@ static int parse_options(int argc, char **argv) {
             if (strcmp(argv[i], "--") == 0) {
                 seen_double_dash = 1;
             } else if (strcmp(argv[i], "--version") == 0) {
-                printf("%d\n", yed_version);
+                printf("%d\n", YED_VERSION);
+                do_exit = 1;
+            } else if (strcmp(argv[i], "--major-version") == 0) {
+                printf("%d\n", YED_MAJOR_VERSION);
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
                 printf("%s\n", INSTALLED_LIB_DIR);
