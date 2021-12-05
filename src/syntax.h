@@ -185,6 +185,7 @@ typedef struct {
     int                max_group;
     regmatch_t        *matches;
     CACHE_TREE         caches;
+    int                needs_state;
     int                finalized;
 } yed_syntax;
 
@@ -637,7 +638,7 @@ static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffe
     yed_line          *line;
     _yed_syntax_range *new_range;
 
-    if (!syntax->finalized) { return; }
+    if (!syntax->finalized || !syntax->needs_state) { return; }
 
     start = measure_time_now_ms();
 
@@ -686,7 +687,7 @@ static _yed_syntax_range *_yed_syntax_get_start_state(yed_syntax *syntax, yed_bu
     _yed_syntax_range       *new_range;
     yed_line                *line;
 
-    if (!syntax->finalized || buffer == NULL || row <= 1) { return syntax->global; }
+    if (!syntax->finalized || !syntax->needs_state || buffer == NULL || row <= 1) { return syntax->global; }
 
     if (row <= 1) { return syntax->global; }
 
@@ -828,6 +829,8 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
 
         case BUFF_MOD_ADD_LINE:
         case BUFF_MOD_INSERT_LINE:
+            if (yed_buff_n_lines(buffer) == 1) { break; }
+
             if (row < yed_buff_n_lines(buffer)) {
                 array_rtraverse(cache->entries, it) {
                     if (it->row >= row) {
@@ -867,7 +870,7 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
             break;
 
         case BUFF_MOD_CLEAR:
-            _yed_syntax_build_cache(syntax, buffer);
+            _yed_syntax_remove_cache(syntax, buffer);
             mark_dirty = 1;
             break;
     }
@@ -1445,6 +1448,7 @@ static inline int yed_syntax_range_end(yed_syntax *syntax, const char *pattern) 
         regerror(err, &range->end, syntax->regex_err_str, err_len);
         _yed_syntax_free_range(range);
     } else {
+        if (!range->one_line) { syntax->needs_state = 1; }
         syntax->range = NULL;
     }
 
@@ -1523,6 +1527,8 @@ static inline void yed_syntax_style_event(yed_syntax *syntax, yed_event *event) 
 static inline void yed_syntax_buffer_delete_event(yed_syntax *syntax, yed_event *event) {
     CACHE_IT it;
 
+    if (!syntax->finalized || !syntax->needs_state) { return; }
+
     it = tree_lookup(syntax->caches, event->buffer);
 
     if (tree_it_good(it)) {
@@ -1532,6 +1538,8 @@ static inline void yed_syntax_buffer_delete_event(yed_syntax *syntax, yed_event 
 
 static inline void yed_syntax_buffer_mod_event(yed_syntax *syntax, yed_event *event) {
     CACHE_IT it;
+
+    if (!syntax->finalized || !syntax->needs_state) { return; }
 
     it = tree_lookup(syntax->caches, event->buffer);
 
