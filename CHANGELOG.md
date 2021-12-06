@@ -7,7 +7,7 @@
 - A new syntax highlighting engine in `syntax.h`.
 - Status line additions:
     - `%{...}` syntax for expanding a variable that contains an attribute string
-    - Padding and justification on `%` expansions: `%` followed by an integer, `x`, will be padded to `x` characters. If `x` is preceded by a `-`, the text will be left justified. A `=` indicates center justification. The default is right justification.
+    - Padding and justification on `%` expansions: `%` followed by an integer, `x`, will be padded to `x` characters. If `x` is preceded by a `-`, the text will be left justified. A `=` indicates center justification. The default is right justification. This has no effect on expansions that result in attributes.
     - `%T`: 24-hour clock
 - Events:
     - `EVENT_STATUS_LINE_PRE_UPDATE` will trigger before the status line is about to be updated.
