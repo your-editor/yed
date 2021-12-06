@@ -25,6 +25,34 @@ void yed_init_styles(void) {
 
 }
 
+static void fixup_missing(yed_style *style) {
+    if (style->good.flags == 0) {
+        if (style->active.flags & ATTR_16) {
+            style->good.flags = ATTR_16;
+            style->good.fg    = ATTR_16_GREEN;
+        } else if (style->active.flags & ATTR_256) {
+            style->good.flags = ATTR_256;
+            style->good.fg    = 2;
+        } else if (style->active.flags & ATTR_RGB) {
+            style->good.flags = ATTR_RGB;
+            style->good.fg    = RGB_32(0, 127, 0);
+        }
+    }
+
+    if (style->bad.flags == 0) {
+        if (style->active.flags & ATTR_16) {
+            style->bad.flags = ATTR_16;
+            style->bad.fg    = ATTR_16_RED;
+        } else if (style->active.flags & ATTR_256) {
+            style->bad.flags = ATTR_256;
+            style->bad.fg    = 1;
+        } else if (style->active.flags & ATTR_RGB) {
+            style->bad.flags = ATTR_RGB;
+            style->bad.fg    = RGB_32(127, 0, 0);
+        }
+    }
+}
+
 void yed_set_style(char *name, yed_style *style) {
     tree_it(yed_style_name_t,
             yed_style_ptr_t)   it;
@@ -33,6 +61,8 @@ void yed_set_style(char *name, yed_style *style) {
 
     new_style  = malloc(sizeof(*new_style));
     memcpy(new_style, style, sizeof(*new_style));
+
+    fixup_missing(new_style);
 
     it = tree_lookup(ys->styles, name);
     if (tree_it_good(it)) {
