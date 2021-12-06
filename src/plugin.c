@@ -479,6 +479,15 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
         }
     }
     FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_compls);
+
+    if (plug->requested_mouse_reporting) {
+        if (ys->mouse_reporting_ref_count == 1) {
+            yed_term_disable_mouse_reporting();
+        }
+        if (ys->mouse_reporting_ref_count > 0) {
+            ys->mouse_reporting_ref_count -= 1;
+        }
+    }
 }
 
 int yed_unload_plugin(char *plug_name) {
@@ -715,4 +724,37 @@ void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion comp
 
 void yed_plugin_set_unload_fn(yed_plugin *plug, yed_plugin_unload_fn_t fn) {
     plug->unload = fn;
+}
+
+void yed_plugin_request_mouse_reporting(yed_plugin *plug) {
+    if (plug->requested_mouse_reporting) { return; }
+
+    plug->requested_mouse_reporting  = 1;
+    ys->mouse_reporting_ref_count   += 1;
+
+    if (ys->mouse_reporting_ref_count == 1) {
+        yed_term_enable_mouse_reporting();
+    }
+
+    LOG_FN_ENTER();
+    yed_log("ref count: %d", ys->mouse_reporting_ref_count);
+    LOG_EXIT();
+}
+
+void yed_plugin_request_no_mouse_reporting(yed_plugin *plug) {
+    if (!plug->requested_mouse_reporting) { return; }
+
+    if (ys->mouse_reporting_ref_count == 1) {
+        yed_term_disable_mouse_reporting();
+    }
+
+    if (ys->mouse_reporting_ref_count > 0) {
+        ys->mouse_reporting_ref_count -= 1;
+    }
+
+    plug->requested_mouse_reporting  = 0;
+
+    LOG_FN_ENTER();
+    yed_log("ref count: %d", ys->mouse_reporting_ref_count);
+    LOG_EXIT();
 }

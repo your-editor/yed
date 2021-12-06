@@ -31,6 +31,7 @@ typedef struct yed_plugin_t {
     array_t                added_styles;
     array_t                added_fts;
     array_t                added_compls;
+    int                    requested_mouse_reporting;
 } yed_plugin;
 
 void yed_init_plugins(void);
@@ -54,6 +55,8 @@ void yed_plugin_set_style(yed_plugin *plug, char *name, struct yed_style_t *styl
 int yed_plugin_make_ft(yed_plugin *plug, const char *ft_name);
 void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion comp);
 void yed_plugin_set_unload_fn(yed_plugin *plug, yed_plugin_unload_fn_t fn);
+void yed_plugin_request_mouse_reporting(yed_plugin *plug);
+void yed_plugin_request_no_mouse_reporting(yed_plugin *plug);
 
 void yed_add_plugin_dir(const char *s);
 

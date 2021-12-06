@@ -41,6 +41,6 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p);
 void yed_set_attr(yed_attrs attr);
 int  yed_attrs_eq(yed_attrs attr1, yed_attrs attr2);
 void yed_combine_attrs(yed_attrs *dst, yed_attrs *src);
-yed_attrs yed_parse_attrs(char *string);
+yed_attrs yed_parse_attrs(const char *string);
 
 #endif

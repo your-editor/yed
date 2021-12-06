@@ -132,6 +132,8 @@ static void print_usage(void) {
 "    Pause the editor at startup to allow an external tool to attach to it.\n"
 "--version\n"
 "    Print the version number and exit.\n"
+"--major-version\n"
+"    Print the major version number and exit.\n"
 "--print-lib-dir\n"
 "    Print the path of the directory containing the yed library and exit.\n"
 "--print-include-dir\n"
@@ -171,7 +173,10 @@ static int parse_options(int argc, char **argv) {
             if (strcmp(argv[i], "--") == 0) {
                 seen_double_dash = 1;
             } else if (strcmp(argv[i], "--version") == 0) {
-                printf("%d\n", yed_version);
+                printf("%d\n", YED_VERSION);
+                do_exit = 1;
+            } else if (strcmp(argv[i], "--major-version") == 0) {
+                printf("%d\n", YED_MAJOR_VERSION);
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
                 printf("%s\n", INSTALLED_LIB_DIR);
@@ -188,7 +193,7 @@ static int parse_options(int argc, char **argv) {
             } else if (strcmp(argv[i], "--print-cflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
-                "-g -O0 "
+                "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
                 "-std=gnu99 -shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
 
@@ -196,9 +201,9 @@ static int parse_options(int argc, char **argv) {
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
-                "-g -O0 "
+                "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-rdynamic -shared -fPIC -L%s -lyed -Wl,-rpath,%s\n", INSTALLED_LIB_DIR, INSTALLED_LIB_DIR);
+                "-rdynamic -shared -fPIC -L%s -lyed\n", INSTALLED_LIB_DIR);
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--instrument") == 0) {
@@ -260,6 +265,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
 
     start_time = measure_time_now_ms();
+
+    srand(time(NULL));
 
     /*
     ** Redirect stderr so that we don't get all kinds of unintended output

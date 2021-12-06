@@ -38,6 +38,7 @@ struct yed_frame_t;
 
 yed_undo_history yed_new_undo_history(void);
 void yed_free_undo_history(yed_undo_history *history);
+void yed_reset_undo_history(yed_undo_history *history);
 int yed_num_undo_records(struct yed_buffer_t *buffer);
 void yed_start_undo_record(struct yed_frame_t *frame, struct yed_buffer_t *buffer);
 void yed_end_undo_record(struct yed_frame_t *frame, struct yed_buffer_t *buffer);

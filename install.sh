@@ -43,7 +43,7 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 LIB_C_FLAGS="-rdynamic -shared -fPIC -lm -lpthread"
-DRIVER_C_FLAGS="-rdynamic -lm -lpthread -Wl,-rpath,$(apath ${lib_dir})"
+DRIVER_C_FLAGS="-Isrc -rdynamic -lm -lpthread"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
@@ -79,12 +79,6 @@ DRIVER_C_FLAGS+=" -DINSTALLED_SHARE_DIR=\"$(apath ${share_dir})\""
 export LIB_C_FLAGS
 export DRIVER_C_FLAGS
 
-# Add this framework to the Mac debug build so
-# that we can use Instruments.app to profile yed
-if [ "$(uname)" == "Darwin" ]; then
-    debug+=" -framework CoreFoundation"
-fi
-
 cfg=${!cfg_name}
 
 ${CC} --version ${ERR_LIM} 2>&1 > /dev/null
@@ -112,6 +106,11 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
+if [ $(uname) = "Darwin" ] && [ -d "${lib_dir}/libyed.so.new.dSYM" ]; then
+    rm -rf "${lib_dir}/libyed.so.dSYM" || exit 1
+    mv "${lib_dir}/libyed.so.new.dSYM" "${lib_dir}/libyed.so.dSYM" || exit 1
+    mv "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so.new" "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so" || exit 1
+fi
 echo "Installed 'libyed.so':             ${lib_dir}"
 
 echo "Creating include directory.."
@@ -120,7 +119,7 @@ echo "Installed headers:                 ${inc_dir}/yed"
 
 echo "Compiling the driver.."
 
-${CC} src/yed_driver.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
+${CC} src/yed_driver.c src/whereami.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
 
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped yed"
@@ -133,6 +132,11 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
+if [ $(uname) = "Darwin" ] && [ -d "${bin_dir}/yed.new.dSYM" ]; then
+    rm -rf "${bin_dir}/yed.dSYM" || exit 1
+    mv "${bin_dir}/yed.new.dSYM" "${bin_dir}/yed.dSYM" || exit 1
+    mv "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed.new" "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed" || exit 1
+fi
 echo "Installed 'yed':                   ${bin_dir}"
 
 echo "Creating default configuration.."
@@ -140,17 +144,23 @@ cp -r share/* ${share_dir}/yed
 ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
 echo "Installed share items:             ${share_dir}/yed"
 
+MAJOR_VERSION=$(${bin_dir}/yed --major-version)
+
 if ! [ -d plugins ]; then
     echo "Grabbing plugins.."
-    git clone https://github.com/kammerdienerb/yed-plugins plugins
+    git clone https://github.com/your-editor/yed-plugins plugins
+    cd plugins
+    git checkout "v${MAJOR_VERSION}"
+    cd ${DIR}
 else
     if [ -d plugins/.git ]; then
         echo "Updating plugins.."
         cd plugins
         git pull
+        git checkout "v${MAJOR_VERSION}"
         cd ${DIR}
     else
-	echo "Found plugins."
+        echo "Found plugins."
     fi
 fi
 

@@ -17,6 +17,10 @@
     __SCOMP(associate)         \
     __SCOMP(status_line)       \
     __SCOMP(command_line)      \
+    __SCOMP(popup)             \
+    __SCOMP(popup_alt)         \
+    __SCOMP(good)              \
+    __SCOMP(bad)               \
     __SCOMP(code_comment)      \
     __SCOMP(code_keyword)      \
     __SCOMP(code_control_flow) \
@@ -25,8 +29,12 @@
     __SCOMP(code_fn_call)      \
     __SCOMP(code_number)       \
     __SCOMP(code_constant)     \
+    __SCOMP(code_field)        \
+    __SCOMP(code_variable)     \
     __SCOMP(code_string)       \
-    __SCOMP(code_character)
+    __SCOMP(code_character)    \
+    __SCOMP(code_escape)       \
+
 
 enum {
     NO_SCOMP,

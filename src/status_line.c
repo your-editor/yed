@@ -1,34 +1,52 @@
 #include "status_line.h"
 
 static char *get_expanded(char *s) {
+    char       *result;
+    int         just;
+    int         padto;
+    char        ibuff[32];
     array_t     chars;
     int         i;
     char        c;
     yed_frame **fit;
-    char        ibuff[32];
     char       *istr;
     char       *str;
     struct tm  *tm;
     time_t      t;
     char        tbuff[256];
+    int         width;
+    char        space = ' ';
+
+    result = NULL;
+
+    just = (*s == '-' || *s == '=') ? *s : 0;
+    if (just) { s += 1; }
+    padto = 0;
+    memset(ibuff, 0, sizeof(ibuff));
+    while (is_digit(*s)) { ibuff[strlen(ibuff)] = *s; s += 1; }
+    if (strlen(ibuff))   { padto = s_to_i(ibuff);             }
 
     switch (*s) {
         case 'b':
             if (ys->active_frame && ys->active_frame->buffer) {
-                return strdup(ys->active_frame->buffer->name);
+                result = strdup(ys->active_frame->buffer->name);
+            } else {
+                result = strdup("-");
             }
             break;
         case 'B':
             if (ys->active_frame && ys->active_frame->buffer && ys->active_frame->buffer->path) {
-                return strdup(ys->active_frame->buffer->path);
+                result = strdup(ys->active_frame->buffer->path);
+            } else {
+                result = strdup("-");
             }
             break;
         case 'c':
             if (ys->active_frame) {
                 istr = itoa(ibuff, ys->active_frame->cursor_col);
-                return strdup(istr);
+                result = strdup(istr);
             } else {
-                return strdup("-");
+                result = strdup("-");
             }
             break;
         case 'f':
@@ -52,14 +70,14 @@ static char *get_expanded(char *s) {
             array_zero_term(chars);
             str = strdup(array_data(chars));
             array_free(chars);
-            return str;
+            result = str;
             break;
         case 'l':
             if (ys->active_frame) {
                 istr = itoa(ibuff, ys->active_frame->cursor_line);
-                return strdup(istr);
+                result = strdup(istr);
             } else {
-                return strdup("-");
+                result = strdup("-");
             }
             break;
         case 'p':
@@ -67,25 +85,34 @@ static char *get_expanded(char *s) {
                 istr = itoa(ibuff,
                               (100.0 * ys->active_frame->cursor_line)
                             / (yed_buff_n_lines(ys->active_frame->buffer)));
-                return strdup(istr);
+                result = strdup(istr);
             } else {
-                return strdup("-");
+                result = strdup("-");
             }
             break;
-        case 't':
+        case 'F':
             if (ys->active_frame && ys->active_frame->buffer) {
                 str = yed_get_ft_name(ys->active_frame->buffer->ft);
                 if (str == NULL) {
-                    return strdup("?");
+                    result = strdup("?");
+                    goto out;
                 }
-                return strdup(str);
+                result = strdup(str);
+            } else {
+                result = strdup("-");
             }
+            break;
+        case 't':
+            t  = time(NULL);
+            tm = localtime(&t);
+            strftime(tbuff, sizeof(tbuff), "%I:%M:%S", tm);
+            result = strdup(tbuff);
             break;
         case 'T':
             t  = time(NULL);
             tm = localtime(&t);
-            strftime(tbuff, sizeof(tbuff), "%I:%M:%S", tm);
-            return strdup(tbuff);
+            strftime(tbuff, sizeof(tbuff), "%H:%M:%S", tm);
+            result = strdup(tbuff);
             break;
         case '(':
             chars = array_make(char);
@@ -99,17 +126,53 @@ static char *get_expanded(char *s) {
                     str = strdup(str);
                     for (s = str; *s; s += 1) { if (*s == '\n') { *s = 0; break; } }
                     array_free(chars);
-                    return str;
+                    result = str;
+                    goto out;
                 }
             }
             array_free(chars);
             break;
         case '%':
-            return strdup("%");
+            result = strdup("%");
             break;
     }
 
-    return NULL;
+out:;
+    if (result != NULL) {
+        width = yed_get_string_width(result);
+        if (width < padto) {
+            chars = array_make(char);
+            switch (just) {
+                case '-':
+                    array_push_n(chars, result, strlen(result));
+                    while (padto - width > 0) {
+                        array_push(chars, space);
+                        width += 1;
+                    }
+                    break;
+                case '=':
+                    for (i = 0; i < (padto - width) / 2; i += 1) {
+                        array_push(chars, space);
+                    }
+                    array_push_n(chars, result, strlen(result));
+                    for (i = 0; i < (padto - width) - ((padto - width) / 2); i += 1) {
+                        array_push(chars, space);
+                    }
+                    break;
+                default:
+                    while (padto - width > 0) {
+                        array_push(chars, space);
+                        width += 1;
+                    }
+                    array_push_n(chars, result, strlen(result));
+            }
+            array_zero_term(chars);
+            result = strdup(array_data(chars));
+            array_free(chars);
+        }
+    }
+
+    return result;
 }
 
 static void parse_and_put_attrs(char *s) {
@@ -131,6 +194,34 @@ static void parse_and_put_attrs(char *s) {
         str   = (char*)array_data(chars);
         attrs = yed_parse_attrs(str);
         yed_combine_attrs(&base, &attrs);
+    }
+
+    yed_set_attr(base);
+
+    array_free(chars);
+}
+
+static void parse_var_and_put_attrs(char *s) {
+    array_t    chars;
+    char      *str;
+    yed_attrs  base;
+    yed_attrs  attrs;
+
+    chars = array_make(char);
+
+    s += 1;
+    while (*s && *s != '}') { array_push(chars, *s); s += 1; }
+
+    base = yed_active_style_get_status_line();
+
+    if (*s) {
+        array_zero_term(chars);
+
+        str = yed_get_var((char*)array_data(chars));
+        if (str != NULL) {
+            attrs = yed_parse_attrs(str);
+            yed_combine_attrs(&base, &attrs);
+        }
     }
 
     yed_set_attr(base);
@@ -163,6 +254,10 @@ static int get_status_line_string_width(char *s) {
                     width += yed_get_string_width(expanded);
                     free(expanded);
                 }
+
+                if    (git->c == '-' || git->c == '=') { git = GBUMP(git, 1); }
+                while (is_digit(git->c))               { git = GBUMP(git, 1); }
+
                 if (git->c == '(') {
                     while (git->c != ')') {
                         git = GBUMP(git, len);
@@ -172,6 +267,13 @@ static int get_status_line_string_width(char *s) {
                     goto skip;
                 } else if (git->c == '[') {
                     while (git->c != ']') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                } else if (git->c == '{') {
+                    while (git->c != '}') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
                         len = yed_get_glyph_len(*git);
@@ -238,6 +340,9 @@ static void put_status_line_string(char *s, int start_col) {
                     }
                 }
 
+                if    (git->c == '-' || git->c == '=') { git = GBUMP(git, 1); }
+                while (is_digit(git->c))               { git = GBUMP(git, 1); }
+
                 if (git->c == '(') {
                     while (git->c != ')') {
                         git = GBUMP(git, len);
@@ -248,6 +353,14 @@ static void put_status_line_string(char *s, int start_col) {
                 } else if (git->c == '[') {
                     parse_and_put_attrs((char*)&git->c);
                     while (git->c != ']') {
+                        git = GBUMP(git, len);
+                        if ((&(git->c) >= end)) { goto out; }
+                        len = yed_get_glyph_len(*git);
+                    }
+                    goto skip;
+                } else if (git->c == '{') {
+                    parse_var_and_put_attrs((char*)&git->c);
+                    while (git->c != '}') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
                         len = yed_get_glyph_len(*git);
@@ -316,18 +429,10 @@ static void write_status_line_right(void) {
 }
 
 void yed_write_status_line(void) {
-/*     int        sav_x; */
-/*     int        sav_y; */
-/*     int        width; */
-/*     int        n_bytes; */
-/*     char      *buff; */
-/*     int        str_width; */
-/*     yed_glyph *git; */
-/*     int        col; */
+    yed_event event;
 
-/*     sav_x = ys->cur_x; */
-/*     sav_y = ys->cur_y; */
-/*     width = ys->term_cols; */
+    event.kind = EVENT_STATUS_LINE_PRE_UPDATE;
+    yed_trigger_event(&event);
 
     yed_set_cursor(ys->term_rows - 1, 1);
 

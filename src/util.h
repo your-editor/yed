@@ -39,3 +39,20 @@ int rect_intersect(int top_a, int bottom_a, int left_a, int right_a,
                    int top_b, int bottom_b, int left_b, int right_b);
 
 #endif
+
+static inline int is_space(int c) {
+    unsigned char d = c - 9;
+    return (0x80001FU >> (d & 31)) & (1U >> (d >> 5));
+}
+
+static inline int is_digit(int c) {
+    return (unsigned int)(('0' - 1 - c) & (c - ('9' + 1))) >> (sizeof(c) * 8 - 1);
+}
+
+static inline int is_alpha(int c) {
+    return (unsigned int)(('a' - 1 - (c | 32)) & ((c | 32) - ('z' + 1))) >> (sizeof(c) * 8 - 1);
+}
+
+static inline int is_alnum(int c) {
+    return is_alpha(c) || is_digit(c);
+}

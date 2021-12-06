@@ -155,4 +155,10 @@ void yed_update_line_visual_widths(void);
                      yed_line_idx_to_col(&(array), ((void*)it) - (array).chars.data - 1)) \
                  : NULL))
 
+/* free() the results of these functions. May return NULL. */
+char *yed_get_selection_text(yed_buffer *buffer);
+char *yed_get_line_text(yed_buffer *buffer, int row);
+char *yed_get_buffer_text(yed_buffer *buffer);
+
+
 #endif

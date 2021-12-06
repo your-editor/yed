@@ -266,6 +266,8 @@ typedef struct yed_state_t {
          yed_completion)         completions;
     tree(yed_completion_name_t,
          yed_completion)         default_completions;
+
+    int                          mouse_reporting_ref_count;
 } yed_state;
 
 extern yed_state *ys;

@@ -85,6 +85,21 @@ int rgb_to_256(unsigned rgb) {
 void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
     if (!dst || !src)    { return; }
 
+    if (dst->flags & ATTR_16) {
+        if (src->flags & ATTR_256 || src->flags & ATTR_RGB) {
+            dst->flags &= ~(ATTR_16_LIGHT_BG | ATTR_16_LIGHT_FG);
+            dst->fg = dst->bg = 0;
+        }
+    } else if (dst->flags & ATTR_256) {
+        if (src->flags & ATTR_16 || src->flags & ATTR_RGB) {
+            dst->fg = dst->bg = 0;
+        }
+    } else if (dst->flags & ATTR_RGB) {
+        if (src->flags & ATTR_16 || src->flags & ATTR_256) {
+            dst->fg = dst->bg = 0;
+        }
+    }
+
     if (src->fg) {
         dst->flags &= ~(ATTR_16_LIGHT_FG);
         dst->fg = src->fg;
@@ -247,7 +262,7 @@ int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
            && (attr1.flags == attr2.flags);
 }
 
-yed_attrs yed_parse_attrs(char *string) {
+yed_attrs yed_parse_attrs(const char *string) {
     yed_attrs  attrs;
     array_t    words;
     int        idx;

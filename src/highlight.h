@@ -204,6 +204,11 @@ static inline void highlight_info_make(highlight_info *info) {
     info->general_suffixes = array_make(suffix_word_hl);
     info->within           = array_make(within_hl);
     info->eols             = array_make(eol_hl);
+
+    LOG_FN_ENTER();
+    yed_log("[!] highlight.h is deprecated and will be removed in version 1400. Use syntax.h instead.");
+#warning        "highlight.h is deprecated and will be removed in version 1400. Use syntax.h instead."
+    LOG_EXIT();
 }
 
 static inline void highlight_info_free(highlight_info *info) {

@@ -47,6 +47,16 @@ typedef enum {
     EVENT_VAR_POST_SET,
     EVENT_VAR_PRE_UNSET,
     EVENT_VAR_POST_UNSET,
+    EVENT_STATUS_LINE_PRE_UPDATE,
+    EVENT_PLUGIN_MESSAGE,
+    _EVENT_RESERVED_0,
+    _EVENT_RESERVED_1,
+    _EVENT_RESERVED_2,
+    _EVENT_RESERVED_3,
+    _EVENT_RESERVED_4,
+    _EVENT_RESERVED_5,
+    _EVENT_RESERVED_6,
+    _EVENT_RESERVED_7,
 
     N_EVENTS,
 } yed_event_kind_t;
@@ -90,6 +100,12 @@ typedef struct {
     int                         n_args;
     union { const char * const *args;
             const char         *var_val; };
+    struct {
+        const char             *message_id;
+        const char             *plugin_id;
+        union { const char     *string_data;
+                void           *v_data; };
+    } plugin_message;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);
