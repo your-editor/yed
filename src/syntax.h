@@ -654,7 +654,9 @@ static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffe
     array_clear(cache->entries);
 
     n_lines = yed_buff_n_lines(buffer);
-    bump    = MAX(n_lines / cache->size, 1);
+    bump    = n_lines < cache->size
+                ? 1
+                : MAX(n_lines / cache->size, 2);
     lim     = 1 + bump;
     range   = syntax->global;
     row     = 1;
@@ -1029,7 +1031,7 @@ static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_s
     end    = array_data(line->chars) + array_len(line->chars);
     nmatch = syntax->max_group + 1;
 
-    while (start < end) {
+    while (start <= end) {
         match_start = NULL;
         eflags      = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
         err         = regexec(&range->end, start, nmatch, syntax->matches, eflags);
@@ -1060,6 +1062,7 @@ static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_s
 
         goto out;
 next:;
+        if (start >= end) { break; }
     }
 
 out:;
