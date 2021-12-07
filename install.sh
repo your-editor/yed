@@ -101,8 +101,6 @@ fi
 
 if [ $(uname) = "Darwin" ]; then
     install_name_tool -id $(apath "${lib_dir}/libyed.so") "${lib_dir}/libyed.so.new"
-    codesign -s - -f ${lib_dir}/libyed.so.new >/dev/null 2>&1 || exit 1
-    echo "    performed codesign fixup"
 fi
 
 mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
@@ -124,11 +122,6 @@ ${CC} src/yed_driver.c src/whereami.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped yed"
     strip ${bin_dir}/yed.new
-fi
-
-if [ $(uname) = "Darwin" ]; then
-    codesign -s - -f ${bin_dir}/yed.new >/dev/null 2>&1 || exit 1
-    echo "    performed codesign fixup"
 fi
 
 mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
