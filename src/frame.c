@@ -1603,7 +1603,7 @@ void yed_mark_dirty_frames_line(yed_buffer *buff, int dirty_row) {
 
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame) {
     return    (row >= frame->top  && row <= frame->top  + frame->height - 1)
-           || (col >= frame->left && col <= frame->left + frame->width  - 1);
+           && (col >= frame->left && col <= frame->left + frame->width  - 1);
 }
 
 int yed_frame_is_tree_root(yed_frame *frame) {

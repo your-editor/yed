@@ -1,6 +1,10 @@
 # Changelog
 
 ## 1300 - 2021-12-6
+### Fixed
+    - Fixed logic in yed_cell_is_in_frame()
+
+## 1300 - 2021-12-6
 ### Added
 - Started keeping a changelog.
 - Started tagging versions in git.
