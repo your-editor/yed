@@ -137,26 +137,6 @@ cp -r share/* ${share_dir}/yed
 ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
 echo "Installed share items:             ${share_dir}/yed"
 
-MAJOR_VERSION=$(${bin_dir}/yed --major-version)
-
-if ! [ -d plugins ]; then
-    echo "Grabbing plugins.."
-    git clone https://github.com/your-editor/yed-plugins plugins
-    cd plugins
-    git checkout "v${MAJOR_VERSION}"
-    cd ${DIR}
-else
-    if [ -d plugins/.git ]; then
-        echo "Updating plugins.."
-        cd plugins
-        git pull
-        git checkout "v${MAJOR_VERSION}"
-        cd ${DIR}
-    else
-        echo "Found plugins."
-    fi
-fi
-
 echo "Compiling plugins.."
 pids=()
 plugs=()
