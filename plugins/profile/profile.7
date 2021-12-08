@@ -1,0 +1,22 @@
+.TH YED-PROFILE 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+profile \- Generate a profile report of the time spent in yed commands.
+.SH CONFIGURATION
+None
+.SH COMMANDS
+.SS profile-start
+Begin profiling yed commands.
+.SS profile-end
+Stop profiling yed commands.
+.SS profile-report
+Focus the *profile buffer.
+.SH BUFFERS
+*profile
+.SH NOTES
+.P
+The time reported for each command does only does not include the time spent in commands called within the first command unless they are the same command.
+This plugin is useful for finding out which parts of your yed configuration are taking up time in, for example, startup.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+profile, start, startup, time, slow

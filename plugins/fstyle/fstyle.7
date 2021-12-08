@@ -1,0 +1,50 @@
+.TH YED-FSTYLE 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+fstyle \- Create and activate styles in plaintext.
+.SH CONFIGURATION
+None
+.SH COMMANDS
+.SS fstyle [path]
+If path is provided, load the style from the file at path and activate it. Otherwise, use the path of the current buffer.
+.SH BUFFERS
+None
+.SH NOTES
+.P
+Creates the fstyle file type.
+When fstyle files are edited in yed with this plugin loaded, the buffer shows each line in the attributes it is setting and updates them as you edit.
+Here is an example of the syntax:
+
+.EX
+    active               fg C9BFB6    bg 170326
+    active-border        fg 7180AC    bg 170326
+    active-gutter        fg C9BFB6    bg 170326
+    inactive             fg C9BFB6    bg 170326
+    inactive-border      fg 7180AC    bg 170326
+    inactive-gutter      fg C9BFB6    bg 170326
+    cursor-line                       bg 393F46
+    selection                         bg 393F46
+    search               fg 49d45c    bg 170326    inverse
+    search-cursor        fg d4495c    bg 170326    inverse
+    attention            fg AF0000                 bold
+    associate            fg 302346    bg 907AD6
+    status-line          fg 252730    bg 7180AC    bold
+    command-line         fg C9BFB6    bg 170326
+    code-comment         fg 555760                 bold
+    code-keyword         fg ED8E29
+    code-control-flow    fg ED8E29
+    code-typename        fg D90368
+    code-preprocessor    fg CFCFCF                 bold
+    code-fn-call         fg 8CBCd9
+    code-number          fg B5446E
+    code-constant        fg CFCFCF                 bold
+    code-string          fg 8AaE9F
+    code-character       fg 8AaE9F
+.EE
+
+When the style is loaded, the basename of its file will be used as the name.
+For example, ~/.config/yed/styles/cubic.fstyle will be named "cubic".
+
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+style color colors live create attributes

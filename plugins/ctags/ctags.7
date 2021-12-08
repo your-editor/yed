@@ -1,0 +1,47 @@
+.TH YED-CTAGS 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+ctags \- ctags integration for yed. Provides symbol generation, highlighting, completion, searching, and jumping.
+.SH CONFIGURATION
+.SS ctags-tags-file [ path ]
+The name of the tags file to use/generate. Default is "tags".
+.SS ctags-flags [ flags ]
+Specifies the flags to pass to ctags when running ctags-gen.
+.SS ctags-additional-paths [ path... ]
+A list of extra files/directories to produce tags for. This is useful if, for example, you want to include library header files.
+.SS ctags-fallback-autogen [ yes / no ]
+If this variable is true, temporary tags will be automatically generated if a tags file does not exist and you have not run ctags-gen yourself. The files in the current working directory, any files in ./src, and any open buffers will be used as the sources of the tags.
+.SS ctags-regen-on-write [ yes / no ]
+If this variable is true, tags will be automatically regenerated when you write a buffer.
+.SS ctags-auto-show-function-hint [ yes / no ]
+If this variable is true, function argument hints will pop up automatically.
+.SS ctags-auto-dismiss-function-hint [ yes / no ]
+If this variable is true, function argument hints go away when your cursor leaves the function call.
+.SS ctags-formatting-limit [ int ]
+The maximum number of tags entries in *ctags-find before it stops trying to format the buffer.
+.SS ctags-enable-extra-highlighting [ yes / no ]
+Whether or not tags found in buffers should be highlighted.
+.SS ctags-compl [ yes / no ]
+Whether or not to create a completion source for tags.
+.SH COMMANDS
+.SS ctags-gen
+Run "ctags <ctags-flags>" as a subprocess in the background to generate/update a tags file.
+.SS ctags-find
+An interactive command that searches through the loaded tags in the *ctags-find buffer.
+After filtering tags, ENTER can be pressed in the buffer to jump to the selected tag.
+.SS ctags-jump-to-definition
+Jumps to the file and line containing the definition of the tag under your cursor.
+.SS ctags-show-function-hint
+If the cursor is in the parentheses of a function call, try to lookup the function in the tags and show argument hints.
+.SS ctags-dismiss-function-hint
+Dismiss the current function argument hint popup.
+.SS ctags-reparse
+If ctags-enable-extra-highlighting or ctags-compl is enabled, this command reparses the tags file to refresh the list of tags.
+.SH BUFFERS
+*ctags-find
+.SH NOTES
+.P
+ctags must be installed on your system for this plugin to work.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+tag, tags, ctags, jump, search, find, project, navigate, navigation, definition, function, hint
