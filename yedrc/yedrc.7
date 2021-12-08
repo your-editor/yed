@@ -1,0 +1,28 @@
+.TH YED-YEDRC 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+yedrc \- Load text files containing yed commands and execute them.
+.SH CONFIGURATION
+None
+.SH COMMANDS
+.SS yedrc-load <path>
+Load the file <path> and execute each line as a yed command.
+.SH BUFFERS
+None
+.SH NOTES
+.P
+This plugin is useful for easy configuration and editor settings.
+Typical usage involves loading a file like ~/.config/yed/yedrc at startup.
+
+yedrc-load can be called again from yedrc files since it is just another command.
+This allows you to have your configuration split into multiple files and have project-local configurations such as a .yedrc file in your project directory.
+
+The syntax/quoting rules for each command are the same as they are on yed's command line except that you can
+split commands into multiple lines with trailing backslashes.
+
+yedrc-load will not recursively execute files.
+
+FT and syntax are by default provided by the lang/yedrc and lang/syntax/yedrc plugins.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+rc, rcfile, config, file, configuration, commands, start

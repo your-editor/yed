@@ -1,0 +1,25 @@
+.TH YED-MACRO 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+macro \- Record keystrokes and play them back.
+.SH CONFIGURATION
+.SS macro-stop-key [key-string]
+The key designated to mean "stop recording the macro".
+Default value is ctrl-e.
+.SS macro-instant-playback [ yes / no ]
+When this variable is set to "yes", keystrokes will be replayed instantly -- i.e. you won't see them happen.
+Default value is "no".
+Otherwise keystrokes will be replayed once per editor pump.
+.SH COMMANDS
+.SS macro-record
+Start recording a macro.
+.SS macro-play [ N ]
+If N is provided, play the macro N times.
+Otherwise play the macro once for each line selected (once if no selection).
+.SH BUFFERS
+None
+.SH NOTES
+None
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+key, record, macro, play, playback, repeat

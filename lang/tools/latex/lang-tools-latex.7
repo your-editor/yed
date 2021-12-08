@@ -1,0 +1,23 @@
+.TH YED-LANG-TOOLS-LATEX 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+lang/tools/latex \- Commands to compile and view the LaTeX file you're editing.
+.SH CONFIGURATION
+.SS latex-comp-prg <command>
+The compile command to run where a non-backslash-escaped % is replaced with the current buffer name.
+.SS latex-view-prg <command>
+The shell command used to launch a pdf viewer.
+.SS latex-update-view-prg <command>
+The command used to tell the viewer to update.
+.SH COMMANDS
+.SS latex-compile-current-file
+Run latex-comp-prg and then latex-update-view-prg for the current file.
+.SS latex-view-current-file
+Run latex-view-prg for the current file.
+.SH BUFFERS
+None
+.SH NOTES
+Requires the LaTeX filetype to be available (generally from lang/latex).
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+latex, LaTeX, tex, Tex, compile, view, pdf

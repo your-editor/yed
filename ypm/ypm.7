@@ -1,0 +1,31 @@
+.TH YED-YPM 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+ypm \- YED Package Manager
+.SH CONFIGURATION
+none
+.SH COMMANDS
+.SS ypm-update
+This command will update all plugin submodules and reinstall all installed plugins.
+.SS ypm-menu
+.P
+This command creates a list view of all available plugins and what thier current status is.
+.SS ypm-install [ template-name ]
+This command will install and hot load the plugin specified.
+.SS ypm-uninstall [ template-name ]
+This command will uninstall and unload the plugin specified.
+.SH BUFFERS
+*ypm-menu
+*ypm-output
+.SH Variables
+.SS ypm-is-updateing [yes / no]
+Variable that is truthy during a ypm update.
+.SH NOTES
+.P
+All of the management of the plugins can be done from the *ypm-menu special buffer gui. Hitting ENTER on a
+plugin will pull up a list of commands that can be done on the highlighted plugin. The list consists of Man Page,
+Install, Uninstall, Load, and Unload commands. If the Man Page is chosen, the man page for the specified
+plugins will be pulled up in a new buffer, ESC will bring you back. If Install is chosen the specified
+plugin will be called with the ypm-install command. If Uninstall is chosed the specified plugin will be
+called with the ypm-uninstall command. If Load is installed the plugin will be hot loaded. If unload is called
+the plugin will be unloaded. Searching plugins based on predefined keywords is accomplished through f. The 'm' key
+brings up the ypm man page. If you want to clear the search bar press 'f' then ESC.

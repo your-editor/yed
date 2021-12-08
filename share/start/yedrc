@@ -1,5 +1,0 @@
-plugin-load 'ypm'
-
-# some nicer colors
-plugin-load 'styles/casey'
-style casey
