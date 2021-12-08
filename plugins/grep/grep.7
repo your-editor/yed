@@ -1,0 +1,22 @@
+.TH YED-GREP 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+grep \- Search for matches to regular expressions in files in your current directory.
+.SH CONFIGURATION
+.SS grep-prg <command>
+The grep command to run where a non-backslash-escaped % is replaced with the search string.
+The default value is "grep --exclude-dir={.git} -RHnIs '%' ."
+.SH COMMANDS
+.SS grep [regex]
+If regex is provided, run the grep-prg with the regex and put results in *grep-list.
+If regex is not provided, grep will be run interactively as you type the regex on the command line.
+Hitting ENTER on an item in *grep-list will jump to that match.
+.SH BUFFERS
+*grep-list
+.SH NOTES
+.P
+Be careful when running grep in high-level directories with many files.
+For example you should probably avoid running grep in your home directory because it can take a long time to search.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+grep, search, find, regex, jump, pattern

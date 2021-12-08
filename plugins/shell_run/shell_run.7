@@ -1,0 +1,18 @@
+.TH YED-SHELL_RUN 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+shell_run \- Run a shell command in the background and collect its output in the special buffer *shell-output.
+.SH CONFIGURATION
+None
+.SH COMMANDS
+.SS shell-run <command>
+Run <command> in the background and focus *shell-output.
+.SH BUFFERS
+*shell-output
+.SH NOTES
+.P
+Interactive commands should not be run with this command because the command will not receive any input.
+Additionally, terminal escape codes in the command's output will not be interpreted as such.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+shell, run, command, bash, program, background

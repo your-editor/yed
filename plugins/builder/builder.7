@@ -1,0 +1,53 @@
+.TH YED-BUILDER 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+builder \- Run build commands in the background. Jump to error if it fails.
+.SH CONFIGURATION
+.SS builder-build-command <command>
+The command to run when you run builder-start.
+.SS builder-error-parse-command <command>
+The command responsible for parsing error locations from the command output.
+The default value can parse error locations from most C/C++ compilers.
+.SS builder-popup-rg [yes/no]
+Sets the builder popup to be either green or red on success or failure.
+
+See NOTES.
+.SS builder-notify-command <command>
+A command that can be run when the build command finishes.
+A small popup will display momentarily if this is unset.
+
+See NOTES.
+.SH COMMANDS
+.SS builder-start
+Start the builder-build-command in the background.
+.SS builder-jump-to-error
+Jump to the error location parsed from the command output.
+.SS builder-print-error
+Print the error text on the command line if the build failed.
+.SS builder-view-output
+Focus the *builder-output buffer.
+.SS builder-view-echo-status
+Print the status of the build on the command line.
+.SH BUFFERS
+*builder-output
+.SH NOTES
+.SS Parsing Errors
+.P
+The builder-error-parse-command should be a shell command that, when invoked with the builder-build-command's output on STDIN, produces output lines of the format FILE:LINE:COLUMN:ERROR for lines that report an error.
+The default value of builder-error-parse-command is given below as an example:
+
+.EX
+    awk -F':' '
+        /:( fatal)? error:/     { print $0; }
+        /: undefined reference/ { printf("%s:%s:1:%s\n", $1, $2, $3); }'
+.EE
+.SS Notification
+The builder-notify-command should be a shell command with a non-backslash-escaped % symbol which will be replaced by the status of the build.
+For example:
+
+.EX
+    ./email_builder_status '%'
+.EE
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+make, run, build, background, process, command, error, jump

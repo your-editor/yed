@@ -1,0 +1,30 @@
+.TH YED-VIMISH 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+vimish \- A modal editor experience that is like vim, but different.
+.SH CONFIGURATION
+None
+.SH COMMANDS
+.SS vimish-bind <mode> <keys> <command>
+Bind <keys> to <command> when in <mode>.
+.SS vimish-unbind <mode> <keys>
+Unbind <keys> in <mode>.
+.SS vimish-exit-insert
+Leave insert mode and return to normal mode.
+.SS w
+.SS W
+Alias for write-buffer.
+.SS q
+.SS Q
+If you're in the only frame, quit.
+Otherwise, close the frame.
+.SS wq
+.SS Wq
+write-buffer, then do q from above.
+.SH BUFFERS
+None
+.SH NOTES
+None
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+key, bind, binding, edit, mode, modal, vim, vi, emacs
