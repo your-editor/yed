@@ -1,0 +1,22 @@
+.TH YED-GREP 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+find_file \- Search for files in your current directory tree.
+.SH CONFIGURATION
+.SS find-file-prg <command>
+The command to run where a non-backslash-escaped % is replaced with the search string.
+The default value is "find . -path ./.git -prune -o -type f -name '*%*' -print".
+.SH COMMANDS
+.SS find-file [string]
+If string is provided, run the find-file-prg with the string and put results in *find-file-list.
+If string is not provided, find-file will be run interactively as you type the string on the command line.
+Hitting ENTER on an item in *find-file-list will jump to that match.
+.SH BUFFERS
+*find-file-list
+.SH NOTES
+.P
+Be careful when running find-file in high-level directories with many files.
+For example you should probably avoid running find-file in your home directory because it can take a long time to search.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+find, file, buffer, search, open, project

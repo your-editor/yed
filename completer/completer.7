@@ -1,0 +1,26 @@
+.TH YED-COMPLETER 7 "YED Plugin Manuals" "" "YED Plugin Manuals"
+.SH NAME
+completer \- A basic completion plugin activated on TAB.
+.SH CONFIGURATION
+.SS completer-sources [ sources... ]
+Space-delimited list of completion sources to use. Default is "word".
+.SS completer-popup [ yes / no ]
+Whether or not do display the popup menu for completion results.
+Default value is "yes".
+.SS completer-popup-size [ int ]
+The size in lines of the popup menu.
+ Default value is 8.
+.SS completer-auto [ yes / no ]
+Whether or not the popup should come up automatically as you type in an "autocomplete" fashion.
+Default value is "no".
+.SH COMMANDS
+None
+.SH BUFFERS
+None
+.SH NOTES
+.P
+Completer uses the word ([a-Z0-9_]+) before the cursor as the search string.
+.SH VERSION
+0.0.1
+.SH KEYWORDS
+complete, completion, auto, autocomplete, popup, tab, TAB
