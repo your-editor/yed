@@ -1,5 +1,9 @@
 # Changelog
 
+## 1304 - 2021-12-10
+### Added
+    - new command `frame` activates frame based on their number.
+
 ## 1303 - 2021-12-8
 ### Changed
     - the `plugins` directory is now a `subtree`. This makes installing simpler and allows you to just grab a `tar` of a release without needing `git`.
