@@ -85,7 +85,7 @@ DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(frame_prev);
 DEF_DEFAULT_COMMAND(frame_move);
 DEF_DEFAULT_COMMAND(frame_resize);
-DEF_DEFAULT_COMMAND(frame_jump);
+DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(simple_insert_string);
 DEF_DEFAULT_COMMAND(delete_back);

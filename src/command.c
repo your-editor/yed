@@ -129,7 +129,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-prev",                         frame_prev);
     SET_DEFAULT_COMMAND("frame-move",                         frame_move);
     SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
-    SET_DEFAULT_COMMAND("frame-jump",                         frame_jump);
+    SET_DEFAULT_COMMAND("frame",                              frame);
     SET_DEFAULT_COMMAND("insert",                             insert);
     SET_DEFAULT_COMMAND("simple-insert-string",               simple_insert_string);
     SET_DEFAULT_COMMAND("delete-back",                        delete_back);
@@ -4125,17 +4125,12 @@ void yed_default_command_repeat(int n_args, char **args) {
     }
 }
 
-void yed_default_command_frame_jump(int n_args, char **args) {
+void yed_default_command_frame(int n_args, char **args) {
     yed_frame *frame;
     int        idx;
 
     if (n_args != 1) {
-        yed_cerr("expected 1 arguments, but got %d", n_args);
-        return;
-    }
-
-    if (!ys->active_frame) {
-        yed_cerr("no active frame");
+        yed_cerr("expected 1 argument, but got %d", n_args);
         return;
     }
 
