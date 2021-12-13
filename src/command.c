@@ -403,30 +403,44 @@ void yed_cmd_buff_delete(int idx) {
 }
 
 void yed_draw_command_line() {
-    int i;
-    int j;
+    int  len;
+    int  i;
+    int  j;
+    char c;
 
     yed_set_cursor(ys->term_rows, 1);
     yed_set_attr(yed_active_style_get_command_line());
     append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
     yed_set_cursor(ys->term_rows, 1);
 
+    len = 0;
+
     if (ys->interactive_command) {
         if (ys->cmd_prompt) {
-            append_to_output_buff(ys->cmd_prompt);
+            for (i = 0; i < strlen(ys->cmd_prompt); i += 1) {
+                len += yed_get_glyph_width(G(*ys->cmd_prompt + i));
+                if (len > ys->term_cols) { goto out; }
+                append_n_to_output_buff(ys->cmd_prompt + i, 1);
+            }
         }
     }
 
     for (i = 0; i < array_len(ys->cmd_buff); i += 1) {
-        if (*(char*)(array_data(ys->cmd_buff) + i) == '\t') {
+        c = *(char*)(array_data(ys->cmd_buff) + i);
+
+        len += yed_get_glyph_width(G(c));
+        if (len > ys->term_cols) { goto out; }
+
+        if (c == '\t') {
             for (j = 0; j < ys->tabw; j += 1) {
                 append_n_to_output_buff(" ", 1);
             }
         } else {
-            append_n_to_output_buff(array_data(ys->cmd_buff) + i, 1);
+            append_n_to_output_buff(&c, 1);
         }
     }
 
+out:;
     append_to_output_buff(TERM_RESET);
     append_to_output_buff(TERM_CURSOR_HIDE);
 }
