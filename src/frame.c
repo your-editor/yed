@@ -1325,12 +1325,12 @@ void _yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
         new_g      = yed_line_col_to_glyph(line, new_col);
 
         if (dir == 1) {
-            while (g != new_g) {
+            while (g < new_g) {
                 g           = ((void*)g) + yed_get_glyph_len(*g);
                 glyph_dist += 1;
             }
         } else {
-            while (new_g != g) {
+            while (new_g < g) {
                 new_g       = ((void*)new_g) + yed_get_glyph_len(*new_g);
                 glyph_dist += 1;
             }

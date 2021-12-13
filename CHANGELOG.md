@@ -1,5 +1,9 @@
 # Changelog
 
+## 1305 - 2021-12-13
+### Fixed
+    - fixed a bug that would cause some cursor movements to crash on binary buffer contents.
+
 ## 1304 - 2021-12-10
 ### Added
     - new command `frame` activates frame based on their number.
