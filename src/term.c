@@ -497,6 +497,8 @@ void yed_handle_resize(void) {
     ys->term_cols = ys->new_term_cols;
     ys->term_rows = ys->new_term_rows;
 
+    yed_resize_screen();
+
     af = ys->active_frame;
     if (af) {
         save_row = af->cursor_line;

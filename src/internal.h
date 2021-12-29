@@ -139,14 +139,15 @@ use_tree_c(yed_ft_name_t, empty_t, strcmp);
 #include "bucket_array.h"
 #include "yed.h"
 #include "term.h"
+#include "attrs.h"
+#include "utf8.h"
+#include "screen.h"
 /* What would be in wcwidth.h: */
 int mk_wcwidth(wchar_t ucs);
-#include "utf8.h"
 #include "key.h"
 #include "ft.h"
 #include "undo.h"
 #include "buffer.h"
-#include "attrs.h"
 #include "frame.h"
 #include "log.h"
 #include "complete.h"
@@ -268,6 +269,10 @@ typedef struct yed_state_t {
          yed_completion)         default_completions;
 
     int                          mouse_reporting_ref_count;
+    int                          update_hz;
+    int                          skip_force_update;
+    pthread_t                    update_forcer_id;
+    yed_screen                   screen;
 } yed_state;
 
 extern yed_state *ys;
@@ -286,6 +291,11 @@ void yed_write_welcome(void);
 
 int yed_check_version_breaking(void);
 void yed_service_reload(int core);
+
+#define MIN_UPDATE_HZ (4)
+#define MAX_UPDATE_HZ (1000)
+int yed_get_update_hz(void);
+void yed_set_update_hz(int hz);
 
 int s_to_i(const char *s);
 

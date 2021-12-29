@@ -117,6 +117,35 @@ static void restart_writer(void) {
     pthread_create(&ys->writer_id, NULL, writer, NULL);
 }
 
+static void * update_forcer(void *arg) {
+    char zero;
+
+    (void)arg;
+    zero = 0;
+
+    while (ys->status != YED_RELOAD_CORE && ys->update_hz >= MIN_UPDATE_HZ) {
+        usleep(825000 * (1.0 / MIN(ys->update_hz, MAX_UPDATE_HZ)));
+
+        if (!ys->skip_force_update) {
+            ioctl(0, TIOCSTI, &zero);
+        } else {
+            ys->skip_force_update = 0;
+        }
+    }
+
+    return NULL;
+}
+
+static void kill_update_forcer(void) {
+    void *junk;
+
+    pthread_join(ys->update_forcer_id, &junk);
+}
+
+static void start_update_forcer(void) {
+    pthread_create(&ys->update_forcer_id, NULL, update_forcer, NULL);
+}
+
 
 static void print_usage(void) {
     char *usage =
@@ -299,6 +328,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
+    yed_init_screen();
 
     pthread_mutex_init(&ys->write_ready_mtx, NULL);
     pthread_cond_init(&ys->write_ready_cond, NULL);
@@ -400,9 +430,11 @@ yed_state * yed_get_state(void)         { return ys;  }
 
 int yed_pump(void) {
     yed_event            event;
+    int                  save_hz;
     int                  keys[16], n_keys, i;
     unsigned long long   start_us;
     int                  skip_keys;
+    int                  got_non_null_key;
 
     if (ys->status == YED_QUIT) {
         memset(&event, 0, sizeof(event));
@@ -416,6 +448,9 @@ int yed_pump(void) {
     } else if (ys->status == YED_RELOAD_CORE) {
         yed_service_reload(1);
         restart_writer();
+        save_hz = ys->update_hz;
+        ys->update_hz = 0;
+        yed_set_update_hz(save_hz);
     }
 
     /* Not sure why this is necessary, but... */
@@ -452,8 +487,14 @@ int yed_pump(void) {
                 ? 0
                 : yed_read_keys(keys);
 
+    got_non_null_key = 0;
     for (i = 0; i < n_keys; i += 1) {
         yed_take_key(keys[i]);
+        got_non_null_key |= !!keys[i];
+    }
+
+    if (got_non_null_key && ys->update_hz >= MIN_UPDATE_HZ) {
+        ys->skip_force_update = 1;
     }
 
     start_us = measure_time_now_us();
@@ -510,6 +551,7 @@ LOG_EXIT();
         } else {
             yed_unload_plugin_libs();
             kill_writer();
+            kill_update_forcer();
         }
     }
 #endif

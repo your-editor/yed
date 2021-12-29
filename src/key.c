@@ -170,81 +170,6 @@ static int esc_sequence(int *input) {
                         return 1;
                     }
                     return 5;
-                } else if (c == '7') {
-                    input[3] = c;
-                    if (read(0, &c, 1) == 0) { return 4; }
-                    input[4] = c;
-                    if (c == ';') {
-                        if (read(0, &c, 1) == 0) { return 5; }
-                        input[5] = c;
-                        if (c == '5') {
-                            if (read(0, &c, 1) == 0) { return 6; }
-                            input[6] = c;
-                            if (c == ';') {
-                                if (read(0, &c, 1) == 0) { return 7; }
-                                input[7] = c;
-                                if (c == '9') {
-                                    if (read(0, &c, 1) == 0) { return 8; }
-                                    input[8] = c;
-                                    if (c == '~') {
-                                        input[0] = CTRL_TAB;
-                                        return 1;
-                                    }
-                                    return 9;
-                                } else if (c == '1') {
-                                    if (read(0, &c, 1) == 0) { return 9; }
-                                    input[9] = c;
-                                    if (c == '3') {
-                                        if (read(0, &c, 1) == 0) { return 10; }
-                                        input[10] = c;
-                                        if (c == '~') {
-                                            input[0] = CTRL_ENTER;
-                                            return 1;
-                                        }
-                                        return 10;
-                                    }
-                                    return 9;
-                                }
-                                return 8;
-                            }
-                            return 7;
-                        } else if (c == '7') {
-                            if (read(0, &c, 1) == 0) { return 6; }
-                            input[6] = c;
-                            if (c == ';') {
-                                if (read(0, &c, 1) == 0) { return 7; }
-                                input[7] = c;
-                                if (c == '9') {
-                                    if (read(0, &c, 1) == 0) { return 8; }
-                                    input[8] = c;
-                                    if (c == '~') {
-                                        input[0] = ESC;
-                                        input[1] = CTRL_TAB;
-                                        return 2;
-                                    }
-                                    return 9;
-                                } else if (c == '1') {
-                                    if (read(0, &c, 1) == 0) { return 8; }
-                                    input[8] = c;
-                                    if (c == '3') {
-                                        if (read(0, &c, 1) == 0) { return 9; }
-                                        input[9] = c;
-                                        if (c == '~') {
-                                            input[0] = ESC;
-                                            input[1] = CTRL_ENTER;
-                                            return 2;
-                                        }
-                                        return 10;
-                                    }
-                                    return 9;
-                                }
-                                return 8;
-                            }
-                            return 7;
-                        }
-                        return 6;
-                    }
-                    return 5;
                 }
                 return 4;
             }
@@ -351,9 +276,13 @@ int yed_read_key_sequences(int len, int *input) {
         /* We have consumed a keystroke. */
         if (new_key == CTRL_H && ctrl_h_is_bs) {new_key = BACKSPACE; }
 
+        if (new_key == KEY_NULL) {
+            keep_reading = 1;
+            continue;
+        }
+
         input[len]    = new_key;
         len          += 1;
-
         keep_reading  = 0;
 
         /*
@@ -463,8 +392,8 @@ int yed_read_keys(int *input) {
             input[0] = MBYTE;
             len      = 1;
         }
-    } else if (c >= 0) {
-        input[0] = c ? c : CTRL_SPACE;
+    } else if (c > 0) {
+        input[0] = c;
         len      = 1;
 
 do_seq:;
@@ -546,6 +475,8 @@ void yed_take_key(int key) {
     yed_trigger_event(&event);
 
     if (event.cancel) { return; }
+
+    if (IS_MOUSE(key)) { return; }
 
     binding = yed_get_key_binding(key);
 
@@ -1033,12 +964,6 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             key_i = PAGE_DOWN;
         } else if (strcmp(key_str, "shift-tab") == 0) {
             key_i = SHIFT_TAB;
-        } else if (strcmp(key_str, "ctrl-tab") == 0) {
-            key_i = CTRL_TAB;
-        } else if (strcmp(key_str, "ctrl-enter") == 0) {
-            key_i = CTRL_ENTER;
-        } else if (strcmp(key_str, "ctrl-space") == 0) {
-            key_i = CTRL_SPACE;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
             if (key_c != -1) {
                 if (key_c == '/') {
@@ -1169,15 +1094,6 @@ char *yed_keys_to_string(int n, int *keys) {
 
             case CTRL_FS:
                 snprintf(key_buff, sizeof(key_buff), "ctrl-/");
-                break;
-            case CTRL_TAB:
-                snprintf(key_buff, sizeof(key_buff), "ctrl-tab");
-                break;
-            case CTRL_ENTER:
-                snprintf(key_buff, sizeof(key_buff), "ctrl-enter");
-                break;
-            case CTRL_SPACE:
-                snprintf(key_buff, sizeof(key_buff), "ctrl-spc");
                 break;
 
             case BACKSPACE:

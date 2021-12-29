@@ -281,6 +281,29 @@ void yed_service_reload(int core) {
     }
 }
 
+static void start_update_forcer(void);
+
+int yed_get_update_hz(void) { return ys->update_hz; }
+
+void yed_set_update_hz(int hz) {
+    int need_to_start_updater;
+
+    if      (hz < MIN_UPDATE_HZ) { hz = 0;             }
+    else if (hz > MAX_UPDATE_HZ) { hz = MAX_UPDATE_HZ; }
+
+    need_to_start_updater = ys->update_hz < MIN_UPDATE_HZ && hz;
+
+    ys->update_hz = hz;
+
+    if (need_to_start_updater) {
+        start_update_forcer();
+    }
+
+    LOG_FN_ENTER();
+    yed_log("update rate: %d Hz", ys->update_hz);
+    LOG_EXIT();
+}
+
 int s_to_i(const char *s) {
     int i;
 
@@ -294,6 +317,7 @@ const char *u8_to_s(u8 u) { return _u8_to_s[u]; }
 #include "array.c"
 #include "bucket_array.c"
 #include "term.c"
+#include "screen.c"
 #include "key.c"
 #include "wcwidth.c"
 #include "utf8.c"
