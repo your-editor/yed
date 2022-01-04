@@ -75,14 +75,8 @@ void yed_term_set_timeout(int n_x_100_ms);
 int yed_term_get_dim(int *r, int *c);
 int yed_term_says_it_supports_truecolor(void);
 
-void yed_term_set_fg_rgb(int r, int g, int b);
-void yed_term_set_bg_rgb(int r, int g, int b);
-void yed_term_set_rgb(int fr, int fg, int fb, int br, int bg, int bb);
-
-void yed_clear_screen(void);
-void yed_cursor_home(void);
 void yed_set_cursor(int row, int col);
-void yed_set_cursor_style(int style);
+void yed_term_set_cursor_style(int style);
 
 void yed_register_sigwinch_handler(void);
 void yed_register_sigstop_handler(void);

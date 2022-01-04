@@ -431,9 +431,8 @@ static void builder_buff_post_mod_handler(yed_event *event) {
     yed_delete_event_handler(buff_post_write_handler);
     yed_delete_event_handler(cursor_moved_handler);
 
-    has_err    = 0;
-    err_fixed  = 1;
-    ys->redraw = 1;
+    has_err   = 0;
+    err_fixed = 1;
 }
 
 static void builder_buff_post_write_handler(yed_event *event) {
@@ -450,9 +449,8 @@ static void builder_buff_post_write_handler(yed_event *event) {
     yed_delete_event_handler(buff_post_write_handler);
     yed_delete_event_handler(cursor_moved_handler);
 
-    has_err    = 0;
-    err_fixed  = 1;
-    ys->redraw = 1;
+    has_err   = 0;
+    err_fixed = 1;
 }
 
 static void builder_cursor_moved_handler(yed_event *event) {

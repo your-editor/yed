@@ -27,8 +27,6 @@ void style_use_term_bg(int n_args, char **args) {
     s->active_border.bg   = 0;
     s->inactive.bg        = 0;
     s->inactive_border.bg = 0;
-
-    YEXE("redraw");
 }
 
 void style_term_bg(int n_args, char **args) {

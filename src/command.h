@@ -20,7 +20,6 @@ void yed_cmd_buff_pop(void);
 void yed_cmd_buff_insert(int idx, char c);
 void yed_cmd_buff_delete(int idx);
 void yed_append_text_to_cmd_buff(const char *s);
-void yed_append_non_text_to_cmd_buff(const char *s);
 void yed_append_int_to_cmd_buff(int i);
 
 void yed_cprint(char *fmt, ...);
@@ -42,7 +41,6 @@ DEF_DEFAULT_COMMAND(command_prompt);
 DEF_DEFAULT_COMMAND(quit);
 DEF_DEFAULT_COMMAND(reload);
 DEF_DEFAULT_COMMAND(reload_core);
-DEF_DEFAULT_COMMAND(redraw);
 DEF_DEFAULT_COMMAND(set);
 DEF_DEFAULT_COMMAND(get);
 DEF_DEFAULT_COMMAND(unset);
@@ -131,5 +129,7 @@ DEF_DEFAULT_COMMAND(feed_keys);
 DEF_DEFAULT_COMMAND(alias);
 DEF_DEFAULT_COMMAND(unalias);
 DEF_DEFAULT_COMMAND(repeat);
+/* @tmp */
+DEF_DEFAULT_COMMAND(switch_renderer);
 
 #endif

@@ -1,8 +1,8 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define _YED_VERSION_MAJOR_PART  13
-#define _YED_VERSION_MINOR_PART  06
+#define _YED_VERSION_MAJOR_PART  14
+#define _YED_VERSION_MINOR_PART  00
 
 
 #define _XYED_VERSION_CAT2(x, y) x##y

@@ -301,6 +301,7 @@ out:;
 }
 
 static void put_status_line_string(char *s, int start_col) {
+    yed_attrs   inv;
     int         col;
     yed_glyph  *git;
     const char *end;
@@ -314,7 +315,10 @@ static void put_status_line_string(char *s, int start_col) {
     if (ys->active_style) {
         yed_set_attr(yed_active_style_get_status_line());
     } else {
-        append_to_output_buff(TERM_INVERSE);
+        inv.flags = ATTR_16 | ATTR_INVERSE;
+        inv.fg    = 0;
+        inv.bg    = 0;
+        yed_set_attr(inv);
     }
 
     col           = start_col;
@@ -332,7 +336,7 @@ static void put_status_line_string(char *s, int start_col) {
                 if (expanded != NULL) {
                     width = yed_get_string_width(expanded);
                     if (col + (width - 1) <= ys->term_cols) {
-                        append_to_output_buff(expanded);
+                        yed_screen_print(expanded);
                         free(expanded);
                     } else {
                         free(expanded);
@@ -376,12 +380,12 @@ static void put_status_line_string(char *s, int start_col) {
             } else {
                 width = yed_get_glyph_width(*git);
                 if (col + (width - 1) > ys->term_cols) { break; }
-                append_n_to_output_buff(&git->c, len);
+                yed_screen_print_n(&git->c, len);
             }
         } else {
             width = yed_get_glyph_width(*git);
             if (col + (width - 1) > ys->term_cols) { break; }
-            append_n_to_output_buff(&git->c, len);
+            yed_screen_print_n(&git->c, len);
         }
 
         col += width;
@@ -430,6 +434,7 @@ static void write_status_line_right(void) {
 
 void yed_write_status_line(void) {
     yed_event event;
+    yed_attrs inv;
 
     event.kind = EVENT_STATUS_LINE_PRE_UPDATE;
     yed_trigger_event(&event);
@@ -439,11 +444,14 @@ void yed_write_status_line(void) {
     if (ys->active_style) {
         yed_set_attr(yed_active_style_get_status_line());
     } else {
-        append_to_output_buff(TERM_INVERSE);
+        inv.flags = ATTR_16 | ATTR_INVERSE;
+        inv.fg    = 0;
+        inv.bg    = 0;
+        yed_set_attr(inv);
     }
-    append_n_to_output_buff(ys->_4096_spaces, ys->term_cols);
+    yed_screen_print_n(ys->_4096_spaces, ys->term_cols);
 
-    write_status_line_left();
-    write_status_line_center();
-    write_status_line_right();
+    write_status_line_left();   yed_reset_attr();
+    write_status_line_center(); yed_reset_attr();
+    write_status_line_right();  yed_reset_attr();
 }

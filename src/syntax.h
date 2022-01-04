@@ -789,13 +789,10 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
     _yed_syntax_range       *cached_state;
     _yed_syntax_range       *start_state;
     _yed_syntax_range       *end_state;
-    int                      mark_dirty;
     _yed_syntax_cache_entry *it;
     int                      idx;
 
     if (!syntax->finalized) { return; }
-
-    mark_dirty = 0;
 
     switch (mod_event) {
         case BUFF_MOD_APPEND_TO_LINE:
@@ -815,7 +812,7 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
                             : *(_yed_syntax_range**)array_item(syntax->ranges, cache_entry->range_idx);
 
             if (cached_state != end_state) {
-                mark_dirty  = _yed_syntax_fixup_cache(syntax, buffer, cache, row);
+                _yed_syntax_fixup_cache(syntax, buffer, cache, row);
             }
 
             if (array_len(cache->entries) == cache->size - 1) {
@@ -843,9 +840,9 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
                 }
             }
 
-            cached_state = _yed_syntax_get_start_state(syntax, buffer, row);
+            _yed_syntax_get_start_state(syntax, buffer, row);
             _yed_syntax_add_to_cache(syntax, cache, row, cached_state);
-            mark_dirty = _yed_syntax_fixup_cache(syntax, buffer, cache, row + 1);
+            _yed_syntax_fixup_cache(syntax, buffer, cache, row + 1);
 
             break;
 
@@ -867,19 +864,13 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
             if (row == 1) {
                 _yed_syntax_add_to_cache(syntax, cache, row, syntax->global);
             }
-            mark_dirty = _yed_syntax_fixup_cache(syntax, buffer, cache, row - 1);
+            _yed_syntax_fixup_cache(syntax, buffer, cache, row - 1);
 
             break;
 
         case BUFF_MOD_CLEAR:
             _yed_syntax_remove_cache(syntax, buffer);
-            mark_dirty = 1;
             break;
-    }
-
-    if (mark_dirty) {
-        DBG("DIRTY");
-        yed_mark_dirty_frames(buffer);
     }
 }
 

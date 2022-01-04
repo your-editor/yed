@@ -266,7 +266,6 @@ void create_default_init_key_handler(yed_event *event) {
             array_free(dds);
             yed_delete_event_handler(h);
             do_create_default_init();
-            ys->redraw_cls = 1;
         }
     } else if (event->key == 'n' || event->key == 'N') {
         array_traverse(dds, dit) {
@@ -274,7 +273,6 @@ void create_default_init_key_handler(yed_event *event) {
         }
         array_free(dds);
         yed_delete_event_handler(h);
-        ys->redraw_cls = 1;
     }
     event->cancel = 1;
 }

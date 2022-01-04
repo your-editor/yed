@@ -122,62 +122,15 @@ int yed_term_says_it_supports_truecolor(void) {
     return 1;
 }
 
-void yed_term_set_fg_rgb(int r, int g, int b) {
-    char buff[128];
-
-    buff[0] = 0;
-
-    sprintf(buff, "\e[38;2;%d;%d;%dm", r, g, b);
-
-    append_to_output_buff(buff);
-}
-
-void yed_term_set_bg_rgb(int r, int g, int b) {
-    char buff[128];
-
-    buff[0] = 0;
-
-    sprintf(buff, "\e[48;2;%d;%d;%dm", r, g, b);
-
-    append_to_output_buff(buff);
-}
-
-void yed_term_set_rgb(int fr, int fg, int fb, int br, int bg, int bb) {
-    char buff[128];
-
-    buff[0] = 0;
-
-    sprintf(buff, "\e[38;2;%d;%d;%d;48;2;%d;%d;%dm", fr, fg, fb, br, bg, bb);
-
-    append_to_output_buff(buff);
-}
-
-void yed_clear_screen(void) {
-    append_to_output_buff(TERM_CLEAR_SCREEN);
-}
-
-void yed_cursor_home(void) {
-    append_to_output_buff(TERM_CURSOR_HOME);
-
-    ys->cur_y = ys->cur_x = 1;
-}
-
 void yed_set_cursor(int row, int col) {
-
     if (row < 1)    { row = 1; }
     if (col < 1)    { col = 1; }
 
-    ys->cur_y = row;
-    ys->cur_x = col;
-
-    append_to_output_buff(TERM_CURSOR_MOVE_BEG);
-    append_int_to_output_buff(row);
-    append_to_output_buff(TERM_CURSOR_MOVE_SEP);
-    append_int_to_output_buff(col);
-    append_to_output_buff(TERM_CURSOR_MOVE_END);
+    ys->screen_update->cur_y = row;
+    ys->screen_update->cur_x = col;
 }
 
-void yed_set_cursor_style(int style) {
+void yed_term_set_cursor_style(int style) {
     switch (style) {
         case TERM_CURSOR_STYLE_DEFAULT:
         case TERM_CURSOR_STYLE_BLINKING_BLOCK:
@@ -186,9 +139,7 @@ void yed_set_cursor_style(int style) {
         case TERM_CURSOR_STYLE_STEADY_UNDERLINE:
         case TERM_CURSOR_STYLE_BLINKING_BAR:
         case TERM_CURSOR_STYLE_STEADY_BAR:
-            append_to_output_buff("\e[");
-            append_int_to_output_buff(style);
-            append_to_output_buff(" q");
+            printf("\e[%d q", style);
             break;
         default:;
     }
@@ -228,7 +179,6 @@ void sigcont_handler(int sig) {
         ys->stopped = 0;
         yed_term_enter();
         pthread_mutex_unlock(&ys->write_ready_mtx);
-        ys->redraw = ys->redraw_cls = 1;
     }
 }
 
@@ -520,18 +470,9 @@ void yed_handle_resize(void) {
         }
     }
 
-    ys->redraw = ys->redraw_cls = 1;
-    yed_clear_screen();
-
     if (af) {
         yed_set_cursor_far_within_frame(af, save_row, save_col);
     }
-
-#if 0
-    yed_update_frames();
-    write_status_bar(0);
-    yed_draw_command_line();
-#endif
 
     ys->has_resized = 0;
 
@@ -541,16 +482,16 @@ void yed_handle_resize(void) {
 }
 
 void yed_term_enable_mouse_reporting(void) {
-    append_to_output_buff(TERM_MOUSE_BUTTON_ENABLE);
-    append_to_output_buff(TERM_SGR_1006_ENABLE);
+    printf("%s", TERM_MOUSE_BUTTON_ENABLE);
+    printf("%s", TERM_SGR_1006_ENABLE);
     LOG_FN_ENTER();
     yed_log("mouse on");
     LOG_EXIT();
 }
 
 void yed_term_disable_mouse_reporting(void) {
-    append_to_output_buff(TERM_MOUSE_BUTTON_DISABLE);
-    append_to_output_buff(TERM_SGR_1006_DISABLE);
+    printf("%s", TERM_MOUSE_BUTTON_DISABLE);
+    printf("%s", TERM_SGR_1006_DISABLE);
     LOG_FN_ENTER();
     yed_log("mouse off");
     LOG_EXIT();

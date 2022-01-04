@@ -71,14 +71,6 @@ void yed_init_output_stream(void) {
 
 int output_buff_len(void) { return array_len(ys->output_buffer); }
 
-void append_n_to_output_buff(char *s, int n) {
-    array_push_n(ys->output_buffer, s, n);
-}
-
-void append_to_output_buff(char *s) {
-    append_n_to_output_buff(s, strlen(s));
-}
-
 static char *itoa(char *p, unsigned x) {
     p += 3*sizeof(int);
     *--p = 0;
@@ -89,41 +81,13 @@ static char *itoa(char *p, unsigned x) {
     return p;
 }
 
-void append_int_to_output_buff(int i) {
-    char  s[16],
-         *p;
-
-    p = itoa(s, i);
-
-    append_to_output_buff(p);
-}
-
 void flush_writer_buff(void) {
     if (!array_len(ys->writer_buffer)) {
         return;
     }
+
     (void)write(1, array_data(ys->writer_buffer), array_len(ys->writer_buffer));
     array_clear(ys->writer_buffer);
-}
-
-void flush_output_buff(void) {
-    if (!array_len(ys->output_buffer)) {
-        return;
-    }
-    (void)write(1, array_data(ys->output_buffer), array_len(ys->output_buffer));
-    array_clear(ys->output_buffer);
-}
-
-void yed_set_small_message(char *msg) {
-    if (ys->small_message) {
-        free(ys->small_message);
-    }
-
-    if (msg) {
-        ys->small_message = strdup(msg);
-    } else {
-        ys->small_message = NULL;
-    }
 }
 
 int yed_check_version_breaking(void) {
@@ -258,27 +222,7 @@ void yed_service_reload(int core) {
         yed_register_sigcont_handler();
     }
 
-    ys->redraw = ys->redraw_cls = 1;
-    append_to_output_buff(TERM_CURSOR_HIDE);
-    yed_set_attr(yed_active_style_get_active());
-    yed_clear_screen();
-    yed_cursor_home();
-    yed_write_welcome();
-    append_to_output_buff(TERM_RESET);
     memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
-    yed_update_frames();
-
-    yed_draw_command_line();
-    yed_write_status_line();
-
-    ys->redraw = ys->redraw_cls = 0;
-
-    if (ys->interactive_command) {
-        yed_set_cursor(ys->term_rows, ys->cmd_cursor_x);
-        append_to_output_buff(TERM_CURSOR_SHOW);
-    } else if (ys->active_frame) {
-        append_to_output_buff(TERM_CURSOR_SHOW);
-    }
 }
 
 static void start_update_forcer(void);

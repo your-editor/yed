@@ -111,7 +111,6 @@ static int yed_buffer_add_line_no_undo_no_events(yed_buffer *buff) {
 
     bucket_array_push(buff->lines, new_line);
 
-    yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
@@ -502,7 +501,6 @@ int yed_buffer_add_line_no_undo(yed_buffer *buff) {
 
     bucket_array_push(buff->lines, new_line);
 
-    yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
@@ -549,7 +547,6 @@ yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row) {
     new_line = yed_new_line();
     line     = bucket_array_insert(buff->lines, idx, new_line);
 
-    yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
@@ -575,7 +572,6 @@ void yed_buff_delete_line_no_undo(yed_buffer *buff, int row) {
     yed_free_line(line);
     bucket_array_delete(buff->lines, idx);
 
-    yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
@@ -597,8 +593,6 @@ void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, yed_glyph 
     idx = yed_line_col_to_idx(line, col);
     yed_line_add_glyph(line, g, idx);
 
-    yed_mark_dirty_frames_line(buff, row);
-
     DO_POST_MOD_EVT(buff, BUFF_MOD_INSERT_INTO_LINE, row, col);
 
 out:;
@@ -616,8 +610,6 @@ void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col) {
 
     idx = yed_line_col_to_idx(line, col);
     yed_line_delete_glyph(line, idx);
-
-    yed_mark_dirty_frames_line(buff, row);
 
     DO_POST_MOD_EVT(buff, BUFF_MOD_DELETE_FROM_LINE, row, col);
 
@@ -640,7 +632,6 @@ void yed_buff_clear_no_undo(yed_buffer *buff) {
 
     yed_buffer_add_line_no_undo(buff);
 
-    yed_mark_dirty_frames(buff);
     buff->get_line_cache     = NULL;
     buff->get_line_cache_row = 0;
 
@@ -1084,7 +1075,6 @@ int yed_fill_buff_from_file(yed_buffer *buff, char *path) {
 
     buff->kind   = BUFF_KIND_FILE;
     buff->flags &= ~BUFF_MODIFIED;
-    yed_mark_dirty_frames(buff);
 
 cleanup:
     fclose(f);

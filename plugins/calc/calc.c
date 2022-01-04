@@ -993,8 +993,6 @@ error:;
         last = strdup(start);
 
         disable_buffer_mod_handler = 0;
-
-        ys->active_frame->dirty = 1;
     }
 }
 
@@ -1118,8 +1116,6 @@ static void unload(yed_plugin *self) {
         free(start);
         start = str = NULL;
     }
-
-    ys->redraw = 1;
 }
 
 void calc_open(int n_args, char **args) {

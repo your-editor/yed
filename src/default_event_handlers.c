@@ -20,14 +20,9 @@ static void yed_var_change_handler(yed_event *event) {
 
         if (ys->tabw != old_tabw) {
             yed_update_line_visual_widths();
-            ys->redraw = 1;
         }
     } else if (strcmp(event->var_name, "cursor-line") == 0) {
-        if (ys->active_frame != NULL) {
-            ys->active_frame->cursor_line_is_dirty = 1;
-        }
     } else if (strcmp(event->var_name, "fill-string") == 0) {
-        ys->redraw = 1;
     }
 
     if (yed_buff_is_visible(yed_get_vars_buffer())) {

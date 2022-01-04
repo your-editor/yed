@@ -101,7 +101,6 @@ void grep_take_key(int key) {
         case ENTER:
             ys->interactive_command = NULL;
             ys->current_search      = NULL;
-            ys->active_frame->dirty = 1;
             yed_clear_cmd_buff();
             break;
         default:

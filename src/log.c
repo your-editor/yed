@@ -26,8 +26,6 @@ void yed__log_prints(char *s, int len) {
     }
 
     buff->flags |= BUFF_RD_ONLY;
-
-    yed_mark_dirty_frames(buff);
 }
 
 const char *yed_top_log_name(void) {
@@ -127,7 +125,6 @@ void yed_log_buff_mod_handler(yed_event *event) {
         if ((*fit) != ys->active_frame
         &&  (*fit)->buffer == yed_get_log_buffer()) {
             yed_set_cursor_far_within_frame((*fit), yed_buff_n_lines(yed_get_log_buffer()), 1);
-            (*fit)->dirty = 1;
         }
     }
 

@@ -18,15 +18,11 @@ typedef struct yed_frame_t {
     int                 gutter_width;
     int                 cursor_line,
                         cursor_col,
-                        last_cursor_line,
-                        dirty_line,
-                        cursor_line_is_dirty,
                         buffer_y_offset,
                         buffer_x_offset;
     int                 cur_x,
                         cur_y;
     int                 desired_col;
-    int                 dirty;
     int                 scroll_off;
     yed_attrs           row_base_attrs;
     array_t             line_attrs;
@@ -57,11 +53,8 @@ void yed_frame_reset_cursor(yed_frame *frame);
 void yed_frame_hard_reset_cursor_x(yed_frame *frame);
 void yed_frame_scroll_buffer(yed_frame *frame, int rows);
 void yed_update_frames(void);
-void yed_frame_update_dirty_line(yed_frame *frame);
 void yed_frame_update_cursor_line(yed_frame *frame);
 void yed_frames_remove_buffer(yed_buffer *buff);
-void yed_mark_dirty_frames(yed_buffer *dirty_buff);
-void yed_mark_dirty_frames_line(yed_buffer *dirty_buff, int row);
 
 void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
                                       int *btop, int *bleft, int *bheight, int *bwidth);
