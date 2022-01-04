@@ -70,7 +70,6 @@ void eline(yed_event *event)  {
 
 void unload(yed_plugin *self) {
     yed_syntax_free(&syn);
-    ys->redraw = 1;
 }
 
 int yed_plugin_boot(yed_plugin *self) {
@@ -150,8 +149,6 @@ int yed_plugin_boot(yed_plugin *self) {
             ARRAY_LOOP(builtins) KWD(*it);
         APOP();
     ENDSYN();
-
-    ys->redraw = 1;
 
     return 0;
 }

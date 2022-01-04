@@ -1680,7 +1680,6 @@ static void key_handler(yed_event *event) {
                 yed_kill_direct_draw(*dit);
             }
             array_free(update_dds);
-            ys->redraw_cls = 1;
             YEXE("ypm-update");
         } else if(event->key == 'n' || event->key == 'N') {
             update_menu_is_up = 0;
@@ -1688,7 +1687,6 @@ static void key_handler(yed_event *event) {
                 yed_kill_direct_draw(*dit);
             }
             array_free(update_dds);
-            ys->redraw_cls = 1;
             yed_plugin_uninstall_features(SELF);
             yed_free_buffer(get_or_make_buffer("ypm-menu"));
             yed_free_buffer(get_or_make_buffer("ypm-output"));

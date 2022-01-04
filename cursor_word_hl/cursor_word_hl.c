@@ -76,11 +76,6 @@ void cursor_word_hl_cursor_moved_handler(yed_event *event) {
     cursor_is_idle       = 0;
     cursor_idle_start_ms = measure_time_now_ms();
 
-    /* Clear old word. */
-    if (cursor_was_idle && the_word) {
-        frame->dirty = 1;
-    }
-
     word = yed_word_under_cursor();
 
     if (!word) {
@@ -123,7 +118,6 @@ void cursor_word_hl_delete_back_handler(yed_event *event) {
             free(the_word);
             the_word     = NULL;
             the_word_len = 0;
-            frame->dirty = 1;
         }
         return;
     }
@@ -154,14 +148,6 @@ void cursor_word_hl_pump_handler(yed_event *event) {
 
     if (cursor_idle_now_ms - cursor_idle_start_ms >= cursor_idle_threshold_ms) {
         cursor_is_idle = 1;
-
-        if (cursor_was_moving) {
-            if (the_word) {
-                if (ys->active_frame) {
-                    ys->active_frame->dirty = 1;
-                }
-            }
-        }
     }
 }
 

@@ -23,8 +23,6 @@ int yed_plugin_boot(yed_plugin *self) {
         yed_set_var("line-number-scomp", "code-comment");
     }
 
-    ys->redraw = 1;
-
     return 0;
 }
 
@@ -86,9 +84,6 @@ void line_numbers_frame_pre_update(yed_event *event) {
     int scomp;
 
     scomp = yed_scomp_nr_by_name(yed_get_var("line-number-scomp"));
-    if (scomp != scomp_save) {
-        ys->redraw = 1;
-    }
     scomp_save = scomp;
 
     if (event->frame->buffer == NULL) {

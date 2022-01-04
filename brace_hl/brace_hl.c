@@ -44,12 +44,6 @@ void brace_hl_cursor_moved_handler(yed_event *event) {
     save_end_row = end_row;
 
     brace_hl_find_braces(event->frame);
-
-    if (beg_row != save_beg_row
-    ||  end_row != save_end_row) {
-
-        frame->dirty = 1;
-    }
 }
 
 void brace_hl_line_handler(yed_event *event) {
@@ -84,12 +78,6 @@ void brace_hl_buff_mod_handler(yed_event *event) {
     save_end_row = end_row;
 
     brace_hl_find_braces(event->frame);
-
-    if (beg_row != save_beg_row
-    ||  end_row != save_end_row) {
-
-        frame->dirty = 1;
-    }
 }
 
 void brace_hl_find_braces(yed_frame *frame) {
