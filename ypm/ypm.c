@@ -59,7 +59,7 @@ static int               mod_norecurse;
 static int               list_len;
 static array_t           update_dds;
 static int               update_menu_is_up;
-
+static int               save_update_hz;
 
 
 /* User facing commands: */
@@ -1032,6 +1032,7 @@ LOG_CMD_ENTER("ypm");
 
     if (arg->count == update_count) {
         yed_cprint("update finished");
+        yed_set_update_hz(save_update_hz);
         yed_set_var("ypm-is-updating","NO");
         draw_list();
         YEXE("buffer", "*ypm-menu");
@@ -1104,6 +1105,8 @@ static void do_update(void) {
     snprintf(buff, sizeof(buff), "bash %s 2>&1", update_script_path);
 
     yed_set_var("ypm-is-updating","YES");
+    save_update_hz = yed_get_update_hz();
+    yed_set_update_hz(10);
     add_bg_task(buff, update_callback, NULL);
 }
 
