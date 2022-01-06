@@ -383,11 +383,11 @@ void yed_cmd_buff_delete(int idx) {
 void yed_draw_command_line() {
     int        i;
     int        len;
-    int        j;
-    char      *p;
-    char       c;
+    yed_glyph *git;
+    char      *s;
     yed_attrs  acmd;
     yed_attrs  aatn;
+    int        j;
 
     yed_set_cursor(ys->term_rows, 1);
     yed_set_attr(yed_active_style_get_command_line());
@@ -398,34 +398,34 @@ void yed_draw_command_line() {
 
     if (ys->interactive_command) {
         if (ys->cmd_prompt) {
-            for (i = 0; i < strlen(ys->cmd_prompt); i += 1) {
-                len += yed_get_glyph_width(G(*ys->cmd_prompt + i));
+            yed_glyph_traverse(ys->cmd_prompt, git) {
+                len += yed_get_glyph_width(*git);
                 if (len > ys->term_cols) { goto out; }
-                yed_screen_print_n(ys->cmd_prompt + i, 1);
+                yed_screen_print_n(&git->c, yed_get_glyph_len(*git));
             }
         }
     }
 
-    for (i = 0; i < array_len(ys->cmd_buff); i += 1) {
-        p = (char*)(array_data(ys->cmd_buff) + i);
-        c = *p;
+    array_zero_term(ys->cmd_buff);
+    s = array_data(ys->cmd_buff);
 
-        if (strncmp(p, "[!]", 3) == 0) {
+    yed_glyph_traverse(s, git) {
+        if (strncmp(&git->c, "[!]", 3) == 0) {
             acmd = yed_active_style_get_command_line();
             aatn = yed_active_style_get_attention();
             yed_combine_attrs(&acmd, &aatn);
             yed_set_attr(acmd);
         }
 
-        len += yed_get_glyph_width(G(c));
+        len += yed_get_glyph_width(*git);
         if (len > ys->term_cols) { goto out; }
 
-        if (c == '\t') {
+        if (git->c == '\t') {
             for (j = 0; j < ys->tabw; j += 1) {
                 yed_screen_print_n(" ", 1);
             }
         } else {
-            yed_screen_print_n(&c, 1);
+            yed_screen_print_n(&git->c, yed_get_glyph_len(*git));
         }
     }
 
