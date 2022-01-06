@@ -81,15 +81,6 @@ static char *itoa(char *p, unsigned x) {
     return p;
 }
 
-void flush_writer_buff(void) {
-    if (!array_len(ys->writer_buffer)) {
-        return;
-    }
-
-    (void)write(1, array_data(ys->writer_buffer), array_len(ys->writer_buffer));
-    array_clear(ys->writer_buffer);
-}
-
 int yed_check_version_breaking(void) {
     int   breaks;
     char *env;

@@ -219,6 +219,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     char               **file_it;
     unsigned long long   start_time;
     int                  dev_null_fd;
+    char                *getcwd_ret;
     char               **it;
     array_t              split;
 
@@ -252,7 +253,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     setlocale(LC_ALL, "en_US.utf8");
 
-    getcwd(cwd, sizeof(cwd));
+    getcwd_ret = getcwd(cwd, sizeof(cwd));
+    (void)getcwd_ret;
     ys->working_dir = strdup(cwd);
 
     yed_init_events();

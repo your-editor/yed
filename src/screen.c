@@ -160,6 +160,7 @@ void yed_render_screen(void) {
     char             buff[512];
     int              cursor_x;
     int              cursor_y;
+    int              write_ret;
 
 #define WR(s, n) array_push_n(output_buffer, s, n)
 
@@ -236,7 +237,8 @@ void yed_render_screen(void) {
 
     WR(buff, strlen(buff));
 
-    write(1, array_data(output_buffer), array_len(output_buffer));
+    write_ret = write(1, array_data(output_buffer), array_len(output_buffer));
+    (void)write_ret;
 
     array_free(output_buffer);
 

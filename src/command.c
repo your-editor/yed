@@ -525,6 +525,7 @@ void yed_default_command_sh(int n_args, char **args) {
          cmd_buff[512];
     const char *lazy_space;
     int i;
+    int sys_ret;
 
     buff[0]     = 0;
     cmd_buff[0] = 0;
@@ -544,7 +545,8 @@ void yed_default_command_sh(int n_args, char **args) {
     printf(TERM_CLEAR_SCREEN);
     printf(TERM_CURSOR_HOME);
     fflush(stdout);
-    system(buff);
+    sys_ret = system(buff);
+    (void)sys_ret;
     printf(TERM_CLEAR_SCREEN);
     fflush(stdout);
 }
