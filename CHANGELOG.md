@@ -8,8 +8,8 @@
     - Rewrote the drawing system from the ground up for high performance and overall smaller output.
 
 ### Removed
-    - `ys->redraw`, `ys->redraw_cls` were removed because they are no longer necessary
-    - `frame->dirty`, was removed because it is no longer necessary
+    - `ys->redraw`, `ys->redraw_cls` were removed because they are no longer necessary.
+    - `frame->dirty`, was removed because it is no longer necessary.
 
 ### Fixed
     - Fixed a bug where mouse keycodes are sent to interactive comands.
