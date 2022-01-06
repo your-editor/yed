@@ -123,6 +123,7 @@ int _yed_write_buffer_to_subproc_2(yed_buffer *buff, char *cmd, int *exit_status
     pid_t          pid;
     int            n_lines;
     int            row;
+    int            write_ret;
     yed_line      *line;
     array_t        out;
     char           read_buff[4096];
@@ -172,9 +173,11 @@ int _yed_write_buffer_to_subproc_2(yed_buffer *buff, char *cmd, int *exit_status
     n_lines = yed_buff_n_lines(buff);
     row     = 1;
     bucket_array_traverse(buff->lines, line) {
-        (void)write(fds_to_child[1], array_data(line->chars), array_len(line->chars));
+        write_ret = write(fds_to_child[1], array_data(line->chars), array_len(line->chars));
+        (void)write_ret;
         if (row < n_lines) {
-            (void)write(fds_to_child[1], "\n", 1);
+            write_ret = write(fds_to_child[1], "\n", 1);
+            (void)write_ret;
         }
         row += 1;
     }
