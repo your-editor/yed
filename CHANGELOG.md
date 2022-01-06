@@ -1,5 +1,20 @@
 # Changelog
 
+## 1400 - 2022-1-6
+### Added
+    - Variable minimum update rate set with `yed_set_update_hz()`. This is useful for drawing elements that need to update/move faster than the default key timeout.
+
+### Changed
+    - Rewrote the drawing system from the ground up for high performance and overall smaller output.
+
+### Removed
+    - `ys->redraw`, `ys->redraw_cls` were removed because they are no longer necessary
+    - `frame->dirty`, was removed because it is no longer necessary
+
+### Fixed
+    - Fixed a bug where mouse keycodes are sent to interactive comands.
+    - Fixed a bug where multi-byte characters were printed incorrectly to the log buffer.
+
 ## 1306 - 2021-12-13
 ### Fixed
     - fixed a bug that would cause command line contents to overflow into a new terminal line.
