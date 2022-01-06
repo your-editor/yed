@@ -39,7 +39,6 @@ yed_frame * yed_vsplit_frame(yed_frame *frame);
 yed_frame * yed_hsplit_frame(yed_frame *frame);
 void yed_activate_frame(yed_frame *frame);
 void yed_clear_frame(yed_frame *frame);
-void yed_undraw_frame(yed_frame *frame);
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset);
 void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f);
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff);

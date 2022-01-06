@@ -129,7 +129,5 @@ DEF_DEFAULT_COMMAND(feed_keys);
 DEF_DEFAULT_COMMAND(alias);
 DEF_DEFAULT_COMMAND(unalias);
 DEF_DEFAULT_COMMAND(repeat);
-/* @tmp */
-DEF_DEFAULT_COMMAND(switch_renderer);
 
 #endif

@@ -23,5 +23,7 @@ void yed_diff_and_swap_screens(void);
 void yed_render_screen(void);
 void yed_screen_print(const char *s);
 void yed_screen_print_n(const char *s, int n);
+void yed_screen_print_over(const char *s);
+void yed_screen_print_n_over(const char *s, int n);
 
 #endif

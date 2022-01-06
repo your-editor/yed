@@ -221,8 +221,6 @@ void yed_service_reload(int core) {
         yed_register_sigstop_handler();
         yed_register_sigcont_handler();
     }
-
-    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
 }
 
 static void start_update_forcer(void);

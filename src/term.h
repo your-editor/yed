@@ -28,7 +28,7 @@
 #define TERM_INVERSE                 "\e[7m"
 #define TERM_SAVE                    "\e7"
 #define TERM_RESTORE                 "\e8"
-#define TERM_RESET                   "\e[00m"
+#define TERM_RESET                   "\e[0m"
 
 #define TERM_ALT_SCREEN              "\e[?1049h"
 #define TERM_STD_SCREEN              "\e[?1049l"

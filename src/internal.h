@@ -186,7 +186,6 @@ typedef struct yed_state_t {
     struct termios               sav_term;
     int                          term_cols,
                                  term_rows;
-    char                        *written_cells;
     tree(yed_buffer_name_t,
          yed_buffer_ptr_t)       buffers;
     int                          unnamed_buff_counter;
@@ -272,9 +271,6 @@ typedef struct yed_state_t {
 } yed_state;
 
 extern yed_state *ys;
-
-/* @tmp */
-extern int use_new_renderer;
 
 void yed_init_output_stream(void);
 

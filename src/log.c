@@ -7,22 +7,29 @@ void yed_init_log(void) {
 }
 
 void yed__log_prints(char *s, int len) {
+    char       *end;
     yed_buffer *buff;
-    int         row, i;
-    yed_glyph   g;
+    int         row;
+    yed_glyph  *g;
+    int         glen;
 
+    end  = s + len;
     buff = yed_get_log_buffer();
     row  = yed_buff_n_lines(buff);
 
     buff->flags &= ~BUFF_RD_ONLY;
 
-    for (i = 0; i < len; i += 1) {
-        g.c = s[i];
-        if (g.c == '\n') {
+    while (s < end) {
+        g = (yed_glyph*)(void*)s;
+        glen = yed_get_glyph_len(*g);
+
+        if (g->c == '\n') {
             row = yed_buffer_add_line_no_undo(buff);
         } else {
-            yed_append_to_line_no_undo(buff, row, g);
+            yed_append_to_line_no_undo(buff, row, *g);
         }
+
+        s += glen;
     }
 
     buff->flags |= BUFF_RD_ONLY;

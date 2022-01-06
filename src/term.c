@@ -441,9 +441,6 @@ void yed_handle_resize(void) {
         return;
     }
 
-    ys->written_cells = realloc(ys->written_cells, ys->new_term_rows * ys->new_term_cols);
-    memset(ys->written_cells, 0, ys->new_term_rows * ys->new_term_cols);
-
     ys->term_cols = ys->new_term_cols;
     ys->term_rows = ys->new_term_rows;
 

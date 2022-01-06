@@ -67,7 +67,7 @@ void yed_do_direct_draws(void) {
             }
             attrs.flags |= dd->additional_attr_flags;
             yed_set_attr(attrs);
-            yed_screen_print(dd->string);
+            yed_screen_print_over(dd->string);
             array_push(new, dd);
         } else {
             free(dd->string);

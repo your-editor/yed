@@ -733,10 +733,6 @@ void yed_plugin_request_mouse_reporting(yed_plugin *plug) {
     if (ys->mouse_reporting_ref_count == 1) {
         yed_term_enable_mouse_reporting();
     }
-
-    LOG_FN_ENTER();
-    yed_log("ref count: %d", ys->mouse_reporting_ref_count);
-    LOG_EXIT();
 }
 
 void yed_plugin_request_no_mouse_reporting(yed_plugin *plug) {
@@ -751,8 +747,4 @@ void yed_plugin_request_no_mouse_reporting(yed_plugin *plug) {
     }
 
     plug->requested_mouse_reporting  = 0;
-
-    LOG_FN_ENTER();
-    yed_log("ref count: %d", ys->mouse_reporting_ref_count);
-    LOG_EXIT();
 }

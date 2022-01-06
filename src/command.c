@@ -174,8 +174,6 @@ do {                                                              \
     SET_DEFAULT_COMMAND("alias",                              alias);
     SET_DEFAULT_COMMAND("unalias",                            unalias);
     SET_DEFAULT_COMMAND("repeat",                             repeat);
-/* @tmp */
-    SET_DEFAULT_COMMAND("switch-renderer",                    switch_renderer);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -2012,7 +2010,6 @@ void frame_move_take_key(int key) {
         yed_frame_hard_reset_cursor_x(f);
     } else if (key == ARROW_UP) {
         if (f->btop > 1) {
-            yed_undraw_frame(f);
             save = f->btop;
             do {
                 f->top_f -= unit_y;
@@ -2021,7 +2018,6 @@ void frame_move_take_key(int key) {
         }
     } else if (key == ARROW_DOWN) {
         if ((f->btop + 1) + f->bheight < ys->term_rows) {
-            yed_undraw_frame(f);
             save = f->btop;
             do {
                 f->top_f += unit_y;
@@ -2030,7 +2026,6 @@ void frame_move_take_key(int key) {
         }
     } else if (key == ARROW_LEFT) {
         if (f->bleft > 1) {
-            yed_undraw_frame(f);
             save = f->bleft;
             do {
                 f->left_f -= unit_x;
@@ -2039,7 +2034,6 @@ void frame_move_take_key(int key) {
         }
     } else if (key == ARROW_RIGHT) {
         if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
-            yed_undraw_frame(f);
             save = f->bleft;
             do {
                 f->left_f += unit_x;
@@ -2101,7 +2095,6 @@ void frame_resize_take_key(int key) {
         yed_frame_hard_reset_cursor_x(f);
     } else if (key == ARROW_UP) {
         if (f->height > 1) {
-            yed_undraw_frame(f);
             save = f->bheight;
             do {
                 f->height_f -= unit_y;
@@ -2110,7 +2103,6 @@ void frame_resize_take_key(int key) {
         }
     } else if (key == ARROW_DOWN) {
         if ((f->btop + 1) + f->bheight < ys->term_rows) {
-            yed_undraw_frame(f);
             save = f->bheight;
             do {
                 f->height_f += unit_y;
@@ -2119,7 +2111,6 @@ void frame_resize_take_key(int key) {
         }
     } else if (key == ARROW_LEFT) {
         if (f->width > 1) {
-            yed_undraw_frame(f);
             save = f->bwidth;
             do {
                 f->width_f -= unit_x;
@@ -2128,7 +2119,6 @@ void frame_resize_take_key(int key) {
         }
     } else if (key == ARROW_RIGHT) {
         if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
-            yed_undraw_frame(f);
             save = f->bwidth;
             do {
                 f->width_f += unit_x;
@@ -4012,16 +4002,6 @@ void yed_default_command_repeat(int n_args, char **args) {
 
     for (; i > 0; i -= 1) {
         yed_execute_command(args[1], n_args - 2, args + 2);
-    }
-}
-
-/* @tmp */
-void yed_default_command_switch_renderer(int n_args, char **args) {
-    use_new_renderer = !use_new_renderer;
-    if (use_new_renderer) {
-        yed_cprint("using NEW renderer");
-    } else {
-        yed_cprint("using OLD renderer");
     }
 }
 

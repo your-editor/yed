@@ -2,8 +2,6 @@
 #include "internal.c"
 
 yed_state *ys;
-/* @tmp */
-int  use_new_renderer = 1;
 
 static int writer_started;
 static int write_pending;
@@ -19,11 +17,9 @@ static void * writer(void *arg) {
         while (!write_pending) {
             pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
         }
-        if (use_new_renderer) {
-            yed_render_screen();
-        } else {
-            flush_writer_buff();
-        }
+
+        yed_render_screen();
+
         write_pending = 0;
 
         pthread_mutex_unlock(&ys->write_ready_mtx);
@@ -272,9 +268,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
 
-    ys->written_cells = malloc(ys->term_rows * ys->term_cols);
-    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
-
     memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
     yed_init_screen();
@@ -385,7 +378,6 @@ int yed_pump(void) {
     if (ys->has_resized) {
         yed_handle_resize();
     } else {
-        memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
         memset(keys, 0, sizeof(keys));
     }
 
