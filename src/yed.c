@@ -270,7 +270,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
 
-    memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
     yed_init_screen();
 
