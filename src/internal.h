@@ -182,7 +182,6 @@ typedef struct yed_state_t {
     pthread_mutex_t              write_ready_mtx;
     pthread_cond_t               write_ready_cond;
     pthread_t                    writer_id;
-    char                         _4096_spaces[4096];
     struct termios               sav_term;
     int                          term_cols,
                                  term_rows;

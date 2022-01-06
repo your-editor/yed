@@ -435,6 +435,7 @@ static void write_status_line_right(void) {
 void yed_write_status_line(void) {
     yed_event event;
     yed_attrs inv;
+    int       i;
 
     event.kind = EVENT_STATUS_LINE_PRE_UPDATE;
     yed_trigger_event(&event);
@@ -449,7 +450,7 @@ void yed_write_status_line(void) {
         inv.bg    = 0;
         yed_set_attr(inv);
     }
-    yed_screen_print_n(ys->_4096_spaces, ys->term_cols);
+    for (i = 0; i < ys->term_cols; i += 1) { yed_screen_print_n(" ", 1); }
 
     write_status_line_left();   yed_reset_attr();
     write_status_line_center(); yed_reset_attr();

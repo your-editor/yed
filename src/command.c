@@ -381,8 +381,8 @@ void yed_cmd_buff_delete(int idx) {
 }
 
 void yed_draw_command_line() {
-    int        len;
     int        i;
+    int        len;
     int        j;
     char      *p;
     char       c;
@@ -391,7 +391,7 @@ void yed_draw_command_line() {
 
     yed_set_cursor(ys->term_rows, 1);
     yed_set_attr(yed_active_style_get_command_line());
-    yed_screen_print_n(ys->_4096_spaces, ys->term_cols);
+    for (i = 0; i < ys->term_cols; i += 1) { yed_screen_print_n(" ", 1); }
     yed_set_cursor(ys->term_rows, 1);
 
     len = 0;
