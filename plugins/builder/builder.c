@@ -6,7 +6,7 @@ static yed_event_handler  style_handler;
 static yed_event_handler  row_handler;
 static yed_event_handler  buff_post_mod_handler;
 static yed_event_handler  buff_post_write_handler;
-static yed_event_handler  cursor_moved_handler;
+static yed_event_handler  frame_pre_update_handler;
 static int                build_is_running;
 static int                build_failed;
 static char              *build_cmd;
@@ -50,7 +50,7 @@ static void builder_pump_handler(yed_event *event);
 static void builder_row_handler(yed_event *event);
 static void builder_buff_post_mod_handler(yed_event *event);
 static void builder_buff_post_write_handler(yed_event *event);
-static void builder_cursor_moved_handler(yed_event *event);
+static void builder_frame_pre_update_handler(yed_event *event);
 static void builder_style_handler(yed_event *event);
 static void builder_jump_to_error_location(int n_args, char **args);
 static void builder_print_error(int n_args, char **args);
@@ -76,18 +76,18 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_plugin_set_command(self, "builder-view-output",   builder_view_output);
     yed_plugin_set_command(self, "builder-echo-status",   builder_echo_status);
 
-    pump_handler.kind            = EVENT_PRE_PUMP;
-    pump_handler.fn              = builder_pump_handler;
-    row_handler.kind             = EVENT_ROW_PRE_CLEAR;
-    row_handler.fn               = builder_row_handler;
-    buff_post_mod_handler.kind   = EVENT_BUFFER_POST_MOD;
-    buff_post_mod_handler.fn     = builder_buff_post_mod_handler;
-    buff_post_write_handler.kind = EVENT_BUFFER_POST_WRITE;
-    buff_post_write_handler.fn   = builder_buff_post_write_handler;
-    cursor_moved_handler.kind    = EVENT_CURSOR_POST_MOVE;
-    cursor_moved_handler.fn      = builder_cursor_moved_handler;
-    style_handler.kind           = EVENT_STYLE_CHANGE;
-    style_handler.fn             = builder_style_handler;
+    pump_handler.kind             = EVENT_PRE_PUMP;
+    pump_handler.fn               = builder_pump_handler;
+    row_handler.kind              = EVENT_ROW_PRE_CLEAR;
+    row_handler.fn                = builder_row_handler;
+    buff_post_mod_handler.kind    = EVENT_BUFFER_POST_MOD;
+    buff_post_mod_handler.fn      = builder_buff_post_mod_handler;
+    buff_post_write_handler.kind  = EVENT_BUFFER_POST_WRITE;
+    buff_post_write_handler.fn    = builder_buff_post_write_handler;
+    frame_pre_update_handler.kind = EVENT_FRAME_PRE_UPDATE;
+    frame_pre_update_handler.fn   = builder_frame_pre_update_handler;
+    style_handler.kind            = EVENT_STYLE_CHANGE;
+    style_handler.fn              = builder_style_handler;
 
     yed_plugin_add_event_handler(self, pump_handler);
     yed_plugin_add_event_handler(self, style_handler);
@@ -429,7 +429,7 @@ static void builder_buff_post_mod_handler(yed_event *event) {
     yed_delete_event_handler(row_handler);
     yed_delete_event_handler(buff_post_mod_handler);
     yed_delete_event_handler(buff_post_write_handler);
-    yed_delete_event_handler(cursor_moved_handler);
+    yed_delete_event_handler(frame_pre_update_handler);
 
     has_err   = 0;
     err_fixed = 1;
@@ -447,24 +447,30 @@ static void builder_buff_post_write_handler(yed_event *event) {
     yed_delete_event_handler(row_handler);
     yed_delete_event_handler(buff_post_mod_handler);
     yed_delete_event_handler(buff_post_write_handler);
-    yed_delete_event_handler(cursor_moved_handler);
+    yed_delete_event_handler(frame_pre_update_handler);
 
     has_err   = 0;
     err_fixed = 1;
 }
 
-static void builder_cursor_moved_handler(yed_event *event) {
+static void builder_frame_pre_update_handler(yed_event *event) {
     yed_buffer *buff;
 
-    if (has_err && event->frame->cursor_line == err_line) {
-        buff = yed_get_buffer_by_path(err_file);
-        if (event->frame->buffer == buff) {
-            builder_draw_error_message(1);
-            return;
-        }
-    }
+    if (!has_err) { return; }
 
-    builder_draw_error_message(0);
+    if (event->frame != ys->active_frame) { return; }
+
+    buff = yed_get_buffer_by_path(err_file);
+
+    if (event->frame->buffer == buff) {
+        if (event->frame->cursor_line == err_line) {
+            builder_draw_error_message(1);
+        } else {
+            builder_draw_error_message(0);
+        }
+    } else {
+        builder_draw_error_message(0);
+    }
 }
 
 static void builder_style_handler(yed_event *event) {
@@ -481,7 +487,7 @@ static void builder_set_err(int has_loc, char *file, int line, int col, char *ms
         yed_plugin_add_event_handler(Self, row_handler);
         yed_plugin_add_event_handler(Self, buff_post_mod_handler);
         yed_plugin_add_event_handler(Self, buff_post_write_handler);
-        yed_plugin_add_event_handler(Self, cursor_moved_handler);
+        yed_plugin_add_event_handler(Self, frame_pre_update_handler);
     }
 
     has_err      = 1;
