@@ -54,6 +54,11 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
     *width  = *bwidth
                 - (*left != *bleft)                              /* 1 shorter if there's a border row on the left... */
                 - ((*bleft + *bwidth - 1) != ys->term_cols);     /* ... or the right.                                */
+
+    if (*bheight <= 0) { *bheight = 1; }
+    if (*height  <= 0) { *height  = 1; }
+    if (*bwidth  <= 0) { *bwidth  = 1; }
+    if (*width   <= 0) { *width   = 1; }
 }
 
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
@@ -169,17 +174,17 @@ void yed_delete_frame(yed_frame *frame) {
 }
 
 yed_frame * yed_vsplit_frame(yed_frame *frame) {
-    int        save_cursor_row, save_cursor_col;
-    yed_frame *new_frame;
+    int             save_cursor_row, save_cursor_col;
+    yed_frame      *new_frame;
+    yed_frame_tree *new_tree;
 
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, 1);
 
-    yed_frame_tree_leaf_vsplit(frame->tree);
-
-    new_frame = frame->tree->parent->child_trees[1]->frame;
+    new_tree  = yed_frame_tree_vsplit(frame->tree);
+    new_frame = new_tree->child_trees[1]->frame;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
@@ -187,21 +192,224 @@ yed_frame * yed_vsplit_frame(yed_frame *frame) {
 }
 
 yed_frame * yed_hsplit_frame(yed_frame *frame) {
-    int        save_cursor_row, save_cursor_col;
-    yed_frame *new_frame;
+    int             save_cursor_row, save_cursor_col;
+    yed_frame      *new_frame;
+    yed_frame_tree *new_tree;
 
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, 1);
 
-    yed_frame_tree_leaf_hsplit(frame->tree);
-
-    new_frame = frame->tree->parent->child_trees[1]->frame;
+    new_tree  = yed_frame_tree_hsplit(frame->tree);
+    new_frame = new_tree->child_trees[1]->frame;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
     return new_frame;
+}
+
+static void frame_tree_leaf_visit_reset_cursor(yed_frame_tree *tree, void *arg) {
+    (void)arg;
+
+    yed_frame_hard_reset_cursor_x(tree->frame);
+    yed_frame_hard_reset_cursor_y(tree->frame);
+}
+
+void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
+    float sign_x, sign_y;
+    float unit_x, unit_y;
+
+    tree = yed_frame_tree_get_root(tree);
+
+    sign_y = (rows < 0 ? -1.0 : 1.0);
+    sign_x = (cols < 0 ? -1.0 : 1.0);
+
+    rows = abs(rows);
+    cols = abs(cols);
+
+    unit_y = sign_y / (float)ys->term_rows;
+    unit_x = sign_x / (float)ys->term_cols;
+
+    for (; rows > 0; rows -= 1) {
+        if (sign_y > 0.0 && tree->top + tree->height > 1.0 - unit_y) { break; }
+        if (sign_y < 0.0 && tree->height <= 5.0 * fabs(unit_y))                           { break; }
+
+        tree->height += unit_y;
+        yed_frame_tree_recursive_readjust(tree);
+    }
+    for (; cols > 0; cols -= 1) {
+        if (sign_x > 0.0 && tree->left + tree->width > 1.0 - unit_x) { break; }
+        if (sign_x < 0.0 && tree->width <= 5.0 * fabs(unit_x))                           { break; }
+
+        tree->width += unit_x;
+        yed_frame_tree_recursive_readjust(tree);
+    }
+
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_reset_cursor, NULL);
+}
+
+void yed_resize_frame(yed_frame *frame, int rows, int cols) {
+    float           sign_x, sign_y;
+    float           unit_x, unit_y;
+    int             save;
+    yed_frame_tree *tree;
+    yed_frame_tree *parent;
+    yed_frame_tree *other;
+    float           atop;
+    float           aleft;
+    float           aheight;
+    float           awidth;
+
+    sign_y = (rows < 0 ? -1.0 : 1.0);
+    sign_x = (cols < 0 ? -1.0 : 1.0);
+
+    rows = abs(rows);
+    cols = abs(cols);
+
+    if (yed_frame_is_tree_root(frame)) {
+        unit_y = sign_y / (float)ys->term_rows;
+        unit_x = sign_x / (float)ys->term_cols;
+
+        for (; rows > 0; rows -= 1) {
+            if (sign_y < 0.0 && frame->bheight - 1 < 1)                           { break; }
+            if (sign_y > 0.0 && frame->btop + frame->bheight > ys->term_rows - 2) { break; }
+
+            save = frame->bheight;
+            do {
+                frame->height_f += unit_y;
+                FRAME_RESET_RECT(frame);
+            } while (frame->bheight == save);
+        }
+        for (; cols > 0; cols -= 1) {
+            if (sign_x < 0.0 && frame->bwidth - 1 < 1)                        { break; }
+            if (sign_x > 0.0 && frame->bleft + frame->bwidth > ys->term_cols) { break; }
+
+            save = frame->bwidth;
+            do {
+                frame->width_f += unit_x;
+                FRAME_RESET_RECT(frame);
+            } while (frame->bwidth == save);
+        }
+
+        yed_frame_tree_set_relative_rect(frame->tree, frame->top_f, frame->left_f, frame->height_f, frame->width_f);
+
+        yed_frame_hard_reset_cursor_x(frame);
+        yed_frame_hard_reset_cursor_y(frame);
+    } else {
+        tree   = frame->tree;
+        parent = tree->parent;
+        other  = parent->child_trees[parent->child_trees[0] == tree];
+
+        yed_frame_tree_get_absolute_rect(parent, &atop, &aleft, &aheight, &awidth);
+
+        unit_y = (sign_y / aheight) / (float)(ys->term_rows - 2);
+        unit_x = (sign_x / awidth)  / (float)ys->term_cols;
+
+        if      (parent->split_kind == FTREE_VSPLIT) { rows = 0; unit_y = 0; }
+        else if (parent->split_kind == FTREE_HSPLIT) { cols = 0; unit_x = 0; }
+
+        for (; rows > 0; rows -= 1) {
+            if (sign_y > 0.0 && tree->height + unit_y >= 1.0 - unit_y) { break; }
+            if (sign_y < 0.0 && tree->height + unit_y <= fabs(unit_y)) { break; }
+
+            tree->height  += unit_y;
+            other->height -= unit_y;
+            yed_frame_tree_recursive_readjust(parent);
+        }
+        for (; cols > 0; cols -= 1) {
+            if (sign_x > 0.0 && tree->width + unit_x >= 1.0 - unit_x) { break; }
+            if (sign_x < 0.0 && tree->width + unit_x <= fabs(unit_x)) { break; }
+
+            tree->width  += unit_x;
+            other->width -= unit_x;
+            yed_frame_tree_recursive_readjust(parent);
+        }
+
+        yed_frame_tree_leaves_do(parent, frame_tree_leaf_visit_reset_cursor, NULL);
+    }
+}
+
+void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols) {
+    float sign_x, sign_y;
+    float unit_x, unit_y;
+    float atop;
+    float aleft;
+    float aheight;
+    float awidth;
+
+    tree = yed_frame_tree_get_root(tree);
+
+    yed_frame_tree_get_absolute_rect(tree, &atop, &aleft, &aheight, &awidth);
+
+    sign_y = (rows < 0 ? -1.0 : 1.0);
+    sign_x = (cols < 0 ? -1.0 : 1.0);
+
+    rows = abs(rows);
+    cols = abs(cols);
+
+    unit_y = sign_y / (float)(ys->term_rows - 2);
+    unit_x = sign_x / (float)ys->term_cols;
+
+    for (; rows > 0; rows -= 1) {
+        if (sign_y > 0.0 && tree->top + tree->height >= 1.0 - unit_y) { break; }
+        if (sign_y < 0.0 && tree->top <= 0.0)                { break; }
+
+        tree->top += unit_y;
+        yed_frame_tree_recursive_readjust(tree);
+    }
+    for (; cols > 0; cols -= 1) {
+        if (sign_x > 0.0 && tree->left + tree->width >= 1.0 - unit_x) { break; }
+        if (sign_x < 0.0 && tree->left <= 0.0)               { break; }
+
+        tree->left += unit_x;
+        yed_frame_tree_recursive_readjust(tree);
+    }
+}
+
+void yed_move_frame(yed_frame *frame, int rows, int cols) {
+    float sign_x, sign_y;
+    float unit_x, unit_y;
+    int   save;
+
+    if (yed_frame_is_tree_root(frame)) {
+        sign_y = (rows < 0 ? -1.0 : 1.0);
+        sign_x = (cols < 0 ? -1.0 : 1.0);
+
+        rows = abs(rows);
+        cols = abs(cols);
+
+        unit_y = sign_y / (float)ys->term_rows;
+        unit_x = sign_x / (float)ys->term_cols;
+
+        for (; rows > 0; rows -= 1) {
+            if (sign_y < 0.0 && frame->btop - 1 < 1)                              { break; }
+            if (sign_y > 0.0 && frame->btop + frame->bheight > ys->term_rows - 2) { break; }
+
+            save = frame->btop;
+            do {
+                frame->top_f += unit_y;
+                FRAME_RESET_RECT(frame);
+            } while (frame->btop == save);
+        }
+        for (; cols > 0; cols -= 1) {
+            if (unit_x < 0.0 && frame->bleft - 1 < 1)                         { break; }
+            if (unit_x > 0.0 && frame->bleft + frame->bwidth > ys->term_cols) { break; }
+
+            do {
+                frame->left_f += unit_x;
+                FRAME_RESET_RECT(frame);
+            } while (frame->bleft == save);
+        }
+
+        yed_frame_tree_set_relative_rect(frame->tree, frame->top_f, frame->left_f, frame->height_f, frame->width_f);
+
+        yed_frame_hard_reset_cursor_x(frame);
+        yed_frame_hard_reset_cursor_y(frame);
+    } else {
+        yed_move_frame_tree(frame->tree, rows, cols);
+        yed_frame_tree_leaves_do(yed_frame_tree_get_root(frame->tree), frame_tree_leaf_visit_reset_cursor, NULL);
+    }
 }
 
 void yed_activate_frame(yed_frame *frame) {
@@ -1098,6 +1306,21 @@ void yed_frame_hard_reset_cursor_x(yed_frame *frame) {
     }
 }
 
+void yed_frame_hard_reset_cursor_y(yed_frame *frame) {
+    int dst_row;
+
+    if (frame->buffer) {
+        dst_row = frame->cursor_line;
+        frame->buffer_y_offset = 0;
+        frame->cur_y = frame->top;
+        frame->cursor_line = 1;
+        yed_set_cursor_within_frame(frame, dst_row, frame->cursor_col);
+    } else {
+        frame->cur_y = frame->top;
+        frame->cur_x = frame->left + frame->gutter_width;
+    }
+}
+
 void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
     int buff_n_lines;
     int old_off;
@@ -1132,22 +1355,52 @@ void yed_move_cursor_within_active_frame(int row, int col) {
     }
 }
 
+static void frame_tree_leaf_visit_update(yed_frame_tree *tree, void *arg) {
+    (void)arg;
+
+    if (tree->frame != ys->active_frame) {
+        yed_frame_update(tree->frame);
+    }
+}
+
 void yed_update_frames(void) {
-    yed_frame **frame;
+    array_t          trees;
+    yed_frame      **frame;
+    yed_frame_tree  *tree;
+    yed_frame_tree **tit;
 
     yed_reset_attr();
+
+    trees = array_make(yed_frame_tree*);
 
     array_rtraverse(ys->frames, frame) {
         if (*frame == ys->active_frame) {
             continue;
         }
-        yed_frame_update(*frame);
+        tree = yed_frame_tree_get_root((*frame)->tree);
+        if (ys->active_frame
+        && tree == yed_frame_tree_get_root(ys->active_frame->tree)) { goto next; }
+
+        array_traverse(trees, tit) {
+            if (*tit == tree) { goto next; }
+        }
+
+        array_push(trees, tree);
+next:;
+    }
+
+    array_traverse(trees, tit) {
+        yed_frame_tree_leaves_do(*tit, frame_tree_leaf_visit_update, NULL);
     }
 
     if (ys->active_frame) {
+        tree = yed_frame_tree_get_root(ys->active_frame->tree);
+        yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_update, NULL);
         yed_frame_update(ys->active_frame);
         yed_set_cursor(ys->active_frame->cur_y, ys->active_frame->cur_x);
     }
+
+    array_free(trees);
 }
 
 int yed_frame_line_is_visible(yed_frame *frame, int row) {

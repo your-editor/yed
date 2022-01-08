@@ -128,6 +128,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-prev",                         frame_prev);
     SET_DEFAULT_COMMAND("frame-move",                         frame_move);
     SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
+    SET_DEFAULT_COMMAND("frame-tree-resize",                  frame_tree_resize);
     SET_DEFAULT_COMMAND("frame",                              frame);
     SET_DEFAULT_COMMAND("insert",                             insert);
     SET_DEFAULT_COMMAND("simple-insert-string",               simple_insert_string);
@@ -1998,12 +1999,8 @@ void yed_default_command_frame_prev(int n_args, char **args) {
 
 void frame_move_take_key(int key) {
     yed_frame *f;
-    int        save;
-    float      unit_x, unit_y;
 
-    f      = ys->active_frame;
-    unit_x = 1.0 / (float)ys->term_cols;
-    unit_y = 1.0 / (float)ys->term_rows;
+    f = ys->active_frame;
 
     if (key == CTRL_C || key == ENTER) {
         ys->interactive_command = NULL;
@@ -2011,37 +2008,13 @@ void frame_move_take_key(int key) {
         yed_frame_reset_cursor(f);
         yed_frame_hard_reset_cursor_x(f);
     } else if (key == ARROW_UP) {
-        if (f->btop > 1) {
-            save = f->btop;
-            do {
-                f->top_f -= unit_y;
-                FRAME_RESET_RECT(f);
-            } while (f->btop == save);
-        }
+        yed_move_frame(f, -1, 0);
     } else if (key == ARROW_DOWN) {
-        if ((f->btop + 1) + f->bheight < ys->term_rows) {
-            save = f->btop;
-            do {
-                f->top_f += unit_y;
-                FRAME_RESET_RECT(f);
-            } while (f->btop == save);
-        }
+        yed_move_frame(f, 1, 0);
     } else if (key == ARROW_LEFT) {
-        if (f->bleft > 1) {
-            save = f->bleft;
-            do {
-                f->left_f -= unit_x;
-                FRAME_RESET_RECT(f);
-            } while (f->bleft == save);
-        }
+        yed_move_frame(f, 0, -1);
     } else if (key == ARROW_RIGHT) {
-        if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
-            save = f->bleft;
-            do {
-                f->left_f += unit_x;
-                FRAME_RESET_RECT(f);
-            } while (f->bleft == save);
-        }
+        yed_move_frame(f, 0, 1);
     }
 }
 
@@ -2053,8 +2026,7 @@ void start_frame_move(void) {
 }
 
 void yed_default_command_frame_move(int n_args, char **args) {
-    yed_frame *frame;
-    int        key;
+    int key;
 
     if (n_args > 1) {
         yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
@@ -2066,14 +2038,7 @@ void yed_default_command_frame_move(int n_args, char **args) {
         return;
     }
 
-    frame = ys->active_frame;
-
     if (!ys->interactive_command) {
-        if (!yed_frame_is_tree_root(frame)) {
-            yed_cerr("frame is part of a split tree -- can't move");
-            return;
-        }
-
         start_frame_move();
     } else {
         sscanf(args[0], "%d", &key);
@@ -2083,12 +2048,8 @@ void yed_default_command_frame_move(int n_args, char **args) {
 
 void frame_resize_take_key(int key) {
     yed_frame *f;
-    int        save;
-    float      unit_x, unit_y;
 
-    f      = ys->active_frame;
-    unit_x = 1.0 / (float)ys->term_cols;
-    unit_y = 1.0 / (float)ys->term_rows;
+    f = ys->active_frame;
 
     if (key == CTRL_C || key == ENTER) {
         ys->interactive_command = NULL;
@@ -2096,50 +2057,25 @@ void frame_resize_take_key(int key) {
         yed_frame_reset_cursor(f);
         yed_frame_hard_reset_cursor_x(f);
     } else if (key == ARROW_UP) {
-        if (f->height > 1) {
-            save = f->bheight;
-            do {
-                f->height_f -= unit_y;
-                FRAME_RESET_RECT(f);
-            } while (f->bheight == save);
-        }
+        yed_resize_frame(f, 1, 0);
     } else if (key == ARROW_DOWN) {
-        if ((f->btop + 1) + f->bheight < ys->term_rows) {
-            save = f->bheight;
-            do {
-                f->height_f += unit_y;
-                FRAME_RESET_RECT(f);
-            } while (f->bheight == save);
-        }
+        yed_resize_frame(f, -1, 0);
     } else if (key == ARROW_LEFT) {
-        if (f->width > 1) {
-            save = f->bwidth;
-            do {
-                f->width_f -= unit_x;
-                FRAME_RESET_RECT(f);
-            } while (f->bwidth == save);
-        }
+        yed_resize_frame(f, 0, -1);
     } else if (key == ARROW_RIGHT) {
-        if ((f->bleft + 1) + f->bwidth - 1 < ys->term_cols + 1) {
-            save = f->bwidth;
-            do {
-                f->width_f += unit_x;
-                FRAME_RESET_RECT(f);
-            } while (f->bwidth == save);
-        }
+        yed_resize_frame(f, 0, 1);
     }
 }
 
 void start_frame_resize(void) {
     ys->interactive_command = "frame-resize";
     ys->cmd_prompt          =
-        "(frame-resize) Use arrows to reize frame. ENTER to stop.";
+        "(frame-resize) Use arrows to resize frame. ENTER to stop.";
     yed_clear_cmd_buff();
 }
 
 void yed_default_command_frame_resize(int n_args, char **args) {
-    yed_frame *frame;
-    int        key;
+    int key;
 
     if (n_args > 1) {
         yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
@@ -2151,18 +2087,59 @@ void yed_default_command_frame_resize(int n_args, char **args) {
         return;
     }
 
-    frame = ys->active_frame;
-
     if (!ys->interactive_command) {
-        if (!yed_frame_is_tree_root(frame)) {
-            yed_cerr("frame part of a split tree -- can't resize");
-            return;
-        }
-
         start_frame_resize();
     } else {
         sscanf(args[0], "%d", &key);
         frame_resize_take_key(key);
+    }
+}
+
+void frame_tree_resize_take_key(int key) {
+    yed_frame *f;
+
+    f = ys->active_frame;
+
+    if (key == CTRL_C || key == ENTER) {
+        ys->interactive_command = NULL;
+        yed_clear_cmd_buff();
+        yed_frame_reset_cursor(f);
+    } else if (key == ARROW_UP) {
+        yed_resize_frame_tree(f->tree, 1, 0);
+    } else if (key == ARROW_DOWN) {
+        yed_resize_frame_tree(f->tree, -1, 0);
+    } else if (key == ARROW_LEFT) {
+        yed_resize_frame_tree(f->tree, 0, -1);
+    } else if (key == ARROW_RIGHT) {
+        yed_resize_frame_tree(f->tree, 0, 1);
+    }
+}
+
+void start_frame_tree_resize(void) {
+    ys->interactive_command = "frame-tree-resize";
+    ys->cmd_prompt          =
+        "(frame-tree-resize) Use arrows to resize frame tree. ENTER to stop.";
+    yed_clear_cmd_buff();
+}
+
+void yed_default_command_frame_tree_resize(int n_args, char **args) {
+    int key;
+
+    if (n_args > 1) {
+        yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    if (!ys->interactive_command) {
+        start_frame_tree_resize();
+    } else {
+        sscanf(args[0], "%d", &key);
+        frame_tree_resize_take_key(key);
     }
 }
 

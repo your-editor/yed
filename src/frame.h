@@ -39,20 +39,24 @@ yed_frame * yed_vsplit_frame(yed_frame *frame);
 yed_frame * yed_hsplit_frame(yed_frame *frame);
 void yed_activate_frame(yed_frame *frame);
 void yed_clear_frame(yed_frame *frame);
+void yed_resize_frame(yed_frame *frame, int rows, int cols);
+void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols);
+void yed_move_frame(yed_frame *frame, int rows, int cols);
+void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols);
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset);
 void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f);
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff);
 void yed_frame_set_gutter_width(yed_frame *frame, int width);
 void yed_frame_update(yed_frame *frame);
-void yed_move_cursor_within_frame(yed_frame *f, int col, int row);
-void yed_move_cursor_within_active_frame(int col, int row);
+void yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs);
+void yed_move_cursor_within_active_frame(int row, int n_glyphs);
 void yed_set_cursor_within_frame(yed_frame *frame, int new_row, int new_col);
 void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col);
 void yed_frame_reset_cursor(yed_frame *frame);
 void yed_frame_hard_reset_cursor_x(yed_frame *frame);
+void yed_frame_hard_reset_cursor_y(yed_frame *frame);
 void yed_frame_scroll_buffer(yed_frame *frame, int rows);
 void yed_update_frames(void);
-void yed_frame_update_cursor_line(yed_frame *frame);
 void yed_frames_remove_buffer(yed_buffer *buff);
 
 void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
