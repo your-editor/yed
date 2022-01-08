@@ -43,6 +43,10 @@ static void set_cell_combine(int row, int col, yed_glyph g) {
 
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
+    cell->attrs.flags &= ~(ATTR_BOLD);
+    cell->attrs.flags &= ~(ATTR_UNDERLINE);
+    cell->attrs.flags &= ~(ATTR_INVERSE);
+
     yed_combine_attrs(&cell->attrs, &ys->screen_update->cur_attrs);
     cell->glyph = g;
 }
