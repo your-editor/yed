@@ -703,7 +703,7 @@ static int eval_expr(calc_expr_t *expr, calc_val_t *val) {
                             : TYPE_INT;
 
             if (expr->op.op == OP_DIV || expr->op.op == OP_IDIV) {
-                if (ri == 0 || rf == 0.0) {
+                if ((rval.type == TYPE_INT && ri == 0) || rf == 0.0) {
                     SET_ERR_AT(expr->str_off, "divide by zero");
                     return 0;
                 }
