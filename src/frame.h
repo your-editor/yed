@@ -35,6 +35,8 @@ yed_frame * yed_add_new_frame(float top_f, float left_f, float height_f, float w
 yed_frame * yed_add_new_frame_full(void);
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f);
 void yed_delete_frame(yed_frame *frame);
+yed_frame * yed_vsplit_frame_tree(yed_frame_tree *tree);
+yed_frame * yed_hsplit_frame_tree(yed_frame_tree *tree);
 yed_frame * yed_vsplit_frame(yed_frame *frame);
 yed_frame * yed_hsplit_frame(yed_frame *frame);
 void yed_activate_frame(yed_frame *frame);

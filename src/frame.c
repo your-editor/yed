@@ -173,6 +173,42 @@ void yed_delete_frame(yed_frame *frame) {
     }
 }
 
+static void frame_tree_leaf_visit_reset_cursor(yed_frame_tree *tree, void *arg) {
+    int save_row;
+    int save_col;
+
+    (void)arg;
+
+/*     yed_frame_hard_reset_cursor_x(tree->frame); */
+/*     yed_frame_hard_reset_cursor_y(tree->frame); */
+
+    save_row = tree->frame->cursor_line;
+    save_col = tree->frame->cursor_col;
+
+    yed_set_cursor_far_within_frame(tree->frame, 1, 1);
+    yed_set_cursor_far_within_frame(tree->frame, save_row, save_col);
+}
+
+yed_frame * yed_vsplit_frame_tree(yed_frame_tree *tree) {
+    yed_frame_tree *new_tree;
+    yed_frame      *new_frame;
+
+    new_tree  = yed_frame_tree_vsplit(tree);
+    new_frame = new_tree->child_trees[1]->frame;
+
+    return new_frame;
+}
+
+yed_frame * yed_hsplit_frame_tree(yed_frame_tree *tree) {
+    yed_frame_tree *new_tree;
+    yed_frame      *new_frame;
+
+    new_tree  = yed_frame_tree_hsplit(tree);
+    new_frame = new_tree->child_trees[1]->frame;
+
+    return new_frame;
+}
+
 yed_frame * yed_vsplit_frame(yed_frame *frame) {
     int             save_cursor_row, save_cursor_col;
     yed_frame      *new_frame;
@@ -207,13 +243,6 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
     yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
     return new_frame;
-}
-
-static void frame_tree_leaf_visit_reset_cursor(yed_frame_tree *tree, void *arg) {
-    (void)arg;
-
-    yed_frame_hard_reset_cursor_x(tree->frame);
-    yed_frame_hard_reset_cursor_y(tree->frame);
 }
 
 void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
