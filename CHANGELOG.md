@@ -1,13 +1,17 @@
 # Changelog
 
-## 1400 - 2022-1-6
+## 1400 - 2022-1-8
 ### Added
     - Variable minimum update rate set with `yed_set_update_hz()`. This is useful for drawing elements that need to update/move faster than the default key timeout.
+    - New command `frame-tree-resize` interactively resizes the root tree of the active frame.
 
 ### Changed
     - Rewrote the drawing system from the ground up for high performance and overall smaller output.
+    - `frame-resize` can resize frames that are part of a split frame tree.
+    - `frame-move` will move the root frame tree of the active frame if it is part of a split.
 
 ### Removed
+    - `highlight.h` (deprecated in version 1300) has been removed in favor of `syntax.h`.
     - `ys->redraw`, `ys->redraw_cls` were removed because they are no longer necessary.
     - `frame->dirty`, was removed because it is no longer necessary.
 
