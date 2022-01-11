@@ -161,6 +161,8 @@ yed_buffer *yed_create_buffer(char *name) {
 yed_buffer * yed_get_buffer(char *name) {
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
 
+    if (name == NULL) { return NULL; }
+
     it = tree_lookup(ys->buffers, name);
 
     if (!tree_it_good(it)) {
