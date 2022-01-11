@@ -840,8 +840,8 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
                 }
             }
 
-            _yed_syntax_get_start_state(syntax, buffer, row);
-            _yed_syntax_add_to_cache(syntax, cache, row, cached_state);
+            start_state = _yed_syntax_get_start_state(syntax, buffer, row);
+            _yed_syntax_add_to_cache(syntax, cache, row, start_state);
             _yed_syntax_fixup_cache(syntax, buffer, cache, row + 1);
 
             break;
