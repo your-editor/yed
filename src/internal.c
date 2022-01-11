@@ -1,4 +1,3 @@
-#ifdef YED_DO_ASSERTIONS
 void yed_assert_fail(const char *msg, const char *fname, int line, const char *cond_str) {
     volatile int *trap;
 
@@ -12,9 +11,6 @@ void yed_assert_fail(const char *msg, const char *fname, int line, const char *c
     trap = 0;
     (void)*trap;
 }
-#endif
-
-
 
 
 uint64_t next_power_of_2(uint64_t x) {

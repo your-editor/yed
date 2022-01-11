@@ -113,7 +113,7 @@ void force_yed_unload(void *handle) {
 #ifdef CAN_RELOAD_CORE
     void *try_handle;
 
-    while ((try_handle = dlopen(lib_path, RTLD_NOW | RTLD_NOLOAD))) {
+    while ((try_handle = dlopen(lib_path, RTLD_LAZY | RTLD_NOLOAD))) {
         dlclose(try_handle);
         dlclose(handle);
     }
@@ -135,7 +135,7 @@ int load_yed_lib(void) {
         force_yed_unload(yed_lib.handle);
     }
 
-    yed_lib.handle = dlopen(lib_path, RTLD_NOW | RTLD_LOCAL);
+    yed_lib.handle = dlopen(lib_path, RTLD_LAZY | RTLD_LOCAL);
 
     if (yed_lib.handle == NULL) {
         printf("[yed]! could not load 'libyed.so'\n%s\n", dlerror());

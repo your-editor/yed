@@ -1,7 +1,7 @@
 #include "internal.h" /* include here so that plugins can see everything. */
 
 static void * yed_get_handle_for_plug(char *plug_path) {
-    return dlopen(plug_path, RTLD_NOW | RTLD_LOCAL);
+    return dlopen(plug_path, RTLD_LAZY | RTLD_LOCAL);
 }
 
 int load_init(const char *path) {
