@@ -174,19 +174,19 @@ void yed_delete_frame(yed_frame *frame) {
 }
 
 static void frame_tree_leaf_visit_reset_cursor(yed_frame_tree *tree, void *arg) {
-    int save_row;
-    int save_col;
+/*     int save_row; */
+/*     int save_col; */
 
     (void)arg;
 
-/*     yed_frame_hard_reset_cursor_x(tree->frame); */
-/*     yed_frame_hard_reset_cursor_y(tree->frame); */
+    yed_frame_hard_reset_cursor_x(tree->frame);
+    yed_frame_hard_reset_cursor_y(tree->frame);
 
-    save_row = tree->frame->cursor_line;
-    save_col = tree->frame->cursor_col;
-
-    yed_set_cursor_far_within_frame(tree->frame, 1, 1);
-    yed_set_cursor_far_within_frame(tree->frame, save_row, save_col);
+/*     save_row = tree->frame->cursor_line; */
+/*     save_col = tree->frame->cursor_col; */
+/*  */
+/*     yed_set_cursor_far_within_frame(tree->frame, 1, 1); */
+/*     yed_set_cursor_far_within_frame(tree->frame, save_row, save_col); */
 }
 
 yed_frame * yed_vsplit_frame_tree(yed_frame_tree *tree) {
