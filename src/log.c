@@ -47,11 +47,12 @@ const char *yed_top_log_name(void) {
 static int in_log;
 
 int yed_vlog(char *fmt, va_list args) {
-    char        tm_buff[128], nm_tm_buff[512], buff[1024];
-    time_t      t;
-    struct tm  *tm;
-    const char *log_name, *header_fmt;
-    int         len, new_header;
+    char            tm_buff[128], nm_tm_buff[512], buff[1024];
+    struct tm      *tm;
+    const char     *log_name, *header_fmt;
+    int             len, new_header;
+    struct timeval  tv;
+    int             millisec;
 
     if (in_log) { return 1; }
 
@@ -75,18 +76,24 @@ int yed_vlog(char *fmt, va_list args) {
 
         if (!log_name) { log_name = "???"; }
 
-        t  = time(NULL);
-        tm = localtime(&t);
+        gettimeofday(&tv, NULL);
+        millisec = lrint(tv.tv_usec / 1000.0);
+        if (millisec >= 1000) {
+            millisec -= 1000;
+            tv.tv_sec += 1;
+        }
+
+        tm = localtime(&tv.tv_sec);
         strftime(tm_buff, sizeof(tm_buff), "%D %I:%M:%S", tm);
 
         if (yed_buff_n_lines(yed_get_log_buffer()) == 1
         &&  yed_buff_get_line(yed_get_log_buffer(), 1)->visual_width == 0) {
-            header_fmt = "[%s](%s) ";
+            header_fmt = "[%s.%03d](%s) ";
         } else {
-            header_fmt = "\n[%s](%s) ";
+            header_fmt = "\n[%s.%03d](%s) ";
         }
 
-        len = snprintf(nm_tm_buff, sizeof(nm_tm_buff), header_fmt, tm_buff, log_name);
+        len = snprintf(nm_tm_buff, sizeof(nm_tm_buff), header_fmt, tm_buff, millisec, log_name);
 
         if (len > sizeof(nm_tm_buff) - 1) {
             len = sizeof(nm_tm_buff) - 1;
