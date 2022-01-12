@@ -32,6 +32,8 @@ void yed_reset_attr(void) {
 static void set_cell(int row, int col, yed_glyph g) {
     yed_screen_cell *cell;
 
+    if (row > ys->term_rows || col > ys->term_cols) { return; }
+
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
     cell->attrs = ys->screen_update->cur_attrs;
@@ -40,6 +42,8 @@ static void set_cell(int row, int col, yed_glyph g) {
 
 static void set_cell_combine(int row, int col, yed_glyph g) {
     yed_screen_cell *cell;
+
+    if (row > ys->term_rows || col > ys->term_cols) { return; }
 
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
