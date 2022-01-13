@@ -2096,22 +2096,24 @@ void yed_default_command_frame_resize(int n_args, char **args) {
 }
 
 void frame_tree_resize_take_key(int key) {
-    yed_frame *f;
+    yed_frame      *f;
+    yed_frame_tree *root;
 
-    f = ys->active_frame;
+    f    = ys->active_frame;
+    root = yed_frame_tree_get_root(f->tree);
 
     if (key == CTRL_C || key == ENTER) {
         ys->interactive_command = NULL;
         yed_clear_cmd_buff();
         yed_frame_reset_cursor(f);
     } else if (key == ARROW_UP) {
-        yed_resize_frame_tree(f->tree, 1, 0);
+        yed_resize_frame_tree(root, 1, 0);
     } else if (key == ARROW_DOWN) {
-        yed_resize_frame_tree(f->tree, -1, 0);
+        yed_resize_frame_tree(root, -1, 0);
     } else if (key == ARROW_LEFT) {
-        yed_resize_frame_tree(f->tree, 0, -1);
+        yed_resize_frame_tree(root, 0, -1);
     } else if (key == ARROW_RIGHT) {
-        yed_resize_frame_tree(f->tree, 0, 1);
+        yed_resize_frame_tree(root, 0, 1);
     }
 }
 

@@ -246,10 +246,15 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
 }
 
 void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
-    float sign_x, sign_y;
-    float unit_x, unit_y;
-
-    tree = yed_frame_tree_get_root(tree);
+    float           atop;
+    float           aleft;
+    float           aheight;
+    float           awidth;
+    float           sign_x, sign_y;
+    float           unit_x, unit_y;
+    yed_frame_tree *readjust_target;
+    yed_frame_tree *other;
+    float           low_lim, hi_lim;
 
     sign_y = (rows < 0 ? -1.0 : 1.0);
     sign_x = (cols < 0 ? -1.0 : 1.0);
@@ -257,28 +262,60 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
     rows = abs(rows);
     cols = abs(cols);
 
-    unit_y = sign_y / (float)ys->term_rows;
-    unit_x = sign_x / (float)ys->term_cols;
+    if (yed_frame_tree_is_root(tree)) {
+        readjust_target = tree;
+        other           = NULL;
+
+        atop    = 0.0;
+        aleft   = 0.0;
+        aheight = 1.0;
+        awidth  = 1.0;
+    } else {
+        readjust_target = tree->parent;
+        other           = readjust_target->child_trees[readjust_target->child_trees[0] == tree];
+
+        if      (readjust_target->split_kind == FTREE_VSPLIT) { rows = 0; unit_y = 0; }
+        else if (readjust_target->split_kind == FTREE_HSPLIT) { cols = 0; unit_x = 0; }
+
+        yed_frame_tree_get_absolute_rect(readjust_target, &atop, &aleft, &aheight, &awidth);
+    }
+
+    unit_y = (sign_y / aheight) / (float)(ys->term_rows - 2);
+    unit_x = (sign_x / awidth)  / (float)ys->term_cols;
 
     for (; rows > 0; rows -= 1) {
-        if (sign_y > 0.0 && tree->top + tree->height > 1.0 - unit_y) { break; }
-        if (sign_y < 0.0 && tree->height <= 5.0 * fabs(unit_y))                           { break; }
+        low_lim = 1.0 - unit_y;
+        if (sign_y > 0.0 && tree->height + unit_y > low_lim) { break; }
 
-        tree->height += unit_y;
-        yed_frame_tree_recursive_readjust(tree);
+        hi_lim = sign_y * unit_y;
+        if (sign_y < 0.0 && tree->height + unit_y <= hi_lim) { break; }
+
+        tree->height  += unit_y;
+        if (other != NULL) {
+            other->height -= unit_y;
+        }
+        yed_frame_tree_recursive_readjust(readjust_target);
     }
     for (; cols > 0; cols -= 1) {
-        if (sign_x > 0.0 && tree->left + tree->width > 1.0 - unit_x) { break; }
-        if (sign_x < 0.0 && tree->width <= 5.0 * fabs(unit_x))                           { break; }
+        low_lim = 1.0 - unit_x;
+        if (sign_x > 0.0 && tree->width + unit_x > low_lim) { break; }
 
-        tree->width += unit_x;
-        yed_frame_tree_recursive_readjust(tree);
+        hi_lim = sign_x * unit_x;
+        if (sign_x < 0.0 && tree->width + unit_x <= hi_lim) { break; }
+
+        tree->width  += unit_x;
+        if (other != NULL) {
+            other->width -= unit_x;
+        }
+        yed_frame_tree_recursive_readjust(readjust_target);
     }
 
-    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_reset_cursor, NULL);
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_reset_cursor, NULL);
 }
 
 void yed_resize_frame(yed_frame *frame, int rows, int cols) {
+    yed_resize_frame_tree(frame->tree, rows, cols);
+#if 0
     float           sign_x, sign_y;
     float           unit_x, unit_y;
     int             save;
@@ -289,6 +326,7 @@ void yed_resize_frame(yed_frame *frame, int rows, int cols) {
     float           aleft;
     float           aheight;
     float           awidth;
+    float           low_lim, hi_lim;
 
     sign_y = (rows < 0 ? -1.0 : 1.0);
     sign_x = (cols < 0 ? -1.0 : 1.0);
@@ -339,16 +377,22 @@ void yed_resize_frame(yed_frame *frame, int rows, int cols) {
         else if (parent->split_kind == FTREE_HSPLIT) { cols = 0; unit_x = 0; }
 
         for (; rows > 0; rows -= 1) {
-            if (sign_y > 0.0 && tree->height + unit_y >= 1.0 - unit_y) { break; }
-            if (sign_y < 0.0 && tree->height + unit_y <= fabs(unit_y)) { break; }
+            low_lim = 1.0 - unit_y;
+            if (sign_y > 0.0 && tree->height + unit_y > low_lim) { break; }
+
+            hi_lim = sign_y * unit_y;
+            if (sign_y < 0.0 && tree->height + unit_y <= hi_lim) { break; }
 
             tree->height  += unit_y;
             other->height -= unit_y;
             yed_frame_tree_recursive_readjust(parent);
         }
         for (; cols > 0; cols -= 1) {
-            if (sign_x > 0.0 && tree->width + unit_x >= 1.0 - unit_x) { break; }
-            if (sign_x < 0.0 && tree->width + unit_x <= fabs(unit_x)) { break; }
+            low_lim = 1.0 - unit_x;
+            if (sign_x > 0.0 && tree->width + unit_x > low_lim) { break; }
+
+            hi_lim = sign_x * unit_x;
+            if (sign_x < 0.0 && tree->width + unit_x <= hi_lim) { break; }
 
             tree->width  += unit_x;
             other->width -= unit_x;
@@ -357,6 +401,7 @@ void yed_resize_frame(yed_frame *frame, int rows, int cols) {
 
         yed_frame_tree_leaves_do(parent, frame_tree_leaf_visit_reset_cursor, NULL);
     }
+#endif
 }
 
 void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols) {
@@ -397,6 +442,8 @@ void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols) {
 }
 
 void yed_move_frame(yed_frame *frame, int rows, int cols) {
+    yed_move_frame_tree(frame->tree, rows, cols);
+#if 0
     float sign_x, sign_y;
     float unit_x, unit_y;
     int   save;
@@ -439,6 +486,7 @@ void yed_move_frame(yed_frame *frame, int rows, int cols) {
         yed_move_frame_tree(frame->tree, rows, cols);
         yed_frame_tree_leaves_do(yed_frame_tree_get_root(frame->tree), frame_tree_leaf_visit_reset_cursor, NULL);
     }
+#endif
 }
 
 void yed_activate_frame(yed_frame *frame) {
