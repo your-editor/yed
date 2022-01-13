@@ -242,10 +242,6 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
     float           new_width;
     yed_frame_tree *other;
     yed_frame_tree *other_leaf;
-    float           other_atop;
-    float           other_aleft;
-    float           other_aheight;
-    float           other_awidth;
 
     if (tree->parent) {
         new_top    = atop + (tree->top * aheight);
