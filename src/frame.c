@@ -210,17 +210,15 @@ yed_frame * yed_hsplit_frame_tree(yed_frame_tree *tree) {
 }
 
 yed_frame * yed_vsplit_frame(yed_frame *frame) {
-    int             save_cursor_row, save_cursor_col;
-    yed_frame      *new_frame;
-    yed_frame_tree *new_tree;
+    int        save_cursor_row, save_cursor_col;
+    yed_frame *new_frame;
 
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, 1);
 
-    new_tree  = yed_frame_tree_vsplit(frame->tree);
-    new_frame = new_tree->child_trees[1]->frame;
+    new_frame = yed_vsplit_frame_tree(frame->tree);
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
@@ -228,17 +226,15 @@ yed_frame * yed_vsplit_frame(yed_frame *frame) {
 }
 
 yed_frame * yed_hsplit_frame(yed_frame *frame) {
-    int             save_cursor_row, save_cursor_col;
-    yed_frame      *new_frame;
-    yed_frame_tree *new_tree;
+    int        save_cursor_row, save_cursor_col;
+    yed_frame *new_frame;
 
     save_cursor_row = frame->cursor_line;
     save_cursor_col = frame->cursor_col;
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, 1);
 
-    new_tree  = yed_frame_tree_hsplit(frame->tree);
-    new_frame = new_tree->child_trees[1]->frame;
+    new_frame = yed_hsplit_frame_tree(frame->tree);
 
     yed_set_cursor_far_within_frame(frame, save_cursor_row, save_cursor_col);
 
@@ -290,7 +286,10 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
         hi_lim = sign_y * unit_y;
         if (sign_y < 0.0 && tree->height + unit_y <= hi_lim) { break; }
 
-        tree->height  += unit_y;
+        tree->height += unit_y;
+        if (other && tree->parent->child_trees[1] == tree) {
+            tree->top -= unit_y;
+        }
         if (other != NULL) {
             other->height -= unit_y;
         }
@@ -303,9 +302,13 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
         hi_lim = sign_x * unit_x;
         if (sign_x < 0.0 && tree->width + unit_x <= hi_lim) { break; }
 
-        tree->width  += unit_x;
+        tree->width += unit_x;
+        if (other && tree->parent->child_trees[1] == tree) {
+            tree->left -= unit_x;
+        }
         if (other != NULL) {
             other->width -= unit_x;
+
         }
         yed_frame_tree_recursive_readjust(readjust_target);
     }

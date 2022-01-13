@@ -242,6 +242,10 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
     float           new_width;
     yed_frame_tree *other;
     yed_frame_tree *other_leaf;
+    float           other_atop;
+    float           other_aleft;
+    float           other_aheight;
+    float           other_awidth;
 
     if (tree->parent) {
         new_top    = atop + (tree->top * aheight);
@@ -254,6 +258,8 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
         new_height = aheight;
         new_width  = awidth;
     }
+
+    other = NULL;
 
     /* Sneaky hacks to make the borders merge. */
     if (tree->parent && tree == tree->parent->child_trees[1]) {
@@ -290,12 +296,30 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
     }
 
     if (tree->is_leaf) {
-        tree->frame->top_f    = new_top;
-        tree->frame->left_f   = new_left;
+        tree->frame->top_f  = new_top;
+        tree->frame->left_f = new_left;
         tree->frame->height_f = new_height;
         tree->frame->width_f  = new_width;
 
         FRAME_RESET_RECT(tree->frame);
+
+/*         if (other != NULL) { */
+/*             yed_frame_tree_get_absolute_rect(other, &other_atop, &other_aleft, &other_aheight, &other_awidth); */
+/*  */
+/*             if (tree->parent->split_kind == FTREE_VSPLIT) { */
+/*                 if (other_aheight * (ys->term_rows - 2) < tree->frame->height) { */
+/*                     tree->frame->height_f -= 1.0 / (ys->term_rows - 2); */
+/*                     FRAME_RESET_RECT(tree->frame); */
+/*                 } */
+/*             } else { */
+/*                 if (other_awidth * ys->term_cols < tree->frame->width) { */
+/*                     tree->frame->width_f -= 1.0 / ys->term_cols; */
+/*                     FRAME_RESET_RECT(tree->frame); */
+/*                 } */
+/*             } */
+/*         } */
+
+
     } else {
         _yed_frame_tree_recursive_readjust(tree->child_trees[0], new_top, new_left, new_height, new_width);
         _yed_frame_tree_recursive_readjust(tree->child_trees[1], new_top, new_left, new_height, new_width);
