@@ -220,19 +220,29 @@ int yed_frame_tree_is_root(yed_frame_tree *tree) {
 }
 
 void yed_frame_tree_get_absolute_rect(yed_frame_tree *tree, float *top, float *left, float *height, float *width) {
+    array_t          tree_arr;
+    yed_frame_tree **tree_it;
+
+    tree_arr = array_make(yed_frame_tree*);
+
+    while (tree->parent) {
+        array_push(tree_arr, tree);
+        tree = tree->parent;
+    }
+
     *top    = tree->top;
     *left   = tree->left;
     *height = tree->height;
     *width  = tree->width;
 
-    while (tree->parent) {
-        *top    += tree->top * tree->parent->height;
-        *left   += tree->left * tree->parent->width;
-        *height *= tree->parent->height;
-        *width  *= tree->parent->width;
-
-        tree = tree->parent;
+    array_rtraverse(tree_arr, tree_it) {
+        *top    += ((*tree_it)->top  * *height);
+        *left   += ((*tree_it)->left * *width);
+        *height *= (*tree_it)->height;
+        *width  *= (*tree_it)->width;
     }
+
+    array_free(tree_arr);
 }
 
 static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop, float aleft, float aheight, float awidth) {
@@ -255,7 +265,23 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
         new_width  = awidth;
     }
 
-    other = NULL;
+    if (tree->parent == NULL || tree->is_leaf || tree == tree->parent->child_trees[0]) {
+        tree->discrete_rows = roundf(aheight * (ys->term_rows - 2));
+        tree->discrete_cols = roundf(awidth * ys->term_cols);
+    } else {
+        other = tree->parent->child_trees[0];
+        if (tree->parent->split_kind == FTREE_VSPLIT) {
+            tree->discrete_rows = tree->parent->discrete_rows;
+            tree->discrete_cols = tree->parent->discrete_cols - other->discrete_cols + 1;
+
+            new_width = (float)tree->discrete_cols / (float)ys->term_cols;
+        } else {
+            tree->discrete_rows = tree->parent->discrete_rows - other->discrete_rows + 1;
+            tree->discrete_cols = tree->parent->discrete_cols;
+
+            new_height = (float)tree->discrete_rows / (float)(ys->term_rows - 2);
+        }
+    }
 
     /* Sneaky hacks to make the borders merge. */
     if (tree->parent && tree == tree->parent->child_trees[1]) {
@@ -268,54 +294,46 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
             if (tree->parent->split_kind == FTREE_VSPLIT) {
                 new_left  = (float)(other_leaf->frame->left + other_leaf->frame->width - 1)
                                 / (float)(ys->term_cols);
-                new_width = (float)(((int)(awidth * ys->term_cols)) - other_leaf->frame->width)
-                                / (float)(ys->term_cols);
             } else if (tree->parent->split_kind == FTREE_HSPLIT) {
                 new_top    = (float)(other_leaf->frame->top + other_leaf->frame->height - 1)
-                                / (float)(ys->term_rows - 2);
-                new_height = (float)(((int)(aheight * (ys->term_rows - 2))) - other_leaf->frame->height)
                                 / (float)(ys->term_rows - 2);
             }
         } else {
             if (tree->parent->split_kind == FTREE_VSPLIT) {
                 new_left  = (float)(other_leaf->frame->left + other_leaf->frame->width - 1)
                                 / (float)(ys->term_cols);
-                new_width = (float)(((int)(awidth * ys->term_cols)) - ((int)(awidth * other->width * ys->term_cols)))
-                                / (float)(ys->term_cols);
             } else if (tree->parent->split_kind == FTREE_HSPLIT) {
                 new_top    = (float)(other_leaf->frame->top + other_leaf->frame->height - 1)
-                                / (float)(ys->term_rows - 2);
-                new_height = (float)(((int)(aheight * (ys->term_rows - 2))) - ((int)(aheight * other->height * (ys->term_rows - 2))))
                                 / (float)(ys->term_rows - 2);
             }
         }
     }
 
     if (tree->is_leaf) {
-        tree->frame->top_f  = new_top;
-        tree->frame->left_f = new_left;
+        tree->frame->top_f    = new_top;
+        tree->frame->left_f   = new_left;
         tree->frame->height_f = new_height;
         tree->frame->width_f  = new_width;
 
         FRAME_RESET_RECT(tree->frame);
 
-/*         if (other != NULL) { */
-/*             yed_frame_tree_get_absolute_rect(other, &other_atop, &other_aleft, &other_aheight, &other_awidth); */
-/*  */
-/*             if (tree->parent->split_kind == FTREE_VSPLIT) { */
-/*                 if (other_aheight * (ys->term_rows - 2) < tree->frame->height) { */
-/*                     tree->frame->height_f -= 1.0 / (ys->term_rows - 2); */
-/*                     FRAME_RESET_RECT(tree->frame); */
-/*                 } */
-/*             } else { */
-/*                 if (other_awidth * ys->term_cols < tree->frame->width) { */
-/*                     tree->frame->width_f -= 1.0 / ys->term_cols; */
-/*                     FRAME_RESET_RECT(tree->frame); */
-/*                 } */
-/*             } */
-/*         } */
+        if (tree->parent != NULL && tree->parent->child_trees[1] == tree) {
+            other = tree->parent->child_trees[0];
+            if (tree->parent->split_kind == FTREE_VSPLIT) {
+                while (tree->frame->bwidth + other->discrete_cols - 1 < tree->parent->discrete_cols) {
+                    tree->frame->width_f += 1.0 / ys->term_cols;
+                    FRAME_RESET_RECT(tree->frame);
+                }
+            } else {
+                while (tree->frame->bheight + other->discrete_rows - 1 < tree->parent->discrete_rows) {
+                    tree->frame->height_f += 1.0 / (ys->term_rows - 2);
+                    FRAME_RESET_RECT(tree->frame);
+                }
+            }
+        }
 
-
+        tree->discrete_rows = tree->frame->bheight;
+        tree->discrete_cols = tree->frame->bwidth;
     } else {
         _yed_frame_tree_recursive_readjust(tree->child_trees[0], new_top, new_left, new_height, new_width);
         _yed_frame_tree_recursive_readjust(tree->child_trees[1], new_top, new_left, new_height, new_width);

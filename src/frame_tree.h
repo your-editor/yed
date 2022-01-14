@@ -11,6 +11,8 @@ struct yed_frame_t;
 
 typedef struct yed_frame_tree_t {
     float                         top, left, height, width;
+    int                           discrete_rows;
+    int                           discrete_cols;
     struct yed_frame_tree_t      *parent;
     int                           is_leaf;
     int                           split_kind;

@@ -288,8 +288,12 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
 
         tree->height += unit_y;
         if (other != NULL) {
+            if (tree == tree->parent->child_trees[1]) {
+                tree->parent->child_trees[1]->top -= unit_y;
+            } else {
+                tree->parent->child_trees[1]->top += unit_y;
+            }
             other->height -= unit_y;
-            tree->parent->child_trees[1]->top -= unit_y;
         }
         yed_frame_tree_recursive_readjust(readjust_target);
     }
@@ -302,8 +306,12 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
 
         tree->width += unit_x;
         if (other != NULL) {
+            if (tree == tree->parent->child_trees[1]) {
+                tree->parent->child_trees[1]->left -= unit_x;
+            } else {
+                tree->parent->child_trees[1]->left += unit_x;
+            }
             other->width -= unit_x;
-            tree->parent->child_trees[1]->left -= unit_y;
 
         }
         yed_frame_tree_recursive_readjust(readjust_target);
