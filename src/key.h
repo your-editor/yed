@@ -64,6 +64,7 @@ enum {
     FN10 = 339,
     FN11 = 340,
     FN12 = 341,
+    MENU_KEY,
     _BRACKETED_PASTE_BEGIN,
     _BRACKETED_PASTE_END,
 

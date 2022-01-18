@@ -172,6 +172,35 @@ static int esc_sequence(int *input) {
                     return 5;
                 }
                 return 4;
+            } else if (input[2] == '5') {
+                if (c == '7') {
+                    input[3] = c;
+
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '3') {
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        input[5] = c;
+                        if (c == '6') {
+                            if (read(0, &c, 1) == 0) { return 6; }
+                            input[6] = c;
+                            if (c == '3') {
+                                if (read(0, &c, 1) == 0) { return 7; }
+                                input[7] = c;
+                                if (c == 'u') {
+                                    input[0] = MENU_KEY;
+                                    return 1;
+                                }
+                                return 8;
+                            }
+                            return 7;
+                        }
+
+                        return 6;
+                    }
+                    return 5;
+                }
+                return 4;
             }
 
             if (c == '~') {
@@ -964,6 +993,8 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             key_i = PAGE_DOWN;
         } else if (strcmp(key_str, "shift-tab") == 0) {
             key_i = SHIFT_TAB;
+        } else if (strcmp(key_str, "menu") == 0) {
+            key_i = MENU_KEY;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
             if (key_c != -1) {
                 if (key_c == '/') {
@@ -1147,6 +1178,10 @@ char *yed_keys_to_string(int n, int *keys) {
             case FN11:
             case FN12:
                 snprintf(key_buff, sizeof(key_buff), "fn-%d", 1 + (key - FN1));
+                break;
+
+            case MENU_KEY:
+                snprintf(key_buff, sizeof(key_buff), "menu");
                 break;
 
             default:
