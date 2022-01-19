@@ -1,9 +1,10 @@
 # Changelog
 
-## 1400 - 2022-1-8
+## 1400 - 2022-1-19
 ### Added
     - Variable minimum update rate set with `yed_set_update_hz()`. This is useful for drawing elements that need to update/move faster than the default key timeout.
     - New command `frame-tree-resize` interactively resizes the root tree of the active frame.
+    - New key code `MENU_KEY`.
 
 ### Changed
     - Rewrote the drawing system from the ground up for high performance and overall smaller output.
