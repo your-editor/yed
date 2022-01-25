@@ -265,24 +265,6 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
         new_width  = awidth;
     }
 
-    if (tree->parent == NULL || tree->is_leaf || tree == tree->parent->child_trees[0]) {
-        tree->discrete_rows = roundf(aheight * (ys->term_rows - 2));
-        tree->discrete_cols = roundf(awidth * ys->term_cols);
-    } else {
-        other = tree->parent->child_trees[0];
-        if (tree->parent->split_kind == FTREE_VSPLIT) {
-            tree->discrete_rows = tree->parent->discrete_rows;
-            tree->discrete_cols = tree->parent->discrete_cols - other->discrete_cols + 1;
-
-            new_width = (float)tree->discrete_cols / (float)ys->term_cols;
-        } else {
-            tree->discrete_rows = tree->parent->discrete_rows - other->discrete_rows + 1;
-            tree->discrete_cols = tree->parent->discrete_cols;
-
-            new_height = (float)tree->discrete_rows / (float)(ys->term_rows - 2);
-        }
-    }
-
     /* Sneaky hacks to make the borders merge. */
     if (tree->parent && tree == tree->parent->child_trees[1]) {
         other      = tree->parent->child_trees[0];
@@ -309,6 +291,27 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
         }
     }
 
+    if (tree->parent == NULL) {
+        tree->discrete_rows = roundf(aheight * (ys->term_rows - 2));
+        tree->discrete_cols = roundf(awidth * ys->term_cols);
+    } else if (tree == tree->parent->child_trees[0]) {
+        tree->discrete_rows = roundf(tree->height * tree->parent->discrete_rows);
+        tree->discrete_cols = roundf(tree->width  * tree->parent->discrete_cols);
+    } else {
+        other = tree->parent->child_trees[0];
+        if (tree->parent->split_kind == FTREE_VSPLIT) {
+            tree->discrete_rows = other->discrete_rows;
+            tree->discrete_cols = tree->parent->discrete_cols - other->discrete_cols + 1;
+
+            new_width = (float)tree->discrete_cols / (float)ys->term_cols;
+        } else {
+            tree->discrete_rows = tree->parent->discrete_rows - other->discrete_rows + 1;
+            tree->discrete_cols = other->discrete_cols;
+
+            new_height = (float)tree->discrete_rows / (float)(ys->term_rows - 2);
+        }
+    }
+
     if (tree->is_leaf) {
         tree->frame->top_f    = new_top;
         tree->frame->left_f   = new_left;
@@ -317,23 +320,28 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
 
         FRAME_RESET_RECT(tree->frame);
 
-        if (tree->parent != NULL && tree->parent->child_trees[1] == tree) {
-            other = tree->parent->child_trees[0];
-            if (tree->parent->split_kind == FTREE_VSPLIT) {
-                while (tree->frame->bwidth + other->discrete_cols - 1 < tree->parent->discrete_cols) {
-                    tree->frame->width_f += 1.0 / ys->term_cols;
-                    FRAME_RESET_RECT(tree->frame);
-                }
-            } else {
-                while (tree->frame->bheight + other->discrete_rows - 1 < tree->parent->discrete_rows) {
-                    tree->frame->height_f += 1.0 / (ys->term_rows - 2);
-                    FRAME_RESET_RECT(tree->frame);
-                }
-            }
+/*         if (tree->parent != NULL && tree->parent->child_trees[1] == tree) { */
+/*             other = tree->parent->child_trees[0]; */
+/*             if (tree->parent->split_kind == FTREE_VSPLIT) { */
+/*                 while (tree->frame->bwidth + other->discrete_cols - 1 > tree->parent->discrete_cols) { */
+/*                     tree->frame->width_f -= 1.0 / ys->term_cols; */
+/*                     FRAME_RESET_RECT(tree->frame); */
+/*                 } */
+/*             } else { */
+/*                 while (tree->frame->bheight + other->discrete_rows - 1 > tree->parent->discrete_rows) { */
+/*                     tree->frame->height_f -= 1.0 / (ys->term_rows - 2); */
+/*                     FRAME_RESET_RECT(tree->frame); */
+/*                 } */
+/*             } */
+/*         } */
+        while (tree->frame->bwidth > tree->discrete_cols) {
+            tree->frame->width_f -= 1.0 / ys->term_cols;
+            FRAME_RESET_RECT(tree->frame);
         }
-
-        tree->discrete_rows = tree->frame->bheight;
-        tree->discrete_cols = tree->frame->bwidth;
+        while (tree->frame->bheight > tree->discrete_rows) {
+            tree->frame->height_f -= 1.0 / (ys->term_rows - 2);
+            FRAME_RESET_RECT(tree->frame);
+        }
     } else {
         _yed_frame_tree_recursive_readjust(tree->child_trees[0], new_top, new_left, new_height, new_width);
         _yed_frame_tree_recursive_readjust(tree->child_trees[1], new_top, new_left, new_height, new_width);
