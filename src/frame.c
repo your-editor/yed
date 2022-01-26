@@ -1065,6 +1065,11 @@ void yed_frame_update(yed_frame *frame) {
     } else {
         yed_clear_frame(frame);
     }
+
+    memset(&update_event, 0, sizeof(update_event));
+    update_event.kind = EVENT_FRAME_POST_UPDATE;
+    update_event.frame = frame;
+    yed_trigger_event(&update_event);
 }
 
 #define NORM_SCROLL_OFF(f) (MIN((f)->scroll_off, (f)->height / 2))

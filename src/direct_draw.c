@@ -48,10 +48,15 @@ yed_direct_draw_t * yed_direct_draw_style(int row, int col, int scomp, char *str
 }
 
 void yed_do_direct_draws(void) {
+    yed_event            event;
     array_t              new;
     yed_direct_draw_t  **dit;
     yed_direct_draw_t   *dd;
     yed_attrs            attrs;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_PRE_DIRECT_DRAWS;
+    yed_trigger_event(&event);
 
     new = array_make(yed_direct_draw_t*);
 
@@ -77,6 +82,11 @@ void yed_do_direct_draws(void) {
 
     array_free(ys->direct_draws);
     ys->direct_draws = new;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_POST_DIRECT_DRAWS;
+    yed_trigger_event(&event);
+
 }
 
 void yed_kill_direct_draw(yed_direct_draw_t *dd) { dd->live = 0; }
