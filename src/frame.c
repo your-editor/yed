@@ -242,14 +242,18 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
 }
 
 void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
-    float           atop;
-    float           aleft;
-    float           aheight;
-    float           awidth;
+    float           target_atop;
+    float           target_aleft;
+    float           target_aheight;
+    float           target_awidth;
     float           sign_x, sign_y;
     float           unit_x, unit_y;
     yed_frame_tree *readjust_target;
     yed_frame_tree *other;
+    float           atop;
+    float           aleft;
+    float           aheight;
+    float           awidth;
     float           low_lim, hi_lim;
 
     sign_y = (rows < 0 ? -1.0 : 1.0);
@@ -262,10 +266,10 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
         readjust_target = tree;
         other           = NULL;
 
-        atop    = 0.0;
-        aleft   = 0.0;
-        aheight = 1.0;
-        awidth  = 1.0;
+        target_atop    = 0.0;
+        target_aleft   = 0.0;
+        target_aheight = 1.0;
+        target_awidth  = 1.0;
     } else {
         readjust_target = tree->parent;
         other           = readjust_target->child_trees[readjust_target->child_trees[0] == tree];
@@ -273,14 +277,19 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
         if      (readjust_target->split_kind == FTREE_VSPLIT) { rows = 0; unit_y = 0; }
         else if (readjust_target->split_kind == FTREE_HSPLIT) { cols = 0; unit_x = 0; }
 
-        yed_frame_tree_get_absolute_rect(readjust_target, &atop, &aleft, &aheight, &awidth);
+        yed_frame_tree_get_absolute_rect(readjust_target, &target_atop, &target_aleft, &target_aheight, &target_awidth);
     }
 
-    unit_y = (sign_y / aheight) / (float)(ys->term_rows - 2);
-    unit_x = (sign_x / awidth)  / (float)ys->term_cols;
+
+    unit_y = (sign_y / target_aheight) / (float)(ys->term_rows - 2);
+    unit_x = (sign_x / target_awidth)  / (float)ys->term_cols;
 
     for (; rows > 0; rows -= 1) {
-        low_lim = 1.0 - unit_y;
+        yed_frame_tree_get_absolute_rect(tree, &atop, &aleft, &aheight, &awidth);
+
+        if (sign_y > 0.0 && atop + aheight >= 1.0 - (1.0 / (ys->term_rows - 2))) { break; }
+
+        low_lim = 1.0;
         if (sign_y > 0.0 && tree->height + unit_y > low_lim) { break; }
 
         hi_lim = sign_y * unit_y;
@@ -295,10 +304,15 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
             }
             other->height -= unit_y;
         }
+
         yed_frame_tree_recursive_readjust(readjust_target);
     }
     for (; cols > 0; cols -= 1) {
-        low_lim = 1.0 - unit_x;
+        yed_frame_tree_get_absolute_rect(tree, &atop, &aleft, &aheight, &awidth);
+
+        if (sign_x > 0.0 && aleft + awidth >= 1.0 - (1.0 / ys->term_cols)) { break; }
+
+        low_lim = 1.0;
         if (sign_x > 0.0 && tree->width + unit_x > low_lim) { break; }
 
         hi_lim = sign_x * unit_x;
@@ -314,6 +328,7 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
             other->width -= unit_x;
 
         }
+
         yed_frame_tree_recursive_readjust(readjust_target);
     }
 
