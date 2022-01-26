@@ -287,7 +287,7 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
     for (; rows > 0; rows -= 1) {
         yed_frame_tree_get_absolute_rect(tree, &atop, &aleft, &aheight, &awidth);
 
-        if (sign_y > 0.0 && atop + aheight >= 1.0 - (1.0 / (ys->term_rows - 2))) { break; }
+        if (sign_y > 0.0 && atop + aheight >= 1.0) { break; }
 
         low_lim = 1.0;
         if (sign_y > 0.0 && tree->height + unit_y > low_lim) { break; }
@@ -310,7 +310,7 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
     for (; cols > 0; cols -= 1) {
         yed_frame_tree_get_absolute_rect(tree, &atop, &aleft, &aheight, &awidth);
 
-        if (sign_x > 0.0 && aleft + awidth >= 1.0 - (1.0 / ys->term_cols)) { break; }
+        if (sign_x > 0.0 && aleft + awidth >= 1.0) { break; }
 
         low_lim = 1.0;
         if (sign_x > 0.0 && tree->width + unit_x > low_lim) { break; }
