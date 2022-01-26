@@ -433,14 +433,14 @@ void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols) {
     unit_x = sign_x / (float)ys->term_cols;
 
     for (; rows > 0; rows -= 1) {
-        if (sign_y > 0.0 && tree->top + tree->height >= 1.0 - unit_y) { break; }
+        if (sign_y > 0.0 && tree->top + tree->height >= 1.0) { break; }
         if (sign_y < 0.0 && tree->top <= 0.0)                { break; }
 
         tree->top += unit_y;
         yed_frame_tree_recursive_readjust(tree);
     }
     for (; cols > 0; cols -= 1) {
-        if (sign_x > 0.0 && tree->left + tree->width >= 1.0 - unit_x) { break; }
+        if (sign_x > 0.0 && tree->left + tree->width >= 1.0) { break; }
         if (sign_x < 0.0 && tree->left <= 0.0)               { break; }
 
         tree->left += unit_x;
