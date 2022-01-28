@@ -21,6 +21,11 @@ void yed_resize_screen(void) {
     memset(ys->screen_render->cells, 0, n_bytes);
 }
 
+void yed_clear_screen(void) {
+    printf(TERM_RESET TERM_CURSOR_HOME TERM_CLEAR_SCREEN);
+    yed_resize_screen();
+}
+
 void yed_set_attr(yed_attrs attr) {
     ys->screen_update->cur_attrs = attr;
 }

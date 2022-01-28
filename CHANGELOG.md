@@ -1,10 +1,11 @@
 # Changelog
 
-## 1400 - 2022-1-19
+## 1400 - 2022-1-28
 ### Added
     - Variable minimum update rate set with `yed_set_update_hz()`. This is useful for drawing elements that need to update/move faster than the default key timeout.
     - New command `frame-tree-resize` interactively resizes the root tree of the active frame.
     - New key code `MENU_KEY`.
+    - `gui.h`: a header that plugins can use to create useful GUI elements.
 
 ### Changed
     - Rewrote the drawing system from the ground up for high performance and overall smaller output.
@@ -19,6 +20,7 @@
 ### Fixed
     - Fixed a bug where mouse keycodes are sent to interactive comands.
     - Fixed a bug where multi-byte characters were printed incorrectly to the log buffer.
+    - Fixed a bug that caused large pastes (from terminal) to be slow.
 
 ## 1306 - 2021-12-13
 ### Fixed

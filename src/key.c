@@ -172,6 +172,15 @@ static int esc_sequence(int *input) {
                     return 5;
                 }
                 return 4;
+            } else if (c == '~') {
+                switch (input[2]) {
+                    case '1':    { input[0] = HOME_KEY;  break; }
+                    case '3':    { input[0] = DEL_KEY;   break; }
+                    case '4':    { input[0] = END_KEY;   break; }
+                    case '5':    { input[0] = PAGE_UP;   break; }
+                    case '6':    { input[0] = PAGE_DOWN; break; }
+                }
+                return 1;
             } else if (input[2] == '5') {
                 if (c == '7') {
                     input[3] = c;
@@ -201,17 +210,6 @@ static int esc_sequence(int *input) {
                     return 5;
                 }
                 return 4;
-            }
-
-            if (c == '~') {
-                switch (input[2]) {
-                    case '1':    { input[0] = HOME_KEY;  break; }
-                    case '3':    { input[0] = DEL_KEY;   break; }
-                    case '4':    { input[0] = END_KEY;   break; }
-                    case '5':    { input[0] = PAGE_UP;   break; }
-                    case '6':    { input[0] = PAGE_DOWN; break; }
-                }
-                return 1;
             }
         } else {
             switch (input[2]) {
@@ -371,7 +369,7 @@ int yed_read_mbyte_keys(char first_byte, int n_bytes) {
     return 1;
 }
 
-int yed_read_keys(int *input) {
+static int _yed_read_keys(int *input) {
     int       len;
     int       nread;
     char      c;
@@ -434,58 +432,74 @@ do_seq:;
     return len;
 }
 
-static int handle_bracketed_paste(int key) {
-    char *str;
-    int   key_ch;
-    int   i;
-    char  key_str_buff[32];
-    char *key_str;
+int yed_read_keys(int *input) {
+    int  n;
+    int  paste_keys[MAX_SEQ_LEN];
+    int  p;
+    int  i;
+    int  key;
+    char key_ch;
 
-    if (key == _BRACKETED_PASTE_BEGIN) {
-        if (!yed_var_is_truthy("bracketed-paste-mode")) {
-            return 1;
-        }
+    n = _yed_read_keys(input);
 
+    if (n == 1 && input[0] == _BRACKETED_PASTE_BEGIN) {
         ys->doing_bracketed_paste = 1;
-        return 1;
-    } else if (key == _BRACKETED_PASTE_END) {
-        if (!yed_var_is_truthy("bracketed-paste-mode")) {
-            return 1;
-        }
-
-        if (!ys->interactive_command) {
-            array_zero_term(ys->bracketed_paste_buff);
-            str = array_data(ys->bracketed_paste_buff);
-            yed_execute_command("simple-insert-string", 1, &str);
-        }
-
-        ys->doing_bracketed_paste = 0;
         array_clear(ys->bracketed_paste_buff);
-        return 1;
-    } else if (ys->doing_bracketed_paste) {
-        if (key < REAL_KEY_MAX
-        &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
-            if (ys->interactive_command) {
+
+        while ((p = _yed_read_keys(paste_keys)) && paste_keys[0] != _BRACKETED_PASTE_END) {
+            for (i = 0; i < p; i += 1) {
+                key = paste_keys[i];
+
+            if (key < REAL_KEY_MAX
+                &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
+                    if (key == MBYTE) {
+                        for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
+                            array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
+                        }
+                    } else {
+                        if (key == NEWLINE) { key = ENTER; }
+                        key_ch = (char)key;
+                        array_push(ys->bracketed_paste_buff, key_ch);
+                    }
+                }
+            }
+        }
+        ys->doing_bracketed_paste = 0;
+    }
+
+    return n;
+}
+
+static void handle_bracketed_paste(void) {
+    char      *data;
+    yed_glyph *git;
+    int        key;
+    char       key_str_buff[32];
+    char      *key_str;
+
+    array_zero_term(ys->bracketed_paste_buff);
+    data = (char*)array_data(ys->bracketed_paste_buff);
+
+    if (ys->interactive_command) {
+        yed_glyph_traverse(data, git) {
+            if (yed_get_glyph_len(*git) > 1) {
+                key       = MBYTE;
+                ys->mbyte = *git;
+            } else {
+                key = (int)git->c;
+            }
+
+            if (key < REAL_KEY_MAX
+            &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
                 sprintf(key_str_buff, "%d", key);
                 key_str = key_str_buff;
 
                 yed_execute_command(ys->interactive_command, 1, &key_str);
-            } else {
-                if (key == MBYTE) {
-                    for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
-                        array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
-                    }
-                } else {
-                    if (key == NEWLINE) { key = ENTER; }
-                    key_ch = (char)key;
-                    array_push(ys->bracketed_paste_buff, key_ch);
-                }
             }
         }
-        return 1;
+    } else {
+        yed_execute_command("simple-insert-string", 1, &data);
     }
-
-    return 0;
 }
 
 void yed_take_key(int key) {
@@ -494,7 +508,8 @@ void yed_take_key(int key) {
     char            *key_str;
     yed_event        event;
 
-    if (handle_bracketed_paste(key)) {
+    if (key == _BRACKETED_PASTE_BEGIN) {
+        handle_bracketed_paste();
         return;
     }
 

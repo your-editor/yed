@@ -16,6 +16,7 @@ typedef struct {
 
 void yed_init_screen(void);
 void yed_resize_screen(void);
+void yed_clear_screen(void);
 void yed_set_attr(yed_attrs attr);
 void yed_reset_attr(void);
 void yed_draw_background(void);

@@ -87,6 +87,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("quit",                               quit);
     SET_DEFAULT_COMMAND("reload",                             reload);
     SET_DEFAULT_COMMAND("reload-core",                        reload_core);
+    SET_DEFAULT_COMMAND("redraw",                             redraw);
     SET_DEFAULT_COMMAND("set",                                set);
     SET_DEFAULT_COMMAND("get",                                get);
     SET_DEFAULT_COMMAND("unset",                              unset);
@@ -460,6 +461,10 @@ void yed_default_command_reload_core(int n_args, char **args) {
 #else
     yed_cerr("core reloading is not supported on this platform");
 #endif
+}
+
+void yed_default_command_redraw(int n_args, char **args) {
+    yed_clear_screen();
 }
 
 void yed_default_command_set(int n_args, char **args) {
