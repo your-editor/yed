@@ -6,6 +6,7 @@
     - New command `frame-tree-resize` interactively resizes the root tree of the active frame.
     - New key code `MENU_KEY`.
     - `gui.h`: a header that plugins can use to create useful GUI elements.
+    - Added two new events, `EVENT_PRE_DIRECT_DRAWS` and `EVENT_POST_DIRECT_DRAWS` that occur before and after the entire set of direct draws is drawn to the screen.
 
 ### Changed
     - Rewrote the drawing system from the ground up for high performance and overall smaller output.
