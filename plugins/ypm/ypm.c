@@ -1,17 +1,20 @@
-#include <yed/plugin.h>
+#define DO_LOG
 
-typedef struct {
-   yed_frame *frame;
-   array_t    strings;
-   array_t    dds;
-   int        start_len;
-   int        is_up;
-   int        row;
-   int        selection;
-   int        size;
-   int        cursor_row;
-   int        cursor_col;
-} menu_popup_t;
+#define DBG__XSTR(x) #x
+#define DBG_XSTR(x) DBG__XSTR(x)
+#ifdef DO_LOG
+#define DBG(...)                                           \
+do {                                                       \
+    LOG_FN_ENTER();                                        \
+    yed_log(__FILE__ ":" XSTR(__LINE__) ": " __VA_ARGS__); \
+    LOG_EXIT();                                            \
+} while (0)
+#else
+#define DBG(...) ;
+#endif
+
+#include <yed/plugin.h>
+#include <yed/gui.h>
 
 typedef struct plugin_t {
     int     downloaded;
@@ -47,11 +50,10 @@ static yed_event_handler h_cur_pre;
 static yed_event_handler h_key;
 static yed_event_handler h_pre_mod;
 static yed_event_handler h_post_mod;
-static menu_popup_t      popup;
+static yed_event_handler h_key;
+static yed_event_handler h_mouse;
 static int               from_menu;
 static int               plug_row;
-static array_t           popup_items;
-static array_t           popup_items_sm;
 static int               in_search;
 static int               has_search;
 static int               cursor_no_recurse;
@@ -60,6 +62,8 @@ static int               list_len;
 static array_t           update_dds;
 static int               update_menu_is_up;
 static int               save_update_hz;
+static array_t           list_items;
+static yed_gui_list_menu list_menu;
 
 
 /* User facing commands: */
@@ -96,6 +100,7 @@ static void        start_search(void);
 static void        leave_search(void);
 static void        clear_and_leave_search(void);
 static void        check_ypm_version(void);
+static void        run(void);
 
 /* Event handlers: */
 static void pump_handler(yed_event *event);
@@ -107,36 +112,39 @@ static void cursor_pre_move_handler(yed_event *event);
 static void key_handler(yed_event *event);
 static void pre_mod_handler(yed_event *event);
 static void post_mod_handler(yed_event *event);
-
+static void _gui_key_handler(yed_event *event);
+static void _gui_mouse_handler(yed_event *event);
 
 static void unload(yed_plugin *self);
 
 int yed_plugin_boot(yed_plugin *self) {
-    char *item;
     int   manpath_len;
     int   manpath_status;
     char *manpath;
     char *ypm_manpath;
     char  new_manpath[4096];
     int   ret;
+    char *item;
 
     YED_PLUG_VERSION_CHECK();
     SELF = self;
     check_ypm_version();
 
-    tasks          = array_make(background_task);
-    plugin_arr     = array_make(plugin);
-    popup_items    = array_make(char*);
+    tasks            = array_make(background_task);
+    plugin_arr       = array_make(plugin);
+    list_items = array_make(char*);
 
     yed_plugin_set_unload_fn(self, unload);
 
     setup_shell_scripts();
 
-    item = "Man Page";  array_push(popup_items, item);
-    item = "Install";   array_push(popup_items, item);
-    item = "Uninstall"; array_push(popup_items, item);
-    item = "Load";      array_push(popup_items, item);
-    item = "Unload";    array_push(popup_items, item);
+    yed_gui_init_list_menu(&list_menu, list_items);
+    list_menu.base.is_up = 0;
+    item = "Man Page";  array_push(list_items, item);
+    item = "Install";   array_push(list_items, item);
+    item = "Uninstall"; array_push(list_items, item);
+    item = "Load";      array_push(list_items, item);
+    item = "Unload";    array_push(list_items, item);
 
     load_all_from_list();
 
@@ -144,6 +152,14 @@ int yed_plugin_boot(yed_plugin *self) {
     draw_menu();
     get_or_make_buffer("ypm-output");
     get_or_make_buffer("man-page");
+
+    h_key.kind = EVENT_KEY_PRESSED;
+    h_key.fn   = _gui_key_handler;
+    yed_plugin_add_event_handler(self, h_key);
+
+    h_mouse.kind = EVENT_KEY_PRESSED;
+    h_mouse.fn   = _gui_mouse_handler;
+    yed_plugin_add_event_handler(self, h_mouse);
 
     h_pump.kind = EVENT_PRE_PUMP;
     h_pump.fn   = pump_handler;
@@ -1022,7 +1038,6 @@ typedef struct {
 
 static void update_install_callback(void *_arg) {
     update_install_arg *arg;
-    char                buff[512];
 
     arg = _arg;
 
@@ -1237,85 +1252,6 @@ static void do_uninstall(const char *plug_name) {
     add_bg_task(buff, uninstall_callback, strdup(plug_name));
 }
 
-
-static void kill_popup(void) {
-    yed_direct_draw_t **dd;
-
-    if (!popup.is_up) { return; }
-
-    free_string_array(popup.strings);
-
-    array_traverse(popup.dds, dd) {
-        yed_kill_direct_draw(*dd);
-    }
-
-    array_free(popup.dds);
-
-    popup.frame = NULL;
-
-    popup.is_up = 0;
-}
-
-static void draw_popup(void) {
-    yed_direct_draw_t **dd_it;
-    yed_attrs           active;
-    yed_attrs           assoc;
-    yed_attrs           merged;
-    yed_attrs           merged_inv;
-    char              **it;
-    int                 max_width;
-    int                 has_left_space;
-    int                 i;
-    char                buff[512];
-    yed_direct_draw_t  *dd;
-
-    array_traverse(popup.dds, dd_it) {
-        yed_kill_direct_draw(*dd_it);
-    }
-    array_free(popup.dds);
-
-    popup.dds = array_make(yed_direct_draw_t*);
-
-    active = yed_active_style_get_active();
-    assoc  = yed_active_style_get_associate();
-    merged = active;
-    yed_combine_attrs(&merged, &assoc);
-    merged_inv = merged;
-    merged_inv.flags ^= ATTR_INVERSE;
-
-    max_width = 0;
-    array_traverse(popup.strings, it) {
-        max_width = MAX(max_width, strlen(*it));
-    }
-
-    i              = 1;
-    has_left_space = popup.frame->cur_x > popup.frame->left;
-
-    array_traverse(popup.strings, it) {
-        snprintf(buff, sizeof(buff), "%s%*s ", has_left_space ? " " : "", -max_width, *it);
-        dd = yed_direct_draw(popup.row + i,
-                             popup.frame->left + popup.cursor_col - 1 - has_left_space,
-                             i == popup.selection + 1 ? merged_inv : merged,
-                             buff);
-        array_push(popup.dds, dd);
-        i += 1;
-    }
-}
-
-static void start_popup(yed_frame *frame, int start_len, array_t strings) {
-    kill_popup();
-
-    popup.frame     = frame;
-    popup.strings   = copy_string_array(strings);
-    popup.dds       = array_make(yed_direct_draw_t*);
-    popup.start_len = start_len;
-    popup.selection = 0;
-
-    draw_popup();
-
-    popup.is_up = 1;
-}
-
 static void open_man_page(const char *page) {
     char  page_copy[256];
     char *s;
@@ -1462,8 +1398,8 @@ static void unload(yed_plugin *self) {
     array_free(tasks);
     array_traverse(plugin_arr, pit) { free_plugin(pit); }
     array_free(plugin_arr);
-    array_free(popup_items);
-    array_free(popup_items_sm);
+    array_free(list_items);
+/*     array_free(popup_items_sm); */
 
     yed_free_buffer(get_or_make_buffer("ypm-output"));
     yed_free_buffer(get_or_make_buffer("ypm-menu"));
@@ -1628,22 +1564,11 @@ static void cursor_pre_move_handler(yed_event *event) {
     if (in_search) {
         if (event->new_row != 15) { event->cancel = 1; }
     } else {
-        if (cursor_no_recurse) { return; }
-
-        if (popup.is_up) {
-            if (event->new_row > event->frame->cursor_line) {
-                popup.selection += 1;
-                if (popup.selection >= array_len(popup.strings)) {
-                    popup.selection = 0;
-                }
-            } else if (event->new_row < event->frame->cursor_line) {
-                popup.selection -= 1;
-                if (popup.selection < 0) { popup.selection = array_len(popup.strings) - 1; }
-            }
+        if (list_menu.base.is_up) {
             event->cancel = 1;
-            draw_popup();
-            return;
         }
+
+        if (cursor_no_recurse) { return; }
 
         if (event->new_row < 19) {
             if (event->frame->buffer_y_offset > 0) {
@@ -1667,11 +1592,6 @@ static void cursor_pre_move_handler(yed_event *event) {
 
 static void key_handler(yed_event *event) {
     yed_direct_draw_t **dit;
-    yed_line *line;
-    char               *s;
-    char                plug_name[256];
-    int                 i;
-    yed_direct_draw_t **dd_it;
 
     if (ys->interactive_command != NULL) { return; }
 
@@ -1719,68 +1639,31 @@ LOG_CMD_ENTER("ypm");
 
         switch (event->key) {
             case 'm':
-                if (popup.is_up) { kill_popup(); }
+                if (list_menu.base.is_up) { yed_gui_kill(&list_menu); }
                 open_man_page("ypm");
                 from_menu     = 1;
                 event->cancel = 1;
                 break;
             case 'f':
-                if (popup.is_up) { kill_popup(); }
+                if (list_menu.base.is_up) { yed_gui_kill(&list_menu); }
                 start_search();
                 event->cancel = 1;
                 break;
             case ENTER:
-                if (popup.is_up) {
-                    kill_popup();
-                    line = yed_buff_get_line(ys->active_frame->buffer, ys->active_frame->cursor_line);
-                    array_zero_term(line->chars);
-                    s = array_data(line->chars);
-                    for (i = 0; i < sizeof(plug_name) && s[i]; i += 1) {
-                        if (s[i] == ' ') { break; }
-                        plug_name[i] = s[i];
-                    }
-                    plug_name[i] = 0;
+                yed_delete_event_handler(h_mouse);
+                if (!list_menu.base.is_up) {
+                    yed_gui_kill(&list_menu);
+                    yed_gui_init_list_menu(&list_menu, list_items);
 
-                    switch (popup.selection) {
-                        case 0:
-                            from_menu = 1;
-                            plug_row = ys->active_frame->cursor_line;
-                            open_man_page(plug_name);
-                            break;
-                        case 1:
-                            from_menu = 1;
-                            plug_row = ys->active_frame->cursor_line;
-                            do_install(plug_name);
-                            break;
-                        case 2:
-                            from_menu = 1;
-                            plug_row = ys->active_frame->cursor_line;
-                            do_uninstall(plug_name);
-                            break;
-                        case 3:
-                            do_plugin_load(plug_name);
-                            break;
-                        case 4:
-                            do_plugin_unload(plug_name);
-                            break;
+                    if (ys->active_frame->cur_y + array_len(list_items) >= ys->active_frame->top + ys->active_frame->height) {
+                        list_menu.base.top = ys->active_frame->cur_y - array_len(list_items) - 1;
+                    } else {
+                        list_menu.base.top = ys->active_frame->cur_y;
                     }
-                } else {
-                    if (list_len > 0) {
-                        popup.size = array_len(popup_items);
-                        if (ys->active_frame->cur_y + popup.size >= ys->active_frame->top + ys->active_frame->height) {
-                            popup.row = ys->active_frame->cur_y - popup.size - 1;
-                        } else {
-                            popup.row = ys->active_frame->cur_y;
-                        }
-                        popup.cursor_col = ys->active_frame->cursor_col;
-                        start_popup(ys->active_frame, 0, popup_items);
-                    }
-                }
-                event->cancel = 1;
-                break;
-            case ESC:
-                if (popup.is_up) {
-                    kill_popup();
+                    list_menu.base.left = ys->active_frame->cur_x;
+
+                    yed_gui_draw(&list_menu);
+                    yed_plugin_add_event_handler(SELF, h_mouse);
                     event->cancel = 1;
                 }
                 break;
@@ -1836,5 +1719,66 @@ static void post_mod_handler(yed_event *event) {
         draw_list();
         internal_mod_on(get_or_make_buffer("ypm-menu"));
         mod_norecurse = 0;
+    }
+}
+
+static void _gui_key_handler(yed_event *event) {
+    int ret = 0;
+    ret = yed_gui_key_pressed(event, &list_menu);
+    if (ret) {
+        run();
+    }
+
+    if (!list_menu.base.is_up) {
+        yed_delete_event_handler(h_mouse);
+    }
+}
+
+static void _gui_mouse_handler(yed_event *event) {
+    yed_gui_mouse_pressed(event, &list_menu);
+
+    if (!list_menu.base.is_up) {
+        yed_delete_event_handler(h_mouse);
+    }
+}
+
+static void run() {
+    yed_line *line;
+    char     *s;
+    int       i;
+    char      plug_name[256];
+
+    if (list_menu.base.is_up) { yed_gui_kill(&list_menu); }
+    line = yed_buff_get_line(ys->active_frame->buffer, ys->active_frame->cursor_line);
+    array_zero_term(line->chars);
+    s = array_data(line->chars);
+    for (i = 0; i < sizeof(plug_name) && s[i]; i += 1) {
+        if (s[i] == ' ') { break; }
+        plug_name[i] = s[i];
+    }
+    plug_name[i] = 0;
+
+    switch (list_menu.selection) {
+        case 0:
+            from_menu = 1;
+            plug_row = ys->active_frame->cursor_line;
+            open_man_page(plug_name);
+            break;
+        case 1:
+            from_menu = 1;
+            plug_row = ys->active_frame->cursor_line;
+            do_install(plug_name);
+            break;
+        case 2:
+            from_menu = 1;
+            plug_row = ys->active_frame->cursor_line;
+            do_uninstall(plug_name);
+            break;
+        case 3:
+            do_plugin_load(plug_name);
+            break;
+        case 4:
+            do_plugin_unload(plug_name);
+            break;
     }
 }
