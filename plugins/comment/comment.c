@@ -70,8 +70,6 @@ void comment_toggle(int n_args, char **args) {
             status = comment_toggle_line(frame, line, row);
         }
 
-        frame->dirty = 1;
-
         YEXE("select-off");
     } else {
         line   = yed_buff_get_line(buff, frame->cursor_line);

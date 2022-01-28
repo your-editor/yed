@@ -1,7 +1,7 @@
 #include "internal.h" /* include here so that plugins can see everything. */
 
 static void * yed_get_handle_for_plug(char *plug_path) {
-    return dlopen(plug_path, RTLD_NOW | RTLD_LOCAL);
+    return dlopen(plug_path, RTLD_LAZY | RTLD_LOCAL);
 }
 
 int load_init(const char *path) {
@@ -266,7 +266,6 @@ void create_default_init_key_handler(yed_event *event) {
             array_free(dds);
             yed_delete_event_handler(h);
             do_create_default_init();
-            ys->redraw_cls = 1;
         }
     } else if (event->key == 'n' || event->key == 'N') {
         array_traverse(dds, dit) {
@@ -274,7 +273,6 @@ void create_default_init_key_handler(yed_event *event) {
         }
         array_free(dds);
         yed_delete_event_handler(h);
-        ys->redraw_cls = 1;
     }
     event->cancel = 1;
 }
@@ -735,10 +733,6 @@ void yed_plugin_request_mouse_reporting(yed_plugin *plug) {
     if (ys->mouse_reporting_ref_count == 1) {
         yed_term_enable_mouse_reporting();
     }
-
-    LOG_FN_ENTER();
-    yed_log("ref count: %d", ys->mouse_reporting_ref_count);
-    LOG_EXIT();
 }
 
 void yed_plugin_request_no_mouse_reporting(yed_plugin *plug) {
@@ -753,8 +747,4 @@ void yed_plugin_request_no_mouse_reporting(yed_plugin *plug) {
     }
 
     plug->requested_mouse_reporting  = 0;
-
-    LOG_FN_ENTER();
-    yed_log("ref count: %d", ys->mouse_reporting_ref_count);
-    LOG_EXIT();
 }

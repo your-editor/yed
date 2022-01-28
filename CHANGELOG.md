@@ -1,5 +1,28 @@
 # Changelog
 
+## 1400 - 2022-1-28
+### Added
+    - Variable minimum update rate set with `yed_set_update_hz()`. This is useful for drawing elements that need to update/move faster than the default key timeout.
+    - New command `frame-tree-resize` interactively resizes the root tree of the active frame.
+    - New key code `MENU_KEY`.
+    - `gui.h`: a header that plugins can use to create useful GUI elements.
+    - Added two new events, `EVENT_PRE_DIRECT_DRAWS` and `EVENT_POST_DIRECT_DRAWS` that occur before and after the entire set of direct draws is drawn to the screen.
+
+### Changed
+    - Rewrote the drawing system from the ground up for high performance and overall smaller output.
+    - `frame-resize` can resize frames that are part of a split frame tree.
+    - `frame-move` will move the root frame tree of the active frame if it is part of a split.
+
+### Removed
+    - `highlight.h` (deprecated in version 1300) has been removed in favor of `syntax.h`.
+    - `ys->redraw`, `ys->redraw_cls` were removed because they are no longer necessary.
+    - `frame->dirty`, was removed because it is no longer necessary.
+
+### Fixed
+    - Fixed a bug where mouse keycodes are sent to interactive comands.
+    - Fixed a bug where multi-byte characters were printed incorrectly to the log buffer.
+    - Fixed a bug that caused large pastes (from terminal) to be slow.
+
 ## 1306 - 2021-12-13
 ### Fixed
     - fixed a bug that would cause command line contents to overflow into a new terminal line.

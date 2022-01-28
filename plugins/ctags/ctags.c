@@ -548,7 +548,6 @@ out:;
 
 void ctags_hl_cleanup(void) {
     yed_syntax_free(&syn);
-    ys->redraw = 1;
 }
 
 void ctags_parse_cleanup(void) {
@@ -586,7 +585,6 @@ LOG_CMD_ENTER("ctags");
     yed_cprint("tags have been parsed for highlighting/completion");
 
     has_parsed = 1;
-    ys->redraw = 1;
 LOG_EXIT();
 }
 
@@ -1218,7 +1216,6 @@ void ctags_find_take_key(int key) {
             break;
         case ENTER:
             ys->interactive_command = NULL;
-            ys->active_frame->dirty = 1;
             yed_clear_cmd_buff();
             if (yed_buff_n_lines(get_or_make_buff()) == 1) {
                 ctag_find_select();
@@ -1250,7 +1247,6 @@ void ctags_find(int n_args, char **args) {
 
         if (n_args) {
             ys->interactive_command = NULL;
-            ys->active_frame->dirty = 1;
 
             yed_clear_cmd_buff();
             if (yed_buff_n_lines(get_or_make_buff()) == 1) {

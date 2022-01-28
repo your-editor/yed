@@ -10,7 +10,6 @@ static void maybe_change_ft(yed_buffer *buff);
 static void maybe_change_ft_event(yed_event *event);
 static void syntax_fstyle_line_handler(yed_event *event);
 static void syntax_fstyle_row_handler(yed_event *event);
-static void syntax_fstyle_mod_handler(yed_event *event);
 
 static yed_attrs parse_attr_line(char *line, int *scomp);
 
@@ -20,7 +19,6 @@ int yed_plugin_boot(yed_plugin *self) {
     yed_event_handler                            buff_pre_write_handler;
     yed_event_handler                            line_handler;
     yed_event_handler                            row_handler;
-    yed_event_handler                            mod_handler;
 
     YED_PLUG_VERSION_CHECK();
 
@@ -45,14 +43,11 @@ int yed_plugin_boot(yed_plugin *self) {
     line_handler.fn             = syntax_fstyle_line_handler;
     row_handler.kind            = EVENT_ROW_PRE_CLEAR;
     row_handler.fn              = syntax_fstyle_row_handler;
-    mod_handler.kind            = EVENT_BUFFER_POST_MOD;
-    mod_handler.fn              = syntax_fstyle_mod_handler;
 
     yed_plugin_add_event_handler(self, buff_post_load_handler);
     yed_plugin_add_event_handler(self, buff_pre_write_handler);
     yed_plugin_add_event_handler(self, line_handler);
     yed_plugin_add_event_handler(self, row_handler);
-    yed_plugin_add_event_handler(self, mod_handler);
 
     tree_traverse(ys->buffers, bit) {
         maybe_change_ft(tree_it_val(bit));
@@ -221,12 +216,6 @@ static void syntax_fstyle_row_handler(yed_event *event) {
     event->row_base_attr = known_active;
     if (attrs.flags != 0) {
         yed_combine_attrs(&event->row_base_attr, &attrs);
-    }
-}
-
-static void syntax_fstyle_mod_handler(yed_event *event) {
-    if (event->buffer->ft == yed_get_ft("fstyle")) {
-        yed_mark_dirty_frames(event->buffer);
     }
 }
 

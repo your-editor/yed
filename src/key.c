@@ -170,86 +170,9 @@ static int esc_sequence(int *input) {
                         return 1;
                     }
                     return 5;
-                } else if (c == '7') {
-                    input[3] = c;
-                    if (read(0, &c, 1) == 0) { return 4; }
-                    input[4] = c;
-                    if (c == ';') {
-                        if (read(0, &c, 1) == 0) { return 5; }
-                        input[5] = c;
-                        if (c == '5') {
-                            if (read(0, &c, 1) == 0) { return 6; }
-                            input[6] = c;
-                            if (c == ';') {
-                                if (read(0, &c, 1) == 0) { return 7; }
-                                input[7] = c;
-                                if (c == '9') {
-                                    if (read(0, &c, 1) == 0) { return 8; }
-                                    input[8] = c;
-                                    if (c == '~') {
-                                        input[0] = CTRL_TAB;
-                                        return 1;
-                                    }
-                                    return 9;
-                                } else if (c == '1') {
-                                    if (read(0, &c, 1) == 0) { return 9; }
-                                    input[9] = c;
-                                    if (c == '3') {
-                                        if (read(0, &c, 1) == 0) { return 10; }
-                                        input[10] = c;
-                                        if (c == '~') {
-                                            input[0] = CTRL_ENTER;
-                                            return 1;
-                                        }
-                                        return 10;
-                                    }
-                                    return 9;
-                                }
-                                return 8;
-                            }
-                            return 7;
-                        } else if (c == '7') {
-                            if (read(0, &c, 1) == 0) { return 6; }
-                            input[6] = c;
-                            if (c == ';') {
-                                if (read(0, &c, 1) == 0) { return 7; }
-                                input[7] = c;
-                                if (c == '9') {
-                                    if (read(0, &c, 1) == 0) { return 8; }
-                                    input[8] = c;
-                                    if (c == '~') {
-                                        input[0] = ESC;
-                                        input[1] = CTRL_TAB;
-                                        return 2;
-                                    }
-                                    return 9;
-                                } else if (c == '1') {
-                                    if (read(0, &c, 1) == 0) { return 8; }
-                                    input[8] = c;
-                                    if (c == '3') {
-                                        if (read(0, &c, 1) == 0) { return 9; }
-                                        input[9] = c;
-                                        if (c == '~') {
-                                            input[0] = ESC;
-                                            input[1] = CTRL_ENTER;
-                                            return 2;
-                                        }
-                                        return 10;
-                                    }
-                                    return 9;
-                                }
-                                return 8;
-                            }
-                            return 7;
-                        }
-                        return 6;
-                    }
-                    return 5;
                 }
                 return 4;
-            }
-
-            if (c == '~') {
+            } else if (c == '~') {
                 switch (input[2]) {
                     case '1':    { input[0] = HOME_KEY;  break; }
                     case '3':    { input[0] = DEL_KEY;   break; }
@@ -258,6 +181,35 @@ static int esc_sequence(int *input) {
                     case '6':    { input[0] = PAGE_DOWN; break; }
                 }
                 return 1;
+            } else if (input[2] == '5') {
+                if (c == '7') {
+                    input[3] = c;
+
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == '3') {
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        input[5] = c;
+                        if (c == '6') {
+                            if (read(0, &c, 1) == 0) { return 6; }
+                            input[6] = c;
+                            if (c == '3') {
+                                if (read(0, &c, 1) == 0) { return 7; }
+                                input[7] = c;
+                                if (c == 'u') {
+                                    input[0] = MENU_KEY;
+                                    return 1;
+                                }
+                                return 8;
+                            }
+                            return 7;
+                        }
+
+                        return 6;
+                    }
+                    return 5;
+                }
+                return 4;
             }
         } else {
             switch (input[2]) {
@@ -351,9 +303,13 @@ int yed_read_key_sequences(int len, int *input) {
         /* We have consumed a keystroke. */
         if (new_key == CTRL_H && ctrl_h_is_bs) {new_key = BACKSPACE; }
 
+        if (new_key == KEY_NULL) {
+            keep_reading = 1;
+            continue;
+        }
+
         input[len]    = new_key;
         len          += 1;
-
         keep_reading  = 0;
 
         /*
@@ -413,7 +369,7 @@ int yed_read_mbyte_keys(char first_byte, int n_bytes) {
     return 1;
 }
 
-int yed_read_keys(int *input) {
+static int _yed_read_keys(int *input) {
     int       len;
     int       nread;
     char      c;
@@ -463,8 +419,8 @@ int yed_read_keys(int *input) {
             input[0] = MBYTE;
             len      = 1;
         }
-    } else if (c >= 0) {
-        input[0] = c ? c : CTRL_SPACE;
+    } else if (c > 0) {
+        input[0] = c;
         len      = 1;
 
 do_seq:;
@@ -476,58 +432,74 @@ do_seq:;
     return len;
 }
 
-static int handle_bracketed_paste(int key) {
-    char *str;
-    int   key_ch;
-    int   i;
-    char  key_str_buff[32];
-    char *key_str;
+int yed_read_keys(int *input) {
+    int  n;
+    int  paste_keys[MAX_SEQ_LEN];
+    int  p;
+    int  i;
+    int  key;
+    char key_ch;
 
-    if (key == _BRACKETED_PASTE_BEGIN) {
-        if (!yed_var_is_truthy("bracketed-paste-mode")) {
-            return 1;
-        }
+    n = _yed_read_keys(input);
 
+    if (n == 1 && input[0] == _BRACKETED_PASTE_BEGIN) {
         ys->doing_bracketed_paste = 1;
-        return 1;
-    } else if (key == _BRACKETED_PASTE_END) {
-        if (!yed_var_is_truthy("bracketed-paste-mode")) {
-            return 1;
-        }
-
-        if (!ys->interactive_command) {
-            array_zero_term(ys->bracketed_paste_buff);
-            str = array_data(ys->bracketed_paste_buff);
-            yed_execute_command("simple-insert-string", 1, &str);
-        }
-
-        ys->doing_bracketed_paste = 0;
         array_clear(ys->bracketed_paste_buff);
-        return 1;
-    } else if (ys->doing_bracketed_paste) {
-        if (key < REAL_KEY_MAX
-        &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
-            if (ys->interactive_command) {
+
+        while ((p = _yed_read_keys(paste_keys)) && paste_keys[0] != _BRACKETED_PASTE_END) {
+            for (i = 0; i < p; i += 1) {
+                key = paste_keys[i];
+
+            if (key < REAL_KEY_MAX
+                &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
+                    if (key == MBYTE) {
+                        for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
+                            array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
+                        }
+                    } else {
+                        if (key == NEWLINE) { key = ENTER; }
+                        key_ch = (char)key;
+                        array_push(ys->bracketed_paste_buff, key_ch);
+                    }
+                }
+            }
+        }
+        ys->doing_bracketed_paste = 0;
+    }
+
+    return n;
+}
+
+static void handle_bracketed_paste(void) {
+    char      *data;
+    yed_glyph *git;
+    int        key;
+    char       key_str_buff[32];
+    char      *key_str;
+
+    array_zero_term(ys->bracketed_paste_buff);
+    data = (char*)array_data(ys->bracketed_paste_buff);
+
+    if (ys->interactive_command) {
+        yed_glyph_traverse(data, git) {
+            if (yed_get_glyph_len(*git) > 1) {
+                key       = MBYTE;
+                ys->mbyte = *git;
+            } else {
+                key = (int)git->c;
+            }
+
+            if (key < REAL_KEY_MAX
+            &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
                 sprintf(key_str_buff, "%d", key);
                 key_str = key_str_buff;
 
                 yed_execute_command(ys->interactive_command, 1, &key_str);
-            } else {
-                if (key == MBYTE) {
-                    for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
-                        array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
-                    }
-                } else {
-                    if (key == NEWLINE) { key = ENTER; }
-                    key_ch = (char)key;
-                    array_push(ys->bracketed_paste_buff, key_ch);
-                }
             }
         }
-        return 1;
+    } else {
+        yed_execute_command("simple-insert-string", 1, &data);
     }
-
-    return 0;
 }
 
 void yed_take_key(int key) {
@@ -536,7 +508,8 @@ void yed_take_key(int key) {
     char            *key_str;
     yed_event        event;
 
-    if (handle_bracketed_paste(key)) {
+    if (key == _BRACKETED_PASTE_BEGIN) {
+        handle_bracketed_paste();
         return;
     }
 
@@ -546,6 +519,8 @@ void yed_take_key(int key) {
     yed_trigger_event(&event);
 
     if (event.cancel) { return; }
+
+    if (IS_MOUSE(key)) { return; }
 
     binding = yed_get_key_binding(key);
 
@@ -1033,12 +1008,8 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             key_i = PAGE_DOWN;
         } else if (strcmp(key_str, "shift-tab") == 0) {
             key_i = SHIFT_TAB;
-        } else if (strcmp(key_str, "ctrl-tab") == 0) {
-            key_i = CTRL_TAB;
-        } else if (strcmp(key_str, "ctrl-enter") == 0) {
-            key_i = CTRL_ENTER;
-        } else if (strcmp(key_str, "ctrl-space") == 0) {
-            key_i = CTRL_SPACE;
+        } else if (strcmp(key_str, "menu") == 0) {
+            key_i = MENU_KEY;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
             if (key_c != -1) {
                 if (key_c == '/') {
@@ -1170,15 +1141,6 @@ char *yed_keys_to_string(int n, int *keys) {
             case CTRL_FS:
                 snprintf(key_buff, sizeof(key_buff), "ctrl-/");
                 break;
-            case CTRL_TAB:
-                snprintf(key_buff, sizeof(key_buff), "ctrl-tab");
-                break;
-            case CTRL_ENTER:
-                snprintf(key_buff, sizeof(key_buff), "ctrl-enter");
-                break;
-            case CTRL_SPACE:
-                snprintf(key_buff, sizeof(key_buff), "ctrl-spc");
-                break;
 
             case BACKSPACE:
                 snprintf(key_buff, sizeof(key_buff), "bsp");
@@ -1231,6 +1193,10 @@ char *yed_keys_to_string(int n, int *keys) {
             case FN11:
             case FN12:
                 snprintf(key_buff, sizeof(key_buff), "fn-%d", 1 + (key - FN1));
+                break;
+
+            case MENU_KEY:
+                snprintf(key_buff, sizeof(key_buff), "menu");
                 break;
 
             default:

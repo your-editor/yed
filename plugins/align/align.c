@@ -88,7 +88,6 @@ void align(int n_args, char **args) {
 
         yed_set_cursor_within_frame(frame, frame->cursor_line, save_col);
         yed_end_undo_record(frame, buff);
-        frame->dirty = 1;
     }
 
     YEXE("select-off");

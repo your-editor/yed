@@ -304,8 +304,6 @@ int yed_undo(yed_frame *frame, yed_buffer *buffer) {
     array_push(history->redo, *record);
     array_pop(history->undo);
 
-    frame->dirty = 1;
-
     return 1;
 }
 
@@ -329,8 +327,6 @@ int yed_redo(yed_frame *frame, yed_buffer *buffer) {
 
     array_push(history->undo, *record);
     array_pop(history->redo);
-
-    frame->dirty = 1;
 
     return 1;
 }

@@ -85,7 +85,6 @@ void yed_remove_style(char *name) {
     &&  strcmp(name, ys->active_style->_name) == 0) {
         free(ys->active_style);
         ys->active_style = NULL;
-        ys->redraw       = 1;
     }
 
     it = tree_lookup(ys->styles, name);
@@ -138,8 +137,6 @@ int yed_activate_style(char *name) {
     memset(&event, 0, sizeof(event));
     event.kind = EVENT_STYLE_CHANGE;
     yed_trigger_event(&event);
-
-    ys->redraw = ys->redraw_cls = 1;
 
     return 1;
 }

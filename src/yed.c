@@ -3,71 +3,6 @@
 
 yed_state *ys;
 
-void yed_write_welcome(void) {
-    int   i, n_oct_lines, oct_width, l;
-    char *oct[] = {
-"                                                           \n",
-"                                                        //(\n",
-"                                                      //   \n",
-"                   This is Your Editor.              %/    \n",
-"                                                     //    \n",
-"                                                    //,    \n",
-"                               %                    /#     \n",
-"                               */#(     //***/*/*  /*/     \n",
-"                       &(//////% ,/**//(       (//*,       \n",
-"                      //////////*(              /*/*       \n",
-"                     (//(///*////*(           ***/ *(      \n",
-"                    ((///////*////#        **/*(  (/(      \n",
-"                    #////////*///(#   /(****#    /**       \n",
-"                    (///**/*****%##***(#/       (*/(       \n",
-"                    ./////***(#%/%((,         (/*/         \n",
-"                     %///***(((%/#*       /*/**#           \n",
-"                     (#//***///(%*(///**/(((*              \n",
-"                       //*//*//#(////((%#(%(%              \n",
-"                  %&((//**/**************/**/***(          \n",
-"              *(///###///***********//(((###///***/#       \n",
-"           /////(((///((//**/#/***//*//        /#****(     \n",
-"        //(//##(///#    #/*/( /#////#//*/         (****#   \n",
-"      //((#%((((//      (///    (//*( %(/*&         ****   \n",
-"     (/((&  #(/(.       ((//    (/**/   #/*(         ***/  \n",
-"     /((#   #///       (///*   ,*/**(    (/*#        ****  \n",
-"     ((%    (/(*      ////(    (/*/*      (/*(      (**/   \n",
-"     ((#    (((      (///      ///*        ***     (***    \n",
-"     #((    ((/%    ((//      (///         //*/    /**.    \n",
-"     .(((    ((/   #(/(      */*(          ///     ***     \n",
-"      ((/    #((( (((/(     ///(           */*     **(     \n",
-"      #/%     ((( (//*      */*            //*     ***/    \n",
-"      (/       /((#(/*      /**            (/*(     .***(  \n",
-"     %(%       //(,////     //*/           (*/*         (/(\n",
-"    #((         // #(/*      */*(           #**/           \n",
-"  (#(&          (/  ////      (//(*           *//&         \n",
-"  .             //   //*/       #//*#(&         (**(/      \n",
-"               ,/(    /**           #//*/#           //%   \n",
-"               //     */*(              //*(/          **  \n",
-"              //*      (//                *//#             \n",
-"             //         //(                 *//            \n",
-"           *(/          ///                  *(            \n",
-"          .             #//                  /(            \n",
-"                        #//                  ((            \n",
-"                        (#                   /(            \n",
-"                        (                    (             \n",
-"                       ((                                  \n"
-    };
-
-    l = 1;
-
-    n_oct_lines = sizeof(oct) / sizeof(char*);
-    oct_width   = strlen(oct[0]);
-
-    for (i = 0; i < n_oct_lines; i += 1) {
-        if (l + i == ys->term_rows - 1) {
-            break;
-        }
-        yed_set_cursor(l + i, (ys->term_cols / 2) - (oct_width / 2));
-        append_to_output_buff(oct[i]);
-    }
-}
-
 static int writer_started;
 static int write_pending;
 
@@ -82,7 +17,9 @@ static void * writer(void *arg) {
         while (!write_pending) {
             pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
         }
-        flush_writer_buff();
+
+        yed_render_screen();
+
         write_pending = 0;
 
         pthread_mutex_unlock(&ys->write_ready_mtx);
@@ -101,6 +38,7 @@ try_again:;
     }
     array_copy(ys->writer_buffer, ys->output_buffer);
     array_clear(ys->output_buffer);
+    yed_diff_and_swap_screens();
     write_pending = 1;
     pthread_cond_signal(&ys->write_ready_cond);
     pthread_mutex_unlock(&ys->write_ready_mtx);
@@ -115,6 +53,35 @@ static void kill_writer(void) {
 
 static void restart_writer(void) {
     pthread_create(&ys->writer_id, NULL, writer, NULL);
+}
+
+static void * update_forcer(void *arg) {
+    char zero;
+
+    (void)arg;
+    zero = 0;
+
+    while (ys->status != YED_RELOAD_CORE && ys->update_hz >= MIN_UPDATE_HZ) {
+        usleep(825000 * (1.0 / MIN(ys->update_hz, MAX_UPDATE_HZ)));
+
+        if (!ys->skip_force_update) {
+            ioctl(0, TIOCSTI, &zero);
+        } else {
+            ys->skip_force_update = 0;
+        }
+    }
+
+    return NULL;
+}
+
+static void kill_update_forcer(void) {
+    void *junk;
+
+    pthread_join(ys->update_forcer_id, &junk);
+}
+
+static void start_update_forcer(void) {
+    pthread_create(&ys->update_forcer_id, NULL, update_forcer, NULL);
 }
 
 
@@ -239,12 +206,20 @@ static void yed_tool_attach(void) {
     getchar();
 }
 
+void yed_draw_everything(void) {
+    yed_draw_background();   yed_reset_attr();
+    yed_write_status_line(); yed_reset_attr();
+    yed_draw_command_line(); yed_reset_attr();
+    yed_update_frames();     yed_reset_attr();
+    yed_do_direct_draws();   yed_reset_attr();
+}
+
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     char                 cwd[4096];
-    int                  has_frames;
     char               **file_it;
     unsigned long long   start_time;
     int                  dev_null_fd;
+    char                *getcwd_ret;
     char               **it;
     array_t              split;
 
@@ -278,7 +253,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     setlocale(LC_ALL, "en_US.utf8");
 
-    getcwd(cwd, sizeof(cwd));
+    getcwd_ret = getcwd(cwd, sizeof(cwd));
+    (void)getcwd_ret;
     ys->working_dir = strdup(cwd);
 
     yed_init_events();
@@ -294,11 +270,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
 
-    ys->written_cells = malloc(ys->term_rows * ys->term_cols);
-    memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
-
-    memset(ys->_4096_spaces, ' ', 4096);
     yed_init_output_stream();
+    yed_init_screen();
 
     pthread_mutex_init(&ys->write_ready_mtx, NULL);
     pthread_cond_init(&ys->write_ready_cond, NULL);
@@ -323,11 +296,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
     array_free(cmd_line_commands);
 
-    has_frames = !!array_len(ys->frames);
-
     if (array_len(ys->options.files) >= 1) {
         YEXE("frame-new");
-        has_frames = 1;
     }
 
     array_traverse(ys->options.files, file_it) {
@@ -343,27 +313,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
         YEXE("frame-prev");
     }
 
-    if (has_frames) {
-        yed_update_frames();
-        append_to_output_buff(TERM_CURSOR_SHOW);
-    } else {
-        append_to_output_buff(TERM_CURSOR_HIDE);
-        yed_set_attr(yed_active_style_get_active());
-        yed_clear_screen();
-        yed_cursor_home();
-        yed_write_welcome();
-        append_to_output_buff(TERM_RESET);
-    }
-
-    yed_draw_command_line();
-    yed_write_status_line();
-
-    ys->redraw = 1;
-    /*
-     * setting the style will ask us to clear the screen,
-     * but we don't really need to here.
-     */
-    ys->redraw_cls = 0;
+    yed_draw_everything();
 
     ys->start_time_ms = measure_time_now_ms() - start_time;
 
@@ -400,9 +350,11 @@ yed_state * yed_get_state(void)         { return ys;  }
 
 int yed_pump(void) {
     yed_event            event;
+    int                  save_hz;
     int                  keys[16], n_keys, i;
     unsigned long long   start_us;
     int                  skip_keys;
+    int                  got_non_null_key;
 
     if (ys->status == YED_QUIT) {
         memset(&event, 0, sizeof(event));
@@ -416,12 +368,9 @@ int yed_pump(void) {
     } else if (ys->status == YED_RELOAD_CORE) {
         yed_service_reload(1);
         restart_writer();
-    }
-
-    /* Not sure why this is necessary, but... */
-    if (!ys->interactive_command && ys->active_frame) {
-        yed_set_cursor(ys->active_frame->cur_y, ys->active_frame->cur_x);
-        append_to_output_buff(TERM_CURSOR_SHOW);
+        save_hz = ys->update_hz;
+        ys->update_hz = 0;
+        yed_set_update_hz(save_hz);
     }
 
     ys->status = YED_NORMAL;
@@ -430,7 +379,6 @@ int yed_pump(void) {
     if (ys->has_resized) {
         yed_handle_resize();
     } else {
-        memset(ys->written_cells, 0, ys->term_rows * ys->term_cols);
         memset(keys, 0, sizeof(keys));
     }
 
@@ -439,9 +387,6 @@ int yed_pump(void) {
      * Give the writer thread the new screen update.
      */
     kick_off_write();
-
-    append_to_output_buff(TERM_CURSOR_HIDE);
-
 
 
     memset(&event, 0, sizeof(event));
@@ -452,43 +397,22 @@ int yed_pump(void) {
                 ? 0
                 : yed_read_keys(keys);
 
+    got_non_null_key = 0;
     for (i = 0; i < n_keys; i += 1) {
         yed_take_key(keys[i]);
+        got_non_null_key |= !!keys[i];
+    }
+
+    if (got_non_null_key && ys->update_hz >= MIN_UPDATE_HZ) {
+        ys->skip_force_update = 1;
     }
 
     start_us = measure_time_now_us();
 
-    if (ys->redraw) {
-        if (ys->redraw_cls) {
-            append_to_output_buff(TERM_CURSOR_HIDE);
-            yed_set_attr(yed_active_style_get_active());
-            yed_clear_screen();
-            yed_cursor_home();
-            append_to_output_buff(TERM_RESET);
-            yed_write_status_line();
-        }
-        yed_mark_direct_draws_as_dirty();
-    }
-
-    yed_update_frames();
-    ys->redraw = ys->redraw_cls = 0;
-    yed_do_direct_draws();
+    yed_draw_everything();
 
     ys->draw_accum_us += measure_time_now_us() - start_us;
     ys->n_pumps       += 1;
-
-    yed_draw_command_line();
-
-    if (ys->interactive_command) {
-        yed_write_status_line();
-        yed_set_cursor(ys->term_rows, ys->cmd_cursor_x);
-        append_to_output_buff(TERM_RESET);
-        append_to_output_buff(TERM_CURSOR_SHOW);
-    } else {
-        yed_write_status_line();
-        append_to_output_buff(TERM_CURSOR_HIDE);
-        append_to_output_buff(TERM_RESET);
-    }
 
     memset(&event, 0, sizeof(event));
     event.kind = EVENT_POST_PUMP;
@@ -510,6 +434,7 @@ LOG_EXIT();
         } else {
             yed_unload_plugin_libs();
             kill_writer();
+            kill_update_forcer();
         }
     }
 #endif

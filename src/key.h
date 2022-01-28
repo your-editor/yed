@@ -52,9 +52,6 @@ enum {
     PAGE_UP,
     PAGE_DOWN,
     SHIFT_TAB,
-    CTRL_TAB,
-    CTRL_ENTER,
-    CTRL_SPACE,
     FN1 = 330,
     FN2 = 331,
     FN3 = 332,
@@ -67,6 +64,7 @@ enum {
     FN10 = 339,
     FN11 = 340,
     FN12 = 341,
+    MENU_KEY,
     _BRACKETED_PASTE_BEGIN,
     _BRACKETED_PASTE_END,
 

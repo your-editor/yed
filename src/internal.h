@@ -139,14 +139,15 @@ use_tree_c(yed_ft_name_t, empty_t, strcmp);
 #include "bucket_array.h"
 #include "yed.h"
 #include "term.h"
+#include "attrs.h"
+#include "utf8.h"
+#include "screen.h"
 /* What would be in wcwidth.h: */
 int mk_wcwidth(wchar_t ucs);
-#include "utf8.h"
 #include "key.h"
 #include "ft.h"
 #include "undo.h"
 #include "buffer.h"
-#include "attrs.h"
 #include "frame.h"
 #include "log.h"
 #include "complete.h"
@@ -181,15 +182,9 @@ typedef struct yed_state_t {
     pthread_mutex_t              write_ready_mtx;
     pthread_cond_t               write_ready_cond;
     pthread_t                    writer_id;
-    char                         _4096_spaces[4096];
     struct termios               sav_term;
     int                          term_cols,
                                  term_rows;
-    char                        * written_cells;
-    int                          cur_x,
-                                 cur_y,
-                                 save_cur_x,
-                                 save_cur_y;
     tree(yed_buffer_name_t,
          yed_buffer_ptr_t)       buffers;
     int                          unnamed_buff_counter;
@@ -224,13 +219,10 @@ typedef struct yed_state_t {
     int                          cmd_prompt_compl_string_len;
     int                          status;
     int                          tabw;
-    int                          redraw;
-    int                          redraw_cls;
     tree(yed_command_name_t,
          yed_command)            commands;
     tree(yed_command_name_t,
          yed_command)            default_commands;
-    char                        *small_message;
     tree(yed_plugin_name_t,
          yed_plugin_ptr_t)       plugins;
     array_t                      plugin_dirs;
@@ -268,6 +260,13 @@ typedef struct yed_state_t {
          yed_completion)         default_completions;
 
     int                          mouse_reporting_ref_count;
+    int                          update_hz;
+    int                          skip_force_update;
+    pthread_t                    update_forcer_id;
+    yed_screen                   screen1;
+    yed_screen                   screen2;
+    yed_screen                  *screen_update;
+    yed_screen                  *screen_render;
 } yed_state;
 
 extern yed_state *ys;
@@ -276,16 +275,16 @@ void yed_init_output_stream(void);
 
 void clear_output_buff(void);
 int output_buff_len(void);
-void append_n_to_output_buff(char *s, int n);
-void append_to_output_buff(char *s);
-void append_int_to_output_buff(int i);
-void flush_output_buff(void);
 
-void yed_set_small_message(char *msg);
-void yed_write_welcome(void);
+void yed_draw_everything(void);
 
 int yed_check_version_breaking(void);
 void yed_service_reload(int core);
+
+#define MIN_UPDATE_HZ (4)
+#define MAX_UPDATE_HZ (1000)
+int yed_get_update_hz(void);
+void yed_set_update_hz(int hz);
 
 int s_to_i(const char *s);
 

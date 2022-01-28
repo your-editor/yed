@@ -248,14 +248,6 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
     *buff_p = 0;
 }
 
-void yed_set_attr(yed_attrs attr) {
-    char buff[128];
-
-    yed_get_attr_str(attr, buff);
-
-    append_to_output_buff(buff);
-}
-
 int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
     return    (attr1.fg    == attr2.fg)
            && (attr1.bg    == attr2.bg)

@@ -189,8 +189,6 @@ void indent(int n_args, char **args) {
             line = yed_buff_get_line(buff, row);
             indent_line(frame, line, row, tabw);
         }
-
-        frame->dirty = 1;
     } else {
         line = yed_buff_get_line(buff, frame->cursor_line);
         indent_line(frame, line, frame->cursor_line, tabw);
@@ -237,8 +235,6 @@ void unindent(int n_args, char **args) {
             line = yed_buff_get_line(buff, row);
             unindent_line(frame, line, row, tabw);
         }
-
-        frame->dirty = 1;
     } else {
         line = yed_buff_get_line(buff, frame->cursor_line);
         unindent_line(frame, line, frame->cursor_line, tabw);

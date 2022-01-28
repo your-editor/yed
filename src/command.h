@@ -20,7 +20,6 @@ void yed_cmd_buff_pop(void);
 void yed_cmd_buff_insert(int idx, char c);
 void yed_cmd_buff_delete(int idx);
 void yed_append_text_to_cmd_buff(const char *s);
-void yed_append_non_text_to_cmd_buff(const char *s);
 void yed_append_int_to_cmd_buff(int i);
 
 void yed_cprint(char *fmt, ...);
@@ -85,6 +84,7 @@ DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(frame_prev);
 DEF_DEFAULT_COMMAND(frame_move);
 DEF_DEFAULT_COMMAND(frame_resize);
+DEF_DEFAULT_COMMAND(frame_tree_resize);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(simple_insert_string);
