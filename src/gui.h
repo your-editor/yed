@@ -5,11 +5,12 @@
 
 /* Base GUI Struct */
 typedef struct {
-    int           kind;      //kind of GUI element
-    int           top;       //top row of the menu
-    int           left;      //left most column of the menu
-    int           is_up;     //if gui is shown
-    array_t       dds;       //array of direct draws
+    int           kind;          //kind of GUI element
+    int           top;           //top row of the menu
+    int           left;          //left most column of the menu
+    int           is_up;         //if gui is shown
+    array_t       dds;           //array of direct draws
+    int           mouse_pressed; //we have seen a mouse press
 } _yed_gui_base;
 
 /* Specialized GUI Structs */
@@ -45,13 +46,14 @@ static inline void yed_gui_init_list_menu(yed_gui_list_menu *menu, array_t strin
 
     yed_gui_kill(menu);
 
-    menu->base.kind         =  LIST_MENU;
-    menu->base.is_up        =  1;
-    menu->base.dds          =  array_make(yed_direct_draw_t*);
-    menu->strings           =  copy_string_array(strings);
-    menu->selection         = -1;
-    menu->max_size          =  array_len(menu->strings);
-    menu->max_width         =  yed_gui_find_width(menu->strings);
+    menu->base.kind          =  LIST_MENU;
+    menu->base.is_up         =  1;
+    menu->base.dds           =  array_make(yed_direct_draw_t*);
+    menu->base.mouse_pressed =  0;
+    menu->strings            =  copy_string_array(strings);
+    menu->selection          = -1;
+    menu->max_size           =  array_len(menu->strings);
+    menu->max_width          =  yed_gui_find_width(menu->strings);
 
     yed_gui_draw(menu);
 }
@@ -68,11 +70,9 @@ static inline void _yed_gui_draw_list_menu(yed_gui_list_menu *menu) {
     int                 width;
 
     char              **it;
-    int                 has_left_space;
     int                 i;
     char                buff[512];
     yed_direct_draw_t  *dd;
-    int                 first;
 
     array_traverse(menu->base.dds, dd_it) {
         yed_kill_direct_draw(*dd_it);
@@ -167,7 +167,8 @@ static inline void _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_li
 
     if (IS_MOUSE(event->key)) {
         if (MOUSE_KIND(event->key) == MOUSE_RELEASE) {
-            if (MOUSE_BUTTON(event->key) == MOUSE_BUTTON_LEFT) {
+            if (MOUSE_BUTTON(event->key) == MOUSE_BUTTON_LEFT && menu->base.mouse_pressed) {
+                menu->base.mouse_pressed = 0;
                 if ((MOUSE_ROW(event->key) <= (menu->base.top + menu->max_size)) &&
                     (MOUSE_ROW(event->key) >=  menu->base.top + 1)               &&
                     (MOUSE_COL(event->key) >=  menu->base.left)                  &&
@@ -199,6 +200,7 @@ static inline void _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_li
                 yed_gui_draw(menu);
                 event->cancel = 1;
             }else if (MOUSE_KIND(event->key) == MOUSE_BUTTON_LEFT) {
+                menu->base.mouse_pressed = 1;
                 event->cancel = 1;
             }
         }
@@ -234,6 +236,7 @@ static inline int yed_gui_key_pressed(yed_event *event, void* base) {
             break;
         default:;
     }
+    return 0;
 }
 
 static inline void yed_gui_mouse_pressed(yed_event *event, void* base) {
