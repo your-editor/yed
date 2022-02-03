@@ -1239,8 +1239,14 @@ void yed_default_command_cursor_next_word_end(int n_args, char **args) {
     col   = frame->cursor_col;
 
     /* if there are no more characters, get the next word on the next line */
-    if (col >= line->visual_width || col + 1 >= line->visual_width)
+    if (col >= line->visual_width)
         goto next_word;
+
+    /* if next character is end of the line, set cursor at end of line */
+    if (col + 1 == line->visual_width) {
+        col += 1;
+        goto out;
+    }
 
     c     = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
     nextc = ((yed_glyph*)yed_line_col_to_glyph(line, col + 1))->c;
@@ -1275,6 +1281,7 @@ word_end:
     }
     col -= 1;
 
+out:
     yed_set_cursor_within_frame(frame, frame->cursor_line, col);
 }
 
