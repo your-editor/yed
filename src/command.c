@@ -105,6 +105,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-line-end",                    cursor_line_end);
     SET_DEFAULT_COMMAND("cursor-prev-word",                   cursor_prev_word);
     SET_DEFAULT_COMMAND("cursor-next-word",                   cursor_next_word);
+    SET_DEFAULT_COMMAND("cursor-next-word-end",               cursor_next_word_end);
     SET_DEFAULT_COMMAND("cursor-prev-paragraph",              cursor_prev_paragraph);
     SET_DEFAULT_COMMAND("cursor-next-paragraph",              cursor_next_paragraph);
     SET_DEFAULT_COMMAND("cursor-page-up",                     cursor_page_up);
@@ -1197,6 +1198,84 @@ skip_lines:
         yed_set_cursor_within_frame(frame, frame->cursor_line, col);
     }
 out:;
+}
+
+void yed_default_command_cursor_next_word_end(int n_args, char **args) {
+    yed_frame *frame;
+    yed_line  *line;
+    int        col, row;
+    char       c;
+    char       nextc;
+    int        save_row;
+    int        save_col;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    if (ys->current_search) {
+        if (yed_var_is_truthy("cursor-move-clears-search")) {
+            ys->current_search = NULL;
+        }
+    }
+
+#define is_word_char(C) \
+    ((is_alnum(C) || C == '_'))
+
+    line  = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    col   = frame->cursor_col;
+
+    /* if there are no more characters, get the next word on the next line */
+    if (col >= line->visual_width || col + 1 >= line->visual_width)
+        goto next_word;
+
+    c     = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+    nextc = ((yed_glyph*)yed_line_col_to_glyph(line, col + 1))->c;
+
+    /* if the character is anywhere but the end of the word, go to the end */
+    if (is_word_char(c) && is_word_char(nextc))
+        goto word_end;
+
+next_word:
+    yed_default_command_cursor_next_word(0, NULL);
+
+word_end:
+    /* we could've skipped lines, so get the line again */
+    line  = yed_buff_get_line(frame->buffer, frame->cursor_line);
+    col   = frame->cursor_col;
+    c     = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+    if (is_word_char(c)) {
+        while (col <= line->visual_width) {
+            col += 1;
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+            if (!is_word_char(c))
+                break;
+        }
+    } else {
+        while (col <= line->visual_width) {
+            col += 1;
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+            if (is_word_char(c) || is_space(c))
+                break;
+        }
+    }
+    col -= 1;
+
+    yed_set_cursor_within_frame(frame, frame->cursor_line, col);
 }
 
 void yed_default_command_cursor_prev_paragraph(int n_args, char **args) {
