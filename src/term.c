@@ -179,6 +179,18 @@ void sigcont_handler(int sig) {
         ys->stopped = 0;
         yed_term_enter();
         pthread_mutex_unlock(&ys->write_ready_mtx);
+
+        yed_check_for_resize();
+        yed_handle_resize();
+        yed_clear_screen();
+
+        /*
+         * Mouse reporting gets turned off when we call term_exit().
+         * Just resend the codes if it was enabled.
+         */
+        if (yed_term_mouse_reporting_enabled()) {
+            yed_term_enable_mouse_reporting();
+        }
     }
 }
 
@@ -444,7 +456,7 @@ void yed_handle_resize(void) {
     ys->term_cols = ys->new_term_cols;
     ys->term_rows = ys->new_term_rows;
 
-    yed_resize_screen();
+    yed_clear_screen(); /* calls yed_resize_screen(); */
 
     af = ys->active_frame;
     if (af) {
