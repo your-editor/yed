@@ -1,5 +1,10 @@
 # Changelog
 
+## 1401 - 2022-4-8
+### Fixed
+    - Fixed a bug where the screen needed to be fully redraw when resuming from suspend, but wasn't.
+    - Fixed a bug where the screen dimensions could be incorrect after resuming from suspend.
+
 ## 1400 - 2022-1-28
 ### Added
     - Variable minimum update rate set with `yed_set_update_hz()`. This is useful for drawing elements that need to update/move faster than the default key timeout.
