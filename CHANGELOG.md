@@ -1,5 +1,9 @@
 # Changelog
 
+## 1402 - 2022-4-13
+### Fixed
+    - Fixed a bug in `yed_service_reload()` that caused compilation failure for GCC 12.
+
 ## 1401 - 2022-4-8
 ### Fixed
     - Fixed a bug where the screen needed to be fully redraw when resuming from suspend, but wasn't.
