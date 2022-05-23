@@ -506,14 +506,15 @@ void expand_path(const char *path, char *buff) {
          *buff_p;
     char  c;
 
-    len      = strlen(path);
-    home     = getenv("HOME");
-    home_len = strlen(home);
+    len  = strlen(path);
+    home = getenv("HOME");
 
     if (!home) {
         memcpy(buff, path, len + 1);
         return;
     }
+
+    home_len = strlen(home);
 
     buff_p = buff;
 
