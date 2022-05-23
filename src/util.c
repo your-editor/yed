@@ -270,11 +270,12 @@ char * homeify_path(const char *path, char *buff) {
           home_len;
     char *home;
 
-    len      = strlen(path);
-    home     = getenv("HOME");
-    home_len = strlen(home);
+    len  = strlen(path);
+    home = getenv("HOME");
 
     if (!home) { return NULL; }
+
+    home_len = strlen(home);
 
     if (strncmp(path, home, home_len) == 0) {
         buff[0] = '~';
