@@ -810,12 +810,10 @@ int yed_add_key_sequence(int len, int *keys) {
 int yed_get_key_sequence(int len, int *keys) {
     yed_key_sequence *seq_it;
     int               i,
-                      s,
                       found,
                       good;
 
     found = 0;
-    s     = 0;
     array_traverse(ys->key_sequences, seq_it) {
         if (seq_it->len == len) {
             good = 1;
@@ -832,7 +830,6 @@ int yed_get_key_sequence(int len, int *keys) {
                 break;
             }
         }
-        s += 1;
     }
 
     if (!found)    { return KEY_NULL; }
