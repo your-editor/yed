@@ -165,6 +165,14 @@ static int parse_options(int argc, char **argv) {
                 "-std=gnu99 -shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
 
                 do_exit = 1;
+            } else if (strcmp(argv[i], "--print-cppflags") == 0) {
+                printf(
+#ifdef YED_DEBUG
+                "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
+#endif
+                "-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+
+                do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
                 printf(
 #ifdef YED_DEBUG
