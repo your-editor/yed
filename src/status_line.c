@@ -72,24 +72,6 @@ static char *get_expanded(char *s) {
             array_free(chars);
             result = str;
             break;
-        case 'l':
-            if (ys->active_frame) {
-                istr = itoa(ibuff, ys->active_frame->cursor_line);
-                result = strdup(istr);
-            } else {
-                result = strdup("-");
-            }
-            break;
-        case 'p':
-            if (ys->active_frame && ys->active_frame->buffer) {
-                istr = itoa(ibuff,
-                              (100.0 * ys->active_frame->cursor_line)
-                            / (yed_buff_n_lines(ys->active_frame->buffer)));
-                result = strdup(istr);
-            } else {
-                result = strdup("-");
-            }
-            break;
         case 'F':
             if (ys->active_frame && ys->active_frame->buffer) {
                 str = yed_get_ft_name(ys->active_frame->buffer->ft);
@@ -98,6 +80,27 @@ static char *get_expanded(char *s) {
                     goto out;
                 }
                 result = strdup(str);
+            } else {
+                result = strdup("-");
+            }
+            break;
+        case 'l':
+            if (ys->active_frame) {
+                istr = itoa(ibuff, ys->active_frame->cursor_line);
+                result = strdup(istr);
+            } else {
+                result = strdup("-");
+            }
+            break;
+        case 'n':
+            result = strdup((ys->active_frame == NULL || ys->active_frame->name == NULL) ? "-" : ys->active_frame->name);
+            break;
+        case 'p':
+            if (ys->active_frame && ys->active_frame->buffer) {
+                istr = itoa(ibuff,
+                              (100.0 * ys->active_frame->cursor_line)
+                            / (yed_buff_n_lines(ys->active_frame->buffer)));
+                result = strdup(istr);
             } else {
                 result = strdup("-");
             }

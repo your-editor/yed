@@ -164,7 +164,11 @@ void yed_delete_frame(yed_frame *frame) {
         }
     }
 
+    array_free(frame->gutter_attrs);
+    array_free(frame->gutter_glyphs);
     array_free(frame->line_attrs);
+
+    if (frame->name != NULL) { free(frame->name); }
 
     free(frame);
 
@@ -1533,6 +1537,39 @@ void yed_frames_remove_buffer(yed_buffer *buff) {
             (*frame)->buffer = NULL;
         }
     }
+}
+
+yed_frame * yed_find_frame_by_name(const char *name) {
+    yed_frame **fit;
+
+    array_traverse(ys->frames, fit) {
+        if ((*fit)->name && strcmp((*fit)->name, name) == 0) {
+            return *fit;
+        }
+    }
+
+    return NULL;
+}
+
+int yed_frame_set_name(yed_frame *f, const char *name) {
+    yed_frame *search;
+
+    if (name == NULL) {
+        if (f->name != NULL) {
+            free(f->name);
+            f->name = NULL;
+        }
+        return 1;
+    }
+
+    search = yed_find_frame_by_name(name);
+
+    if (search != NULL) { return 0; }
+
+    if (f->name != NULL) { free(f->name); }
+    f->name = strdup(name);
+
+    return 1;
 }
 
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame) {

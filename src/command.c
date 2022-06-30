@@ -131,6 +131,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
     SET_DEFAULT_COMMAND("frame-tree-resize",                  frame_tree_resize);
     SET_DEFAULT_COMMAND("frame",                              frame);
+    SET_DEFAULT_COMMAND("frame-name",                         frame_name);
     SET_DEFAULT_COMMAND("insert",                             insert);
     SET_DEFAULT_COMMAND("simple-insert-string",               simple_insert_string);
     SET_DEFAULT_COMMAND("delete-back",                        delete_back);
@@ -4018,6 +4019,36 @@ void yed_default_command_frame(int n_args, char **args) {
     frame = *(yed_frame**)array_item(ys->frames, idx);
 
     yed_activate_frame(frame);
+}
+
+void yed_default_command_frame_name(int n_args, char **args) {
+    yed_frame *frame;
+
+    if (n_args > 1) {
+        yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (frame == NULL) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    if (n_args == 0) {
+        if (frame->name != NULL) {
+            yed_cprint("'%s'", frame->name);
+        } else {
+            yed_cerr("frame is not named");
+        }
+    } else {
+        if (yed_frame_set_name(frame, args[0])) {
+            yed_cprint("frame is now named '%s'", args[0]);
+        } else {
+            yed_cerr("frame name '%s' is already used", args[0]);
+        }
+    }
 }
 
 int yed_execute_command_from_split(array_t split) {

@@ -28,6 +28,7 @@ typedef struct yed_frame_t {
     array_t             line_attrs;
     array_t             gutter_glyphs;
     array_t             gutter_attrs;
+    char               *name;
 } yed_frame;
 
 void yed_init_frames(void);
@@ -60,6 +61,8 @@ void yed_frame_hard_reset_cursor_y(yed_frame *frame);
 void yed_frame_scroll_buffer(yed_frame *frame, int rows);
 void yed_update_frames(void);
 void yed_frames_remove_buffer(yed_buffer *buff);
+yed_frame * yed_find_frame_by_name(const char *name);
+int  yed_frame_set_name(yed_frame *f, const char *name);
 
 void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
                                       int *btop, int *bleft, int *bheight, int *bwidth);
