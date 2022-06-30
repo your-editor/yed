@@ -61,7 +61,7 @@ static void set_cell_combine(int row, int col, yed_glyph g) {
 }
 
 static void write_welcome(void) {
-    int   i, j, n_oct_lines, oct_width, l;
+    int   i, j, n_oct_lines, oct_width, l, col, row;
     char *oct[] = {
 "                                                           \n",
 "                                                        //(\n",
@@ -117,10 +117,23 @@ static void write_welcome(void) {
     oct_width   = strlen(oct[0]);
 
     for (i = 0; i < n_oct_lines; i += 1) {
-        if (l + i == ys->term_rows - 1) {
+        row = l + i;
+
+        if (row == ys->term_rows - 1) {
             break;
         }
+
+        col = ((ys->term_cols / 2) - (oct_width / 2));
         for (j = 0; j < strlen(oct[i]) - 1; j += 1) {
+
+            if (col+j > ys->term_cols) {
+                break;
+            }
+
+            if (col+j < 1) {
+                continue;
+            }
+
             set_cell(l + i, (ys->term_cols / 2) - (oct_width / 2) + j, G(oct[i][j]));
         }
     }

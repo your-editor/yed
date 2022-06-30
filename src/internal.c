@@ -139,7 +139,7 @@ void yed_service_reload(int core) {
     ys->cur_log_name = NULL; /* This could be memory from a plugin that got unloaded. */
 
     array_traverse(ys->ft_array, ft_name_it) {
-        free(ft_name_it);
+        free(*ft_name_it);
     }
     array_clear(ys->ft_array);
 
