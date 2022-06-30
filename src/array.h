@@ -57,10 +57,10 @@ void _array_copy(array_t *dst, array_t *src);
     ((array).used = 0)
 
 #define array_item(array, idx) \
-    ((array).data + ((array).elem_size * (idx)))
+    (void*)(((char*)(array).data + ((array).elem_size * (idx))))
 
 #define array_last(array) \
-    ((array).used ? ((array).data + ((array).elem_size * ((array).used - 1))) : NULL)
+    ((array).used ? (void*)((char*)(array).data + ((array).elem_size * ((array).used - 1))) : NULL)
 
 
 #define array_traverse(array, it)                                                \

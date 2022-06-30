@@ -1007,6 +1007,8 @@ yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col) {
     line = yed_buff_get_line(buff, row);
     if (!line) { return NULL; }
 
+    if (col > line->visual_width) { return NULL; }
+
     idx = yed_line_col_to_idx(line, col);
     if (idx == -1) { return NULL; }
 
