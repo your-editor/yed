@@ -87,6 +87,7 @@ DEF_DEFAULT_COMMAND(frame_resize);
 DEF_DEFAULT_COMMAND(frame_tree_resize);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frame_name);
+DEF_DEFAULT_COMMAND(frame_unname);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(simple_insert_string);
 DEF_DEFAULT_COMMAND(delete_back);
