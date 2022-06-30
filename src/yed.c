@@ -215,11 +215,21 @@ static void yed_tool_attach(void) {
 }
 
 void yed_draw_everything(void) {
+    yed_event event;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_PRE_DRAW_EVERYTHING;
+    yed_trigger_event(&event);
+
     yed_draw_background();   yed_reset_attr();
     yed_write_status_line(); yed_reset_attr();
     yed_draw_command_line(); yed_reset_attr();
     yed_update_frames();     yed_reset_attr();
     yed_do_direct_draws();   yed_reset_attr();
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_POST_DRAW_EVERYTHING;
+    yed_trigger_event(&event);
 }
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {

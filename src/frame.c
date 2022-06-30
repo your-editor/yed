@@ -516,9 +516,16 @@ void yed_move_frame(yed_frame *frame, int rows, int cols) {
 }
 
 void yed_activate_frame(yed_frame *frame) {
+    yed_event event;
     int       buff_n_lines;
     int       save_cursor_line;
-    yed_event event;
+
+    memset(&event, 0, sizeof(event));
+    event.kind  = EVENT_FRAME_PRE_ACTIVATE;
+    event.frame = frame;
+    yed_trigger_event(&event);
+
+    if (event.cancel) { return; }
 
     if (ys->active_frame && ys->active_frame != frame) {
         ys->prev_active_frame = ys->active_frame;
