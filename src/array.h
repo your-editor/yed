@@ -69,7 +69,7 @@ void _array_copy(array_t *dst, array_t *src);
          it += 1)
 
 #define array_traverse_from(array, it, starting_idx)                                          \
-    for (it = (__typeof(it))(array).data + ((starting_idx) * (array).elem_size);              \
+    for (it = (__typeof(it))((char*)(array).data + ((starting_idx) * (array).elem_size));     \
          it < (__typeof(it))((char*)(array).data + ((array).used * (array).elem_size));       \
          it += 1)
 
