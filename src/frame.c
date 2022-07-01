@@ -64,6 +64,7 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
     yed_frame *frame;
 
+
     LIMIT(top_f, 0.0, 1.0);
     LIMIT(left_f, 0.0, 1.0);
     LIMIT(height_f, 0.0, 1.0 - top_f);
@@ -73,6 +74,8 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     width_f  = roundf(width_f * (float)ys->term_cols) / (float)ys->term_cols;
 
     frame = malloc(sizeof(*frame));
+
+    memset(frame, 0, sizeof(*frame));
 
     frame->buffer       = NULL;
     frame->top_f        = top_f;
