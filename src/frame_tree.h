@@ -36,6 +36,7 @@ int yed_frame_tree_is_root(yed_frame_tree *tree);
 void yed_frame_tree_recursive_readjust(yed_frame_tree *tree);
 yed_frame_tree *yed_frame_tree_get_split_leaf_prefer_left_or_topmost(yed_frame_tree *tree);
 yed_frame_tree *yed_frame_tree_get_split_leaf_prefer_right_or_bottommost(yed_frame_tree *tree);
+void yed_frame_tree_swap_children(yed_frame_tree *tree);
 void yed_frame_tree_get_absolute_rect(yed_frame_tree *tree, float *top, float *left, float *height, float *width);
 void yed_frame_tree_set_relative_rect(yed_frame_tree *tree, float top, float left, float height, float width);
 

@@ -383,3 +383,28 @@ yed_frame_tree *yed_frame_tree_get_split_leaf_prefer_right_or_bottommost(yed_fra
 
     return tree;
 }
+
+void yed_frame_tree_swap_children(yed_frame_tree *tree) {
+    yed_frame_tree *left_child;
+    float           top, left, height, width;
+
+    if (tree->is_leaf) { return; }
+
+    left_child = tree->child_trees[0];
+    top        = tree->child_trees[0]->top;
+    left       = tree->child_trees[0]->left;
+    height     = tree->child_trees[0]->height;
+    width      = tree->child_trees[0]->width;
+
+    yed_frame_tree_set_relative_rect(tree->child_trees[0],
+                                     tree->child_trees[1]->top,    tree->child_trees[1]->left,
+                                     tree->child_trees[1]->height, tree->child_trees[1]->width);
+
+    yed_frame_tree_set_relative_rect(tree->child_trees[1], top,    left,
+                                                           height, width);
+
+    tree->child_trees[0] = tree->child_trees[1];
+    tree->child_trees[1] = left_child;
+
+    yed_frame_tree_recursive_readjust(tree);
+}

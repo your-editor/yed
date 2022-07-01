@@ -8,6 +8,7 @@
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.
     - `yed_find_frame_by_name()`: lookup a frame based on its name.
+    - `yed_frame_tree_swap_children()`: swap the layouts of split frames.
     - New commands `frame-name` and `frame-uname`.
     - New in status line: `%F`: the active frame's name (or `-`, if none).
     - New events:
