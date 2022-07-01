@@ -208,6 +208,8 @@ static void frame_tree_leaf_visit_event(yed_frame_tree *tree, void *arg) {
     event.kind = e->event_kind;
     event.frame = tree->frame;
 
+    yed_trigger_event(&event);
+
     if (event.cancel) { e->was_cancelled = 1; }
 }
 
