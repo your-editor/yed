@@ -5,6 +5,7 @@
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
 ### Added
+    - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.
     - `yed_find_frame_by_name()`: lookup a frame based on its name.
     - New commands `frame-name` and `frame-uname`.

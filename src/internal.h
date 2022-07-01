@@ -283,6 +283,7 @@ void yed_service_reload(int core);
 
 #define MIN_UPDATE_HZ (4)
 #define MAX_UPDATE_HZ (1000)
+void yed_force_update(void);
 int yed_get_update_hz(void);
 void yed_set_update_hz(int hz);
 

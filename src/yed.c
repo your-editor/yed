@@ -56,16 +56,13 @@ static void restart_writer(void) {
 }
 
 static void * update_forcer(void *arg) {
-    char zero;
-
     (void)arg;
-    zero = 0;
 
     while (ys->status != YED_RELOAD_CORE && ys->update_hz >= MIN_UPDATE_HZ) {
         usleep(825000 * (1.0 / MIN(ys->update_hz, MAX_UPDATE_HZ)));
 
         if (!ys->skip_force_update) {
-            ioctl(0, TIOCSTI, &zero);
+            yed_force_update();
         } else {
             ys->skip_force_update = 0;
         }

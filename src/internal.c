@@ -212,6 +212,13 @@ void yed_service_reload(int core) {
 
 static void start_update_forcer(void);
 
+void yed_force_update(void) {
+    char zero;
+
+    zero = 0;
+    ioctl(0, TIOCSTI, &zero);
+}
+
 int yed_get_update_hz(void) { return ys->update_hz; }
 
 void yed_set_update_hz(int hz) {
