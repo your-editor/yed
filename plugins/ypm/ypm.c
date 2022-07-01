@@ -1497,6 +1497,7 @@ static void line_handler(yed_event *event) {
         i = 1;
         array_traverse(event->line_attrs, ait) {
             git = yed_buff_get_glyph(buff, event->row, i);
+            if (!git) { continue; }
             if (isalpha(git->c)) {
                 yed_combine_attrs(ait, &attr);
             }
@@ -1511,6 +1512,7 @@ static void line_handler(yed_event *event) {
 
         array_traverse(event->line_attrs, ait) {
             git = yed_buff_get_glyph(buff, event->row, i);
+            if (!git) { continue; }
 
             if (strncmp(&git->c, "│", strlen("│")) == 0) { table_col += 1; goto next; }
 
