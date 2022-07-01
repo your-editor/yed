@@ -1,5 +1,24 @@
 # Changelog
 
+## 1500 - 2022-7-1
+### Fixed
+    - Some macros contained code that caused compiler warnings or errors when compiled as C++.
+    - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
+### Added
+    - `yed_frame_set_name()`: set or clear a name for a frame.
+    - `yed_find_frame_by_name()`: lookup a frame based on its name.
+    - New commands `frame-name` and `frame-uname`.
+    - New in status line: `%F`: the active frame's name (or `-`, if none).
+    - New events:
+        - `EVENT_FRAME_PRE_ACTIVATE`
+        - `EVENT_FRAME_POST_DELETE`
+        - `EVENT_FRAME_PRE_MOVE`
+        - `EVENT_FRAME_POST_MOVE`
+        - `EVENT_FRAME_PRE_RESIZE`
+        - `EVENT_FRAME_POST_RESIZE`
+        - `EVENT_PRE_DRAW_EVERYTHING`
+        - `EVENT_POST_DRAW_EVERYTHING`
+
 ## 1403 - 2022-5-4
 ### Fixed
     - Fixed a bug in `write_welcome()` that caused segfualts when the horizontal screen sized was too small.
