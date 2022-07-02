@@ -49,4 +49,4 @@ int yed_get_string_width(const char *s);
 #define yed_glyph_traverse(_s, _g)                        \
     for ((_g) = (yed_glyph*)(void*)(_s);                  \
          ((char*)(void*)(_g)) < ((_s) + strlen((_s)));    \
-         (_g) = ((void*)(_g)) + yed_get_glyph_len(*(_g)))
+         (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len(*(_g))))
