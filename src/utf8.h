@@ -51,3 +51,8 @@ int yed_get_string_width(const char *s);
     for ((_g) = (yed_glyph*)(void*)(_s);                             \
          ((char*)(void*)(_g)) < ((_s) + _yed_glyph_traverse_len);    \
          (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len(*(_g))))
+
+#define yed_glyph_traverse_n(_s, _n, _g)                             \
+    for ((_g) = (yed_glyph*)(void*)(_s);                             \
+         ((char*)(void*)(_g)) < ((_s) + (_n));                       \
+         (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len(*(_g))))
