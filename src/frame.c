@@ -869,8 +869,9 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     }
 
     memset(&event, 0, sizeof(event));
-    event.kind  = EVENT_FRAME_PRE_SET_BUFFER;
-    event.frame = frame;
+    event.kind   = EVENT_FRAME_PRE_SET_BUFFER;
+    event.frame  = frame;
+    event.buffer = buff;
     yed_trigger_event(&event);
 
     frame->buffer = buff;
