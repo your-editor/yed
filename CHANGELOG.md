@@ -10,7 +10,7 @@
     - `yed_find_frame_by_name()`: lookup a frame based on its name.
     - `yed_frame_tree_swap_children()`: swap the layouts of split frames.
     - New commands `frame-name` and `frame-uname`.
-    - New in status line: `%F`: the active frame's name (or `-`, if none).
+    - New in status line: `%n`: the active frame's name (or `-`, if none).
     - New events:
         - `EVENT_FRAME_PRE_ACTIVATE`
         - `EVENT_FRAME_POST_DELETE`
