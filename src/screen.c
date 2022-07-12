@@ -225,7 +225,6 @@ void yed_render_screen(void) {
                 }
 
                 if (!yed_attrs_eq(cell->attrs, ys->screen_render->cur_attrs)) {
-                    WR(TERM_RESET, strlen(TERM_RESET));
                     yed_get_attr_str(cell->attrs, buff);
                     WR(buff, strlen(buff));
                     ys->screen_render->cur_attrs = cell->attrs;
