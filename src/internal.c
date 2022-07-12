@@ -234,10 +234,6 @@ void yed_set_update_hz(int hz) {
     if (need_to_start_updater) {
         start_update_forcer();
     }
-
-    LOG_FN_ENTER();
-    yed_log("update rate: %d Hz", ys->update_hz);
-    LOG_EXIT();
 }
 
 int s_to_i(const char *s) {
