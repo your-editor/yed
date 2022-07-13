@@ -43,6 +43,7 @@ int yed_term_enter(void) {
     yed_register_sigill_handler();
     yed_register_sigfpe_handler();
     yed_register_sigbus_handler();
+    yed_register_sigchld_handler();
 
     printf(TERM_ALT_SCREEN);
     printf(TERM_ENABLE_BRACKETED_PASTE);
@@ -326,6 +327,16 @@ void sigbus_handler(int sig) {
     kill(0, SIGBUS);
 }
 
+void sigchld_handler(int sig) {
+    yed_event event;
+
+    memset(&event, 0, sizeof(event));
+    event.kind   = EVENT_SIGNAL_RECEIVED;
+    event.signum = sig;
+
+    yed_trigger_event(&event);
+}
+
 void yed_register_sigwinch_handler(void) {
     struct sigaction sa;
 
@@ -422,6 +433,17 @@ void yed_register_sigbus_handler(void) {
     sa.sa_handler = sigbus_handler;
     if (sigaction(SIGBUS, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGBUS");
+    }
+}
+
+void yed_register_sigchld_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigchld_handler;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGCHLD");
     }
 }
 

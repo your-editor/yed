@@ -60,6 +60,7 @@ typedef enum {
     EVENT_POST_DIRECT_DRAWS,
     EVENT_PRE_DRAW_EVERYTHING,
     EVENT_POST_DRAW_EVERYTHING,
+    EVENT_SIGNAL_RECEIVED,
     _EVENT_RESERVED_0,
     _EVENT_RESERVED_1,
     _EVENT_RESERVED_2,
@@ -117,6 +118,7 @@ typedef struct {
         union { const char     *string_data;
                 void           *v_data; };
     } plugin_message;
+    int signum;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);
