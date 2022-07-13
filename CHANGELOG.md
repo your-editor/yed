@@ -20,6 +20,7 @@
         - `EVENT_FRAME_POST_RESIZE`
         - `EVENT_PRE_DRAW_EVERYTHING`
         - `EVENT_POST_DRAW_EVERYTHING`
+        - `EVENT_SIGNAL_RECEIVED`
 
 ## 1403 - 2022-5-4
 ### Fixed
