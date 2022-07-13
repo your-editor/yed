@@ -536,7 +536,8 @@ void yed_default_command_sh(int n_args, char **args) {
     buff[0]     = 0;
     cmd_buff[0] = 0;
 
-    strcat(buff, "bash -c '(");
+    strcat(buff, getenv("SHELL"));
+    strcat(buff, " -c '(");
 
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
@@ -553,8 +554,7 @@ void yed_default_command_sh(int n_args, char **args) {
     fflush(stdout);
     sys_ret = system(buff);
     (void)sys_ret;
-    printf(TERM_CLEAR_SCREEN);
-    fflush(stdout);
+    yed_clear_screen();
 }
 
 void yed_default_command_sh_silent(int n_args, char **args) {
@@ -567,7 +567,8 @@ void yed_default_command_sh_silent(int n_args, char **args) {
     buff[0]     = 0;
     cmd_buff[0] = 0;
 
-    strcat(buff, "bash -c '(");
+    strcat(buff, getenv("SHELL"));
+    strcat(buff, " -c '(");
 
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
@@ -593,10 +594,12 @@ void yed_default_command_less(int n_args, char **args) {
     const char *lazy_space;
     int i;
     int err;
+    const char * shell = getenv("SHELL");
 
     buff[0] = 0;
 
-    strcat(buff, "bash -c '(");
+    strcat(buff, shell);
+    strcat(buff, " -c '(");
 
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
@@ -605,15 +608,14 @@ void yed_default_command_less(int n_args, char **args) {
         lazy_space = " ";
     }
 
-    strcpy(cmd_buff, buff + strlen("bash -c '("));
+    strcpy(cmd_buff, buff + strlen(shell) + strlen(" -c '("));
 
     strcat(buff, ") 2>&1 | less -cR'");
 
     printf(TERM_STD_SCREEN);
     fflush(stdout);
     err = system(buff);
-    printf(TERM_ALT_SCREEN);
-    fflush(stdout);
+    yed_clear_screen();
 
     if (err == 0) {
         yed_cprint("%s", cmd_buff);

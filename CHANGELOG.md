@@ -1,5 +1,11 @@
 # Changelog
 
+# 1404 - 2022-7-13
+### Fixed
+    - Fixed a bug where running commands would not reload the status bar
+### Changed
+    - Allow for running commands in non-BASH shells
+
 ## 1403 - 2022-5-4
 ### Fixed
     - Fixed a bug in `write_welcome()` that caused segfualts when the horizontal screen sized was too small.
