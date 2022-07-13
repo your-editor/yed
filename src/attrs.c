@@ -137,7 +137,7 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
 
     *buff_p = 0;
 
-    BUFFCATN(buff_p, "\e[0", 3);
+    BUFFCATN(buff_p, "\e[", 2);
 
     if (attr.flags & ATTR_BOLD) {
         BUFFCATN(buff_p, ";1", 2);
