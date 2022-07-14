@@ -1472,8 +1472,8 @@ void yed_frames_remove_buffer(yed_buffer *buff) {
 
     array_traverse(ys->frames, frame) {
         if ((*frame)->buffer == buff) {
-            yed_set_cursor_far_within_frame((*frame), 1, 1);
-            (*frame)->buffer = NULL;
+            yed_frame_set_buff(*frame, NULL);
+            yed_frame_reset_cursor(*frame);
         }
     }
 }
