@@ -449,7 +449,7 @@ void yed_activate_frame(yed_frame *frame) {
     int       buff_n_lines;
     int       save_cursor_line;
 
-    if (frame == NULL) { return; }
+    if (frame == NULL || frame == ys->active_frame) { return; }
 
     memset(&event, 0, sizeof(event));
     event.kind  = EVENT_FRAME_PRE_ACTIVATE;
