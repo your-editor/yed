@@ -606,7 +606,7 @@ int yed_reload_plugins(void) {
     return 0;
 }
 
-void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
+void yed_plugin_set_command(yed_plugin *plug, const char *name, yed_command command) {
     char *name_dup;
 
     yed_set_command(name, command);
@@ -625,11 +625,11 @@ int yed_plugin_acquire_virt_key(yed_plugin *plug) {
     return key;
 }
 
-void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int n_args, char **args) {
+void yed_plugin_bind_key(yed_plugin *plug, int key, const char *cmd_name, int n_args, char **args) {
     yed_key_binding binding;
 
     binding.key    = key;
-    binding.cmd    = cmd_name;
+    binding.cmd    = (char*)cmd_name;
     binding.n_args = n_args;
     binding.args   = args;
 
@@ -667,7 +667,7 @@ void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler) {
     yed_add_event_handler(handler);
 }
 
-void yed_plugin_set_style(yed_plugin *plug, char *name, yed_style *style) {
+void yed_plugin_set_style(yed_plugin *plug, const char *name, yed_style *style) {
     char *name_dup;
 
     yed_set_style(name, style);
@@ -712,10 +712,10 @@ void yed_add_plugin_dir(const char *s) {
     array_insert(ys->plugin_dirs, 0, s_dup);
 }
 
-void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion comp) {
+void yed_plugin_set_completion(yed_plugin *plug, const char *name, yed_completion comp) {
     char *name_dup;
 
-    yed_set_completion(name, comp);
+    yed_set_completion((char*)name, comp);
     name_dup = strdup(name);
     array_push(plug->added_compls, name_dup);
 }

@@ -21,7 +21,7 @@ void yed_set_default_vars(void) {
     yed_set_var("status-line-right",          DEFAULT_STATUS_LINE_RIGHT);
 }
 
-void yed_set_var(char *var, char *val) {
+void yed_set_var(const char *var, const char *val) {
     tree_it(yed_var_name_t,
             yed_var_val_t)     it;
     yed_event                  evt;
@@ -40,13 +40,13 @@ void yed_set_var(char *var, char *val) {
 
     if (evt.cancel) { return; }
 
-    it = tree_lookup(ys->vars, var);
+    it = tree_lookup(ys->vars, (char*)var);
 
     if (!tree_it_good(it)) {
         tree_insert(ys->vars, strdup(var), strdup(val));
     } else {
         old_val = tree_it_val(it);
-        tree_insert(ys->vars, var, strdup(val));
+        tree_insert(ys->vars, (char*)var, strdup(val));
         free(old_val);
     }
 
@@ -54,7 +54,7 @@ void yed_set_var(char *var, char *val) {
     yed_trigger_event(&evt);
 }
 
-char *yed_get_var(char *var) {
+char *yed_get_var(const char *var) {
     tree_it(yed_var_name_t,
             yed_var_val_t)     it;
 
@@ -62,7 +62,7 @@ char *yed_get_var(char *var) {
         return NULL;
     }
 
-    it = tree_lookup(ys->vars, var);
+    it = tree_lookup(ys->vars, (char*)var);
 
     if (!tree_it_good(it)) {
         return NULL;
@@ -71,7 +71,7 @@ char *yed_get_var(char *var) {
     return tree_it_val(it);
 }
 
-void yed_unset_var(char *var) {
+void yed_unset_var(const char *var) {
     tree_it(yed_var_name_t,
             yed_var_val_t)       it;
     char                        *old_var,
@@ -82,7 +82,7 @@ void yed_unset_var(char *var) {
         return;
     }
 
-    it = tree_lookup(ys->vars, var);
+    it = tree_lookup(ys->vars, (char*)var);
 
     if (!tree_it_good(it)) {
         return;
@@ -99,7 +99,7 @@ void yed_unset_var(char *var) {
 
     if (evt.cancel) { return; }
 
-    tree_delete(ys->vars, var);
+    tree_delete(ys->vars, (char*)var);
     free(old_var);
     free(old_val);
 
@@ -108,7 +108,7 @@ void yed_unset_var(char *var) {
     yed_trigger_event(&evt);
 }
 
-int yed_var_is_truthy(char *var) {
+int yed_var_is_truthy(const char *var) {
     char *val;
 
     if (!(val = yed_get_var(var))) {
@@ -132,7 +132,7 @@ int yed_var_is_truthy(char *var) {
     return 1;
 }
 
-int yed_get_var_as_int(char *var, int *out) {
+int yed_get_var_as_int(const char *var, int *out) {
     char *val;
 
     if (!(val = yed_get_var(var))) {

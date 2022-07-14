@@ -53,7 +53,7 @@ static void fixup_missing(yed_style *style) {
     }
 }
 
-void yed_set_style(char *name, yed_style *style) {
+void yed_set_style(const char *name, yed_style *style) {
     tree_it(yed_style_name_t,
             yed_style_ptr_t)   it;
     yed_style                 *new_style,
@@ -64,7 +64,7 @@ void yed_set_style(char *name, yed_style *style) {
 
     fixup_missing(new_style);
 
-    it = tree_lookup(ys->styles, name);
+    it = tree_lookup(ys->styles, (char*)name);
     if (tree_it_good(it)) {
         old_style        = tree_it_val(it);
         new_style->_name = old_style->_name;
@@ -76,7 +76,7 @@ void yed_set_style(char *name, yed_style *style) {
     }
 }
 
-void yed_remove_style(char *name) {
+void yed_remove_style(const char *name) {
     tree_it(yed_style_name_t,
             yed_style_ptr_t)   it;
     yed_style                 *style;
@@ -87,20 +87,20 @@ void yed_remove_style(char *name) {
         ys->active_style = NULL;
     }
 
-    it = tree_lookup(ys->styles, name);
+    it = tree_lookup(ys->styles, (char*)name);
     if (tree_it_good(it)) {
         style = tree_it_val(it);
-        tree_delete(ys->styles, name);
+        tree_delete(ys->styles, (char*)name);
         free(style->_name);
         free(style);
     }
 }
 
-yed_style * yed_get_style(char *name) {
+yed_style * yed_get_style(const char *name) {
     tree_it(yed_style_name_t,
             yed_style_ptr_t)   it;
 
-    it = tree_lookup(ys->styles, name);
+    it = tree_lookup(ys->styles, (char*)name);
 
     if (!tree_it_good(it)) {
         return NULL;
@@ -109,7 +109,7 @@ yed_style * yed_get_style(char *name) {
     return tree_it_val(it);
 }
 
-int yed_activate_style(char *name) {
+int yed_activate_style(const char *name) {
     yed_style *style;
     yed_event  event;
 

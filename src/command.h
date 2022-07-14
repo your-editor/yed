@@ -6,12 +6,12 @@
 
 void yed_init_commands(void);
 
-yed_command yed_get_command(char *name);
-void yed_set_command(char *name, yed_command command);
-void yed_unset_command(char *name);
+yed_command yed_get_command(const char *name);
+void yed_set_command(const char *name, yed_command command);
+void yed_unset_command(const char *name);
 
-void yed_set_default_command(char *name, yed_command command);
-yed_command yed_get_default_command(char *name);
+void yed_set_default_command(const char *name, yed_command command);
+yed_command yed_get_default_command(const char *name);
 void yed_set_default_commands(void);
 
 void yed_clear_cmd_buff(void);
@@ -22,8 +22,8 @@ void yed_cmd_buff_delete(int idx);
 void yed_append_text_to_cmd_buff(const char *s);
 void yed_append_int_to_cmd_buff(int i);
 
-void yed_cprint(char *fmt, ...);
-void yed_cerr(char *fmt, ...);
+void yed_cprint(const char *fmt, ...);
+void yed_cerr(const char *fmt, ...);
 void yed_cprint_clear(void);
 
 void yed_draw_command_line(void);
@@ -32,7 +32,7 @@ void yed_command_take_key(int key);
 
 int yed_execute_command_from_split(array_t split);
 int yed_execute_command(char* name, int, char**);
-void yed_add_command(char *name, yed_command cmd);
+void yed_add_command(const char *name, yed_command cmd);
 
 #define DEF_DEFAULT_COMMAND(name) \
     void yed_default_command_##name(int, char**)

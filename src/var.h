@@ -6,9 +6,9 @@ void yed_init_vars(void);
 
 void yed_set_default_vars(void);
 
-void yed_set_var(char *var, char *val);
-char *yed_get_var(char *var);
-void yed_unset_var(char *var);
+void yed_set_var(const char *var, const char *val);
+char *yed_get_var(const char *var);
+void yed_unset_var(const char *var);
 
 #define DEFAULT_TABW 4
 int yed_get_tab_width(void);
@@ -23,7 +23,7 @@ int yed_get_default_scroll_offset(void);
 #define DEFAULT_STATUS_LINE_CENTER ""
 #define DEFAULT_STATUS_LINE_RIGHT  "(%p%%)  %l :: %c  %t "
 
-int yed_var_is_truthy(char *var);
-int yed_get_var_as_int(char *var, int *out);
+int yed_var_is_truthy(const char *var);
+int yed_get_var_as_int(const char *var, int *out);
 
 #endif

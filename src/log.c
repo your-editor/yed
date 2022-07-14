@@ -6,8 +6,8 @@ void yed_init_log(void) {
     LOG_EXIT();
 }
 
-void yed__log_prints(char *s, int len) {
-    char       *end;
+void yed__log_prints(const char *s, int len) {
+    const char *end;
     yed_buffer *buff;
     int         row;
     yed_glyph  *g;
@@ -46,7 +46,7 @@ const char *yed_top_log_name(void) {
 
 static int in_log;
 
-int yed_vlog(char *fmt, va_list args) {
+int yed_vlog(const char *fmt, va_list args) {
     char            tm_buff[128], nm_tm_buff[512], buff[1024];
     struct tm      *tm;
     const char     *log_name, *header_fmt;
@@ -119,7 +119,7 @@ int yed_vlog(char *fmt, va_list args) {
     return new_header;
 }
 
-int yed_log(char *fmt, ...) {
+int yed_log(const char *fmt, ...) {
     va_list va;
     int     r;
 

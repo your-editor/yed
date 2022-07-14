@@ -43,7 +43,7 @@ static const unsigned char _utf8_lens[] = {
         ? 1                                   \
         : (int)(_utf8_lens[(g).u_c >> 3ULL]))
 
-void yed_get_string_info(char *bytes, int len, int *n_glyphs, int *width);
+void yed_get_string_info(const char *bytes, int len, int *n_glyphs, int *width);
 int yed_get_string_width(const char *s);
 
 #define yed_glyph_traverse(_s, _g)                                   \

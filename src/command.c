@@ -15,10 +15,10 @@ void yed_init_commands(void) {
     yed_cmd_line_readline_make(ys->search_readline, &ys->search_hist);
 }
 
-yed_command yed_get_command(char *name) {
+yed_command yed_get_command(const char *name) {
     tree_it(yed_command_name_t, yed_command) it;
 
-    it = tree_lookup(ys->commands, name);
+    it = tree_lookup(ys->commands, (char*)name);
 
     if (!tree_it_good(it)) {
         return NULL;
@@ -27,47 +27,47 @@ yed_command yed_get_command(char *name) {
     return tree_it_val(it);
 }
 
-void yed_set_command(char *name, yed_command command) {
+void yed_set_command(const char *name, yed_command command) {
     tree_it(yed_command_name_t, yed_command)  it;
 
-    it = tree_lookup(ys->commands, name);
+    it = tree_lookup(ys->commands, (char*)name);
 
     if (tree_it_good(it)) {
-        tree_insert(ys->commands, name, command);
+        tree_insert(ys->commands, (char*)name, command);
     } else {
         tree_insert(ys->commands, strdup(name), command);
     }
 }
 
-void yed_unset_command(char *name) {
+void yed_unset_command(const char *name) {
     tree_it(yed_command_name_t, yed_command)  it;
     char                                     *old_key;
 
-    it = tree_lookup(ys->commands, name);
+    it = tree_lookup(ys->commands, (char*)name);
 
     if (tree_it_good(it)) {
         old_key = tree_it_key(it);
-        tree_delete(ys->commands, name);
+        tree_delete(ys->commands, (char*)name);
         free(old_key);
     }
 }
 
-void yed_set_default_command(char *name, yed_command command) {
+void yed_set_default_command(const char *name, yed_command command) {
     tree_it(yed_command_name_t, yed_command)  it;
 
-    it = tree_lookup(ys->default_commands, name);
+    it = tree_lookup(ys->default_commands, (char*)name);
 
     if (tree_it_good(it)) {
-        tree_insert(ys->default_commands, name, command);
+        tree_insert(ys->default_commands, (char*)name, command);
     } else {
         tree_insert(ys->default_commands, strdup(name), command);
     }
 }
 
-yed_command yed_get_default_command(char *name) {
+yed_command yed_get_default_command(const char *name) {
     tree_it(yed_command_name_t, yed_command) it;
 
-    it = tree_lookup(ys->default_commands, name);
+    it = tree_lookup(ys->default_commands, (char*)name);
 
     if (!tree_it_good(it)) {
         return NULL;
@@ -216,7 +216,7 @@ void yed_append_int_to_cmd_buff(int i) {
 
 static int cprinted_len   = 0;
 
-void yed_vcprint(char *fmt, va_list args) {
+void yed_vcprint(const char *fmt, va_list args) {
     char        buff[1024];
     int         len, i, j;
     char        spc, dot;
@@ -276,7 +276,7 @@ void yed_vcprint(char *fmt, va_list args) {
     }
 }
 
-void yed_vcerr(char *fmt, va_list args) {
+void yed_vcerr(const char *fmt, va_list args) {
     char       buff[1024];
     int        len, i, j;
     char       spc, dot;
@@ -337,7 +337,7 @@ void yed_vcerr(char *fmt, va_list args) {
     }
 }
 
-void yed_cprint(char *fmt, ...) {
+void yed_cprint(const char *fmt, ...) {
     va_list va;
 
     va_start(va, fmt);
@@ -345,7 +345,7 @@ void yed_cprint(char *fmt, ...) {
     va_end(va);
 }
 
-void yed_cerr(char *fmt, ...) {
+void yed_cerr(const char *fmt, ...) {
     char    fmt_buff[256];
     va_list va;
 

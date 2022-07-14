@@ -13,8 +13,8 @@ typedef struct {
 } yed_direct_draw_t;
 
 void yed_init_direct_draw(void);
-yed_direct_draw_t * yed_direct_draw(int row, int col, yed_attrs attrs, char *string);
-yed_direct_draw_t * yed_direct_draw_style(int row, int col, int scomp, char *string);
+yed_direct_draw_t * yed_direct_draw(int row, int col, yed_attrs attrs, const char *string);
+yed_direct_draw_t * yed_direct_draw_style(int row, int col, int scomp, const char *string);
 void yed_do_direct_draws(void);
 void yed_kill_direct_draw(yed_direct_draw_t *dd);
 

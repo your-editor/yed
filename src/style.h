@@ -54,10 +54,10 @@ typedef struct yed_style_t {
 } yed_style;
 
 void yed_init_styles(void);
-void yed_set_style(char *name, yed_style *style);
-void yed_remove_style(char *name);
-yed_style * yed_get_style(char *name);
-int yed_activate_style(char *name);
+void yed_set_style(const char *name, yed_style *style);
+void yed_remove_style(const char *name);
+yed_style * yed_get_style(const char *name);
+int yed_activate_style(const char *name);
 yed_style * yed_get_active_style(void);
 yed_attrs yed_get_active_style_scomp(int scomp);
 int yed_scomp_nr_by_name(const char *name);
