@@ -105,7 +105,9 @@
 #define YED_SYN_CACHE_SIZE         (8192)
 #define YED_SYN_N_EVICTION_BUCKETS (4096)
 
-#ifdef YED_DEBUG
+/* #define YED_SYNTAX_DEBUG */
+
+#ifdef YED_SYNTAX_DEBUG
 
 #define DBG(...)                      \
 do {                                  \
