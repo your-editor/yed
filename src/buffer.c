@@ -7,6 +7,8 @@ void yed_init_buffers(void) {
     yed_get_log_buffer();
     yed_get_bindings_buffer();
     yed_get_vars_buffer();
+
+    LOG_EXIT();
 }
 
 yed_line yed_new_line(void) {

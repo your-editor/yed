@@ -170,6 +170,7 @@ out:;
                     array_push_n(chars, result, strlen(result));
             }
             array_zero_term(chars);
+            free(result);
             result = strdup(array_data(chars));
             array_free(chars);
         }
