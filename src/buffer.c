@@ -104,6 +104,12 @@ void yed_line_pop_glyph(yed_line *line) {
     line->n_glyphs     -= 1;
 }
 
+void yed_clear_line(yed_line *line) {
+    array_clear(line->chars);
+    line->visual_width = 0;
+    line->n_glyphs     = 0;
+}
+
 static int yed_buffer_add_line_no_undo_no_events(yed_buffer *buff) {
     u32      n_lines;
     yed_line new_line;
