@@ -17,6 +17,7 @@
         - `frame-name`, `frame-uname`, `frame-set-position`, and `frame-tree-set-position`.
         - `open-command-line-buffers`: This command is run when `yed` starts and is passed the paths specified on the command line.
           By default it opens the buffers/frames/a split in the same way `yed` always has, but now that it's a command, it can be overridden.
+        - `buffer-hidden`: Load a buffer, but do not create a frame or load it into one.
     - New in status line: `%n`: the active frame's name (or `-`, if none).
     - New events:
         - `EVENT_FRAME_PRE_ACTIVATE`

@@ -69,6 +69,7 @@ DEF_DEFAULT_COMMAND(cursor_buffer_end);
 DEF_DEFAULT_COMMAND(cursor_line);
 DEF_DEFAULT_COMMAND(word_under_cursor);
 DEF_DEFAULT_COMMAND(buffer);
+DEF_DEFAULT_COMMAND(buffer_hidden);
 DEF_DEFAULT_COMMAND(buffer_delete);
 DEF_DEFAULT_COMMAND(buffer_next);
 DEF_DEFAULT_COMMAND(buffer_prev);

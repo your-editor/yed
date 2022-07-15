@@ -114,6 +114,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-line",                        cursor_line);
     SET_DEFAULT_COMMAND("word-under-cursor",                  word_under_cursor);
     SET_DEFAULT_COMMAND("buffer",                             buffer);
+    SET_DEFAULT_COMMAND("buffer-hidden",                      buffer_hidden);
     SET_DEFAULT_COMMAND("buffer-delete",                      buffer_delete);
     SET_DEFAULT_COMMAND("buffer-next",                        buffer_next);
     SET_DEFAULT_COMMAND("buffer-prev",                        buffer_prev);
@@ -1404,7 +1405,7 @@ void yed_default_command_cursor_page_down(int n_args, char **args) {
     }
 }
 
-void yed_default_command_buffer(int n_args, char **args) {
+static void buffer_common(int n_args, char **args, int hidden) {
     yed_buffer                                   *buffer;
     yed_buffer                                   *lookup;
     char                                          a_path[4096];
@@ -1421,7 +1422,8 @@ void yed_default_command_buffer(int n_args, char **args) {
 
     memset(&event, 0, sizeof(event));
 
-    if (!ys->active_frame
+    if (!hidden
+    &&  !ys->active_frame
     &&  array_len(ys->frames) == 0) {
         YEXE("frame-new");
     }
@@ -1440,7 +1442,7 @@ void yed_default_command_buffer(int n_args, char **args) {
         lookup = yed_get_buffer_by_path(a_path);
     }
 
-    if (lookup) {
+    if (lookup && !hidden) {
         buffer = lookup;
 
         if (ys->active_frame) {
@@ -1486,7 +1488,7 @@ void yed_default_command_buffer(int n_args, char **args) {
                     event.buffer_is_new_file = 0;
                 }
 
-                if (ys->active_frame) {
+                if (!hidden && ys->active_frame) {
                     yed_frame_set_buff(ys->active_frame, buffer);
                 }
 
@@ -1504,6 +1506,14 @@ cleanup:
     yed_free_buffer(buffer);
 
 out:;
+}
+
+void yed_default_command_buffer(int n_args, char **args) {
+    buffer_common(n_args, args, /* hidden = */ 0);
+}
+
+void yed_default_command_buffer_hidden(int n_args, char **args) {
+    buffer_common(n_args, args, /* hidden = */ 1);
 }
 
 void yed_default_command_buffer_delete(int n_args, char **args) {
