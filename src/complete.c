@@ -272,10 +272,14 @@ static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
 }
 
 static void get_all_buff_words(tree(str_t, empty_t) words) {
+    int                                           include_special;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
     yed_line                                     *line;
 
+    include_special = yed_var_is_truthy("compl-words-include-special");
+
     tree_traverse(ys->buffers, it) {
+        if (!include_special && tree_it_val(it)->flags & BUFF_SPECIAL) { continue; }
         bucket_array_traverse(tree_it_val(it)->lines, line) {
             get_all_line_words(words, line);
         }

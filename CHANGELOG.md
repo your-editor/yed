@@ -7,6 +7,7 @@
     - Fixed a bug where sometimes the cursor would not be returned to the top left of a frame when it no longer is displaying a buffer.
 ### Changed
     - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
+    - The default completion source `words` no longer scans special buffers for words unless the variable `compl-words-include-special` is truthy.
 ### Added
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.
