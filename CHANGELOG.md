@@ -1,9 +1,10 @@
 # Changelog
 
-## 1500 - 2022-7-1
+## 1500 - 2022-7-15
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
+    - Fixed a bug where sometimes the cursor would not be returned to the top left of a frame when it no longer is displaying a buffer.
 ### Added
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.
