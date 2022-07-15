@@ -886,6 +886,8 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     if (buff) {
         yed_set_cursor_far_within_frame(frame, 1, 1);
         yed_set_cursor_within_frame(frame, buff->last_cursor_row, buff->last_cursor_col);
+    } else {
+        yed_frame_reset_cursor(frame);
     }
 
     event.kind = EVENT_FRAME_POST_SET_BUFFER;
@@ -1473,7 +1475,6 @@ void yed_frames_remove_buffer(yed_buffer *buff) {
     array_traverse(ys->frames, frame) {
         if ((*frame)->buffer == buff) {
             yed_frame_set_buff(*frame, NULL);
-            yed_frame_reset_cursor(*frame);
         }
     }
 }
