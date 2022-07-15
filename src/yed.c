@@ -231,7 +231,6 @@ void yed_draw_everything(void) {
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     char                 cwd[4096];
-    char               **file_it;
     unsigned long long   start_time;
     int                  dev_null_fd;
     char                *getcwd_ret;
@@ -311,22 +310,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
     array_free(cmd_line_commands);
 
-    if (array_len(ys->options.files) >= 1) {
-        YEXE("frame-new");
-    }
-
-    array_traverse(ys->options.files, file_it) {
-        YEXE("buffer", *file_it);
-    }
-
-    if (array_len(ys->options.files) >= 1) {
-        YEXE("buffer", *(char**)array_item(ys->options.files, 0));
-    }
-    if (array_len(ys->options.files) > 1) {
-        YEXE("frame-vsplit");
-        YEXE("buffer", *(char**)array_item(ys->options.files, 1));
-        YEXE("frame-prev");
-    }
+    yed_execute_command("open-command-line-buffers",
+                        array_len(ys->options.files),
+                        array_data(ys->options.files));
 
     yed_draw_everything();
 

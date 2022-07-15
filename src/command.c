@@ -130,6 +130,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-move",                         frame_move);
     SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
     SET_DEFAULT_COMMAND("frame-tree-resize",                  frame_tree_resize);
+    SET_DEFAULT_COMMAND("frame-set-position",                 frame_set_position);
+    SET_DEFAULT_COMMAND("frame-tree-set-position",            frame_tree_set_position);
     SET_DEFAULT_COMMAND("frame",                              frame);
     SET_DEFAULT_COMMAND("frame-name",                         frame_name);
     SET_DEFAULT_COMMAND("frame-unname",                       frame_unname);
@@ -178,6 +180,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("alias",                              alias);
     SET_DEFAULT_COMMAND("unalias",                            unalias);
     SET_DEFAULT_COMMAND("repeat",                             repeat);
+    SET_DEFAULT_COMMAND("open-command-line-buffers",          open_command_line_buffers);
 }
 
 void yed_clear_cmd_buff(void) {
@@ -2082,23 +2085,57 @@ void start_frame_resize(void) {
 }
 
 void yed_default_command_frame_resize(int n_args, char **args) {
-    int key;
-
-    if (n_args > 1) {
-        yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
-        return;
-    }
+    int   key;
+    float fheight;
+    float fwidth;
+    int   cur_r;
+    int   cur_c;
+    int   row;
+    int   col;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
         return;
     }
 
-    if (!ys->interactive_command) {
-        start_frame_resize();
+    if (n_args <= 1) {
+        if (!ys->interactive_command) {
+            if (n_args != 0) {
+                yed_cerr("expected 0 or 2 arguments, but got %d", n_args);
+                return;
+            }
+
+            start_frame_resize();
+        } else {
+            sscanf(args[0], "%d", &key);
+            frame_resize_take_key(key);
+        }
     } else {
-        sscanf(args[0], "%d", &key);
-        frame_resize_take_key(key);
+        if (n_args != 2) {
+            yed_cerr("expected 0 or 2 arguments, but got %d", n_args);
+            return;
+        }
+
+        fheight = atof(args[0]);
+        fwidth  = atof(args[1]);
+        cur_r   = fheight * (ys->term_rows - 2);
+        cur_c   = fwidth  * ys->term_cols;
+        row     = cur_r - ys->active_frame->bheight;
+        col     = cur_c - ys->active_frame->bwidth;
+
+        if (yed_frame_tree_is_root(ys->active_frame->tree)
+        ||  ys->active_frame->tree == ys->active_frame->tree->parent->child_trees[0]) {
+            yed_resize_frame(ys->active_frame, row, col);
+        } else {
+            if (ys->active_frame->tree->parent->split_kind == FTREE_VSPLIT) {
+                row  = 0;
+                col *= -1;
+            } else {
+                row *= -1;
+                col  = 0;
+            }
+            yed_resize_frame_tree(ys->active_frame->tree->parent->child_trees[0], row, col);
+        }
     }
 }
 
@@ -2132,24 +2169,112 @@ void start_frame_tree_resize(void) {
 }
 
 void yed_default_command_frame_tree_resize(int n_args, char **args) {
-    int key;
-
-    if (n_args > 1) {
-        yed_cerr("expected 0 or 1 arguments, but got %d", n_args);
-        return;
-    }
+    int             key;
+    yed_frame_tree *root;
+    float           fheight;
+    float           fwidth;
+    int             root_r;
+    int             root_c;
+    int             cur_r;
+    int             cur_c;
+    int             row;
+    int             col;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
         return;
     }
 
-    if (!ys->interactive_command) {
-        start_frame_tree_resize();
+    if (n_args <= 1) {
+        if (!ys->interactive_command) {
+            if (n_args != 0) {
+                yed_cerr("expected 0 or 2 arguments, but got %d", n_args);
+                return;
+            }
+
+            start_frame_tree_resize();
+        } else {
+            sscanf(args[0], "%d", &key);
+            frame_tree_resize_take_key(key);
+        }
     } else {
-        sscanf(args[0], "%d", &key);
-        frame_tree_resize_take_key(key);
+        if (n_args != 2) {
+            yed_cerr("expected 0 or 2 arguments, but got %d", n_args);
+            return;
+        }
+
+        fheight = atof(args[0]);
+        fwidth  = atof(args[1]);
+        root    = yed_frame_tree_get_root(ys->active_frame->tree);
+        cur_r   = fheight * ys->term_rows;
+        cur_c   = fwidth  * ys->term_cols;
+        root_r  = root->height * (ys->term_rows - 2);
+        root_c  = root->width  * ys->term_cols;
+        row     = cur_r - root_r;
+        col     = cur_c - root_c;
+
+        yed_resize_frame_tree(root, row, col);
     }
+}
+
+void yed_default_command_frame_set_position(int n_args, char **args) {
+    float ftop;
+    float fleft;
+    int   cur_r;
+    int   cur_c;
+    int   row;
+    int   col;
+
+    if (n_args != 2) {
+        yed_cerr("expected 2 argument, but got %d", n_args);
+        return;
+    }
+
+    if (ys->active_frame == NULL) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    ftop  = atof(args[0]); LIMIT(ftop,  0.0, 1.0);
+    fleft = atof(args[1]); LIMIT(fleft, 0.0, 1.0);
+
+    cur_r = ftop  * (ys->term_rows - 2);
+    cur_c = fleft * ys->term_cols;
+
+    row = cur_r - ys->active_frame->top;
+    col = cur_c - ys->active_frame->left;
+
+    yed_move_frame(ys->active_frame, row, col);
+}
+
+void yed_default_command_frame_tree_set_position(int n_args, char **args) {
+    float ftop;
+    float fleft;
+    int   cur_r;
+    int   cur_c;
+    int   row;
+    int   col;
+
+    if (n_args != 2) {
+        yed_cerr("expected 2 argument, but got %d", n_args);
+        return;
+    }
+
+    if (ys->active_frame == NULL) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    ftop  = atof(args[0]); LIMIT(ftop,  0.0, 1.0);
+    fleft = atof(args[1]); LIMIT(fleft, 0.0, 1.0);
+
+    cur_r = ftop  * (ys->term_rows - 2);
+    cur_c = fleft * ys->term_cols;
+
+    row = cur_r - ys->active_frame->top;
+    col = cur_c - ys->active_frame->left;
+
+    yed_move_frame(ys->active_frame, row, col);
 }
 
 void yed_default_command_insert(int n_args, char **args) {
@@ -4068,6 +4193,28 @@ void yed_default_command_frame_unname(int n_args, char **args) {
     }
 
     yed_frame_set_name(frame, NULL);
+}
+
+void yed_default_command_open_command_line_buffers(int n_args, char **args) {
+    int i;
+
+    if (n_args >= 1) {
+        YEXE("frame-new");
+    }
+
+    for (i = 0; i < n_args; i += 1) {
+        YEXE("buffer", args[i]);
+    }
+
+    if (n_args >= 1) {
+        YEXE("buffer", args[0]);
+    }
+
+    if (n_args > 1) {
+        YEXE("frame-vsplit");
+        YEXE("buffer", args[1]);
+        YEXE("frame-prev");
+    }
 }
 
 int yed_execute_command_from_split(array_t split) {

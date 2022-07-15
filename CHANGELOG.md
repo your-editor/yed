@@ -5,12 +5,17 @@
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
     - Fixed a bug where sometimes the cursor would not be returned to the top left of a frame when it no longer is displaying a buffer.
+### Changed
+    - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
 ### Added
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.
     - `yed_find_frame_by_name()`: lookup a frame based on its name.
     - `yed_frame_tree_swap_children()`: swap the layouts of split frames.
-    - New commands `frame-name` and `frame-uname`.
+    - New commands:
+        - `frame-name`, `frame-uname`, `frame-set-position`, and `frame-tree-set-position`.
+        - `open-command-line-buffers`: This command is run when `yed` starts and is passed the paths specified on the command line.
+          By default it opens the buffers/frames/a split in the same way `yed` always has, but now that it's a command, it can be overridden.
     - New in status line: `%n`: the active frame's name (or `-`, if none).
     - New events:
         - `EVENT_FRAME_PRE_ACTIVATE`

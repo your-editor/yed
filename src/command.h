@@ -85,6 +85,8 @@ DEF_DEFAULT_COMMAND(frame_prev);
 DEF_DEFAULT_COMMAND(frame_move);
 DEF_DEFAULT_COMMAND(frame_resize);
 DEF_DEFAULT_COMMAND(frame_tree_resize);
+DEF_DEFAULT_COMMAND(frame_tree_set_position);
+DEF_DEFAULT_COMMAND(frame_set_position);
 DEF_DEFAULT_COMMAND(frame);
 DEF_DEFAULT_COMMAND(frame_name);
 DEF_DEFAULT_COMMAND(frame_unname);
@@ -133,5 +135,6 @@ DEF_DEFAULT_COMMAND(feed_keys);
 DEF_DEFAULT_COMMAND(alias);
 DEF_DEFAULT_COMMAND(unalias);
 DEF_DEFAULT_COMMAND(repeat);
+DEF_DEFAULT_COMMAND(open_command_line_buffers);
 
 #endif
