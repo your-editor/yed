@@ -12,7 +12,7 @@ int yed_term_enter(void) {
     tcgetattr(0, &ys->sav_term);
     raw_term = ys->sav_term;
 
-    raw_term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    raw_term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON | IMAXBEL);
     /* output modes - disable post processing */
     /* raw_term.c_oflag &= ~(OPOST); */
     /* control modes - set 8 bit chars */
