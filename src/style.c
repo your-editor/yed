@@ -148,7 +148,69 @@ static void fixup_missing(yed_style *style) {
         }
     }
 
-    if (!(style->active.flags & ATTR_RGB)) { return; }
+    if (style->active.flags == 0 || style->active.flags & ATTR_16) {
+        style->white.flags     = ATTR_16 | ATTR_16_LIGHT_FG;
+        style->white.fg        = ATTR_16_GREY;
+        style->grey.flags      = ATTR_16;
+        style->grey.fg         = ATTR_16_GREY;
+        style->black.flags     = ATTR_16;
+        style->black.fg        = ATTR_16_BLACK;
+        style->red.flags       = ATTR_16;
+        style->red.fg          = ATTR_16_RED;
+        style->orange.flags    = ATTR_16 | ATTR_16_LIGHT_FG;
+        style->orange.fg       = ATTR_16_RED;
+        style->yellow.flags    = ATTR_16;
+        style->yellow.fg       = ATTR_16_YELLOW;
+        style->lime.flags      = ATTR_16 | ATTR_16_LIGHT_FG;
+        style->lime.fg         = ATTR_16_YELLOW;
+        style->green.flags     = ATTR_16;
+        style->green.fg        = ATTR_16_GREEN;
+        style->turquoise.flags = ATTR_16 | ATTR_16_LIGHT_FG;
+        style->turquoise.fg    = ATTR_16_GREEN;
+        style->cyan.flags      = ATTR_16;
+        style->cyan.fg         = ATTR_16_CYAN;
+        style->blue.flags      = ATTR_16;
+        style->blue.fg         = ATTR_16_BLUE;
+        style->purple.flags    = ATTR_16 | ATTR_16_LIGHT_FG;
+        style->purple.fg       = ATTR_16_BLUE;
+        style->magenta.flags   = ATTR_16;
+        style->magenta.fg      = ATTR_16_MAGENTA;
+        style->pink.flags      = ATTR_16 | ATTR_16_LIGHT_FG;
+        style->pink.fg         = ATTR_16_MAGENTA;
+
+        return;
+    } else if (style->active.flags & ATTR_256) {
+        style->white.flags     = ATTR_256;
+        style->white.fg        = 231;
+        style->grey.flags      = ATTR_256;
+        style->grey.fg         = 244;
+        style->black.flags     = ATTR_256;
+        style->black.fg        = 16;
+        style->red.flags       = ATTR_256;
+        style->red.fg          = 196;
+        style->orange.flags    = ATTR_256;
+        style->orange.fg       = 214;
+        style->yellow.flags    = ATTR_256;
+        style->yellow.fg       = 226;
+        style->lime.flags      = ATTR_256;
+        style->lime.fg         = 154;
+        style->green.flags     = ATTR_256;
+        style->green.fg        = 46;
+        style->turquoise.flags = ATTR_256;
+        style->turquoise.fg    = 43;
+        style->cyan.flags      = ATTR_256;
+        style->cyan.fg         = 51;
+        style->blue.flags      = ATTR_256;
+        style->blue.fg         = 21;
+        style->purple.flags    = ATTR_256;
+        style->purple.fg       = 93;
+        style->magenta.flags   = ATTR_256;
+        style->magenta.fg      = 127;
+        style->pink.flags      = ATTR_256;
+        style->pink.fg         = 169;
+
+        return;
+    }
 
     for (i = 0; i < N; i += 1) {
         attrs = yed_get_style_scomp(style, sample_scomps[i]);
