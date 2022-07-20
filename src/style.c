@@ -25,7 +25,103 @@ void yed_init_styles(void) {
 
 }
 
+static void rgb_to_hsv(int r, int g, int b,
+                       float *h, float *s, float *v) {
+    float max;
+    float min;
+    float R;
+    float G;
+    float B;
+
+    R = (float)r / 255.0;
+    G = (float)g / 255.0;
+    B = (float)b / 255.0;
+
+    max = MAX(r, MAX(g, b));
+    min = MIN(r, MIN(g, b));
+
+    *v = max / 255.0;
+    *s = max == 0.0 ? 0.0 : 1.0 - (min / max);
+    *h = atan2f((sqrtf(3.0) * (G - B)), (2 * R - G - B));
+    if (*h < 0.0) { *h += 2.0 * M_PI; }
+}
+
+static void hsv_to_rgb(float h, float s, float v,
+                       int  *r, int  *g, int  *b) {
+
+    float R;
+    float G;
+    float B;
+    float C;
+    float X;
+    float m;
+
+    C = v * s;
+    X = C * (1 - fabs(fmod(h/(M_PI/3.0), 2.0) - 1.0));
+    m = v - C;
+
+    if      (h >= 0.0              && h < (M_PI/3.0))       { R = C; G = X; B = 0; }
+    else if (h >= (M_PI/3.0)       && h < (2.0 * M_PI/3.0)) { R = X; G = C; B = 0; }
+    else if (h >= (2.0 * M_PI/3.0) && h < (M_PI))           { R = 0; G = C; B = X; }
+    else if (h >= (M_PI/2.0)       && h < (4.0 * M_PI/3.0)) { R = 0; G = X; B = C; }
+    else if (h >= (4.0 * M_PI/3.0) && h < (5.0 * M_PI/3.0)) { R = X; G = 0; B = C; }
+    else if (h >= (5.0 * M_PI/3.0) && h < (2.0*M_PI))       { R = C; G = 0; B = X; }
+    else                                                    { R =    G =    B = 0; }
+
+    *r = (R + m) * 255;
+    *g = (G + m) * 255;
+    *b = (B + m) * 255;
+}
+
 static void fixup_missing(yed_style *style) {
+    int sample_scomps[] = {
+        STYLE_code_comment,
+        STYLE_code_keyword,
+        STYLE_code_control_flow,
+        STYLE_code_typename,
+        STYLE_code_preprocessor,
+        STYLE_code_fn_call,
+        STYLE_code_number,
+        STYLE_code_constant,
+        STYLE_code_field,
+        STYLE_code_variable,
+        STYLE_code_string,
+        STYLE_code_character,
+        STYLE_code_escape,
+    };
+    int       N;
+    int       n;
+    float     avg_sat;
+    float     avg_val;
+    float     avg_off;
+    yed_attrs attrs;
+    int       i;
+    int       r;
+    int       g;
+    int       b;
+    float     h;
+    float     s;
+    float     v;
+    int set_scomps[] = {
+        STYLE_red,
+        STYLE_orange,
+        STYLE_yellow,
+        STYLE_lime,
+        STYLE_green,
+        STYLE_turquoise,
+        STYLE_cyan,
+        STYLE_blue,
+        STYLE_purple,
+        STYLE_magenta,
+        STYLE_pink,
+    };
+
+    N       = sizeof(sample_scomps) / sizeof(int);
+    n       = 0;
+    avg_sat = 0.0;
+    avg_val = 0.0;
+    avg_off = 0.0;
+
     if (style->good.flags == 0) {
         if (style->active.flags & ATTR_16) {
             style->good.flags = ATTR_16;
@@ -50,6 +146,74 @@ static void fixup_missing(yed_style *style) {
             style->bad.flags = ATTR_RGB;
             style->bad.fg    = RGB_32(127, 0, 0);
         }
+    }
+
+    if (!(style->active.flags & ATTR_RGB)) { return; }
+
+    for (i = 0; i < N; i += 1) {
+        attrs = yed_get_style_scomp(style, sample_scomps[i]);
+        if (attrs.flags == 0 || !(attrs.flags & ATTR_RGB)) { continue; }
+
+        if (   (sample_scomps[i] == STYLE_status_line
+            ||  sample_scomps[i] == STYLE_popup
+            ||  sample_scomps[i] == STYLE_popup_alt)
+        && !(attrs.flags & ATTR_INVERSE)) {
+
+            r = RGB_32_r(attrs.bg);
+            g = RGB_32_g(attrs.bg);
+            b = RGB_32_b(attrs.bg);
+        } else {
+            r = RGB_32_r(attrs.fg);
+            g = RGB_32_g(attrs.fg);
+            b = RGB_32_b(attrs.fg);
+        }
+
+        rgb_to_hsv(r, g, b, &h, &s, &v);
+
+        avg_sat += s;
+        avg_val += v;
+        avg_off += fmod(h + (M_PI/6.0), (M_PI/3.0)) - (M_PI/6.0);
+
+        n += 1;
+    }
+
+    avg_sat /= (float)n;
+    avg_val /= (float)n;
+    avg_off /= (float)n;
+
+    N = sizeof(set_scomps) / sizeof(int);
+
+    for (i = 0; i < N; i += 1) {
+        if (yed_get_style_scomp(style, set_scomps[i]).flags != 0) { continue; }
+
+        h = i * (M_PI/6.0) + avg_off;
+        if (h < 0.0) { h += 2.0 * M_PI; }
+
+        hsv_to_rgb(h, avg_sat, avg_val,
+                   &r, &g, &b);
+
+        switch (set_scomps[i]) {
+            #define __SCOMP(comp)                        \
+                case STYLE_##comp:                       \
+                    style->comp.flags = ATTR_RGB;        \
+                    style->comp.fg    = RGB_32(r, g, b); \
+                    break;
+            __STYLE_COMPONENTS
+            #undef __SCOMP
+        }
+    }
+
+    if (style->white.flags == 0) {
+        style->white.flags = ATTR_RGB | ATTR_BOLD;
+        style->white.fg    = RGB_32(255, 255, 255);
+    }
+    if (style->grey.flags == 0) {
+        style->grey.flags = ATTR_RGB | ATTR_BOLD;
+        style->grey.fg    = RGB_32(127, 127, 127);
+    }
+    if (style->black.flags == 0) {
+        style->black.flags = ATTR_RGB | ATTR_BOLD;
+        style->black.fg    = RGB_32(1, 1, 1);
     }
 }
 
@@ -161,11 +325,7 @@ __STYLE_COMPONENTS
 
 #undef __SCOMP
 
-yed_attrs yed_get_active_style_scomp(int scomp) {
-    yed_style *style;
-
-    style = yed_get_active_style();
-
+yed_attrs yed_get_style_scomp(yed_style *style, int scomp) {
     if (!style) { goto fail; }
 
     switch (scomp) {
@@ -176,6 +336,10 @@ yed_attrs yed_get_active_style_scomp(int scomp) {
 
 fail:
     return ZERO_ATTR;
+}
+
+yed_attrs yed_get_active_style_scomp(int scomp) {
+    return yed_get_style_scomp(yed_get_active_style(), scomp);
 }
 
 int yed_scomp_nr_by_name(const char *name) {

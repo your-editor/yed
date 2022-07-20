@@ -34,6 +34,20 @@
     __SCOMP(code_string)       \
     __SCOMP(code_character)    \
     __SCOMP(code_escape)       \
+    __SCOMP(white)             \
+    __SCOMP(grey)              \
+    __SCOMP(black)             \
+    __SCOMP(red)               \
+    __SCOMP(orange)            \
+    __SCOMP(yellow)            \
+    __SCOMP(lime)              \
+    __SCOMP(green)             \
+    __SCOMP(turquoise)         \
+    __SCOMP(cyan)              \
+    __SCOMP(blue)              \
+    __SCOMP(purple)            \
+    __SCOMP(magenta)           \
+    __SCOMP(pink)              \
 
 
 enum {
@@ -59,6 +73,7 @@ void yed_remove_style(const char *name);
 yed_style * yed_get_style(const char *name);
 int yed_activate_style(const char *name);
 yed_style * yed_get_active_style(void);
+yed_attrs yed_get_style_scomp(yed_style *style, int scomp);
 yed_attrs yed_get_active_style_scomp(int scomp);
 int yed_scomp_nr_by_name(const char *name);
 
