@@ -213,10 +213,7 @@ void yed_service_reload(int core) {
 static void start_update_forcer(void);
 
 void yed_force_update(void) {
-    char zero;
-
-    zero = 0;
-    ioctl(0, TIOCSTI, &zero);
+    yed_signal(YED_SIG_FORCE_UPDATE);
 }
 
 int yed_get_update_hz(void) { return ys->update_hz; }
@@ -233,6 +230,20 @@ void yed_set_update_hz(int hz) {
 
     if (need_to_start_updater) {
         start_update_forcer();
+    }
+}
+
+void yed_signal(char sig) {
+    write(ys->signal_pipe_fds[1], &sig, 1);
+}
+
+void yed_handle_signal(char sig) {
+    switch (sig) {
+        case YED_SIG_FORCE_UPDATE:
+            break;
+        default:;
+            yed_log("unrecognized signal received: 0x%x", sig);
+            break;
     }
 }
 

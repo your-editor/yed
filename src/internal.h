@@ -20,6 +20,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -267,6 +268,7 @@ typedef struct yed_state_t {
     yed_screen                   screen2;
     yed_screen                  *screen_update;
     yed_screen                  *screen_render;
+    int                          signal_pipe_fds[2];
 } yed_state;
 
 extern yed_state *ys;
@@ -286,6 +288,14 @@ void yed_service_reload(int core);
 void yed_force_update(void);
 int yed_get_update_hz(void);
 void yed_set_update_hz(int hz);
+
+enum {
+    YED_SIG_FORCE_UPDATE,
+
+    YED_N_SIGS,
+};
+
+void yed_signal(char sig);
 
 int s_to_i(const char *s);
 

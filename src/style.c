@@ -75,6 +75,7 @@ static void hsv_to_rgb(float h, float s, float v,
 
 static void fixup_missing(yed_style *style) {
     int sample_scomps[] = {
+        STYLE_active,
         STYLE_code_comment,
         STYLE_code_keyword,
         STYLE_code_control_flow,
@@ -212,6 +213,8 @@ static void fixup_missing(yed_style *style) {
         return;
     }
 
+#define ACTIVE_FACTOR (3)
+
     for (i = 0; i < N; i += 1) {
         attrs = yed_get_style_scomp(style, sample_scomps[i]);
         if (attrs.flags == 0 || !(attrs.flags & ATTR_RGB)) { continue; }
@@ -232,6 +235,8 @@ static void fixup_missing(yed_style *style) {
 
         rgb_to_hsv(r, g, b, &h, &s, &v);
 
+        if (sample_scomps[i] == STYLE_active) { v *= (float)ACTIVE_FACTOR; }
+
         avg_sat += s;
         avg_val += v;
         avg_off += fmod(h + (M_PI/6.0), (M_PI/3.0)) - (M_PI/6.0);
@@ -240,7 +245,7 @@ static void fixup_missing(yed_style *style) {
     }
 
     avg_sat /= (float)n;
-    avg_val /= (float)n;
+    avg_val /= (float)(n + (ACTIVE_FACTOR - 1));
     avg_off /= (float)n;
 
     N = sizeof(set_scomps) / sizeof(int);

@@ -371,8 +371,11 @@ int yed_read_mbyte_keys(char first_byte, int n_bytes) {
 
 static int _yed_read_keys(int *input) {
     int            len;
+    struct pollfd  pfds[2];
+    int            status;
+    char           sig;
     int            nread;
-    struct termios t;
+/*     struct termios t; */
     char           c;
     int            n_bytes;
     yed_glyph      g;
@@ -380,9 +383,29 @@ static int _yed_read_keys(int *input) {
     len          = 0;
     ctrl_h_is_bs = yed_var_is_truthy("ctrl-h-is-backspace");
 
+    pfds[0].fd      = 0;
+    pfds[0].events  = POLLIN;
+    pfds[0].revents = 0;
+
+    pfds[1].fd      = ys->signal_pipe_fds[0];
+    pfds[1].events  = POLLIN;
+    pfds[1].revents = 0;
+
+    status = poll(pfds, 2, 100 * TERM_DEFAULT_READ_TIMEOUT);
+    if (status <= 0) { return 0; }
+
+    if (pfds[1].revents & POLLIN) {
+        while (read(ys->signal_pipe_fds[0], &sig, 1) > 0) {
+            yed_handle_signal(sig);
+        }
+    }
+
+    if (!(pfds[0].revents & POLLIN)) { return 0; }
+
     nread = read(0, &c, 1);
     if (nread <= 0) { return 0; }
 
+#if 0
     /*
      * If we read a zero byte, somebody is probably trying to force an update on us.
      * In that case, we need to clear out all zero bytes so that we don't accumulate
@@ -401,6 +424,7 @@ static int _yed_read_keys(int *input) {
 
         if (nread <= 0) { return 0; }
     }
+#endif
 
     n_bytes = 1;
 

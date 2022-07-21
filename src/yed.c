@@ -233,6 +233,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     char                 cwd[4096];
     unsigned long long   start_time;
     int                  dev_null_fd;
+    int                  fd_flags;
     char                *getcwd_ret;
     char               **it;
     array_t              split;
@@ -264,6 +265,10 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     dev_null_fd = open("/dev/null", O_WRONLY);
     dup2(dev_null_fd, 2);
     close(dev_null_fd);
+
+    pipe(ys->signal_pipe_fds);
+    fd_flags = fcntl(ys->signal_pipe_fds[0], F_GETFL);
+    fcntl(ys->signal_pipe_fds[0], F_SETFL, fd_flags | O_NONBLOCK);
 
     setlocale(LC_ALL, "en_US.utf8");
 
