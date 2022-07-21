@@ -375,7 +375,6 @@ static int _yed_read_keys(int *input) {
     int            status;
     char           sig;
     int            nread;
-/*     struct termios t; */
     char           c;
     int            n_bytes;
     yed_glyph      g;

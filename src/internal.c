@@ -234,7 +234,10 @@ void yed_set_update_hz(int hz) {
 }
 
 void yed_signal(char sig) {
-    write(ys->signal_pipe_fds[1], &sig, 1);
+    int write_ret;
+
+    write_ret = write(ys->signal_pipe_fds[1], &sig, 1);
+    (void)write_ret;
 }
 
 void yed_handle_signal(char sig) {
