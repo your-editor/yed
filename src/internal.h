@@ -267,8 +267,6 @@ typedef struct yed_state_t {
 
 extern yed_state *ys;
 
-void yed_init_output_stream(void);
-
 void clear_output_buff(void);
 int output_buff_len(void);
 

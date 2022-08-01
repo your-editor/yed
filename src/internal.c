@@ -59,11 +59,6 @@ char * pretty_bytes(uint64_t n_bytes) {
     return r;
 }
 
-
-void yed_init_output_stream(void) {
-    ys->output_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
-}
-
 int output_buff_len(void) { return array_len(ys->output_buffer); }
 
 static char *itoa(char *p, unsigned x) {

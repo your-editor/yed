@@ -1,6 +1,8 @@
 #include "screen.h"
 
 void yed_init_screen(void) {
+    ys->output_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
+
     ys->screen_update = &ys->screen1;
     ys->screen_render = &ys->screen2;
 
@@ -8,8 +10,10 @@ void yed_init_screen(void) {
 }
 
 void yed_resize_screen(void) {
-    int n_cells;
-    int n_bytes;
+    int              n_cells;
+    int              n_bytes;
+    yed_screen_cell *cell;
+    int              i;
 
     n_cells = ys->term_rows * ys->term_cols;
     n_bytes = n_cells * sizeof(yed_screen_cell);
@@ -19,6 +23,12 @@ void yed_resize_screen(void) {
 
     memset(ys->screen_update->cells, 0, n_bytes);
     memset(ys->screen_render->cells, 0, n_bytes);
+
+    cell = ys->screen_render->cells;
+    for (i = 0; i < n_cells; i += 1) {
+        cell->dirty  = 1;
+        cell        += 1;
+    }
 }
 
 void yed_clear_screen(void) {
@@ -170,8 +180,8 @@ void yed_diff_and_swap_screens(void) {
 
     for (row = 1; row <= ys->term_rows; row += 1) {
         for (col = 1; col <= ys->term_cols; col += 1) {
-            dirty =   (rcell->glyph.data != ucell->glyph.data
-                    || !yed_attrs_eq(rcell->attrs, ucell->attrs));
+            dirty = (   rcell->glyph.data != ucell->glyph.data
+                     || !yed_attrs_eq(rcell->attrs, ucell->attrs));
 
             *rcell       = *ucell;
             rcell->dirty = dirty;
@@ -189,8 +199,9 @@ void yed_render_screen(void) {
     char             buff[512];
     int              cursor_x;
     int              cursor_y;
-    int              write_ret;
     int              width;
+    int              total_written;
+    int              n;
 
 #define WR(s, n) array_push_n(ys->output_buffer, s, n)
 
@@ -259,8 +270,12 @@ void yed_render_screen(void) {
     snprintf(buff, sizeof(buff), "\e[%d;%dH", cursor_y, cursor_x);
     WR(buff, strlen(buff));
 
-    write_ret = write(1, array_data(ys->output_buffer), array_len(ys->output_buffer));
-    (void)write_ret;
+    total_written = 0;
+    while (total_written < array_len(ys->output_buffer)) {
+        n = write(1, array_data(ys->output_buffer) + total_written, array_len(ys->output_buffer) - total_written);
+        ASSERT(n > 0, "failed to write output");
+        total_written += n;
+    }
 
 #undef WR
 }

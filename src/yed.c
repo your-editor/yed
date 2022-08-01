@@ -240,7 +240,6 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_direct_draw();
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
-    yed_init_output_stream();
     yed_init_screen();
     yed_init_commands();
     yed_init_keys();
