@@ -1442,10 +1442,10 @@ static void buffer_common(int n_args, char **args, int hidden) {
         lookup = yed_get_buffer_by_path(a_path);
     }
 
-    if (lookup && !hidden) {
+    if (lookup) {
         buffer = lookup;
 
-        if (ys->active_frame) {
+        if (ys->active_frame && !hidden) {
             yed_frame_set_buff(ys->active_frame, buffer);
         }
     } else {
@@ -2230,10 +2230,6 @@ void yed_default_command_frame_tree_resize(int n_args, char **args) {
 void yed_default_command_frame_set_position(int n_args, char **args) {
     float ftop;
     float fleft;
-    int   cur_r;
-    int   cur_c;
-    int   row;
-    int   col;
 
     if (n_args != 2) {
         yed_cerr("expected 2 argument, but got %d", n_args);
@@ -2248,22 +2244,12 @@ void yed_default_command_frame_set_position(int n_args, char **args) {
     ftop  = atof(args[0]); LIMIT(ftop,  0.0, 1.0);
     fleft = atof(args[1]); LIMIT(fleft, 0.0, 1.0);
 
-    cur_r = ftop  * (ys->term_rows - 2);
-    cur_c = fleft * ys->term_cols;
-
-    row = cur_r - ys->active_frame->top;
-    col = cur_c - ys->active_frame->left;
-
-    yed_move_frame(ys->active_frame, row, col);
+    yed_frame_set_pos(ys->active_frame, ftop, fleft);
 }
 
 void yed_default_command_frame_tree_set_position(int n_args, char **args) {
     float ftop;
     float fleft;
-    int   cur_r;
-    int   cur_c;
-    int   row;
-    int   col;
 
     if (n_args != 2) {
         yed_cerr("expected 2 argument, but got %d", n_args);
@@ -2278,13 +2264,7 @@ void yed_default_command_frame_tree_set_position(int n_args, char **args) {
     ftop  = atof(args[0]); LIMIT(ftop,  0.0, 1.0);
     fleft = atof(args[1]); LIMIT(fleft, 0.0, 1.0);
 
-    cur_r = ftop  * (ys->term_rows - 2);
-    cur_c = fleft * ys->term_cols;
-
-    row = cur_r - ys->active_frame->top;
-    col = cur_c - ys->active_frame->left;
-
-    yed_move_frame(ys->active_frame, row, col);
+    yed_frame_set_pos(ys->active_frame, ftop, fleft);
 }
 
 void yed_default_command_insert(int n_args, char **args) {
