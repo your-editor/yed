@@ -625,10 +625,12 @@ void yed_remove_key_map(const char *mapname) {
             if (prev != NULL) {
                 prev->next = list->next;
             } else {
-                ys->keymap_list = NULL;
+                ys->keymap_list = list->next;
             }
 
             free(list);
+
+            break;
         }
         prev = list;
     }
