@@ -47,7 +47,6 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols);
 void yed_move_frame(yed_frame *frame, int rows, int cols);
 void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols);
 void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x_offset);
-void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f);
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff);
 void yed_frame_set_gutter_width(yed_frame *frame, int width);
 void yed_frame_update(yed_frame *frame);

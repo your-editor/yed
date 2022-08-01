@@ -840,12 +840,18 @@ void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x
 }
 
 void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
-    frame->top_f  = top_f;
-    frame->left_f = left_f;
+    int   cur_r;
+    int   cur_c;
+    int   row;
+    int   col;
 
-    FRAME_RESET_RECT(frame);
+    cur_r = top_f  * (ys->term_rows - 2);
+    cur_c = left_f * ys->term_cols;
 
-    yed_frame_reset_cursor(frame);
+    row = cur_r - frame->top;
+    col = cur_c - frame->left;
+
+    yed_move_frame(frame, row, col);
 }
 
 void yed_frame_set_gutter_width(yed_frame *frame, int width) {
