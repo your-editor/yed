@@ -859,9 +859,10 @@ void yed_frame_set_gutter_width(yed_frame *frame, int width) {
         width = 0;
     }
 
-    frame->gutter_width = width;
-
-    yed_frame_reset_cursor(frame);
+    if (frame->gutter_width != width) {
+        frame->gutter_width = width;
+        yed_frame_reset_cursor(frame);
+    }
 }
 
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
