@@ -269,7 +269,7 @@ yed_buffer *yed_get_bindings_buffer(void) {
 void yed_update_bindings_buffer(void) {
     yed_buffer                          *bind_buff;
     int                                  row;
-    int                                  key;
+    yed_key_map_list                    *list;
     yed_key_binding                     *binding;
     char                                *key_str;
     int                                  i;
@@ -283,45 +283,30 @@ void yed_update_bindings_buffer(void) {
     yed_buff_clear_no_undo(bind_buff);
 
     row = 1;
-    for (key = 0; key < REAL_KEY_MAX; key += 1) {
-        binding = ys->real_key_map[key];
-        if (binding == NULL) { continue; }
-
-        key_str = yed_keys_to_string(1, &key);
-        if (key_str == NULL) { continue; }
-
-        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
-        free(key_str);
-
-        for (i = 0; i < binding->n_args; i += 1) {
-            strcat(line_buff, " \"");
-            strcat(line_buff, binding->args[i]);
-            strcat(line_buff, "\"");
-        }
-
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        snprintf(line_buff, sizeof(line_buff), "%s%s:", list->map->name, list->map->enabled ? "" : "(disabled)");
         yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
-
         row += 1;
-    }
 
-    tree_traverse(ys->vkey_binding_map, it) {
-        binding = tree_it_val(it);
+        tree_traverse(list->map->binding_map, it) {
+            binding = tree_it_val(it);
 
-        key_str = yed_keys_to_string(1, &binding->key);
-        if (key_str == NULL) { continue; }
+            key_str = yed_keys_to_string(1, &binding->key);
+            if (key_str == NULL) { continue; }
 
-        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
-        free(key_str);
+            snprintf(line_buff, sizeof(line_buff), "  %-32s %s", key_str, binding->cmd);
+            free(key_str);
 
-        for (i = 0; i < binding->n_args; i += 1) {
-            strcat(line_buff, " '");
-            strcat(line_buff, binding->args[i]);
-            strcat(line_buff, "'");
+            for (i = 0; i < binding->n_args; i += 1) {
+                strcat(line_buff, " '");
+                strcat(line_buff, binding->args[i]);
+                strcat(line_buff, "'");
+            }
+
+            yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
+
+            row += 1;
         }
-
-        yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
-
-        row += 1;
     }
 
     bind_buff->flags |= BUFF_RD_ONLY;

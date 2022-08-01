@@ -366,6 +366,7 @@ int yed_load_plugin(char *plug_name) {
 
     plug->path                 = strdup(path_buff);
     plug->added_cmds           = array_make(char*);
+    plug->added_maps           = array_make(char*);
     plug->acquired_keys        = array_make(int);
     plug->added_bindings       = array_make(int);
     plug->added_key_sequences  = array_make(int);
@@ -419,7 +420,7 @@ do {                                          \
 void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
             yed_command)             cmd_it;
-    char                           **cmd_name_it, **style_name_it, **ft_name_it;
+    char                           **cmd_name_it, **map_name_it, **style_name_it, **ft_name_it;
     int                             *key_it;
     yed_event_handler               *handler_it;
     tree_it(yed_completion_name_t,
@@ -436,6 +437,11 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
         }
     }
     FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_cmds);
+
+    array_traverse(plug->added_maps, map_name_it) {
+        yed_remove_key_map(*map_name_it);
+    }
+    FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_maps);
 
     array_traverse(plug->acquired_keys, key_it) {
         yed_release_virt_key(*key_it);
@@ -615,6 +621,15 @@ void yed_plugin_set_command(yed_plugin *plug, const char *name, yed_command comm
     array_push(plug->added_cmds, name_dup);
 }
 
+void yed_plugin_add_key_map(yed_plugin *plug, const char *mapname) {
+    char *name_dup;
+
+    yed_add_key_map(mapname);
+
+    name_dup = strdup(mapname);
+    array_push(plug->added_maps, name_dup);
+}
+
 int yed_plugin_acquire_virt_key(yed_plugin *plug) {
     int key;
 
@@ -634,6 +649,18 @@ void yed_plugin_bind_key(yed_plugin *plug, int key, const char *cmd_name, int n_
     binding.args   = args;
 
     yed_bind_key(binding);
+    array_push(plug->added_bindings, key);
+}
+
+void yed_plugin_map_bind_key(yed_plugin *plug, const char *mapname, int key, const char *cmd_name, int n_args, char **args) {
+    yed_key_binding binding;
+
+    binding.key    = key;
+    binding.cmd    = (char*)cmd_name;
+    binding.n_args = n_args;
+    binding.args   = args;
+
+    yed_map_bind_key(mapname, binding);
     array_push(plug->added_bindings, key);
 }
 

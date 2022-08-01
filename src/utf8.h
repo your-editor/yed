@@ -7,7 +7,7 @@ typedef union {
 
 #define G_IS_ASCII(g) (!((g).u_c >> 7))
 
-#define G(c) ((yed_glyph){(c)})
+#define G(c) ((yed_glyph){ .data = (c)})
 
 int _yed_get_mbyte_width(yed_glyph g);
 

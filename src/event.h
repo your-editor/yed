@@ -100,6 +100,7 @@ typedef struct {
     array_t                     line_attrs;
     array_t                     gutter_glyphs;
     array_t                     gutter_attrs;
+    const char                 *map;
     int                         key;
     char                       *glyph;
     int                         cancel;

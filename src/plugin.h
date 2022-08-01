@@ -24,6 +24,7 @@ typedef struct yed_plugin_t {
     yed_plugin_boot_t      boot;
     yed_plugin_unload_fn_t unload;
     array_t                added_cmds;
+    array_t                added_maps;
     array_t                added_bindings;
     array_t                acquired_keys;
     array_t                added_key_sequences;
@@ -47,7 +48,9 @@ int yed_reload_plugins(void);
 
 void yed_plugin_set_command(yed_plugin *plug, const char *name, yed_command cmd);
 int yed_plugin_acquire_virt_key(yed_plugin *plug);
+void yed_plugin_add_key_map(yed_plugin *plug, const char *mapname);
 void yed_plugin_bind_key(yed_plugin *plug, int key, const char *command_name, int n_args, char **args);
+void yed_plugin_map_bind_key(yed_plugin *plug, const char *mapname, int key, const char *command_name, int n_args, char **args);
 int yed_plugin_add_key_sequence(yed_plugin *plug, int len, int *keys);
 int yed_plugin_vadd_key_sequence(yed_plugin *plug, int len, ...);
 void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler);

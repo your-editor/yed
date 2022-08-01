@@ -161,9 +161,6 @@ void sigstop_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGTSTP, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     ys->stopped = 1;
     yed_term_exit();
@@ -179,8 +176,6 @@ void sigcont_handler(int sig) {
 
         ys->stopped = 0;
         yed_term_enter();
-        pthread_mutex_unlock(&ys->write_ready_mtx);
-
         yed_check_for_resize();
         yed_handle_resize();
         yed_clear_screen();
@@ -203,9 +198,6 @@ void sigterm_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGTERM, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -220,9 +212,6 @@ void sigquit_handler(int sig) {
     act.sa_flags = 0;
     sigemptyset (&act.sa_mask);
     sigaction(SIGQUIT, &act, NULL);
-
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -255,9 +244,6 @@ void sigsegv_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGSEGV, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -274,9 +260,6 @@ void sigill_handler(int sig) {
     act.sa_flags = 0;
     sigemptyset (&act.sa_mask);
     sigaction(SIGILL, &act, NULL);
-
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -295,9 +278,6 @@ void sigfpe_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGFPE, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -314,9 +294,6 @@ void sigbus_handler(int sig) {
     act.sa_flags = 0;
     sigemptyset (&act.sa_mask);
     sigaction(SIGBUS, &act, NULL);
-
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();

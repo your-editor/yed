@@ -179,10 +179,6 @@ typedef struct yed_state_t {
     yed_lib_t                   *yed_lib;
     char                        *argv0;
     array_t                      output_buffer;
-    array_t                      writer_buffer;
-    pthread_mutex_t              write_ready_mtx;
-    pthread_cond_t               write_ready_cond;
-    pthread_t                    writer_id;
     struct termios               sav_term;
     int                          term_cols,
                                  term_rows;
@@ -227,13 +223,11 @@ typedef struct yed_state_t {
     tree(yed_plugin_name_t,
          yed_plugin_ptr_t)       plugins;
     array_t                      plugin_dirs;
-    yed_key_binding             *real_key_map[REAL_KEY_MAX];
-    yed_glyph                    mbyte;
-    tree(int,
-         yed_key_binding_ptr_t)  vkey_binding_map;
+    yed_key_map_list            *keymap_list;
     array_t                      key_sequences;
     int                          virt_key_counter;
     array_t                      released_virt_keys;
+    yed_glyph                    mbyte;
     array_t                      event_handlers[N_EVENTS];
     tree(yed_var_name_t,
          yed_var_val_t)          vars;

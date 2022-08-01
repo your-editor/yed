@@ -62,7 +62,6 @@ char * pretty_bytes(uint64_t n_bytes) {
 
 void yed_init_output_stream(void) {
     ys->output_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
-    ys->writer_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
 }
 
 int output_buff_len(void) { return array_len(ys->output_buffer); }
@@ -117,6 +116,7 @@ out:;
 }
 
 void yed_service_reload(int core) {
+    yed_key_map_list                                *list;
     tree_it(yed_command_name_t, yed_command)         cmd_it;
     tree_it(yed_completion_name_t, yed_completion)   compl_it;
     tree_it(yed_style_name_t, yed_style_ptr_t)       style_it;
@@ -128,7 +128,9 @@ void yed_service_reload(int core) {
         tree_reset_fns(yed_style_name_t,      yed_style_ptr_t,       ys->styles);
         tree_reset_fns(yed_var_name_t,        yed_var_val_t,         ys->vars);
         tree_reset_fns(yed_buffer_name_t,     yed_buffer_ptr_t,      ys->buffers);
-        tree_reset_fns(int,                   yed_key_binding_ptr_t, ys->vkey_binding_map);
+        for (list = ys->keymap_list; list != NULL; list = list->next) {
+            tree_reset_fns(int, yed_key_binding_ptr_t, list->map->binding_map);
+        }
         tree_reset_fns(yed_command_name_t,    yed_command,           ys->commands);
         tree_reset_fns(yed_command_name_t,    yed_command,           ys->default_commands);
         tree_reset_fns(yed_completion_name_t, yed_completion,        ys->completions);

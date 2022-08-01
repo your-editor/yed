@@ -39,6 +39,8 @@ static void set_cell(int row, int col, yed_glyph g) {
 
     if (row > ys->term_rows || col > ys->term_cols) { return; }
 
+    ASSERT(yed_get_glyph_len(g) > 1 || isprint(g.c), "non-printable in cell");
+
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
     cell->attrs = ys->screen_update->cur_attrs;
@@ -49,6 +51,8 @@ static void set_cell_combine(int row, int col, yed_glyph g) {
     yed_screen_cell *cell;
 
     if (row > ys->term_rows || col > ys->term_cols) { return; }
+
+    ASSERT(yed_get_glyph_len(g) > 1 || isprint(g.c), "non-printable in cell");
 
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
@@ -166,8 +170,8 @@ void yed_diff_and_swap_screens(void) {
 
     for (row = 1; row <= ys->term_rows; row += 1) {
         for (col = 1; col <= ys->term_cols; col += 1) {
-            dirty = (   rcell->glyph.data != ucell->glyph.data
-                     || !yed_attrs_eq(rcell->attrs, ucell->attrs));
+            dirty =   (rcell->glyph.data != ucell->glyph.data
+                    || !yed_attrs_eq(rcell->attrs, ucell->attrs));
 
             *rcell       = *ucell;
             rcell->dirty = dirty;
@@ -179,7 +183,6 @@ void yed_diff_and_swap_screens(void) {
 }
 
 void yed_render_screen(void) {
-    array_t          output_buffer;
     yed_screen_cell *cell;
     int              row;
     int              col;
@@ -187,19 +190,16 @@ void yed_render_screen(void) {
     int              cursor_x;
     int              cursor_y;
     int              write_ret;
+    int              width;
 
-#define WR(s, n) array_push_n(output_buffer, s, n)
+#define WR(s, n) array_push_n(ys->output_buffer, s, n)
 
-    output_buffer = array_make(char);
+    array_clear(ys->output_buffer);
 
     WR(TERM_CURSOR_HIDE, strlen(TERM_CURSOR_HIDE));
 
+    WR("\e[H", strlen("\e[H"));
     ys->screen_render->cur_x = ys->screen_render->cur_y = 1;
-    snprintf(buff, sizeof(buff), "%s1%s1%s",
-        TERM_CURSOR_MOVE_BEG,
-        TERM_CURSOR_MOVE_SEP,
-        TERM_CURSOR_MOVE_END);
-    WR(buff, strlen(buff));
 
     ys->screen_render->cur_attrs = ZERO_ATTR;
     WR(TERM_RESET, strlen(TERM_RESET));
@@ -208,19 +208,20 @@ void yed_render_screen(void) {
 
     for (row = 1; row <= ys->term_rows; row += 1) {
         for (col = 1; col <= ys->term_cols; col += 1) {
-            if (cell->dirty) {
+            if (cell->dirty && cell->glyph.data) {
                 if (ys->screen_render->cur_y != row
-                ||  ys->screen_render->cur_x != col) {
-                    snprintf(buff, sizeof(buff), "%s%d%s%d%s",
-                             TERM_CURSOR_MOVE_BEG,
-                             row,
-                             TERM_CURSOR_MOVE_SEP,
-                             col,
-                             TERM_CURSOR_MOVE_END);
-
+                &&  ys->screen_render->cur_x != col) {
+                    snprintf(buff, sizeof(buff), "\e[%d;%dH", row, col);
                     WR(buff, strlen(buff));
-
                     ys->screen_render->cur_y = row;
+                    ys->screen_render->cur_x = col;
+                } else if (ys->screen_render->cur_y != row) {
+                    snprintf(buff, sizeof(buff), "\e[%dd", row);
+                    WR(buff, strlen(buff));
+                    ys->screen_render->cur_y = row;
+                } else if (ys->screen_render->cur_x != col) {
+                    snprintf(buff, sizeof(buff), "\e[%dG", col);
+                    WR(buff, strlen(buff));
                     ys->screen_render->cur_x = col;
                 }
 
@@ -230,13 +231,15 @@ void yed_render_screen(void) {
                     ys->screen_render->cur_attrs = cell->attrs;
                 }
 
+                ASSERT(yed_get_glyph_len(cell->glyph) > 1 || isprint(cell->glyph.c), "non-printable");
+
                 WR(&cell->glyph.c, yed_get_glyph_len(cell->glyph));
 
-                ys->screen_render->cur_x += yed_get_glyph_width(cell->glyph);
-
-                cell->dirty = 0;
+                width = yed_get_glyph_width(cell->glyph);
+                ys->screen_render->cur_x += width;
             }
 
+            cell->dirty = 0;
             cell += 1;
         }
     }
@@ -253,19 +256,11 @@ void yed_render_screen(void) {
         cursor_y = cursor_x = 1;
     }
 
-    snprintf(buff, sizeof(buff), "%s%d%s%d%s",
-             TERM_CURSOR_MOVE_BEG,
-             cursor_y,
-             TERM_CURSOR_MOVE_SEP,
-             cursor_x,
-             TERM_CURSOR_MOVE_END);
-
+    snprintf(buff, sizeof(buff), "\e[%d;%dH", cursor_y, cursor_x);
     WR(buff, strlen(buff));
 
-    write_ret = write(1, array_data(output_buffer), array_len(output_buffer));
+    write_ret = write(1, array_data(ys->output_buffer), array_len(ys->output_buffer));
     (void)write_ret;
-
-    array_free(output_buffer);
 
 #undef WR
 }

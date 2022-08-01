@@ -144,16 +144,7 @@ int yed_get_var_as_int(const char *var, int *out) {
     return 1;
 }
 
-int yed_get_tab_width(void) {
-    int tabw;
-
-    if (!yed_get_var_as_int("tab-width", &tabw)
-    ||  tabw <= 0) {
-        tabw = DEFAULT_TABW;
-    }
-
-    return tabw;
-}
+int yed_get_tab_width(void) { return ys->tabw; }
 
 int yed_get_default_scroll_offset(void) {
     int scroll_off;

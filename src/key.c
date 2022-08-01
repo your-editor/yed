@@ -1,7 +1,7 @@
 static int ctrl_h_is_bs;
 
 void yed_init_keys(void) {
-    ys->vkey_binding_map     = tree_make(int, yed_key_binding_ptr_t);
+    yed_add_key_map("global");
     ys->key_sequences        = array_make(yed_key_sequence);
     ys->released_virt_keys   = array_make(int);
     ys->bracketed_paste_buff = array_make(char);
@@ -575,6 +575,220 @@ void yed_feed_keys(int n, int *keys) {
     }
 }
 
+static yed_key_map *yed_get_key_map(const char *mapname) {
+    yed_key_map_list *list;
+
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        if (strcmp(list->map->name, mapname) == 0) {
+            return list->map;
+        }
+    }
+
+    return NULL;
+}
+
+void yed_add_key_map(const char *mapname) {
+    yed_key_map      *map;
+    yed_key_map_list *list;
+
+    if (mapname == NULL) { return; }
+
+    map = malloc(sizeof(*map));
+    map->name        = strdup(mapname);
+    map->binding_map = tree_make(int, yed_key_binding_ptr_t);
+    map->enabled     = 1;
+
+    list = malloc(sizeof(*list));
+    list->map = map;
+    list->next = ys->keymap_list;
+
+    ys->keymap_list = list;
+}
+
+void yed_remove_key_map(const char *mapname) {
+    yed_key_map_list                    *prev;
+    yed_key_map_list                    *list;
+    tree_it(int, yed_key_binding_ptr_t)  it;
+
+
+    prev = NULL;
+
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        if (strcmp(list->map->name, mapname) == 0) {
+            tree_traverse(list->map->binding_map, it) {
+                yed_map_unbind_key(mapname, tree_it_key(it));
+            }
+            tree_free(list->map->binding_map);
+            free(list->map->name);
+            free(list->map);
+
+            if (prev != NULL) {
+                prev->next = list->next;
+            } else {
+                ys->keymap_list = NULL;
+            }
+
+            free(list);
+        }
+        prev = list;
+    }
+}
+
+void yed_enable_key_map(const char *mapname) {
+    yed_key_map_list *list;
+    yed_event         event;
+
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        if (strcmp(list->map->name, mapname) == 0) {
+            memset(&event, 0, sizeof(event));
+            event.kind = EVENT_KEY_PRE_BIND;
+            event.map  = mapname;
+            yed_trigger_event(&event);
+
+            if (event.cancel) { break; }
+
+            list->map->enabled = 1;
+
+            event.kind = EVENT_KEY_POST_BIND;
+            yed_trigger_event(&event);
+
+            break;
+        }
+    }
+}
+
+void yed_disable_key_map(const char *mapname) {
+    yed_key_map_list *list;
+    yed_event         event;
+
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        if (strcmp(list->map->name, mapname) == 0) {
+            memset(&event, 0, sizeof(event));
+            event.kind = EVENT_KEY_PRE_UNBIND;
+            event.map  = mapname;
+            yed_trigger_event(&event);
+
+            if (event.cancel) { break; }
+
+            list->map->enabled = 0;
+
+            event.kind = EVENT_KEY_POST_UNBIND;
+            yed_trigger_event(&event);
+
+            break;
+        }
+    }
+}
+
+void yed_map_bind_key(const char *mapname, yed_key_binding binding) {
+    yed_key_map      *map;
+    yed_event         event;
+    yed_key_binding  *b;
+    char            **args;
+    int               i;
+
+    LOG_FN_ENTER();
+
+    map = yed_get_key_map(mapname);
+    if (map == NULL) { goto out; }
+
+    if (binding.key == KEY_NULL)    { goto out; }
+
+    memset(&event, 0, sizeof(event));
+    event.kind     = EVENT_KEY_PRE_BIND;
+    event.map      = mapname;
+    event.key      = binding.key;
+    event.cmd_name = binding.cmd;
+    event.n_args   = binding.n_args;
+    event.args     = (const char * const*)binding.args;
+    yed_trigger_event(&event);
+    if (event.cancel) { goto out; }
+
+    if (binding.key == CTRL_H
+    &&  yed_var_is_truthy("ctrl-h-is-backspace")) {
+        yed_log("[!] warning: Binding ctrl-h to '%s' while 'ctrl-h-is-backspace' is set.\n"
+                "    Pressing backspace may invoke this binding depending on what your "
+                "terminal sends when you press backspace.", binding.cmd);
+    }
+
+    yed_map_unbind_key(mapname, binding.key);
+
+    binding.cmd  = strdup(binding.cmd);
+    if (binding.n_args) {
+        args         = binding.args;
+        binding.args = malloc(sizeof(char*) * binding.n_args);
+        for (i = 0; i < binding.n_args; i += 1) {
+            binding.args[i] = strdup(args[i]);
+        }
+    }
+
+    b  = malloc(sizeof(*b));
+    *b = binding;
+
+    tree_insert(map->binding_map, binding.key, b);
+
+    event.kind = EVENT_KEY_POST_BIND;
+    yed_trigger_event(&event);
+
+out:
+    LOG_EXIT();
+}
+
+void yed_map_unbind_key(const char *mapname, int key) {
+    yed_key_map                         *map;
+    yed_event                            event;
+    tree_it(int, yed_key_binding_ptr_t)  it;
+    yed_key_binding                     *old_binding;
+    int                                  i;
+
+    map = yed_get_key_map(mapname);
+    if (map == NULL) { return; }
+
+    if (key == KEY_NULL)    { return; }
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_KEY_PRE_UNBIND;
+    event.map  = mapname;
+    event.key  = key;
+    yed_trigger_event(&event);
+    if (event.cancel) { return; }
+
+    it = tree_lookup(map->binding_map, key);
+
+    if (tree_it_good(it)) {
+        old_binding = tree_it_val(it);
+        tree_delete(map->binding_map, tree_it_key(it));
+        free(old_binding->cmd);
+        if (old_binding->n_args) {
+            for (i = 0; i < old_binding->n_args; i += 1) {
+                free(old_binding->args[i]);
+            }
+            free(old_binding->args);
+        }
+        free(old_binding);
+    }
+
+    event.kind = EVENT_KEY_POST_UNBIND;
+    yed_trigger_event(&event);
+}
+
+yed_key_binding *yed_map_get_key_binding(const char *mapname, int key) {
+    yed_key_map                         *map;
+    tree_it(int, yed_key_binding_ptr_t)  it;
+
+    if (key == KEY_NULL || IS_MOUSE(key))    { return NULL; }
+
+    map = yed_get_key_map(mapname);
+    if (map == NULL) { return NULL; }
+
+    it = tree_lookup(map->binding_map, key);
+
+    if (!tree_it_good(it)) { return NULL; }
+
+    return tree_it_val(it);
+}
+
+
 static yed_key_binding default_key_bindings[] = {
     { CTRL_Y,      "command-prompt",      0, NULL },
     { ARROW_UP,    "cursor-up",           0, NULL },
@@ -651,122 +865,30 @@ void yed_set_default_key_bindings(void) {
 }
 
 void yed_bind_key(yed_key_binding binding) {
-    yed_event         event;
-    yed_key_binding  *b;
-    char            **args;
-    int               i;
-
-    LOG_FN_ENTER();
-
-    if (binding.key == KEY_NULL)    { goto out; }
-
-    memset(&event, 0, sizeof(event));
-    event.kind     = EVENT_KEY_PRE_BIND;
-    event.key      = binding.key;
-    event.cmd_name = binding.cmd;
-    event.n_args   = binding.n_args;
-    event.args     = (const char * const*)binding.args;
-    yed_trigger_event(&event);
-    if (event.cancel) { return; }
-
-    if (binding.key == CTRL_H
-    &&  yed_var_is_truthy("ctrl-h-is-backspace")) {
-        yed_log("[!] warning: Binding ctrl-h to '%s' while 'ctrl-h-is-backspace' is set.\n"
-                "    Pressing backspace may invoke this binding depending on what your "
-                "terminal sends when you press backspace.", binding.cmd);
-    }
-
-    yed_unbind_key(binding.key);
-
-    binding.cmd  = strdup(binding.cmd);
-    if (binding.n_args) {
-        args         = binding.args;
-        binding.args = malloc(sizeof(char*) * binding.n_args);
-        for (i = 0; i < binding.n_args; i += 1) {
-            binding.args[i] = strdup(args[i]);
-        }
-    }
-
-    b  = malloc(sizeof(*b));
-    *b = binding;
-
-    if (binding.key < REAL_KEY_MAX) {
-        ys->real_key_map[binding.key] = b;
-    } else {
-        tree_insert(ys->vkey_binding_map, binding.key, b);
-    }
-
-    event.kind = EVENT_KEY_POST_BIND;
-    yed_trigger_event(&event);
-
-out:
-    LOG_EXIT();
+    yed_map_bind_key("global", binding);
 }
 
 void yed_unbind_key(int key) {
-    yed_event                            event;
-    tree_it(int, yed_key_binding_ptr_t)  it;
-    yed_key_binding                     *old_binding;
-    int                                  i;
+    yed_key_map_list *list;
 
-    if (key == KEY_NULL)    { return; }
+    list = ys->keymap_list;
 
-    memset(&event, 0, sizeof(event));
-    event.kind = EVENT_KEY_PRE_UNBIND;
-    event.key  = key;
-    yed_trigger_event(&event);
-    if (event.cancel) { return; }
+    if (list == NULL) { return; }
 
-    if (key < REAL_KEY_MAX) {
-        old_binding = ys->real_key_map[key];
-        if (old_binding) {
-            free(old_binding->cmd);
-            if (old_binding->n_args) {
-                for (i = 0; i < old_binding->n_args; i += 1) {
-                    free(old_binding->args[i]);
-                }
-                free(old_binding->args);
-            }
-            free(old_binding);
-            ys->real_key_map[key] = NULL;
-        }
-    } else {
-        it = tree_lookup(ys->vkey_binding_map, key);
-
-        if (tree_it_good(it)) {
-            old_binding = tree_it_val(it);
-            tree_delete(ys->vkey_binding_map, tree_it_key(it));
-            free(old_binding->cmd);
-            if (old_binding->n_args) {
-                for (i = 0; i < old_binding->n_args; i += 1) {
-                    free(old_binding->args[i]);
-                }
-                free(old_binding->args);
-            }
-            free(old_binding);
-        }
-    }
-
-    event.kind = EVENT_KEY_POST_UNBIND;
-    yed_trigger_event(&event);
+    yed_map_unbind_key(list->map->name, key);
 }
 
 yed_key_binding * yed_get_key_binding(int key) {
-    tree_it(int, yed_key_binding_ptr_t) it;
+    yed_key_map_list *list;
+    yed_key_binding  *b;
 
-    if (key == KEY_NULL || IS_MOUSE(key))    { return NULL; }
-
-    if (key < REAL_KEY_MAX) {
-        return ys->real_key_map[key];
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        if (!list->map->enabled) { continue; }
+        b = yed_map_get_key_binding(list->map->name, key);
+        if (b != NULL) { return b; }
     }
 
-    it = tree_lookup(ys->vkey_binding_map, key);
-
-    if (!tree_it_good(it)) {
-        return NULL;
-    }
-
-    return tree_it_val(it);
+    return NULL;
 }
 
 int yed_is_key(int key) {

@@ -3,58 +3,6 @@
 
 yed_state *ys;
 
-static int writer_started;
-static int write_pending;
-
-static void * writer(void *arg) {
-    (void)arg;
-
-    while (1) {
-        pthread_mutex_lock(&ys->write_ready_mtx);
-
-        writer_started = 1;
-
-        while (!write_pending) {
-            pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
-        }
-
-        yed_render_screen();
-
-        write_pending = 0;
-
-        pthread_mutex_unlock(&ys->write_ready_mtx);
-        if (ys->status == YED_RELOAD_CORE) { break; }
-    }
-
-    return NULL;
-}
-
-static void kick_off_write(void) {
-try_again:;
-    pthread_mutex_lock(&ys->write_ready_mtx);
-    if (write_pending) {
-        pthread_mutex_unlock(&ys->write_ready_mtx);
-        goto try_again;
-    }
-    array_copy(ys->writer_buffer, ys->output_buffer);
-    array_clear(ys->output_buffer);
-    yed_diff_and_swap_screens();
-    write_pending = 1;
-    pthread_cond_signal(&ys->write_ready_cond);
-    pthread_mutex_unlock(&ys->write_ready_mtx);
-}
-
-static void kill_writer(void) {
-    void *junk;
-
-    kick_off_write();
-    pthread_join(ys->writer_id, &junk);
-}
-
-static void restart_writer(void) {
-    pthread_create(&ys->writer_id, NULL, writer, NULL);
-}
-
 static void * update_forcer(void *arg) {
     (void)arg;
 
@@ -227,6 +175,9 @@ void yed_draw_everything(void) {
     memset(&event, 0, sizeof(event));
     event.kind = EVENT_POST_DRAW_EVERYTHING;
     yed_trigger_event(&event);
+
+    yed_diff_and_swap_screens();
+    yed_render_screen();
 }
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
@@ -287,18 +238,10 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_log();
     yed_init_frame_trees();
     yed_init_direct_draw();
-
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
-
     yed_init_output_stream();
     yed_init_screen();
-
-    pthread_mutex_init(&ys->write_ready_mtx, NULL);
-    pthread_cond_init(&ys->write_ready_cond, NULL);
-
-    pthread_create(&ys->writer_id, NULL, writer, NULL);
-    while (!writer_started) { usleep(100); }
     yed_init_commands();
     yed_init_keys();
     yed_init_search();
@@ -375,7 +318,6 @@ int yed_pump(void) {
         yed_service_reload(0);
     } else if (ys->status == YED_RELOAD_CORE) {
         yed_service_reload(1);
-        restart_writer();
         save_hz = ys->update_hz;
         ys->update_hz = 0;
         yed_set_update_hz(save_hz);
@@ -389,13 +331,6 @@ int yed_pump(void) {
     } else {
         memset(keys, 0, sizeof(keys));
     }
-
-
-    /*
-     * Give the writer thread the new screen update.
-     */
-    kick_off_write();
-
 
     memset(&event, 0, sizeof(event));
     event.kind = EVENT_PRE_PUMP;
@@ -441,7 +376,6 @@ LOG_EXIT();
             ys->status = YED_NORMAL;
         } else {
             yed_unload_plugin_libs();
-            kill_writer();
             kill_update_forcer();
         }
     }
