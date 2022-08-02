@@ -242,6 +242,10 @@ void yed_free_buffer(yed_buffer *buffer) {
     yed_free_undo_history(&buffer->undo_history);
 
     free(buffer);
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_BUFFER_POST_DELETE;
+    yed_trigger_event(&event);
 }
 
 

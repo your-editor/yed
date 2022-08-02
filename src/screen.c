@@ -49,8 +49,6 @@ static void set_cell(int row, int col, yed_glyph g) {
 
     if (row > ys->term_rows || col > ys->term_cols) { return; }
 
-    ASSERT(yed_get_glyph_len(g) > 1 || isprint(g.c), "non-printable in cell");
-
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
     cell->attrs = ys->screen_update->cur_attrs;
@@ -61,8 +59,6 @@ static void set_cell_combine(int row, int col, yed_glyph g) {
     yed_screen_cell *cell;
 
     if (row > ys->term_rows || col > ys->term_cols) { return; }
-
-    ASSERT(yed_get_glyph_len(g) > 1 || isprint(g.c), "non-printable in cell");
 
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
 
