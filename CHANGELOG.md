@@ -31,6 +31,7 @@
         - `EVENT_PRE_DRAW_EVERYTHING`
         - `EVENT_POST_DRAW_EVERYTHING`
         - `EVENT_SIGNAL_RECEIVED`
+        - `EVENT_BUFFER_POST_DELETE`
     - New style components: `white`, `grey`, `black`, `red`, `orange`, `yellow`, `lime`, `green`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, and `pink`
         - These are automatically generated for any style if they are not explicitly set.
         - Colors are generated such that they are relatively pleasant and readable with the other colors in the style.
