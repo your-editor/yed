@@ -238,8 +238,6 @@ void yed_render_screen(void) {
                     ys->screen_render->cur_attrs = cell->attrs;
                 }
 
-                ASSERT(yed_get_glyph_len(cell->glyph) > 1 || isprint(cell->glyph.c), "non-printable");
-
                 WR(&cell->glyph.c, yed_get_glyph_len(cell->glyph));
 
                 width = yed_get_glyph_width(cell->glyph);

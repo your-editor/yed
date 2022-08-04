@@ -1,6 +1,6 @@
 # Changelog
 
-## 1500 - 2022-7-15
+## 1500 - 2022-8-4
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
@@ -34,6 +34,7 @@
         - `EVENT_SIGNAL_RECEIVED`
         - `EVENT_BUFFER_POST_DELETE`
         - `EVENT_BUFFER_CREATED`
+        - `EVENT_BUFFER_PRE_FOCUS`
     - New style components: `white`, `grey`, `black`, `red`, `orange`, `yellow`, `lime`, `green`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, and `pink`
         - These are automatically generated for any style if they are not explicitly set.
         - Colors are generated such that they are relatively pleasant and readable with the other colors in the style.

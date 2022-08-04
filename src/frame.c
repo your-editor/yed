@@ -458,6 +458,14 @@ void yed_activate_frame(yed_frame *frame) {
 
     if (event.cancel) { return; }
 
+    if (frame->buffer != NULL) {
+        memset(&event, 0, sizeof(event));
+        event.kind   = EVENT_BUFFER_PRE_FOCUS;
+        event.frame  = frame;
+        event.buffer = frame->buffer;
+        yed_trigger_event(&event);
+    }
+
     if (ys->active_frame && ys->active_frame != frame) {
         ys->prev_active_frame = ys->active_frame;
     }
@@ -880,6 +888,13 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     event.frame  = frame;
     event.buffer = buff;
     yed_trigger_event(&event);
+
+    memset(&event, 0, sizeof(event));
+    event.kind   = EVENT_BUFFER_PRE_FOCUS;
+    event.frame  = frame;
+    event.buffer = buff;
+    yed_trigger_event(&event);
+
 
     frame->buffer = buff;
 
