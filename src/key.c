@@ -27,6 +27,12 @@ static int esc_timeout(int *input) {
         return 1;
     }
 
+    if (input[1] != '['
+    &&  input[1] != 'O'
+    &&  input[1] != ESC) {
+        return 2;
+    }
+
     if (read(0, &c, 1) == 0) {
         return 2;
     }
