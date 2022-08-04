@@ -149,6 +149,7 @@ yed_buffer yed_new_buff(void) {
 yed_buffer *yed_create_buffer(char *name) {
     yed_buffer                                   *buff;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    yed_event                                     event;
 
     it = tree_lookup(ys->buffers, name);
 
@@ -162,6 +163,11 @@ yed_buffer *yed_create_buffer(char *name) {
     buff->name = strdup(name);
 
     tree_insert(ys->buffers, strdup(name), buff);
+
+    memset(&event, 0, sizeof(event));
+    event.kind   = EVENT_BUFFER_CREATED;
+    event.buffer = buff;
+    yed_trigger_event(&event);
 
     return buff;
 }
