@@ -889,11 +889,13 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     event.buffer = buff;
     yed_trigger_event(&event);
 
-    memset(&event, 0, sizeof(event));
-    event.kind   = EVENT_BUFFER_PRE_FOCUS;
-    event.frame  = frame;
-    event.buffer = buff;
-    yed_trigger_event(&event);
+    if (buff != NULL) {
+        memset(&event, 0, sizeof(event));
+        event.kind   = EVENT_BUFFER_PRE_FOCUS;
+        event.frame  = frame;
+        event.buffer = buff;
+        yed_trigger_event(&event);
+    }
 
 
     frame->buffer = buff;

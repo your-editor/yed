@@ -1,6 +1,6 @@
 # Changelog
 
-## 1500 - 2022-8-4
+## 1500 - 2022-8-5
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
@@ -8,6 +8,9 @@
     - Some memory leaks.
     - Fixed memory bug in bucket_array.
     - Fixed a bug where there was a delay when a key is pressed immediately after ESC.
+    - Now, ZERO writes are sent to the terminal if the screen/cursor position have not changed.
+      This is overall more efficient, but also very useful for some terminals that detect inactivity and do things like disabling their
+      renderer to reduce CPU and GPU usage as well as lower power consumption.
 ### Changed
     - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
     - The default completion source `words` no longer scans special buffers for words unless the variable `compl-words-include-special` is truthy.
@@ -38,6 +41,9 @@
     - New style components: `white`, `grey`, `black`, `red`, `orange`, `yellow`, `lime`, `green`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, and `pink`
         - These are automatically generated for any style if they are not explicitly set.
         - Colors are generated such that they are relatively pleasant and readable with the other colors in the style.
+    - `screen-update-sync` enables a feature that sends `CSI ? 2026 h` and `CSI ? 2026 l` before and after screen update writes to reduce tearing and jitter
+      in situations where the write payload isn't received as a unit by the terminal (typically over `ssh`). Respectable terminals will simply ignore these codes if they do not support
+      the feature, but just in case, it can be disabled with the `screen-update-sync` variable.
 
 ## 1403 - 2022-5-4
 ### Fixed

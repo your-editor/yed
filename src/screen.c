@@ -189,6 +189,7 @@ void yed_diff_and_swap_screens(void) {
 }
 
 void yed_render_screen(void) {
+    int              screen_dirty;
     yed_screen_cell *cell;
     int              row;
     int              col;
@@ -203,6 +204,25 @@ void yed_render_screen(void) {
 
     array_clear(ys->output_buffer);
 
+    if (yed_var_is_truthy("screen-update-sync")) {
+        WR("\e[?2026h", strlen("\e[?2026h"));
+    }
+
+    screen_dirty = 0;
+
+    /* Screen is "dirty" if the cursor has moved. */
+    if (ys->interactive_command != NULL) {
+        if (ys->screen_render->cur_x != ys->cmd_cursor_x
+        ||  ys->screen_render->cur_y != ys->term_rows) {
+            screen_dirty = 1;
+        }
+    } else if (ys->active_frame != NULL) {
+        if (ys->screen_render->cur_x != ys->active_frame->cur_x
+        ||  ys->screen_render->cur_y != ys->active_frame->cur_y) {
+            screen_dirty = 1;
+        }
+    }
+
     WR(TERM_CURSOR_HIDE, strlen(TERM_CURSOR_HIDE));
 
     WR("\e[H", strlen("\e[H"));
@@ -216,6 +236,8 @@ void yed_render_screen(void) {
     for (row = 1; row <= ys->term_rows; row += 1) {
         for (col = 1; col <= ys->term_cols; col += 1) {
             if (cell->dirty && cell->glyph.data) {
+                screen_dirty = 1;
+
                 if (ys->screen_render->cur_y != row
                 &&  ys->screen_render->cur_x != col) {
                     snprintf(buff, sizeof(buff), "\e[%d;%dH", row, col);
@@ -261,14 +283,23 @@ void yed_render_screen(void) {
         cursor_y = cursor_x = 1;
     }
 
-    snprintf(buff, sizeof(buff), "\e[%d;%dH", cursor_y, cursor_x);
-    WR(buff, strlen(buff));
+    ys->screen_render->cur_x = cursor_x;
+    ys->screen_render->cur_y = cursor_y;
 
-    total_written = 0;
-    while (total_written < array_len(ys->output_buffer)) {
-        n = write(1, array_data(ys->output_buffer) + total_written, array_len(ys->output_buffer) - total_written);
-        ASSERT(n > 0, "failed to write output");
-        total_written += n;
+    if (screen_dirty) {
+        snprintf(buff, sizeof(buff), "\e[%d;%dH", cursor_y, cursor_x);
+        WR(buff, strlen(buff));
+
+        if (yed_var_is_truthy("screen-update-sync")) {
+            WR("\e[?2026l", strlen("\e[?2026l"));
+        }
+
+        total_written = 0;
+        while (total_written < array_len(ys->output_buffer)) {
+            n = write(1, array_data(ys->output_buffer) + total_written, array_len(ys->output_buffer) - total_written);
+            ASSERT(n > 0, "failed to write output");
+            total_written += n;
+        }
     }
 
 #undef WR

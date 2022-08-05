@@ -19,6 +19,7 @@ void yed_set_default_vars(void) {
     yed_set_var("status-line-left",           DEFAULT_STATUS_LINE_LEFT);
     yed_set_var("status-line-center",         DEFAULT_STATUS_LINE_CENTER);
     yed_set_var("status-line-right",          DEFAULT_STATUS_LINE_RIGHT);
+    yed_set_var("screen-update-sync",         "yes");
 }
 
 void yed_set_var(const char *var, const char *val) {
