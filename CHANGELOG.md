@@ -19,6 +19,10 @@
     - `yed_frame_set_name()`: set or clear a name for a frame.
     - `yed_find_frame_by_name()`: lookup a frame based on its name.
     - `yed_frame_tree_swap_children()`: swap the layouts of split frames.
+    - `yed_frame_set_pos()`: set the absolute position of the frame/parent frame tree.
+    - `yed_frame_tree_set_pos()`: set the absolute position of the parent frame tree.
+    - `yed_frame_set_size()`: set the absolute size of the frame/parent frame tree.
+    - `yed_frame_tree_set_size()`: set the absolute size of the parent frame tree.
     - New commands:
         - `frame-name`, `frame-uname`, `frame-set-position`, and `frame-tree-set-position`.
         - `open-command-line-buffers`: This command is run when `yed` starts and is passed the paths specified on the command line.

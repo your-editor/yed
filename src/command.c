@@ -2096,12 +2096,8 @@ void start_frame_resize(void) {
 
 void yed_default_command_frame_resize(int n_args, char **args) {
     int   key;
-    float fheight;
-    float fwidth;
-    int   cur_r;
-    int   cur_c;
-    int   row;
-    int   col;
+    float height;
+    float width;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -2126,26 +2122,10 @@ void yed_default_command_frame_resize(int n_args, char **args) {
             return;
         }
 
-        fheight = atof(args[0]);
-        fwidth  = atof(args[1]);
-        cur_r   = fheight * (ys->term_rows - 2);
-        cur_c   = fwidth  * ys->term_cols;
-        row     = cur_r - ys->active_frame->bheight;
-        col     = cur_c - ys->active_frame->bwidth;
+        height = atof(args[0]);
+        width  = atof(args[1]);
 
-        if (yed_frame_tree_is_root(ys->active_frame->tree)
-        ||  ys->active_frame->tree == ys->active_frame->tree->parent->child_trees[0]) {
-            yed_resize_frame(ys->active_frame, row, col);
-        } else {
-            if (ys->active_frame->tree->parent->split_kind == FTREE_VSPLIT) {
-                row  = 0;
-                col *= -1;
-            } else {
-                row *= -1;
-                col  = 0;
-            }
-            yed_resize_frame_tree(ys->active_frame->tree->parent->child_trees[0], row, col);
-        }
+        yed_frame_set_size(ys->active_frame, height, width);
     }
 }
 
@@ -2179,16 +2159,9 @@ void start_frame_tree_resize(void) {
 }
 
 void yed_default_command_frame_tree_resize(int n_args, char **args) {
-    int             key;
-    yed_frame_tree *root;
-    float           fheight;
-    float           fwidth;
-    int             root_r;
-    int             root_c;
-    int             cur_r;
-    int             cur_c;
-    int             row;
-    int             col;
+    int   key;
+    float height;
+    float width;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -2213,23 +2186,15 @@ void yed_default_command_frame_tree_resize(int n_args, char **args) {
             return;
         }
 
-        fheight = atof(args[0]);
-        fwidth  = atof(args[1]);
-        root    = yed_frame_tree_get_root(ys->active_frame->tree);
-        cur_r   = fheight * ys->term_rows;
-        cur_c   = fwidth  * ys->term_cols;
-        root_r  = root->height * (ys->term_rows - 2);
-        root_c  = root->width  * ys->term_cols;
-        row     = cur_r - root_r;
-        col     = cur_c - root_c;
-
-        yed_resize_frame_tree(root, row, col);
+        height = atof(args[0]);
+        width  = atof(args[1]);
+        yed_frame_tree_set_size(yed_frame_tree_get_root(ys->active_frame->tree), height, width);
     }
 }
 
 void yed_default_command_frame_set_position(int n_args, char **args) {
-    float ftop;
-    float fleft;
+    float top;
+    float left;
 
     if (n_args != 2) {
         yed_cerr("expected 2 argument, but got %d", n_args);
@@ -2241,15 +2206,15 @@ void yed_default_command_frame_set_position(int n_args, char **args) {
         return;
     }
 
-    ftop  = atof(args[0]); LIMIT(ftop,  0.0, 1.0);
-    fleft = atof(args[1]); LIMIT(fleft, 0.0, 1.0);
+    top  = atof(args[0]); LIMIT(top,  0.0, 1.0);
+    left = atof(args[1]); LIMIT(left, 0.0, 1.0);
 
-    yed_frame_set_pos(ys->active_frame, ftop, fleft);
+    yed_frame_set_pos(ys->active_frame, top, left);
 }
 
 void yed_default_command_frame_tree_set_position(int n_args, char **args) {
-    float ftop;
-    float fleft;
+    float top;
+    float left;
 
     if (n_args != 2) {
         yed_cerr("expected 2 argument, but got %d", n_args);
@@ -2261,10 +2226,10 @@ void yed_default_command_frame_tree_set_position(int n_args, char **args) {
         return;
     }
 
-    ftop  = atof(args[0]); LIMIT(ftop,  0.0, 1.0);
-    fleft = atof(args[1]); LIMIT(fleft, 0.0, 1.0);
+    top  = atof(args[0]); LIMIT(top,  0.0, 1.0);
+    left = atof(args[1]); LIMIT(left, 0.0, 1.0);
 
-    yed_frame_set_pos(ys->active_frame, ftop, fleft);
+    yed_frame_set_pos(ys->active_frame, top, left);
 }
 
 void yed_default_command_insert(int n_args, char **args) {

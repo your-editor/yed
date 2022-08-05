@@ -285,6 +285,66 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
     return new_frame;
 }
 
+void yed_frame_set_size(yed_frame *frame, float height, float width) {
+    yed_frame_tree_set_size(frame->tree, height, width);
+}
+
+void yed_frame_tree_set_size(yed_frame_tree *tree, float height, float width) {
+    yed_frame_tree                *readjust_target;
+    frame_tree_leaf_visitor_event  e;
+
+    readjust_target = yed_frame_tree_get_root(tree);
+
+    e.event_kind    = EVENT_FRAME_PRE_RESIZE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return; }
+
+    LIMIT(height, 0.0, 1.0);
+    LIMIT(width,  0.0, 1.0);
+
+    readjust_target->height = height;
+    readjust_target->width  = width;
+
+    yed_frame_tree_recursive_readjust(readjust_target);
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_reset_cursor, NULL);
+
+    e.event_kind = EVENT_FRAME_POST_RESIZE;
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+}
+
+void yed_frame_set_pos(yed_frame *frame, float top, float left) {
+    yed_frame_tree_set_pos(frame->tree, top, left);
+}
+
+void yed_frame_tree_set_pos(yed_frame_tree *tree, float top, float left) {
+    yed_frame_tree                *readjust_target;
+    frame_tree_leaf_visitor_event  e;
+
+    readjust_target = yed_frame_tree_get_root(tree);
+
+    e.event_kind    = EVENT_FRAME_PRE_MOVE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return; }
+
+    LIMIT(top, 0.0, 1.0);
+    LIMIT(left,  0.0, 1.0);
+
+    readjust_target->top  = top;
+    readjust_target->left = left;
+
+    yed_frame_tree_recursive_readjust(readjust_target);
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_reset_cursor, NULL);
+
+    e.event_kind = EVENT_FRAME_POST_MOVE;
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+}
+
 void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
     frame_tree_leaf_visitor_event  e;
     float                          target_atop;
@@ -845,21 +905,6 @@ void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x
 
     yed_frame_draw_fill(frame, lines_drawn);
     yed_reset_attr();
-}
-
-void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
-    int   cur_r;
-    int   cur_c;
-    int   row;
-    int   col;
-
-    cur_r = top_f  * (ys->term_rows - 2);
-    cur_c = left_f * ys->term_cols;
-
-    row = cur_r - frame->top;
-    col = cur_c - frame->left;
-
-    yed_move_frame(frame, row, col);
 }
 
 void yed_frame_set_gutter_width(yed_frame *frame, int width) {
