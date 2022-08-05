@@ -48,6 +48,7 @@
     - `screen-update-sync` enables a feature that sends `CSI ? 2026 h` and `CSI ? 2026 l` before and after screen update writes to reduce tearing and jitter
       in situations where the write payload isn't received as a unit by the terminal (typically over `ssh`). Respectable terminals will simply ignore these codes if they do not support
       the feature, but just in case, it can be disabled with the `screen-update-sync` variable.
+    - More default command completions.
 
 ## 1403 - 2022-5-4
 ### Fixed

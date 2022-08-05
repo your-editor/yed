@@ -292,11 +292,11 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
     }
 
     if (tree->parent == NULL) {
-        tree->discrete_rows = roundf(aheight * (ys->term_rows - 2));
-        tree->discrete_cols = roundf(awidth * ys->term_cols);
+        tree->discrete_rows = MAX(roundf(aheight * (ys->term_rows - 2)), 1);
+        tree->discrete_cols = MAX(roundf(awidth * ys->term_cols), 1);
     } else if (tree == tree->parent->child_trees[0]) {
-        tree->discrete_rows = roundf(tree->height * tree->parent->discrete_rows);
-        tree->discrete_cols = roundf(tree->width  * tree->parent->discrete_cols);
+        tree->discrete_rows = MAX(roundf(tree->height * tree->parent->discrete_rows), 1);
+        tree->discrete_cols = MAX(roundf(tree->width  * tree->parent->discrete_cols), 1);
     } else {
         other = tree->parent->child_trees[0];
         if (tree->parent->split_kind == FTREE_VSPLIT) {
@@ -320,20 +320,6 @@ static void _yed_frame_tree_recursive_readjust(yed_frame_tree *tree, float atop,
 
         FRAME_RESET_RECT(tree->frame);
 
-/*         if (tree->parent != NULL && tree->parent->child_trees[1] == tree) { */
-/*             other = tree->parent->child_trees[0]; */
-/*             if (tree->parent->split_kind == FTREE_VSPLIT) { */
-/*                 while (tree->frame->bwidth + other->discrete_cols - 1 > tree->parent->discrete_cols) { */
-/*                     tree->frame->width_f -= 1.0 / ys->term_cols; */
-/*                     FRAME_RESET_RECT(tree->frame); */
-/*                 } */
-/*             } else { */
-/*                 while (tree->frame->bheight + other->discrete_rows - 1 > tree->parent->discrete_rows) { */
-/*                     tree->frame->height_f -= 1.0 / (ys->term_rows - 2); */
-/*                     FRAME_RESET_RECT(tree->frame); */
-/*                 } */
-/*             } */
-/*         } */
         while (tree->frame->bwidth > tree->discrete_cols) {
             tree->frame->width_f -= 1.0 / ys->term_cols;
             FRAME_RESET_RECT(tree->frame);

@@ -37,6 +37,8 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
     if (!(*bleft & 1)) { *bwidth += 1; }
 
     /* Sanity checks and limitations. */
+    LIMIT(*height,  1, ys->term_rows - 2);
+    LIMIT(*width,   1, ys->term_cols);
     LIMIT(*btop,    1, ys->term_rows - 2);
     LIMIT(*bheight, 1, ys->term_rows - 2);
     LIMIT(*bleft,   1, ys->term_cols);
@@ -1151,6 +1153,7 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
      * Update the cursor line.
      */
     f->cursor_line = f->buffer_y_offset + (f->cur_y - f->top + 1);
+    LIMIT(f->cursor_line, 1, buff_n_lines);
 }
 
 void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {

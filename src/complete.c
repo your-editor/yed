@@ -220,6 +220,11 @@ out:;
     return status;
 }
 
+static int complete_files_and_buffers(char *string, yed_completion_results *results) {
+    const char *compls[] = { "file", "buffer" };
+    return yed_complete_multiple(sizeof(compls)/sizeof(compls[0]), (char**)compls, string, results);
+}
+
 static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
     int  col, start_col;
     char c, *word_start, *word;
@@ -326,7 +331,8 @@ void yed_set_default_completions(void) {
     SET_DEFAULT_COMPL("word",                        yed_default_completion_words);
 
     SET_DEFAULT_COMPL("bind-compl-arg-1",            yed_default_completion_commands);
-    SET_DEFAULT_COMPL("buffer-compl-arg-0",          yed_default_completion_files);
+    SET_DEFAULT_COMPL("buffer-compl-arg-0",          complete_files_and_buffers);
+    SET_DEFAULT_COMPL("buffer-hidden-compl-arg-0",   complete_files_and_buffers);
     SET_DEFAULT_COMPL("buffer-delete-compl-arg-0",   yed_default_completion_buffers);
     SET_DEFAULT_COMPL("set-compl-arg-0",             yed_default_completion_variables);
     SET_DEFAULT_COMPL("get-compl-arg-0",             yed_default_completion_variables);
@@ -339,6 +345,9 @@ void yed_set_default_completions(void) {
     SET_DEFAULT_COMPL("plugin-path-compl-arg-0",     yed_default_completion_plugins);
     SET_DEFAULT_COMPL("find-in-buffer-compl-arg-0",  yed_default_completion_words);
     SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0", yed_default_completion_files);
+    SET_DEFAULT_COMPL("alias-compl-arg-1",           yed_default_completion_commands);
+    SET_DEFAULT_COMPL("unalias-compl-arg-0",         yed_default_completion_commands);
+    SET_DEFAULT_COMPL("repeat-compl-arg-1",          yed_default_completion_commands);
 }
 
 int compute_common_prefix_len(char *in, int n_items, char **items) {
