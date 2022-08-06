@@ -14,6 +14,7 @@
 ### Changed
     - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
     - The default completion source `words` no longer scans special buffers for words unless the variable `compl-words-include-special` is truthy.
+    - `frame` now accepts an index or a name of a frame to activate.
 ### Added
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.

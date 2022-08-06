@@ -131,10 +131,11 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-tree-next",                    frame_tree_next);
     SET_DEFAULT_COMMAND("frame-tree-prev",                    frame_tree_prev);
     SET_DEFAULT_COMMAND("frame-move",                         frame_move);
+    SET_DEFAULT_COMMAND("frame-set-position",                 frame_set_position);
     SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
     SET_DEFAULT_COMMAND("frame-tree-resize",                  frame_tree_resize);
-    SET_DEFAULT_COMMAND("frame-set-position",                 frame_set_position);
-    SET_DEFAULT_COMMAND("frame-tree-set-position",            frame_tree_set_position);
+    SET_DEFAULT_COMMAND("frame-set-size",                     frame_set_size);
+    SET_DEFAULT_COMMAND("frame-tree-set-size",                frame_tree_set_size);
     SET_DEFAULT_COMMAND("frame",                              frame);
     SET_DEFAULT_COMMAND("frame-name",                         frame_name);
     SET_DEFAULT_COMMAND("frame-unname",                       frame_unname);
@@ -2171,6 +2172,26 @@ void yed_default_command_frame_move(int n_args, char **args) {
     }
 }
 
+void yed_default_command_frame_set_position(int n_args, char **args) {
+    float top;
+    float left;
+
+    if (n_args != 2) {
+        yed_cerr("expected 2 argument, but got %d", n_args);
+        return;
+    }
+
+    if (ys->active_frame == NULL) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    top  = atof(args[0]); LIMIT(top,  0.0, 1.0);
+    left = atof(args[1]); LIMIT(left, 0.0, 1.0);
+
+    yed_frame_set_pos(ys->active_frame, top, left);
+}
+
 void frame_resize_take_key(int key) {
     yed_frame *f;
 
@@ -2203,6 +2224,10 @@ void yed_default_command_frame_resize(int n_args, char **args) {
     int   key;
     float height;
     float width;
+    int   cur_r;
+    int   cur_c;
+    int   row;
+    int   col;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -2229,8 +2254,24 @@ void yed_default_command_frame_resize(int n_args, char **args) {
 
         height = atof(args[0]);
         width  = atof(args[1]);
+        cur_r   = height * (ys->term_rows - 2);
+        cur_c   = width  * ys->term_cols;
+        row     = cur_r - ys->active_frame->bheight;
+        col     = cur_c - ys->active_frame->bwidth;
 
-        yed_frame_set_size(ys->active_frame, height, width);
+        if (yed_frame_tree_is_root(ys->active_frame->tree)
+        ||  ys->active_frame->tree == ys->active_frame->tree->parent->child_trees[0]) {
+            yed_resize_frame(ys->active_frame, row, col);
+        } else {
+            if (ys->active_frame->tree->parent->split_kind == FTREE_VSPLIT) {
+                row  = 0;
+                col *= -1;
+            } else {
+                row *= -1;
+                col  = 0;
+            }
+            yed_resize_frame_tree(ys->active_frame->tree->parent->child_trees[0], row, col);
+        }
     }
 }
 
@@ -2264,9 +2305,16 @@ void start_frame_tree_resize(void) {
 }
 
 void yed_default_command_frame_tree_resize(int n_args, char **args) {
-    int   key;
-    float height;
-    float width;
+    int             key;
+    float           height;
+    float           width;
+    yed_frame_tree *root;
+    int             cur_r;
+    int             cur_c;
+    int             root_r;
+    int             root_c;
+    int             row;
+    int             col;
 
     if (!ys->active_frame) {
         yed_cerr("no active frame");
@@ -2293,13 +2341,21 @@ void yed_default_command_frame_tree_resize(int n_args, char **args) {
 
         height = atof(args[0]);
         width  = atof(args[1]);
-        yed_frame_tree_set_size(yed_frame_tree_get_root(ys->active_frame->tree), height, width);
+        root   = yed_frame_tree_get_root(ys->active_frame->tree);
+        cur_r  = height * ys->term_rows;
+        cur_c  = width  * ys->term_cols;
+        root_r = root->height * (ys->term_rows - 2);
+        root_c = root->width  * ys->term_cols;
+        row    = cur_r - root_r;
+        col    = cur_c - root_c;
+
+        yed_resize_frame_tree(root, row, col);
     }
 }
 
-void yed_default_command_frame_set_position(int n_args, char **args) {
-    float top;
-    float left;
+void yed_default_command_frame_set_size(int n_args, char **args) {
+    float height;
+    float width;
 
     if (n_args != 2) {
         yed_cerr("expected 2 argument, but got %d", n_args);
@@ -2311,15 +2367,15 @@ void yed_default_command_frame_set_position(int n_args, char **args) {
         return;
     }
 
-    top  = atof(args[0]); LIMIT(top,  0.0, 1.0);
-    left = atof(args[1]); LIMIT(left, 0.0, 1.0);
+    height = atof(args[0]); LIMIT(height, 0.0, 1.0);
+    width  = atof(args[1]); LIMIT(width,  0.0, 1.0);
 
-    yed_frame_set_pos(ys->active_frame, top, left);
+    yed_frame_set_size(ys->active_frame, height, width);
 }
 
-void yed_default_command_frame_tree_set_position(int n_args, char **args) {
-    float top;
-    float left;
+void yed_default_command_frame_tree_set_size(int n_args, char **args) {
+    float height;
+    float width;
 
     if (n_args != 2) {
         yed_cerr("expected 2 argument, but got %d", n_args);
@@ -2331,10 +2387,10 @@ void yed_default_command_frame_tree_set_position(int n_args, char **args) {
         return;
     }
 
-    top  = atof(args[0]); LIMIT(top,  0.0, 1.0);
-    left = atof(args[1]); LIMIT(left, 0.0, 1.0);
+    height = atof(args[0]); LIMIT(height, 0.0, 1.0);
+    width  = atof(args[1]); LIMIT(width,  0.0, 1.0);
 
-    yed_frame_set_pos(ys->active_frame, top, left);
+    yed_frame_tree_set_size(ys->active_frame->tree, height, width);
 }
 
 void yed_default_command_insert(int n_args, char **args) {
@@ -4187,22 +4243,24 @@ void yed_default_command_frame(int n_args, char **args) {
         return;
     }
 
-    if (!sscanf(args[0], "%d", &idx)) {
-        yed_cerr("couldn't parse int from argument '%s'", args[0]);
-        return;
-    }
+    if ((frame = yed_find_frame_by_name(args[0])) == NULL) {
+        if (!sscanf(args[0], "%d", &idx)) {
+            yed_cerr("'%s' is not a frame name or an integer index", args[0]);
+            return;
+        }
 
-    if (idx < 0) {
-        yed_cerr("index %d out of range", idx);
-        return;
-    }
+        if (idx < 0) {
+            yed_cerr("index %d out of range", idx);
+            return;
+        }
 
-    if (array_len(ys->frames) <= idx) {
-        yed_cerr("index %d out of range", idx);
-        return;
-    }
+        if (array_len(ys->frames) <= idx) {
+            yed_cerr("index %d out of range", idx);
+            return;
+        }
 
-    frame = *(yed_frame**)array_item(ys->frames, idx);
+        frame = *(yed_frame**)array_item(ys->frames, idx);
+    }
 
     yed_activate_frame(frame);
 }
