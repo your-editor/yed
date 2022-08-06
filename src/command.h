@@ -83,6 +83,8 @@ DEF_DEFAULT_COMMAND(frame_vsplit);
 DEF_DEFAULT_COMMAND(frame_hsplit);
 DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(frame_prev);
+DEF_DEFAULT_COMMAND(frame_tree_next);
+DEF_DEFAULT_COMMAND(frame_tree_prev);
 DEF_DEFAULT_COMMAND(frame_move);
 DEF_DEFAULT_COMMAND(frame_resize);
 DEF_DEFAULT_COMMAND(frame_tree_resize);

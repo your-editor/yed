@@ -128,6 +128,8 @@ do {                                                              \
     SET_DEFAULT_COMMAND("frame-hsplit",                       frame_hsplit);
     SET_DEFAULT_COMMAND("frame-next",                         frame_next);
     SET_DEFAULT_COMMAND("frame-prev",                         frame_prev);
+    SET_DEFAULT_COMMAND("frame-tree-next",                    frame_tree_next);
+    SET_DEFAULT_COMMAND("frame-tree-prev",                    frame_tree_prev);
     SET_DEFAULT_COMMAND("frame-move",                         frame_move);
     SET_DEFAULT_COMMAND("frame-resize",                       frame_resize);
     SET_DEFAULT_COMMAND("frame-tree-resize",                  frame_tree_resize);
@@ -2015,6 +2017,109 @@ void yed_default_command_frame_prev(int n_args, char **args) {
     }
 
     yed_activate_frame(frame);
+}
+
+void yed_default_command_frame_tree_next(int n_args, char **args) {
+    array_t         roots;
+    yed_frame_tree *cur_tree, *tree, **tree_it;
+    int             i, cur_tree_idx;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    roots = array_make(yed_frame_tree*);
+    array_traverse(ys->frame_trees, tree_it) {
+        if (yed_frame_tree_is_root(*tree_it)) {
+            array_push(roots, *tree_it);
+        }
+    }
+
+    if (array_len(roots) == 1) { goto out_free; }
+
+    tree     = NULL;
+    cur_tree = yed_frame_tree_get_root(ys->active_frame->tree);
+
+    if (cur_tree == *(yed_frame_tree**)array_item(roots, 0)) {
+        tree = *(yed_frame_tree**)array_last(roots);
+    } else {
+        i = cur_tree_idx = 0;
+        array_traverse(roots, tree_it) {
+            if (*tree_it == cur_tree) {
+                cur_tree_idx = i;
+                break;
+            }
+            i += 1;
+        }
+        tree = *(yed_frame_tree**)array_item(roots, cur_tree_idx - 1);
+    }
+
+
+    while (!tree->is_leaf) {
+        tree = tree->child_trees[0];
+    }
+
+    yed_activate_frame(tree->frame);
+
+out_free:;
+    array_free(roots);
+}
+
+void yed_default_command_frame_tree_prev(int n_args, char **args) {
+    array_t         roots;
+    yed_frame_tree *cur_tree, *tree, **tree_it;
+    int             i, cur_tree_idx;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    roots = array_make(yed_frame_tree*);
+    array_traverse(ys->frame_trees, tree_it) {
+        if (yed_frame_tree_is_root(*tree_it)) {
+            array_push(roots, *tree_it);
+        }
+    }
+
+    if (array_len(roots) == 1) { goto out_free; }
+
+    tree     = NULL;
+    cur_tree = yed_frame_tree_get_root(ys->active_frame->tree);
+
+    if (cur_tree == *(yed_frame_tree**)array_item(roots, 0)) {
+        tree = *(yed_frame_tree**)array_last(roots);
+    } else {
+        i = cur_tree_idx = 0;
+        array_traverse(roots, tree_it) {
+            if (*tree_it == cur_tree) {
+                cur_tree_idx = i;
+                break;
+            }
+            i += 1;
+        }
+        tree = *(yed_frame_tree**)array_item(roots, cur_tree_idx - 1);
+    }
+
+    while (!tree->is_leaf) {
+        tree = tree->child_trees[0];
+    }
+
+    yed_activate_frame(tree->frame);
+
+out_free:;
+    array_free(roots);
 }
 
 void frame_move_take_key(int key) {
