@@ -334,6 +334,7 @@ void yed_update_vars_buffer(void) {
     tree_it(yed_var_name_t, yed_var_val_t)  vit;
     char                                    line_buff[1024];
     int                                     row;
+    int                                     i;
 
     vars_buff = yed_get_vars_buffer();
 
@@ -350,6 +351,9 @@ void yed_update_vars_buffer(void) {
     tree_traverse(ys->vars, vit) {
         snprintf(line_buff, sizeof(line_buff), "%-*s = %s", max_width, tree_it_key(vit), tree_it_val(vit));
         yed_buff_insert_string_no_undo(vars_buff, line_buff, row, 1);
+        for (i = 0; i < strlen(tree_it_val(vit)); i += 1) {
+            if (tree_it_val(vit)[i] == '\n') { row += 1; }
+        }
         row += 1;
     }
 
