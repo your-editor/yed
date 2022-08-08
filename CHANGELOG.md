@@ -13,6 +13,7 @@
       renderer to reduce CPU and GPU usage as well as lower power consumption.
     - Fixed a bug where variables with newlines displayed in `*vars` would be on lines for subsequent variables.
     - Fixed a bug where `yed_write_buffer_to_subproc()` would sometimes fail when `read()` calls got interrupted by signals.
+    - Got rid of some compiler warnings.
 ### Changed
     - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
     - The default completion source `words` no longer scans special buffers for words unless the variable `compl-words-include-special` is truthy.

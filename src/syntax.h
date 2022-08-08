@@ -627,7 +627,9 @@ static inline _yed_syntax_cache_entry *_yed_syntax_add_to_cache(yed_syntax *synt
 }
 
 static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffer) {
+#ifdef YED_SYNTAX_DEBUG
     u64                start;
+#endif
 
     CACHE_IT           it;
     _yed_syntax_cache  new_cache;
@@ -642,7 +644,9 @@ static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffe
 
     if (!syntax->finalized || !syntax->needs_state) { return; }
 
+#ifdef YED_SYNTAX_DEBUG
     start = measure_time_now_ms();
+#endif
 
     it = tree_lookup(syntax->caches, buffer);
 
@@ -725,12 +729,13 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
     int                      started_at_top;
     _yed_syntax_cache_entry *it;
     int                      changed;
+#ifdef YED_SYNTAX_DEBUG
     int                      count;
+#endif
     _yed_syntax_range       *start_range;
     yed_line                *line;
     _yed_syntax_range       *end_range;
     int                      end_range_idx;
-    _yed_syntax_cache_entry  new_entry;
 
     if (array_len(cache->entries) == 0) {
         return 0;
@@ -747,7 +752,11 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
     DBG("fixup: row %d ->", it->row);
 
     changed = 0;
-    count   = 0;
+
+#ifdef YED_SYNTAX_DEBUG
+    count = 0;
+#endif
+
     while (it != array_last(cache->entries)) {
         start_range = *(_yed_syntax_range**)array_item(syntax->ranges, it->range_idx);
         line        = yed_buff_get_line(buffer, it->row);
@@ -776,7 +785,9 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
         }
 
         /* `it` is the correct next cache entry to use at this point. */
+#ifdef YED_SYNTAX_DEBUG
         count += 1;
+#endif
     }
 
 out:;
@@ -971,7 +982,6 @@ static inline const char * _yed_syntax_find_next_regex_match(yed_syntax *syntax,
 }
 
 static inline const char * _yed_syntax_find_next_range_start(yed_syntax *syntax, yed_line *line, const char *start, _yed_syntax_range **range_out, int *len_out) {
-    const char         *end;
     regmatch_t          match;
     const char         *match_start;
     _yed_syntax_range  *match_range;
@@ -981,7 +991,6 @@ static inline const char * _yed_syntax_find_next_range_start(yed_syntax *syntax,
     int                 eflags;
     int                 err;
 
-    end         = array_data(line->chars) + array_len(line->chars);
     match_start = NULL;
     match_range = NULL;
 
@@ -1015,7 +1024,6 @@ static inline const char * _yed_syntax_find_next_range_start(yed_syntax *syntax,
 static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_syntax_range *range, yed_line *line, const char *start, int *len_out) {
     const char *end;
     int         nmatch;
-    const char *match_start;
     regmatch_t  m;
     int         eflags;
     int         err;
@@ -1025,9 +1033,8 @@ static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_s
     nmatch = syntax->max_group + 1;
 
     while (start <= end) {
-        match_start = NULL;
-        eflags      = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
-        err         = regexec(&range->end, start, nmatch, syntax->matches, eflags);
+        eflags = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
+        err    = regexec(&range->end, start, nmatch, syntax->matches, eflags);
 
         if (!err) {
             memcpy(&m, syntax->matches, sizeof(m));
@@ -1071,7 +1078,6 @@ out:;
 static inline _yed_syntax_range *_yed_syntax_get_line_end_state(yed_syntax *syntax, yed_buffer *buffer, yed_line *line, _yed_syntax_range *start_range) {
     _yed_syntax_range *range;
     const char        *start;
-    const char        *end;
     const char        *str;
     const char        *next_range_start;
     const char        *range_end_start;
@@ -1081,7 +1087,6 @@ static inline _yed_syntax_range *_yed_syntax_get_line_end_state(yed_syntax *synt
 
     range            = start_range;
     start            = array_data(line->chars);
-    end              = start + array_len(line->chars);
     str              = start;
     next_range_start = NULL;
 

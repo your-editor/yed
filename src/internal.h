@@ -27,7 +27,10 @@
 #include <math.h>
 #include <pthread.h>
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include <dlfcn.h>
 
 #ifdef RTLD_NOLOAD
@@ -38,8 +41,15 @@
 #include <libgen.h>
 
 #include <locale.h>
-#define __USE_XOPEN
+
+#ifndef __USE_XOPEN
+#define __USE_XOPEN 1
+#endif
+
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
+#endif
+
 #include <wchar.h>
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
