@@ -47,7 +47,7 @@
         - `EVENT_BUFFER_POST_DELETE`
         - `EVENT_BUFFER_CREATED`
         - `EVENT_BUFFER_PRE_FOCUS`
-    - New style components: `white`, `grey`, `black`, `red`, `orange`, `yellow`, `lime`, `green`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, and `pink`
+    - New style components: `white`, `gray`, `black`, `red`, `orange`, `yellow`, `lime`, `green`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, and `pink`
         - These are automatically generated for any style if they are not explicitly set.
         - Colors are generated such that they are relatively pleasant and readable with the other colors in the style.
     - `screen-update-sync` enables a feature that sends `CSI ? 2026 h` and `CSI ? 2026 l` before and after screen update writes to reduce tearing and jitter
