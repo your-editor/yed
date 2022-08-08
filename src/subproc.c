@@ -184,8 +184,19 @@ int _yed_write_buffer_to_subproc_2(yed_buffer *buff, char *cmd, int *exit_status
     close(fds_to_child[1]);
 
     out = array_make(char);
-    while ((n_read = read(fds_from_child[0], read_buff, sizeof(read_buff))) > 0) {
-        array_push_n(out, read_buff, n_read);
+    for (;;) {
+        n_read = read(fds_from_child[0], read_buff, sizeof(read_buff));
+        if (n_read == 0) {
+            break;
+        } else if (n_read < 0) {
+            if (errno == EAGAIN || errno == EINTR) {
+                errno = 0;
+            } else {
+                break;
+            }
+        } else {
+            array_push_n(out, read_buff, n_read);
+        }
     }
 
     if (n_read == -1) {
@@ -327,7 +338,7 @@ int yed_read_subproc_into_buffer_nb(yed_nb_subproc_t *nb_subproc) {
     }
 
     if (n_read < 0) {
-        if (errno == EAGAIN) {
+        if (errno == EAGAIN || errno == EINTR) {
             errno  = 0;
             status = 1;
             goto out;
