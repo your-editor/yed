@@ -35,7 +35,7 @@
     __SCOMP(code_character)    \
     __SCOMP(code_escape)       \
     __SCOMP(white)             \
-    __SCOMP(grey)              \
+    __SCOMP(gray)              \
     __SCOMP(black)             \
     __SCOMP(red)               \
     __SCOMP(orange)            \

@@ -152,8 +152,8 @@ static void fixup_missing(yed_style *style) {
     if (style->active.flags == 0 || style->active.flags & ATTR_16) {
         style->white.flags     = ATTR_16 | ATTR_16_LIGHT_FG;
         style->white.fg        = ATTR_16_GREY;
-        style->grey.flags      = ATTR_16;
-        style->grey.fg         = ATTR_16_GREY;
+        style->gray.flags      = ATTR_16;
+        style->gray.fg         = ATTR_16_GREY;
         style->black.flags     = ATTR_16;
         style->black.fg        = ATTR_16_BLACK;
         style->red.flags       = ATTR_16;
@@ -183,8 +183,8 @@ static void fixup_missing(yed_style *style) {
     } else if (style->active.flags & ATTR_256) {
         style->white.flags     = ATTR_256;
         style->white.fg        = 231;
-        style->grey.flags      = ATTR_256;
-        style->grey.fg         = 244;
+        style->gray.flags      = ATTR_256;
+        style->gray.fg         = 244;
         style->black.flags     = ATTR_256;
         style->black.fg        = 16;
         style->red.flags       = ATTR_256;
@@ -274,9 +274,9 @@ static void fixup_missing(yed_style *style) {
         style->white.flags = ATTR_RGB | ATTR_BOLD;
         style->white.fg    = RGB_32(255, 255, 255);
     }
-    if (style->grey.flags == 0) {
-        style->grey.flags = ATTR_RGB | ATTR_BOLD;
-        style->grey.fg    = RGB_32(127, 127, 127);
+    if (style->gray.flags == 0) {
+        style->gray.flags = ATTR_RGB | ATTR_BOLD;
+        style->gray.fg    = RGB_32(127, 127, 127);
     }
     if (style->black.flags == 0) {
         style->black.flags = ATTR_RGB | ATTR_BOLD;
