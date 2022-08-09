@@ -1737,7 +1737,11 @@ static void _gui_key_handler(yed_event *event) {
 }
 
 static void _gui_mouse_handler(yed_event *event) {
-    yed_gui_mouse_pressed(event, &list_menu);
+    int ret = 0;
+    ret = yed_gui_mouse_pressed(event, &list_menu);
+    if (ret) {
+        run();
+    }
 
     if (!list_menu.base.is_up) {
         yed_delete_event_handler(h_mouse);
