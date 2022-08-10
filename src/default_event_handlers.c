@@ -106,3 +106,11 @@ void yed_search_line_handler(yed_event *event) {
         scan += 1;
     }
 }
+
+void yed_replace_cursor_handler(yed_event *event) {
+    if (ys->interactive_command != NULL
+    &&  strcmp(ys->interactive_command, "replace-current-search") == 0) {
+
+        event->cancel = 1;
+    }
+}

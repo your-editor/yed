@@ -1,6 +1,6 @@
 # Changelog
 
-## 1500 - 2022-8-8
+## 1500 - 2022-8-10
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
@@ -13,6 +13,7 @@
       renderer to reduce CPU and GPU usage as well as lower power consumption.
     - Fixed a bug where variables with newlines displayed in `*vars` would be on lines for subsequent variables.
     - Fixed a bug where `yed_write_buffer_to_subproc()` would sometimes fail when `read()` calls got interrupted by signals.
+    - Fixed a bug where the cursor could move while performing a `replace-current-search`, which would cause a crash.
     - Got rid of some compiler warnings.
 ### Changed
     - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
