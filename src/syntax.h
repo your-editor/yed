@@ -1179,6 +1179,7 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
     next_kwd             = NOT_SEARCHED;
     next_range_start     = NOT_SEARCHED;
     next_match           = NOT_SEARCHED;
+    next_kwd_len         = 0;
     next_kwd_attr        = NULL;
     next_match_len       = 0;
     next_match_attr      = NULL;
