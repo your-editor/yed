@@ -1123,28 +1123,28 @@ out:;
 
 static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *line, array_t line_attrs, _yed_syntax_range *start_range) {
     _yed_syntax_range *range;
-    const char    *str;
-    const char    *start;
-    const char    *line_end;
-    const char    *end;
-    const char    *range_end_start;
-    int            range_end_len;
-    int            cstart;
-    int            cend;
-    yed_attrs     *ait;
-    int            i;
-    const char    *next_kwd;
-    const char    *next_range_start;
-    const char    *next_match;
+    const char        *str;
+    const char        *start;
+    const char        *line_end;
+    const char        *end;
+    const char        *range_end_start;
+    int                range_end_len;
+    int                cstart;
+    int                cend;
+    yed_attrs         *ait;
+    int                i;
+    const char        *next_kwd;
+    const char        *next_range_start;
+    const char        *next_match;
     _yed_syntax_attr  *next_kwd_attr;
     _yed_syntax_attr  *next_match_attr;
     _yed_syntax_attr  *a;
-    int            next_kwd_len;
-    int            next_match_len;
-    int            next_range_start_len;
+    int                next_kwd_len;
+    int                next_match_len;
+    int                next_range_start_len;
     _yed_syntax_range *next_range;
-    const char    *first;
-    int            first_len;
+    const char        *first;
+    int                first_len;
 
 #define NOT_SEARCHED    ((void*)~(u64)NULL)
 #define NEEDS_SEARCH(x) ((x) == NOT_SEARCHED || ((x) != NULL && (x) < str))
@@ -1180,7 +1180,9 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
     next_range_start     = NOT_SEARCHED;
     next_match           = NOT_SEARCHED;
     next_kwd_attr        = NULL;
+    next_match_len       = 0;
     next_match_attr      = NULL;
+    next_range           = NULL;
     next_range_start_len = 0;
     first                = NULL;
     first_len            = 0;
