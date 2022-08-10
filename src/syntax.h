@@ -1176,11 +1176,16 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
         }
     }
 
-    next_kwd         = NOT_SEARCHED;
-    next_range_start = NOT_SEARCHED;
-    next_match       = NOT_SEARCHED;
-    next_kwd_attr    = NULL;
-    next_match_attr  = NULL;
+    next_kwd             = NOT_SEARCHED;
+    next_range_start     = NOT_SEARCHED;
+    next_match           = NOT_SEARCHED;
+    next_kwd_attr        = NULL;
+    next_match_attr      = NULL;
+    next_range_start_len = 0;
+    first                = NULL;
+    first_len            = 0;
+    a                    = NULL;
+    range_end_start      = NULL;
 
     while (str < line_end) {
         /* Want to skip early as often as we can to avoid needless searches/regexecs. */
