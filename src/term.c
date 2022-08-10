@@ -40,6 +40,7 @@ int yed_term_enter(void) {
     yed_register_sigquit_handler();
     yed_register_sigstop_handler();
     yed_register_sigsegv_handler();
+    yed_register_sigabrt_handler();
     yed_register_sigill_handler();
     yed_register_sigfpe_handler();
     yed_register_sigbus_handler();
@@ -253,6 +254,23 @@ void sigsegv_handler(int sig) {
     kill(0, SIGSEGV);
 }
 
+void sigabrt_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGABRT, &act, NULL);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    print_fatal_signal_message_and_backtrace("SIGABRT");
+
+    /* Do the real signal */
+    kill(0, SIGABRT);
+}
+
 void sigill_handler(int sig) {
     struct sigaction act;
 
@@ -377,6 +395,17 @@ void yed_register_sigsegv_handler(void) {
     sa.sa_handler = sigsegv_handler;
     if (sigaction(SIGSEGV, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGSEGV");
+    }
+}
+
+void yed_register_sigabrt_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigsegv_handler;
+    if (sigaction(SIGABRT, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGABRT");
     }
 }
 

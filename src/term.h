@@ -84,6 +84,7 @@ void yed_register_sigcont_handler(void);
 void yed_register_sigterm_handler(void);
 void yed_register_sigquit_handler(void);
 void yed_register_sigsegv_handler(void);
+void yed_register_sigabrt_handler(void);
 void yed_register_sigill_handler(void);
 void yed_register_sigfpe_handler(void);
 void yed_register_sigbus_handler(void);
