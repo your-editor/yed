@@ -53,75 +53,88 @@ PACKABLE_STYLE(acme) {
     YED_PLUG_VERSION_CHECK();
 
     tc        = !!yed_get_var("truecolor");
-    attr_kind = tc ? ATTR_RGB : ATTR_256;
+    attr_kind = tc ? ATTR_KIND_RGB : ATTR_KIND_256;
 
     memset(&s, 0, sizeof(s));
 
-    s.active.flags            = attr_kind;
+    ATTR_SET_FG_KIND(s.active.flags, attr_kind);
     s.active.fg               = foreground;
+    ATTR_SET_BG_KIND(s.active.flags, attr_kind);
     s.active.bg               = background;
 
-    s.inactive.flags          = attr_kind;
+    ATTR_SET_FG_KIND(s.inactive.flags, attr_kind);
     s.inactive.fg             = foreground;
+    ATTR_SET_BG_KIND(s.inactive.flags, attr_kind);
     s.inactive.bg             = background;
 
     s.active_border           = s.active;
     s.inactive_border         = s.inactive;
 
-    s.cursor_line.flags       = attr_kind;
+    ATTR_SET_FG_KIND(s.cursor_line.flags, attr_kind);
     s.cursor_line.fg          = foreground;
+    ATTR_SET_BG_KIND(s.cursor_line.flags, attr_kind);
     s.cursor_line.bg          = sel_color;
 
-    s.search.flags            = attr_kind | ATTR_INVERSE;
+    ATTR_SET_FG_KIND(s.search.flags, attr_kind);
     s.search.fg               = srch;
+    s.search.flags           |= ATTR_INVERSE;
 
-    s.search_cursor.flags     = attr_kind | ATTR_INVERSE;
+    ATTR_SET_FG_KIND(s.search_cursor.flags, attr_kind);
     s.search_cursor.fg        = srch_cursor;
+    s.search_cursor.flags    |= ATTR_INVERSE;
 
-    s.selection.flags         = attr_kind;
+    ATTR_SET_FG_KIND(s.selection.flags, attr_kind);
     s.selection.fg            = foreground;
+    ATTR_SET_BG_KIND(s.selection.flags, attr_kind);
     s.selection.bg            = sel_color;
 
-    s.attention.flags         = attr_kind | ATTR_BOLD;
+    ATTR_SET_FG_KIND(s.attention.flags, attr_kind);
     s.attention.fg            = attn;
+    s.attention.flags        |= ATTR_BOLD;
 
-    s.associate.flags         = attr_kind | ATTR_BOLD;
+    ATTR_SET_BG_KIND(s.associate.flags, attr_kind);
     s.associate.bg            = assoc_bg;
+    s.associate.flags        |= ATTR_BOLD;
 
     s.command_line            = s.active;
 
-    s.status_line.flags       = attr_kind | ATTR_BOLD;
+    ATTR_SET_FG_KIND(s.status_line.flags, attr_kind);
     s.status_line.fg          = foreground;
+    ATTR_SET_BG_KIND(s.status_line.flags, attr_kind);
     s.status_line.bg          = status_bg;
+    s.status_line.flags      |= ATTR_BOLD;
 
     s.active_gutter           = s.active;
     s.inactive_gutter         = s.inactive;
 
-    s.code_comment.flags      = attr_kind;
+    ATTR_SET_FG_KIND(s.code_comment.flags, attr_kind);
     s.code_comment.fg         = comment;
 
-    s.code_keyword.flags      = attr_kind | ATTR_BOLD;
+    ATTR_SET_FG_KIND(s.code_keyword.flags, attr_kind);
     s.code_keyword.fg         = keyword;
+    s.code_keyword.flags     |= ATTR_BOLD;
 
     s.code_control_flow       =
     s.code_typename           = s.code_keyword;
 
-    s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
-    s.code_preprocessor.fg    = pp_keyword;
+    ATTR_SET_FG_KIND(s.code_preprocessor.flags, attr_kind);
+    s.code_preprocessor.fg     = pp_keyword;
+    s.code_preprocessor.flags |= ATTR_BOLD;
 
-    s.code_fn_call.flags      = attr_kind | ATTR_BOLD;
+    ATTR_SET_FG_KIND(s.code_fn_call.flags, attr_kind);
     s.code_fn_call.fg         = call;
+    s.code_fn_call.flags     |= ATTR_BOLD;
 
-    s.code_number.flags       = attr_kind;
+    ATTR_SET_FG_KIND(s.code_number.flags, attr_kind);
     s.code_number.fg          = number;
 
-    s.code_constant.flags     = attr_kind;
+    ATTR_SET_FG_KIND(s.code_constant.flags, attr_kind);
     s.code_constant.fg        = constant;
 
-    s.code_string.flags       = attr_kind;
+    ATTR_SET_FG_KIND(s.code_string.flags, attr_kind);
     s.code_string.fg          = string;
 
-    s.code_character.flags    = attr_kind;
+    ATTR_SET_FG_KIND(s.code_character.flags, attr_kind);
     s.code_character.fg       = character;
 
     yed_plugin_set_style(self, "acme", &s);

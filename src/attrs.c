@@ -85,35 +85,31 @@ int rgb_to_256(unsigned rgb) {
 void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
     if (!dst || !src)    { return; }
 
-    if (dst->flags & ATTR_16) {
-        if (src->flags & ATTR_256 || src->flags & ATTR_RGB) {
-            dst->flags &= ~(ATTR_16_LIGHT_BG | ATTR_16_LIGHT_FG);
-            dst->fg = dst->bg = 0;
-        }
-    } else if (dst->flags & ATTR_256) {
-        if (src->flags & ATTR_16 || src->flags & ATTR_RGB) {
-            dst->fg = dst->bg = 0;
-        }
-    } else if (dst->flags & ATTR_RGB) {
-        if (src->flags & ATTR_16 || src->flags & ATTR_256) {
-            dst->fg = dst->bg = 0;
-        }
+    if (ATTR_FG_KIND(dst->flags) == ATTR_KIND_16
+    &&  ATTR_FG_KIND(src->flags) != ATTR_KIND_NONE
+    &&     (ATTR_FG_KIND(src->flags) != ATTR_KIND_16
+        || !(src->flags & ATTR_16_LIGHT_FG))) {
+            
+        dst->flags &= ~ATTR_16_LIGHT_FG;
+    }
+    
+    if (ATTR_BG_KIND(dst->flags) == ATTR_KIND_16
+    &&  ATTR_BG_KIND(src->flags) != ATTR_KIND_NONE
+    &&     (ATTR_BG_KIND(src->flags) != ATTR_KIND_16
+        || !(src->flags & ATTR_16_LIGHT_BG))) {
+        dst->flags &= ~ATTR_16_LIGHT_BG;
     }
 
-    if (src->fg) {
-        dst->flags &= ~(ATTR_16_LIGHT_FG);
+    if (ATTR_FG_KIND(src->flags) != ATTR_KIND_NONE) {
+        ATTR_SET_FG_KIND(dst->flags, ATTR_FG_KIND(src->flags));
         dst->fg = src->fg;
     }
-    if (src->bg) {
-        dst->flags &= ~(ATTR_16_LIGHT_BG);
+    if (ATTR_BG_KIND(src->flags) != ATTR_KIND_NONE) {
+        ATTR_SET_BG_KIND(dst->flags, ATTR_BG_KIND(src->flags));
         dst->bg = src->bg;
     }
 
-/*     dst->flags &= ~(ATTR_BOLD); */
-/*     dst->flags &= ~(ATTR_INVERSE); */
-/*     dst->flags &= ~(ATTR_UNDERLINE); */
-
-    dst->flags |= src->flags;
+    dst->flags |= src->flags & ~0xF;
 }
 
 #define BUFFCATN(buff_p, str, n) \
@@ -131,9 +127,10 @@ do {                                        \
 
 
 void yed_get_attr_str(yed_attrs attr, char *buff_p) {
-    int fr, fg, fb;
-    int br, bg, bb;
-    int f16, b16;
+    int c16;
+    int r;
+    int g;
+    int b;
 
     *buff_p = 0;
 
@@ -151,96 +148,57 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
         BUFFCATN(buff_p, ";7", 2);
     }
 
-    if (attr.flags & ATTR_16) {
-        if (attr.fg || attr.bg) {
-            BUFFCATN(buff_p, ";", 1);
+    if (ATTR_FG_KIND(attr.flags) != ATTR_KIND_NONE) {
+        BUFFCATN(buff_p, ";", 1);
+        switch(ATTR_FG_KIND(attr.flags)) {
+            case ATTR_KIND_16:
+                c16 = attr.fg;
+                if (attr.flags & ATTR_16_LIGHT_FG) { c16 += 60; }
+                BUFFCAT(buff_p, u8_to_s(c16));
+                break;
+            case ATTR_KIND_256:
+                LIMIT(attr.fg, 0, 255);
+                BUFFCATN(buff_p, "38;5;", 5);
+                BUFFCAT(buff_p, u8_to_s(attr.fg));
+                break;
+            case ATTR_KIND_RGB:
+                r = RGB_32_r(attr.fg);
+                g = RGB_32_g(attr.fg);
+                b = RGB_32_b(attr.fg);
+                BUFFCATN(buff_p, "38;2;", 5);
+                BUFFCAT(buff_p, u8_to_s(r));
+                BUFFCATN(buff_p, ";", 1);
+                BUFFCAT(buff_p, u8_to_s(g));
+                BUFFCATN(buff_p, ";", 1);
+                BUFFCAT(buff_p, u8_to_s(b));
+                break;
         }
+    }
 
-        f16 = attr.fg;
-        b16 = attr.bg;
-
-        if (f16 && b16) {
-            if (attr.flags & ATTR_16_LIGHT_FG) {
-                f16 += 60;
-            }
-            if (attr.flags & ATTR_16_LIGHT_BG) {
-                b16 += 60;
-            }
-            BUFFCAT(buff_p, u8_to_s(10 + b16));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(f16));
-        } else if (f16) {
-            if (attr.flags & ATTR_16_LIGHT_FG) {
-                f16 += 60;
-            }
-            BUFFCAT(buff_p, u8_to_s(f16));
-        } else if (b16) {
-            if (attr.flags & ATTR_16_LIGHT_BG) {
-                b16 += 60;
-            }
-            BUFFCAT(buff_p, u8_to_s(10 + b16));
-        }
-    } else if (attr.flags & ATTR_256) {
-        LIMIT(attr.fg, 0, 255);
-        LIMIT(attr.bg, 0, 255);
-
-        if (attr.fg || attr.bg) {
-            BUFFCATN(buff_p, ";", 1);
-        }
-
-        if (attr.fg && attr.bg) {
-            BUFFCATN(buff_p, "38;5;", 5);
-            BUFFCAT(buff_p, u8_to_s(attr.fg));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCATN(buff_p, "48;5;", 5);
-            BUFFCAT(buff_p, u8_to_s(attr.bg));
-        } else if (attr.fg) {
-            BUFFCATN(buff_p, "38;5;", 5);
-            BUFFCAT(buff_p, u8_to_s(attr.fg));
-        } else if (attr.bg) {
-            BUFFCATN(buff_p, "48;5;", 5);
-            BUFFCAT(buff_p, u8_to_s(attr.bg));
-        }
-    } else if (attr.flags & ATTR_RGB) {
-        if (attr.fg || attr.bg) {
-            BUFFCATN(buff_p, ";", 1);
-        }
-
-        fr = RGB_32_r(attr.fg);
-        fg = RGB_32_g(attr.fg);
-        fb = RGB_32_b(attr.fg);
-        br = RGB_32_r(attr.bg);
-        bg = RGB_32_g(attr.bg);
-        bb = RGB_32_b(attr.bg);
-
-        if (attr.fg && attr.bg) {
-            BUFFCATN(buff_p, "38;2;", 5);
-            BUFFCAT(buff_p, u8_to_s(fr));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(fg));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(fb));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCATN(buff_p, "48;2;", 5);
-            BUFFCAT(buff_p, u8_to_s(br));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(bg));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(bb));
-        } else if (attr.fg) {
-            BUFFCATN(buff_p, "38;2;", 5);
-            BUFFCAT(buff_p, u8_to_s(fr));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(fg));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(fb));
-        } else if (attr.bg) {
-            BUFFCATN(buff_p, "48;2;", 5);
-            BUFFCAT(buff_p, u8_to_s(br));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(bg));
-            BUFFCATN(buff_p, ";", 1);
-            BUFFCAT(buff_p, u8_to_s(bb));
+    if (ATTR_BG_KIND(attr.flags) != ATTR_KIND_NONE) {
+        BUFFCATN(buff_p, ";", 1);
+        switch(ATTR_BG_KIND(attr.flags)) {
+            case ATTR_KIND_16:
+                c16 = attr.bg + 10;
+                if (attr.flags & ATTR_16_LIGHT_BG) { c16 += 60; }
+                BUFFCAT(buff_p, u8_to_s(c16));
+                break;
+            case ATTR_KIND_256:
+                LIMIT(attr.bg, 0, 255);
+                BUFFCATN(buff_p, "48;5;", 5);
+                BUFFCAT(buff_p, u8_to_s(attr.bg));
+                break;
+            case ATTR_KIND_RGB:
+                r = RGB_32_r(attr.bg);
+                g = RGB_32_g(attr.bg);
+                b = RGB_32_b(attr.bg);
+                BUFFCATN(buff_p, "48;2;", 5);
+                BUFFCAT(buff_p, u8_to_s(r));
+                BUFFCATN(buff_p, ";", 1);
+                BUFFCAT(buff_p, u8_to_s(g));
+                BUFFCATN(buff_p, ";", 1);
+                BUFFCAT(buff_p, u8_to_s(b));
+                break;
         }
     }
 
@@ -264,6 +222,7 @@ yed_attrs yed_parse_attrs(const char *string) {
     char      *field_start;
     unsigned   color;
     char       rgb_str[9];
+    int        tmp;
 
 #define WORD_OR_NULL(_idx) \
     (((_idx) >= array_len(words)) ? NULL : *(char**)array_item(words, (_idx)))
@@ -296,13 +255,11 @@ yed_attrs yed_parse_attrs(const char *string) {
                     attrs = ref_attrs;
                 } else {
                     if (strcmp(field_start, "fg") == 0) {
-                        attrs.fg     = ref_attrs.fg;
-                        attrs.flags &= ~(ATTR_16 | ATTR_256 | ATTR_RGB);
-                        attrs.flags |= ref_attrs.flags & (ATTR_16 | ATTR_256 | ATTR_RGB);
+                        ATTR_SET_FG_KIND(attrs.flags, ATTR_FG_KIND(ref_attrs.flags));
+                        attrs.fg = ref_attrs.fg;
                     } else if (strcmp(field_start, "bg") == 0) {
-                        attrs.bg     = ref_attrs.bg;
-                        attrs.flags &= ~(ATTR_16 | ATTR_256 | ATTR_RGB);
-                        attrs.flags |= ref_attrs.flags & (ATTR_16 | ATTR_256 | ATTR_RGB);
+                        ATTR_SET_BG_KIND(attrs.flags, ATTR_BG_KIND(ref_attrs.flags));
+                        attrs.bg = ref_attrs.bg;
                     } else if (strcmp(word, "inverse") == 0) {
                         attrs.flags &= ~(ATTR_INVERSE);
                         attrs.flags |= ref_attrs.flags & ATTR_INVERSE;
@@ -328,26 +285,18 @@ yed_attrs yed_parse_attrs(const char *string) {
 
             if (word[0] == '!') {
                 if (sscanf(word + 1, "%u", &color)) {
-                    attrs.flags |=  ATTR_16;
-                    attrs.flags &= ~ATTR_256;
-                    attrs.flags &= ~ATTR_RGB;
-                    attrs.fg     = ATTR_16_BLACK + color;
+                    ATTR_SET_FG_KIND(attrs.flags, ATTR_KIND_16);
+                    attrs.fg = ATTR_16_BLACK + color;
                 }
             } else if (word[0] == '@') {
                 if (sscanf(word + 1, "%u", &color)) {
-                    attrs.flags &= ~ATTR_16;
-                    attrs.flags |=  ATTR_256;
-                    attrs.flags &= ~ATTR_RGB;
-                    attrs.fg     = color;
+                    ATTR_SET_FG_KIND(attrs.flags, ATTR_KIND_256);
+                    attrs.fg = color;
                 }
             } else {
                 snprintf(rgb_str, sizeof(rgb_str), "0x%s", word);
                 if (sscanf(rgb_str, "%x", &color)) {
-                    if (color != 0) {
-                        attrs.flags &= ~ATTR_16;
-                        attrs.flags &= ~ATTR_256;
-                        attrs.flags |=  ATTR_RGB;
-                    }
+                    ATTR_SET_FG_KIND(attrs.flags, ATTR_KIND_RGB);
                     attrs.fg = color;
                 }
             }
@@ -358,26 +307,18 @@ yed_attrs yed_parse_attrs(const char *string) {
 
             if (word[0] == '!') {
                 if (sscanf(word + 1, "%u", &color)) {
-                    attrs.flags |=  ATTR_16;
-                    attrs.flags &= ~ATTR_256;
-                    attrs.flags &= ~ATTR_RGB;
-                    attrs.bg     = ATTR_16_BLACK + color;
+                    ATTR_SET_BG_KIND(attrs.flags, ATTR_KIND_16);
+                    attrs.bg = ATTR_16_BLACK + color;
                 }
             } else if (word[0] == '@') {
                 if (sscanf(word + 1, "%u", &color)) {
-                    attrs.flags &= ~ATTR_16;
-                    attrs.flags |=  ATTR_256;
-                    attrs.flags &= ~ATTR_RGB;
-                    attrs.bg     = color;
+                    ATTR_SET_BG_KIND(attrs.flags, ATTR_KIND_256);
+                    attrs.bg = color;
                 }
             } else {
                 snprintf(rgb_str, sizeof(rgb_str), "0x%s", word);
                 if (sscanf(rgb_str, "%x", &color)) {
-                    if (color != 0) {
-                        attrs.flags &= ~ATTR_16;
-                        attrs.flags &= ~ATTR_256;
-                        attrs.flags |=  ATTR_RGB;
-                    }
+                    ATTR_SET_FG_KIND(attrs.flags, ATTR_KIND_RGB);
                     attrs.bg = color;
                 }
             }
@@ -408,9 +349,13 @@ yed_attrs yed_parse_attrs(const char *string) {
         } else if (strcmp(word, "no-16-light-bg") == 0) {
             attrs.flags &= ~ATTR_16_LIGHT_BG;
         } else if (strcmp(word, "swap") == 0) {
-            attrs.fg ^= attrs.bg;
-            attrs.bg ^= attrs.fg;
-            attrs.fg ^= attrs.bg;
+            tmp = ATTR_FG_KIND(attrs.flags);
+            ATTR_SET_FG_KIND(attrs.flags, ATTR_BG_KIND(attrs.flags));
+            ATTR_SET_BG_KIND(attrs.flags, tmp);
+
+            tmp = attrs.fg;
+            attrs.fg = attrs.bg;
+            attrs.bg = tmp;
         }
 
         idx += 1;

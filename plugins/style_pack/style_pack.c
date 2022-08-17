@@ -1,11 +1,7 @@
 #define STYLE_PACK
 #include <yed/plugin.h>
 
-#include "styles/lab.c"
-#include "styles/book.c"
-#include "styles/blue.c"
 #include "styles/first.c"
-#include "styles/elise.c"
 #include "styles/nord.c"
 #include "styles/monokai.c"
 #include "styles/gruvbox.c"
@@ -40,11 +36,7 @@
 int yed_plugin_boot(yed_plugin *self) {
     YED_PLUG_VERSION_CHECK();
 
-    PACK_STYLE(self, lab);
-    PACK_STYLE(self, book);
-    PACK_STYLE(self, blue);
     PACK_STYLE(self, first);
-    PACK_STYLE(self, elise);
     PACK_STYLE(self, nord);
     PACK_STYLE(self, monokai);
     PACK_STYLE(self, gruvbox);

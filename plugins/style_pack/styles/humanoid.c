@@ -40,15 +40,15 @@ PACKABLE_STYLE(humanoid) {
               attr_kind;
 
     tc        = !!yed_get_var("truecolor");
-    attr_kind = tc ? ATTR_RGB : ATTR_256;
+    attr_kind = tc ? ATTR_KIND_RGB : ATTR_KIND_256;
 
     memset(&s, 0, sizeof(s));
 
-    s.active.flags        = attr_kind;
+    s.active.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.active.fg           = dark_FG;
     s.active.bg           = dark_BG;
 
-    s.inactive.flags      = attr_kind;
+    s.inactive.flags      = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.inactive.fg         = dark_FG;
     s.inactive.bg         = dark_BG;
 
@@ -57,71 +57,74 @@ PACKABLE_STYLE(humanoid) {
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line.flags   = attr_kind;
+    s.cursor_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.cursor_line.fg      = s.active.fg;
     s.cursor_line.bg      = dark_grey;
 
     s.selection           = s.cursor_line;
 
-/*     s.selection.flags     = attr_kind; */
-/*     s.selection.fg        = s.active.bg; */
-/*     s.selection.bg        = s.active.fg; */
-
-    s.search.flags        = attr_kind;
+    s.search.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.search.fg           = dark_grey;
     s.search.bg           = dark_orange;
 
-    s.search_cursor.flags = attr_kind | ATTR_BOLD;
+    s.search_cursor.flags = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.search_cursor.fg    = s.search.fg;
     s.search_cursor.bg    = s.search.bg;
 
-    s.attention.flags     = attr_kind | ATTR_BOLD;
+    s.attention.flags     = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.attention.fg        = dark_red;
 
-    s.associate.flags     = attr_kind;
+    s.associate.flags     = ATTR_BG_KIND_BITS(attr_kind);
     s.associate.bg        = dark_assoc;
 
     s.command_line        = s.active;
 
-    s.status_line.flags   = attr_kind | ATTR_BOLD;
+    s.status_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.status_line.fg      = dark_FG;
     s.status_line.bg      = dark_grey;
 
     s.active_gutter       = s.active;
     s.inactive_gutter     = s.inactive;
 
-    s.code_comment.flags  = attr_kind | ATTR_BOLD;
+    s.code_comment.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_comment.fg     = both_03;
 
-    s.code_keyword.flags  = attr_kind | ATTR_BOLD;
+    s.code_keyword.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_keyword.fg     = dark_magenta;
 
-    s.code_control_flow.fg = dark_magenta;
-    s.code_typename.fg     = dark_orange;
+    s.code_control_flow.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_control_flow.fg    = dark_magenta;
+    
+    s.code_typename.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_typename.fg    = dark_orange;
 
-    s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
+    s.code_preprocessor.flags = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_preprocessor.fg    = dark_orange;
 
-    s.code_fn_call.flags  = attr_kind;
+    s.code_fn_call.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_fn_call.fg     = dark_blue;
 
-    s.code_number.flags  = attr_kind;
+    s.code_number.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_number.fg     = both_09;
 
     s.code_constant      = s.code_number;
+
+    s.code_string.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_string.fg     = dark_green;
-    s.code_character.fg  = dark_green;
+    
+    s.code_character.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_character.fg    = dark_green;
 
     yed_plugin_set_style(self, "humanoid-dark", &s);
 
 
     memset(&s, 0, sizeof(s));
 
-    s.active.flags        = attr_kind;
+    s.active.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.active.fg           = light_FG;
     s.active.bg           = light_BG;
 
-    s.inactive.flags      = attr_kind;
+    s.inactive.flags      = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.inactive.fg         = light_FG;
     s.inactive.bg         = light_BG;
 
@@ -130,60 +133,63 @@ PACKABLE_STYLE(humanoid) {
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line.flags   = attr_kind;
+    s.cursor_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.cursor_line.fg      = s.active.fg;
     s.cursor_line.bg      = light_grey;
 
     s.selection           = s.cursor_line;
 
-/*     s.selection.flags     = attr_kind; */
-/*     s.selection.fg        = s.active.bg; */
-/*     s.selection.bg        = s.active.fg; */
-
-    s.search.flags        = attr_kind;
+    s.search.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.search.fg           = light_grey;
     s.search.bg           = light_orange;
 
-    s.search_cursor.flags = attr_kind | ATTR_BOLD;
+    s.search_cursor.flags = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.search_cursor.fg    = s.search.fg;
     s.search_cursor.bg    = s.search.bg;
 
-    s.attention.flags     = attr_kind | ATTR_BOLD;
+    s.attention.flags     = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.attention.fg        = light_red;
 
-    s.associate.flags     = attr_kind;
+    s.associate.flags     = ATTR_BG_KIND_BITS(attr_kind);
     s.associate.bg        = light_assoc;
 
     s.command_line        = s.active;
 
-    s.status_line.flags   = attr_kind | ATTR_BOLD;
+    s.status_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.status_line.fg      = light_FG;
     s.status_line.bg      = light_grey;
 
     s.active_gutter       = s.active;
     s.inactive_gutter     = s.inactive;
 
-    s.code_comment.flags  = attr_kind | ATTR_BOLD;
+    s.code_comment.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_comment.fg     = both_03;
 
-    s.code_keyword.flags  = attr_kind | ATTR_BOLD;
+    s.code_keyword.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_keyword.fg     = light_magenta;
 
-    s.code_control_flow.fg = light_magenta;
-    s.code_typename.fg     = light_orange;
+    s.code_control_flow.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_control_flow.fg    = light_magenta;
+    
+    s.code_typename.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_typename.fg    = light_orange;
 
-    s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
+    s.code_preprocessor.flags = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_preprocessor.fg    = light_orange;
 
-    s.code_fn_call.flags  = attr_kind;
+    s.code_fn_call.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_fn_call.fg     = light_blue;
 
-    s.code_number.flags  = attr_kind;
+    s.code_number.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_number.fg     = both_09;
 
     s.code_constant      = s.code_number;
-    s.code_string.fg     = light_green;
-    s.code_character.fg  = light_green;
+
+    s.code_string.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_string.fg    = light_green;
+
+    s.code_character.flags = ATTR_FG_KIND_BITS(attr_kind);
+    s.code_character.fg    = light_green;
 
     yed_plugin_set_style(self, "humanoid-light", &s);
 

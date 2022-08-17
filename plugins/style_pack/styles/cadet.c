@@ -22,15 +22,15 @@ PACKABLE_STYLE(cadet) {
     YED_PLUG_VERSION_CHECK();
 
     tc        = !!yed_get_var("truecolor");
-    attr_kind = tc ? ATTR_RGB : ATTR_256;
+    attr_kind = tc ? ATTR_KIND_RGB : ATTR_KIND_256;
 
     memset(&s, 0, sizeof(s));
 
-    s.active.flags        = attr_kind;
+    s.active.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.active.fg           = white;
     s.active.bg           = dark_blue;
 
-    s.inactive.flags      = attr_kind;
+    s.inactive.flags      = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.inactive.fg         = white;
     s.inactive.bg         = black;
 
@@ -39,58 +39,57 @@ PACKABLE_STYLE(cadet) {
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line.flags   = attr_kind;
+    s.cursor_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.cursor_line.fg      = white;
     s.cursor_line.bg      = grey;
 
-    s.search.flags        = attr_kind;
+    s.search.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.search.fg           = dark_blue;
     s.search.bg           = green;
 
-    s.search_cursor.flags = attr_kind | ATTR_BOLD;
+    s.search_cursor.flags = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.search_cursor.fg    = dark_blue;
     s.search_cursor.bg    = yellow;
 
-    s.selection.flags     = attr_kind;
+    s.selection.flags     = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.selection.fg        = white;
     s.selection.bg        = grey;
 
-    s.attention.flags     = attr_kind | ATTR_BOLD;
+    s.attention.flags     = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.attention.fg        = red;
 
-    s.associate.flags     = attr_kind;
+    s.associate.flags     = ATTR_FG_KIND_BITS(attr_kind);
     s.associate.fg        = orange;
 
     s.command_line        = s.active;
 
-    s.status_line.flags   = attr_kind | ATTR_BOLD;
+    s.status_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.status_line.fg      = black;
     s.status_line.bg      = medium_blue;
 
     s.active_gutter       = s.active;
     s.inactive_gutter     = s.inactive;
 
-    s.code_comment.flags  = attr_kind | ATTR_BOLD;
+    s.code_comment.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_comment.fg     = rust;
 
-    s.code_keyword.flags  = attr_kind | ATTR_BOLD;
+    s.code_keyword.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_keyword.fg     = yellow;
 
-    s.code_control_flow       =
-    s.code_typename           = s.code_keyword;
-
+    s.code_control_flow   =
+    s.code_typename       =
     s.code_preprocessor   = s.code_keyword;
 
-    s.code_fn_call.flags  = attr_kind;
+    s.code_fn_call.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_fn_call.fg     = light_blue;
 
-    s.code_number.flags   = attr_kind;
+    s.code_number.flags   = ATTR_FG_KIND_BITS(attr_kind);
     s.code_number.fg      = medium_blue;
 
-    s.code_constant.flags = attr_kind;
+    s.code_constant.flags = ATTR_FG_KIND_BITS(attr_kind);
     s.code_constant.fg    = medium_blue;
 
-    s.code_string.flags   = attr_kind;
+    s.code_string.flags   = ATTR_FG_KIND_BITS(attr_kind);
     s.code_string.fg      = green;
 
     s.code_character      = s.code_string;

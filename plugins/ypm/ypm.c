@@ -978,7 +978,8 @@ static void draw_list(void) {
                         ((*it).loaded == 1) ? col_2_width+2 : col_2_width, ((*it).loaded == 1) ? "\xE2\x9C\x93" : "X",
                         max_desc_width + 1, (*it).plugin_description == NULL ? "<no description>" : (*it).plugin_description
                 );
-        attr.flags = ATTR_16;
+        ATTR_SET_FG_KIND(attr.flags, ATTR_KIND_16);
+        ATTR_SET_BG_KIND(attr.flags, ATTR_KIND_16);
         attr.fg = ATTR_16_RED;
         attr.bg = ATTR_16_BLACK;
         yed_set_attr(attr);
@@ -1523,13 +1524,14 @@ static void line_handler(yed_event *event) {
                 }
             } else if (table_col == 2 || table_col == 3) {
                 if (strncmp(&git->c, chk, strlen(chk)) == 0) {
-                    attr    = yed_active_style_get_active();
+                    attr = yed_active_style_get_active();
+                    ATTR_SET_BG_KIND(attr.flags, ATTR_KIND_NONE);
                     attr.bg = 0;
-                    if (attr.flags & ATTR_RGB) {
+                    if (ATTR_FG_KIND(attr.flags) == ATTR_KIND_RGB) {
                         attr.fg = RGB_32(0x0, 0x7f, 0x0);
-                    } else if (attr.flags & ATTR_256) {
+                    } else if (ATTR_FG_KIND(attr.flags) == ATTR_KIND_256) {
                         attr.fg = 34;
-                    } else {
+                    } else if (ATTR_FG_KIND(attr.flags) == ATTR_KIND_16) {
                         attr.fg = ATTR_16_GREEN;
                     }
                     yed_combine_attrs(ait, &attr);

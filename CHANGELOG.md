@@ -1,6 +1,6 @@
 # Changelog
 
-## 1500 - 2022-8-10
+## 1500 - 2022-8-12
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
@@ -16,6 +16,7 @@
     - Fixed a bug where the cursor could move while performing a `replace-current-search`, which would cause a crash.
     - Got rid of some compiler warnings.
 ### Changed
+    - `yed` attributes can now have mixed modes for foreground and background. For example, an attribute could define an RGB background, but a 256-color foreground.
     - `frame-resize` and `frame-tree-resize` can now be run non-interactively by passing 2 arguments, width and height (floats [0,1]).
     - The default completion source `words` no longer scans special buffers for words unless the variable `compl-words-include-special` is truthy.
     - `frame` now accepts an index or a name of a frame to activate.

@@ -2,11 +2,8 @@
 
 PACKABLE_STYLE(bold) {
     yed_style s;
-    int       attr_kind;
 
     YED_PLUG_VERSION_CHECK();
-
-    attr_kind = ATTR_256;
 
     memset(&s, 0, sizeof(s));
 
@@ -18,7 +15,8 @@ PACKABLE_STYLE(bold) {
 #define attn        (9)
 #define comm        (102)
 
-    s.active.flags            = attr_kind;
+
+    s.active.flags            = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.active.fg               = forground;
     s.active.bg               = background;
 
@@ -29,57 +27,56 @@ PACKABLE_STYLE(bold) {
 
     s.inactive_border         = s.inactive;
 
-    s.cursor_line.flags       = attr_kind;
+    s.cursor_line.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.cursor_line.fg          = s.active.fg;
     s.cursor_line.bg          = sel;
 
-    s.search.flags            = attr_kind;
+    s.search.flags            = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.search.fg               = s.active.fg;
     s.search.bg               = accent;
 
-    s.search_cursor.flags     = attr_kind | ATTR_BOLD;
+    s.search_cursor.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256) | ATTR_BOLD;
     s.search_cursor.fg        = s.active.bg;
     s.search_cursor.bg        = accent;
 
-    s.selection.flags         = attr_kind;
+    s.selection.flags         = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.selection.fg            = s.active.fg;
     s.selection.bg            = sel;
 
-    s.attention.flags         = attr_kind | ATTR_BOLD;
+    s.attention.flags         = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BOLD;
     s.attention.fg            = attn;
 
-    s.associate.flags         = attr_kind;
+    s.associate.flags         = ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.associate.bg            = assoc;
 
     s.command_line            = s.active;
 
-    s.status_line.flags       = attr_kind | ATTR_BOLD;
+    s.status_line.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256) | ATTR_BOLD;
     s.status_line.fg          = s.active.bg;
     s.status_line.bg          = accent;
 
     s.active_gutter           = s.active;
     s.inactive_gutter         = s.inactive;
 
-    s.code_comment.flags      = attr_kind;
+    s.code_comment.flags      = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_comment.fg         = comm;
 
-    s.code_keyword.flags      = attr_kind | ATTR_BOLD;
+    s.code_keyword.flags      = ATTR_BOLD;
+    s.code_preprocessor.flags = ATTR_BOLD;
 
     s.code_control_flow       =
     s.code_typename           = s.code_keyword;
 
-    s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
-
-    s.code_number.flags       = attr_kind;
+    s.code_number.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_number.fg          = accent;
 
-    s.code_constant.flags     = attr_kind;
+    s.code_constant.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_constant.fg        = accent;
 
-    s.code_string.flags       = attr_kind;
+    s.code_string.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_string.fg          = accent;
 
-    s.code_character.flags    = attr_kind;
+    s.code_character.flags    = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_character.fg       = accent;
 
     yed_plugin_set_style(self, "bold-dark", &s);
@@ -105,7 +102,7 @@ PACKABLE_STYLE(bold) {
 #define comm       (102)
 
 
-    s.active.flags            = attr_kind;
+    s.active.flags            = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.active.fg               = forground;
     s.active.bg               = background;
 
@@ -116,53 +113,56 @@ PACKABLE_STYLE(bold) {
 
     s.inactive_border         = s.inactive;
 
-    s.cursor_line.flags       = attr_kind;
+    s.cursor_line.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.cursor_line.fg          = s.active.fg;
     s.cursor_line.bg          = sel;
 
-    s.search.flags            = attr_kind;
+    s.search.flags            = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.search.fg               = s.active.fg;
     s.search.bg               = accent;
 
-    s.search_cursor.flags     = attr_kind | ATTR_BOLD;
+    s.search_cursor.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256) | ATTR_BOLD;
     s.search_cursor.fg        = s.active.bg;
     s.search_cursor.bg        = accent;
 
-    s.selection.flags         = attr_kind;
+    s.selection.flags         = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.selection.fg            = s.active.fg;
     s.selection.bg            = sel;
 
-    s.attention.flags         = attr_kind | ATTR_BOLD;
+    s.attention.flags         = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BOLD;
     s.attention.fg            = attn;
 
-    s.associate.flags         = attr_kind;
+    s.associate.flags         = ATTR_BG_KIND_BITS(ATTR_KIND_256);
     s.associate.bg            = assoc;
 
     s.command_line            = s.active;
 
-    s.status_line.flags       = attr_kind | ATTR_BOLD;
+    s.status_line.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256) | ATTR_BG_KIND_BITS(ATTR_KIND_256) | ATTR_BOLD;
     s.status_line.fg          = s.active.bg;
     s.status_line.bg          = accent;
 
     s.active_gutter           = s.active;
     s.inactive_gutter         = s.inactive;
 
-    s.code_comment.flags      = attr_kind;
+    s.code_comment.flags      = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_comment.fg         = comm;
 
-    s.code_keyword.flags      = attr_kind | ATTR_BOLD;
-    s.code_preprocessor.flags = attr_kind | ATTR_BOLD;
+    s.code_keyword.flags      = ATTR_BOLD;
+    s.code_preprocessor.flags = ATTR_BOLD;
 
-    s.code_number.flags       = attr_kind;
+    s.code_control_flow       =
+    s.code_typename           = s.code_keyword;
+
+    s.code_number.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_number.fg          = accent;
 
-    s.code_constant.flags     = attr_kind;
+    s.code_constant.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_constant.fg        = accent;
 
-    s.code_string.flags       = attr_kind;
+    s.code_string.flags       = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_string.fg          = accent;
 
-    s.code_character.flags    = attr_kind;
+    s.code_character.flags    = ATTR_FG_KIND_BITS(ATTR_KIND_256);
     s.code_character.fg       = accent;
 
     yed_plugin_set_style(self, "bold-light", &s);
