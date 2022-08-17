@@ -89,10 +89,10 @@ void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
     &&  ATTR_FG_KIND(src->flags) != ATTR_KIND_NONE
     &&     (ATTR_FG_KIND(src->flags) != ATTR_KIND_16
         || !(src->flags & ATTR_16_LIGHT_FG))) {
-            
+
         dst->flags &= ~ATTR_16_LIGHT_FG;
     }
-    
+
     if (ATTR_BG_KIND(dst->flags) == ATTR_KIND_16
     &&  ATTR_BG_KIND(src->flags) != ATTR_KIND_NONE
     &&     (ATTR_BG_KIND(src->flags) != ATTR_KIND_16
@@ -318,7 +318,7 @@ yed_attrs yed_parse_attrs(const char *string) {
             } else {
                 snprintf(rgb_str, sizeof(rgb_str), "0x%s", word);
                 if (sscanf(rgb_str, "%x", &color)) {
-                    ATTR_SET_FG_KIND(attrs.flags, ATTR_KIND_RGB);
+                    ATTR_SET_BG_KIND(attrs.flags, ATTR_KIND_RGB);
                     attrs.bg = color;
                 }
             }
