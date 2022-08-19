@@ -9,12 +9,17 @@ function apath() {
 }
 
 
-while getopts "c:p:" flag
+while getopts "c:p:b:" flag
 do
     case "${flag}" in
         c) cfg_name=${OPTARG};;
         p) prefix=$(apath ${OPTARG});;
-        \?) echo "usage: $0 [-c CONFIG] [-p PREFIX]" && exit 1;;
+        b) TEMP=$(apath ${OPTARG});;
+        \?) echo -e "usage: $0 [-c CONFIG] [-p PREFIX] [-b TEMP]\n";
+            echo    "-c            Use a custom config";
+            echo    "-p            Set a prefix"
+            echo    "-b            Point to a temporary yed install to build a package with";
+            exit 1;;
     esac
 done
 
@@ -25,11 +30,11 @@ fi
 
 source install.options
 
-mkdir -p ${lib_dir} || exit 1
-mkdir -p ${plug_dir} || exit 1
-mkdir -p ${inc_dir}/yed || exit 1
-mkdir -p ${bin_dir} || exit 1
-mkdir -p ${share_dir}/yed || exit 1
+mkdir -p ${DESTDIR}${lib_dir} || exit 1
+mkdir -p ${DESTDIR}${plug_dir} || exit 1
+mkdir -p ${DESTDIR}${inc_dir}/yed || exit 1
+mkdir -p ${DESTDIR}${bin_dir} || exit 1
+mkdir -p ${DESTDIR}${share_dir}/yed || exit 1
 
 if [ -z $cfg_name ]; then
     cfg_name="release"
@@ -92,50 +97,56 @@ export cfg=${cfg}
 
 
 echo "Compiling libyed.so.."
-${CC} src/yed.c -o ${lib_dir}/libyed.so.new ${LIB_C_FLAGS} ${cfg} || exit $?
+${CC} src/yed.c -o ${DESTDIR}${lib_dir}/libyed.so.new ${LIB_C_FLAGS} ${cfg} || exit $?
 
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped libyed.so"
-    strip ${lib_dir}/libyed.so.new
+    strip ${DESTDIR}${lib_dir}/libyed.so.new
 fi
 
 if [ $(uname) = "Darwin" ]; then
-    install_name_tool -id $(apath "${lib_dir}/libyed.so") "${lib_dir}/libyed.so.new"
+    install_name_tool -id $(apath "${DESTDIR}${lib_dir}/libyed.so") "${DESTDIR}${lib_dir}/libyed.so.new"
 fi
 
-mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
-if [ $(uname) = "Darwin" ] && [ -d "${lib_dir}/libyed.so.new.dSYM" ]; then
-    rm -rf "${lib_dir}/libyed.so.dSYM" || exit 1
-    mv "${lib_dir}/libyed.so.new.dSYM" "${lib_dir}/libyed.so.dSYM" || exit 1
-    mv "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so.new" "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so" || exit 1
+mv ${DESTDIR}${lib_dir}/libyed.so.new ${DESTDIR}${lib_dir}/libyed.so || exit 1
+if [ $(uname) = "Darwin" ] && [ -d "${DESTDIR}${lib_dir}/libyed.so.new.dSYM" ]; then
+    rm -rf "${DESTDIR}${lib_dir}/libyed.so.dSYM" || exit 1
+    mv "${DESTDIR}${lib_dir}/libyed.so.new.dSYM" "${DESTDIR}${lib_dir}/libyed.so.dSYM" || exit 1
+    mv "${DESTDIR}${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so.new" "${DESTDIR}${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so" || exit 1
 fi
-echo "Installed 'libyed.so':             ${lib_dir}"
+echo "Installed 'libyed.so':             ${DESTDIR}${lib_dir}"
 
 echo "Creating include directory.."
-cp src/*.h ${inc_dir}/yed || exit 1
-echo "Installed headers:                 ${inc_dir}/yed"
+cp src/*.h ${DESTDIR}${inc_dir}/yed || exit 1
+echo "Installed headers:                 ${DESTDIR}${inc_dir}/yed"
 
 echo "Compiling the driver.."
 
-${CC} src/yed_driver.c src/whereami.c -o ${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
+${CC} src/yed_driver.c src/whereami.c -o ${DESTDIR}${bin_dir}/yed.new ${DRIVER_C_FLAGS} ${cfg} || exit $?
 
 if [ "${strip}x" = "yesx" ]; then
     echo "    stripped yed"
-    strip ${bin_dir}/yed.new
+    strip ${DESTDIR}${bin_dir}/yed.new
 fi
 
-mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
-if [ $(uname) = "Darwin" ] && [ -d "${bin_dir}/yed.new.dSYM" ]; then
-    rm -rf "${bin_dir}/yed.dSYM" || exit 1
-    mv "${bin_dir}/yed.new.dSYM" "${bin_dir}/yed.dSYM" || exit 1
-    mv "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed.new" "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed" || exit 1
+mv ${DESTDIR}${bin_dir}/yed.new ${DESTDIR}${bin_dir}/yed || exit 1
+if [ $(uname) = "Darwin" ] && [ -d "${DESTDIR}${bin_dir}/yed.new.dSYM" ]; then
+    rm -rf "${DESTDIR}${bin_dir}/yed.dSYM" || exit 1
+    mv "${DESTDIR}${bin_dir}/yed.new.dSYM" "${DESTDIR}${bin_dir}/yed.dSYM" || exit 1
+    mv "${DESTDIR}${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed.new" "${DESTDIR}${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed" || exit 1
 fi
-echo "Installed 'yed':                   ${bin_dir}"
+echo "Installed 'yed':                   ${DESTDIR}${bin_dir}"
 
 echo "Creating default configuration.."
-cp -r share/* ${share_dir}/yed
-${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
-echo "Installed share items:             ${share_dir}/yed"
+cp -r share/* ${DESTDIR}${share_dir}/yed
+
+if [ -z "${TEMP}" ]; then
+        ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
+else
+        sed 's|<yed/plugin.h>|"../../src/plugin.h"|' -i share/start/init.c
+        ${CC} share/start/init.c -o ${DESTDIR}${share_dir}/yed/start/init.so $(${TEMP}/bin/yed --print-cflags) $(${TEMP}/bin/yed --print-ldflags) || exit 1
+fi
+echo "Installed share items:             ${DESTDIR}${share_dir}/yed"
 
 echo "Compiling plugins.."
 pids=()
@@ -143,11 +154,16 @@ plugs=()
 
 cd ${DIR}/plugins
 
+if [ -z "${TEMP}" ]; then
+        PATH="${bin_dir}:${PATH}" 
+else
+        PATH="${TEMP}/bin:${PATH}" 
+fi
 for b in $(find . -name "build.sh" | sed "s#^\./##"); do
     cd ${DIR}/plugins/$(dirname $b)
     d=$(dirname $b)
 
-    PATH="${bin_dir}:${PATH}" bash build.sh &
+    bash build.sh &
 
     pids+=($!)
     plugs+=($(dirname $b))
@@ -155,13 +171,13 @@ done
 
 for (( i=0; i<${#pids[*]}; ++i)); do
     wait ${pids[$i]} || exit 1
-    mkdir -p $(dirname ${plug_dir}/${plugs[$i]}) || exit 1
-    mv ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so ${plug_dir}/${plugs[$i]}.so || exit 1
+    mkdir -p $(dirname ${DESTDIR}${plug_dir}/${plugs[$i]}) || exit 1
+    mv ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so ${DESTDIR}${plug_dir}/${plugs[$i]}.so || exit 1
     if [ $(uname) = "Darwin" ] && [ -d ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so.dSYM ]; then
-        if [ -d ${plug_dir}/${plugs[$i]}.so.dSYM ]; then
-            rm -rf ${plug_dir}/${plugs[$i]}.so.dSYM
+        if [ -d ${DESTDIR}${plug_dir}/${plugs[$i]}.so.dSYM ]; then
+            rm -rf ${DESTDIR}${plug_dir}/${plugs[$i]}.so.dSYM
         fi
-        mv ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so.dSYM ${plug_dir}/${plugs[$i]}.so.dSYM
+        mv ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so.dSYM ${DESTDIR}${plug_dir}/${plugs[$i]}.so.dSYM
     fi
 done
-echo "Installed plugins:                 ${plug_dir}"
+echo "Installed plugins:                 ${DESTDIR}${plug_dir}"
