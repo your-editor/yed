@@ -22,6 +22,7 @@
     - `frame` now accepts an index or a name of a frame to activate.
     - `yed` now only ships with the following plugins: `yedrc`, `ypm`, and `style_pack`
     - The default value of `buffer-load-mode` is now `stream`. This is needed to, e.g., open "files" in `/proc`.
+    - `sh`, `sh-silent`, and `less` now use the value of `$SHELL` instead of `bash`. (thanks @euclaise!!!)
 ### Added
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.

@@ -540,6 +540,7 @@ void yed_default_command_sh(int n_args, char **args) {
          cmd_buff[512];
     const char *lazy_space;
     int i;
+    int junk[MAX_SEQ_LEN];
     int sys_ret;
 
     buff[0]     = 0;
@@ -551,7 +552,7 @@ void yed_default_command_sh(int n_args, char **args) {
         strcat(buff, "sh");
     }
 
-    strcat(buff, "sh -c '(");
+    strcat(buff, " -c '(");
 
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
@@ -561,13 +562,16 @@ void yed_default_command_sh(int n_args, char **args) {
     }
 
     strcat(buff, cmd_buff);
-    strcat(buff, "); printf \"\\r\\n[ Hit any key to return to yed. ]\"; read -n 1'; printf \"\\n\\n\"");
+    strcat(buff, "); printf \"\\r\\n[ Hit any key to return to yed. ]\"'");
+
 
     printf(TERM_CLEAR_SCREEN);
     printf(TERM_CURSOR_HOME);
     fflush(stdout);
     sys_ret = system(buff);
     (void)sys_ret;
+
+    while (yed_read_keys(junk) == 0);
     yed_clear_screen();
 }
 
@@ -587,7 +591,7 @@ void yed_default_command_sh_silent(int n_args, char **args) {
         strcat(buff, "sh");
     }
 
-    strcat(buff, "sh -c '(");
+    strcat(buff, " -c '(");
 
     lazy_space = "";
     for (i = 0; i < n_args; i += 1) {
@@ -638,6 +642,7 @@ void yed_default_command_less(int n_args, char **args) {
     printf(TERM_STD_SCREEN);
     fflush(stdout);
     err = system(buff);
+    printf(TERM_ALT_SCREEN);
     yed_clear_screen();
 
     if (err == 0) {
