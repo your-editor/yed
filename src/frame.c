@@ -601,8 +601,34 @@ out:
     return c;
 }
 
+static int _yed_draw_line_set_col_attrs(yed_frame *frame, array_t line_attrs, int col, yed_attrs *attrs) {
+    yed_attrs *ait;
+
+    if (col < 1)                                              { return 0; }
+    if (col <= frame->buffer_x_offset)                        { return 0; }
+    if (col - frame->buffer_x_offset > array_len(line_attrs)) { return 0; }
+
+    ait = array_item(line_attrs, col - frame->buffer_x_offset - 1);
+    memcpy(ait, attrs, sizeof(*ait));
+
+    return 1;
+}
+
+static int _yed_draw_line_combine_col_attrs(yed_frame *frame, array_t line_attrs, int col, yed_attrs *attrs) {
+    yed_attrs *ait;
+
+    if (col < 1)                                              { return 0; }
+    if (col <= frame->buffer_x_offset)                        { return 0; }
+    if (col - frame->buffer_x_offset > array_len(line_attrs)) { return 0; }
+
+    ait = array_item(line_attrs, col - frame->buffer_x_offset - 1);
+    yed_combine_attrs(ait, attrs);
+
+    return 1;
+}
+
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    yed_attrs  cur_attr, base_attr, sel_attr, *attr_it;
+    yed_attrs  cur_attr, base_attr, sel_attr;
     int        col, n_col, first_idx, first_col, width_skip, col_off, width, n_bytes, i, nprint_glyph_pos;
     char       nprint_chars[2] = { '^', '?' };
     char      *bytes, *gutter_bytes;
@@ -651,7 +677,6 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * line_attrs array.
      */
      if (ys->active_frame == frame && frame->buffer->has_selection) {
-        col = 1;
         if (ys->active_style) {
             sel_attr = yed_active_style_get_selection();
         } else {
@@ -659,11 +684,10 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             sel_attr.flags |= ATTR_INVERSE;
         }
 
-        array_traverse(frame->line_attrs, attr_it) {
+        for (col = 1; col <= line->visual_width; col += 1) {
             if (yed_is_in_range(&frame->buffer->selection, row, col)) {
-                yed_combine_attrs(attr_it, &sel_attr);
+                _yed_draw_line_combine_col_attrs(frame, frame->line_attrs, col, &sel_attr);
             }
-            col += 1;
         }
     }
 
@@ -1607,30 +1631,13 @@ yed_attrs * yed_eline_get_col_attrs(struct yed_event_t *event, int col) {
 }
 
 int yed_eline_set_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
-    yed_attrs *ait;
+    if (event->kind != EVENT_LINE_PRE_DRAW) { return 0; }
 
-    if (col < 1)                                                             { return 0; }
-    if (event->kind != EVENT_LINE_PRE_DRAW)                                  { return 0; }
-    if (col <= event->frame->buffer_x_offset)                                { return 0; }
-    if (col - event->frame->buffer_x_offset > array_len(event->eline_attrs)) { return 0; }
-
-    ait = array_item(event->eline_attrs, col - event->frame->buffer_x_offset - 1);
-    memcpy(ait, attrs, sizeof(*ait));
-
-    return 1;
+    return _yed_draw_line_set_col_attrs(event->frame, event->eline_attrs, col, attrs);
 }
 
 int yed_eline_combine_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
-    yed_attrs *ait;
+    if (event->kind != EVENT_LINE_PRE_DRAW) { return 0; }
 
-    if (col < 1)                                                             { return 0; }
-    if (event->kind != EVENT_LINE_PRE_DRAW)                                  { return 0; }
-    if (col <= event->frame->buffer_x_offset)                                { return 0; }
-    if (col - event->frame->buffer_x_offset > array_len(event->eline_attrs)) { return 0; }
-
-    ait = array_item(event->eline_attrs, col - event->frame->buffer_x_offset - 1);
-
-    yed_combine_attrs(ait, attrs);
-
-    return 1;
+    return _yed_draw_line_combine_col_attrs(event->frame, event->eline_attrs, col, attrs);
 }
