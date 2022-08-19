@@ -7,7 +7,7 @@ void yed_init_vars(void) {
 void yed_set_default_vars(void) {
     yed_set_var("tab-width",                 XSTR(DEFAULT_TABW));
     yed_set_var("ctrl-h-is-backspace",       "yes");
-    yed_set_var("buffer-load-mode",          "map");
+    yed_set_var("buffer-load-mode",          "stream");
     yed_set_var("bracketed-paste-mode",      "on");
     yed_set_var("enable-search-cursor-move", "yes");
     yed_set_var("default-scroll-offset",     XSTR(DEFAULT_SCROLL_OFF));
@@ -16,10 +16,11 @@ void yed_set_default_vars(void) {
     yed_set_var("fill-string",               DEFAULT_FILL_STRING);
     yed_set_var("cursor-move-clears-search", "yes");
     yed_set_var("use-boyer-moore",           "no");
-    yed_set_var("status-line-left",           DEFAULT_STATUS_LINE_LEFT);
-    yed_set_var("status-line-center",         DEFAULT_STATUS_LINE_CENTER);
-    yed_set_var("status-line-right",          DEFAULT_STATUS_LINE_RIGHT);
-    yed_set_var("screen-update-sync",         "yes");
+    yed_set_var("status-line-left",          DEFAULT_STATUS_LINE_LEFT);
+    yed_set_var("status-line-center",        DEFAULT_STATUS_LINE_CENTER);
+    yed_set_var("status-line-right",         DEFAULT_STATUS_LINE_RIGHT);
+    yed_set_var("screen-update-sync",        "yes");
+    yed_set_var("syntax-max-line-length",    XSTR(DEFAULT_SYNTAX_MAX_LINE_LENGTH));
 }
 
 void yed_set_var(const char *var, const char *val) {

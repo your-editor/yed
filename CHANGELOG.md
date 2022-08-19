@@ -21,6 +21,7 @@
     - The default completion source `words` no longer scans special buffers for words unless the variable `compl-words-include-special` is truthy.
     - `frame` now accepts an index or a name of a frame to activate.
     - `yed` now only ships with the following plugins: `yedrc`, `ypm`, and `style_pack`
+    - The default value of `buffer-load-mode` is now `stream`. This is needed to, e.g., open "files" in `/proc`.
 ### Added
     - `yed_force_update()`: force an editor pump as soon as possible, bypassing the key press timeout.
     - `yed_frame_set_name()`: set or clear a name for a frame.
@@ -57,6 +58,7 @@
       the feature, but just in case, it can be disabled with the `screen-update-sync` variable.
     - More default command completions.
     - Added SIGABRT to the list of fatal signals that print a backtrace.
+    - For plugins that use `syntax.h`: `syntax-max-line-length` allows the highlighter to skip lines that are very long to avoid hangs on unusual files.
 
 ## 1403 - 2022-5-4
 ### Fixed

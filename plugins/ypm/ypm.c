@@ -1474,29 +1474,22 @@ static void line_handler(yed_event *event) {
     if (event->row <= 11) {
         attr = yed_active_style_get_code_string();
 
-        array_traverse(event->line_attrs, ait) {
+        array_traverse(event->eline_attrs, ait) {
             yed_combine_attrs(ait, &attr);
         }
     } else if (event->row == 13) {
         attr = yed_active_style_get_code_keyword();
 
-        ait = array_item(event->line_attrs, 8 - 1);
-        yed_combine_attrs(ait, &attr);
-
-        ait = array_item(event->line_attrs, 42 - 1);
-        yed_combine_attrs(ait, &attr);
-        ait = array_item(event->line_attrs, 43 - 1);
-        yed_combine_attrs(ait, &attr);
-        ait = array_item(event->line_attrs, 44 - 1);
-        yed_combine_attrs(ait, &attr);
-
-        ait = array_item(event->line_attrs, 57 - 1);
-        yed_combine_attrs(ait, &attr);
+        yed_eline_combine_col_attrs(event, 8,  &attr);
+        yed_eline_combine_col_attrs(event, 42, &attr);
+        yed_eline_combine_col_attrs(event, 43, &attr);
+        yed_eline_combine_col_attrs(event, 44, &attr);
+        yed_eline_combine_col_attrs(event, 57, &attr);
     } else if (event->row == 17) {
         attr = yed_active_style_get_code_keyword();
 
         i = 1;
-        array_traverse(event->line_attrs, ait) {
+        array_traverse(event->eline_attrs, ait) {
             git = yed_buff_get_glyph(buff, event->row, i);
             if (!git) { continue; }
             if (isalpha(git->c)) {
@@ -1511,7 +1504,7 @@ static void line_handler(yed_event *event) {
         table_col = 1;
         i         = 1;
 
-        array_traverse(event->line_attrs, ait) {
+        array_traverse(event->eline_attrs, ait) {
             git = yed_buff_get_glyph(buff, event->row, i);
             if (!git) { continue; }
 

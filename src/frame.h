@@ -3,6 +3,8 @@
 
 #include "frame_tree.h"
 
+struct yed_event_t;
+
 typedef struct yed_frame_t {
     yed_frame_tree     *tree;
     yed_buffer         *buffer;
@@ -78,5 +80,9 @@ int yed_cell_is_in_frame(int row, int col, yed_frame *frame);
 int yed_frame_line_to_y(yed_frame *frame, int row);
 
 int yed_frame_is_tree_root(yed_frame *frame);
+
+yed_attrs * yed_eline_get_col_attrs(struct yed_event_t *event, int col);
+int yed_eline_set_col_attrs(struct yed_event_t *event, int col, yed_attrs *attrs);
+int yed_eline_combine_col_attrs(struct yed_event_t *event, int col, yed_attrs *attrs);
 
 #endif

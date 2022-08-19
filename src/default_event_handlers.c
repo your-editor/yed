@@ -95,11 +95,13 @@ void yed_search_line_handler(yed_event *event) {
                     : &search;
 
         for (i = 0; i < search_width; i += 1) {
-            attr = array_item(event->line_attrs, col + i - 1);
             if (ys->active_style) {
-                yed_combine_attrs(attr, set);
+                yed_eline_combine_col_attrs(event, col + i, set);
             } else {
-                attr->flags ^= ATTR_INVERSE;
+                attr = yed_eline_get_col_attrs(event, col + i);
+                if (attr != NULL) {
+                    attr->flags ^= ATTR_INVERSE;
+                }
             }
         }
 

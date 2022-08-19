@@ -91,7 +91,7 @@ typedef enum {
     N_BUFF_MOD_EVENTS,
 } yed_buff_mod_event;
 
-typedef struct {
+typedef struct yed_event_t {
     yed_event_kind_t            kind;
     yed_frame                  *frame;
     yed_buffer                 *buffer;
@@ -100,7 +100,7 @@ typedef struct {
     union { int                 col;
             int                 new_col; };
     yed_attrs                   row_base_attr;
-    array_t                     line_attrs;
+    array_t                     eline_attrs;
     array_t                     gutter_glyphs;
     array_t                     gutter_attrs;
     const char                 *map;

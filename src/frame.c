@@ -641,7 +641,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * They might be modified later on.
      */
     array_clear(frame->line_attrs);
-    for (col = 1; col <= line->visual_width; col += 1) {
+    for (col = 0; col < frame->width; col += 1) {
         array_push(frame->line_attrs, base_attr);
     }
 
@@ -691,7 +691,7 @@ again_gutter:
     event.frame          = frame;
     event.row            = row;
     event.row_base_attr  = base_attr;
-    event.line_attrs     = frame->line_attrs;
+    event.eline_attrs    = frame->line_attrs;
     event.gutter_glyphs  = frame->gutter_glyphs;
     event.gutter_attrs   = frame->gutter_attrs;
 
@@ -699,7 +699,7 @@ again_gutter:
 
     if (frame->gutter_width != save_gutter_width) { goto again_gutter; }
 
-    frame->line_attrs    = event.line_attrs;
+    frame->line_attrs    = event.eline_attrs;
     frame->gutter_glyphs = event.gutter_glyphs;
     frame->gutter_attrs  = event.gutter_attrs;
 
@@ -772,7 +772,7 @@ again_gutter:
         if (*bytes == '\t') {
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
                 yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
-                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, col_off);
                 yed_set_attr(cur_attr);
                 yed_screen_print_n(" ", 1);
                 col_off += 1;
@@ -784,7 +784,7 @@ again_gutter:
 
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
                 yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
-                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, col_off);
                 yed_set_attr(cur_attr);
                 yed_screen_print_n(nprint_chars + nprint_glyph_pos, 1);
                 col_off          += 1;
@@ -793,7 +793,7 @@ again_gutter:
         } else {
             if (col_off + width <= n_col) {
                 yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
-                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, col_off);
                 yed_set_attr(cur_attr);
                 yed_screen_print_n(bytes, n_bytes);
                 col_off += width;
@@ -1595,4 +1595,42 @@ int yed_frame_is_tree_root(yed_frame *frame) {
     }
 
     return !frame->tree->parent;
+}
+
+yed_attrs * yed_eline_get_col_attrs(struct yed_event_t *event, int col) {
+    if (col < 1)                                                             { return NULL; }
+    if (event->kind != EVENT_LINE_PRE_DRAW)                                  { return NULL; }
+    if (col <= event->frame->buffer_x_offset)                                { return NULL; }
+    if (col - event->frame->buffer_x_offset > array_len(event->eline_attrs)) { return NULL; }
+
+    return array_item(event->eline_attrs, col - event->frame->buffer_x_offset - 1);
+}
+
+int yed_eline_set_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
+    yed_attrs *ait;
+
+    if (col < 1)                                                             { return 0; }
+    if (event->kind != EVENT_LINE_PRE_DRAW)                                  { return 0; }
+    if (col <= event->frame->buffer_x_offset)                                { return 0; }
+    if (col - event->frame->buffer_x_offset > array_len(event->eline_attrs)) { return 0; }
+
+    ait = array_item(event->eline_attrs, col - event->frame->buffer_x_offset - 1);
+    memcpy(ait, attrs, sizeof(*ait));
+
+    return 1;
+}
+
+int yed_eline_combine_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
+    yed_attrs *ait;
+
+    if (col < 1)                                                             { return 0; }
+    if (event->kind != EVENT_LINE_PRE_DRAW)                                  { return 0; }
+    if (col <= event->frame->buffer_x_offset)                                { return 0; }
+    if (col - event->frame->buffer_x_offset > array_len(event->eline_attrs)) { return 0; }
+
+    ait = array_item(event->eline_attrs, col - event->frame->buffer_x_offset - 1);
+
+    yed_combine_attrs(ait, attrs);
+
+    return 1;
 }
