@@ -9,16 +9,15 @@ function apath() {
 }
 
 
-while getopts "c:p:b:" flag
+while getopts "c:p:" flag
 do
     case "${flag}" in
         c) cfg_name=${OPTARG};;
         p) prefix=$(apath ${OPTARG});;
-        b) TEMP=$(apath ${OPTARG});;
         \?) echo -e "usage: $0 [-c CONFIG] [-p PREFIX] [-b TEMP]\n";
-            echo    "-c            Use a custom config";
+            echo    "-c            Set a build config [release, common, debug],";
+            echo    "              'release' is the default"
             echo    "-p            Set a prefix"
-            echo    "-b            Point to a temporary yed install to build a package with";
             exit 1;;
     esac
 done
@@ -94,7 +93,12 @@ fi
 
 export cfg=${cfg}
 
-
+if [ "${cfg}" = "debug" ]; then
+        yed_cflags="-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
+        yed_ldflags="-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
+fi
+yed_cflags+="-std=gnu99 -shared -fPIC -I$(apath ${inc_dir})"
+yed_ldflags+="-rdynamic -shared -fPIC -L$(apath ${lib_dir}) -lyed"
 
 echo "Compiling libyed.so.."
 ${CC} src/yed.c -o ${DESTDIR}${lib_dir}/libyed.so.new ${LIB_C_FLAGS} ${cfg} || exit $?
@@ -139,13 +143,8 @@ echo "Installed 'yed':                   ${DESTDIR}${bin_dir}"
 
 echo "Creating default configuration.."
 cp -r share/* ${DESTDIR}${share_dir}/yed
-
-if [ -z "${TEMP}" ]; then
-        ${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
-else
-        sed 's|<yed/plugin.h>|"../../src/plugin.h"|' -i share/start/init.c
-        ${CC} share/start/init.c -o ${DESTDIR}${share_dir}/yed/start/init.so $(${TEMP}/bin/yed --print-cflags) $(${TEMP}/bin/yed --print-ldflags) || exit 1
-fi
+sed 's|<yed/plugin.h>|"../../src/plugin.h"|' -i share/start/init.c
+${CC} share/start/init.c -o ${DESTDIR}${share_dir}/yed/start/init.so ${yed_cflags} ${yed_ldflags} || exit 1
 echo "Installed share items:             ${DESTDIR}${share_dir}/yed"
 
 echo "Compiling plugins.."
@@ -153,16 +152,15 @@ pids=()
 plugs=()
 
 cd ${DIR}/plugins
+yed_cflags="${yed_cflags//I\//I${DESTDIR}\/}"
+yed_ldflags="${yed_ldflags//L\//L${DESTDIR}\/}"
 
-if [ -z "${TEMP}" ]; then
-        PATH="${bin_dir}:${PATH}" 
-else
-        PATH="${TEMP}/bin:${PATH}" 
-fi
 for b in $(find . -name "build.sh" | sed "s#^\./##"); do
     cd ${DIR}/plugins/$(dirname $b)
     d=$(dirname $b)
 
+    sed 's|$(yed --print-cflags)|'"${yed_cflags}"'|' -i build.sh
+    sed 's|$(yed --print-ldflags)|'"${yed_ldflags}"'|' -i build.sh
     bash build.sh &
 
     pids+=($!)
