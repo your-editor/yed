@@ -6,6 +6,7 @@ void yed_init_vars(void) {
 
 void yed_set_default_vars(void) {
     yed_set_var("tab-width",                 XSTR(DEFAULT_TABW));
+    yed_set_var("cursor-line",               "no");
     yed_set_var("ctrl-h-is-backspace",       "yes");
     yed_set_var("buffer-load-mode",          "stream");
     yed_set_var("bracketed-paste-mode",      "on");
