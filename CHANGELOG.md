@@ -60,6 +60,7 @@
     - More default command completions.
     - Added SIGABRT to the list of fatal signals that print a backtrace.
     - For plugins that use `syntax.h`: `syntax-max-line-length` allows the highlighter to skip lines that are very long to avoid hangs on unusual files.
+    - Added the ability to change the installation paths of binaries after they're built. This should make it much more possible for package managers to build yed somewhere safe and then move the installation.
 
 ## 1403 - 2022-5-4
 ### Fixed
