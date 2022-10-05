@@ -91,13 +91,13 @@ static int parse_options(int argc, char **argv) {
                 printf("%d\n", YED_MAJOR_VERSION);
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
-                printf("%s\n", INSTALLED_LIB_DIR);
+                printf("%s\n", installed_lib_dir());
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-include-dir") == 0) {
-                printf("%s\n", INSTALLED_INCLUDE_DIR);
+                printf("%s\n", installed_include_dir());
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-default-plugin-dir") == 0) {
-                printf("%s\n", DEFAULT_PLUG_DIR);
+                printf("%s\n", default_plug_dir());
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-config-dir") == 0) {
                 printf("%s\n", get_config_path());
@@ -107,7 +107,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-std=gnu99 -shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                "-std=gnu99 -shared -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-cppflags") == 0) {
@@ -115,7 +115,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                "-shared -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
@@ -123,7 +123,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-rdynamic -shared -fPIC -L%s -lyed\n", INSTALLED_LIB_DIR);
+                "-rdynamic -shared -fPIC -L%s -lyed\n", installed_lib_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--instrument") == 0) {

@@ -257,6 +257,7 @@ int s_to_i(const char *s) {
 
 const char *u8_to_s(u8 u) { return _u8_to_s[u]; }
 
+#include "install.c"
 #include "array.c"
 #include "bucket_array.c"
 #include "term.c"

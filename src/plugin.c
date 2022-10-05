@@ -234,7 +234,7 @@ LOG_FN_ENTER();
     snprintf(buff, sizeof(buff),
              "(mkdir -p %s "
              "&& find %s/yed/start/* -maxdepth 1 -type f -exec cp {} %s/. \\; ) 2>&1",
-             get_config_path(), INSTALLED_SHARE_DIR, get_config_path());
+             get_config_path(), installed_share_dir(), get_config_path());
 
     output = yed_run_subproc(buff, &output_len, &status);
 
@@ -301,10 +301,10 @@ void yed_init_plugins(void) {
     ys->plugin_dirs = array_make(char*);
     ys->plugins     = tree_make(yed_plugin_name_t, yed_plugin_ptr_t);
 
-    if (strlen(DEFAULT_PLUG_DIR)) {
+    if (strlen(default_plug_dir())) {
         LOG_FN_ENTER();
-        yed_log("adding default plugin directory '%s'", DEFAULT_PLUG_DIR);
-        yed_add_plugin_dir(DEFAULT_PLUG_DIR);
+        yed_log("adding default plugin directory '%s'", default_plug_dir());
+        yed_add_plugin_dir(default_plug_dir());
         LOG_EXIT();
     }
 

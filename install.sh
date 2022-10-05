@@ -25,11 +25,11 @@ fi
 
 source install.options
 
-mkdir -p ${lib_dir} || exit 1
-mkdir -p ${plug_dir} || exit 1
-mkdir -p ${inc_dir}/yed || exit 1
-mkdir -p ${bin_dir} || exit 1
-mkdir -p ${share_dir}/yed || exit 1
+mkdir -p ${lib_dir}       || exit $?
+mkdir -p ${plug_dir}      || exit $?
+mkdir -p ${inc_dir}/yed   || exit $?
+mkdir -p ${bin_dir}       || exit $?
+mkdir -p ${share_dir}/yed || exit $?
 
 if [ -z $cfg_name ]; then
     cfg_name="release"
@@ -103,16 +103,16 @@ if [ $(uname) = "Darwin" ]; then
     install_name_tool -id $(apath "${lib_dir}/libyed.so") "${lib_dir}/libyed.so.new"
 fi
 
-mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit 1
+mv ${lib_dir}/libyed.so.new ${lib_dir}/libyed.so || exit $?
 if [ $(uname) = "Darwin" ] && [ -d "${lib_dir}/libyed.so.new.dSYM" ]; then
-    rm -rf "${lib_dir}/libyed.so.dSYM" || exit 1
-    mv "${lib_dir}/libyed.so.new.dSYM" "${lib_dir}/libyed.so.dSYM" || exit 1
-    mv "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so.new" "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so" || exit 1
+    rm -rf "${lib_dir}/libyed.so.dSYM" || exit $?
+    mv "${lib_dir}/libyed.so.new.dSYM" "${lib_dir}/libyed.so.dSYM" || exit $?
+    mv "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so.new" "${lib_dir}/libyed.so.dSYM/Contents/Resources/DWARF/libyed.so" || exit $?
 fi
 echo "Installed 'libyed.so':             ${lib_dir}"
 
 echo "Creating include directory.."
-cp src/*.h ${inc_dir}/yed || exit 1
+cp src/*.h ${inc_dir}/yed || exit $?
 echo "Installed headers:                 ${inc_dir}/yed"
 
 echo "Compiling the driver.."
@@ -124,17 +124,17 @@ if [ "${strip}x" = "yesx" ]; then
     strip ${bin_dir}/yed.new
 fi
 
-mv ${bin_dir}/yed.new ${bin_dir}/yed || exit 1
+mv ${bin_dir}/yed.new ${bin_dir}/yed || exit $?
 if [ $(uname) = "Darwin" ] && [ -d "${bin_dir}/yed.new.dSYM" ]; then
-    rm -rf "${bin_dir}/yed.dSYM" || exit 1
-    mv "${bin_dir}/yed.new.dSYM" "${bin_dir}/yed.dSYM" || exit 1
-    mv "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed.new" "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed" || exit 1
+    rm -rf "${bin_dir}/yed.dSYM" || exit $?
+    mv "${bin_dir}/yed.new.dSYM" "${bin_dir}/yed.dSYM" || exit $?
+    mv "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed.new" "${bin_dir}/yed.dSYM/Contents/Resources/DWARF/yed" || exit $?
 fi
 echo "Installed 'yed':                   ${bin_dir}"
 
 echo "Creating default configuration.."
 cp -r share/* ${share_dir}/yed
-${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit 1
+${CC} ${share_dir}/yed/start/init.c -o ${share_dir}/yed/start/init.so $(${bin_dir}/yed --print-cflags) $(${bin_dir}/yed --print-ldflags) || exit $?
 echo "Installed share items:             ${share_dir}/yed"
 
 echo "Compiling plugins.."
@@ -154,9 +154,9 @@ for b in $(find . -name "build.sh" | sed "s#^\./##"); do
 done
 
 for (( i=0; i<${#pids[*]}; ++i)); do
-    wait ${pids[$i]} || exit 1
-    mkdir -p $(dirname ${plug_dir}/${plugs[$i]}) || exit 1
-    mv ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so ${plug_dir}/${plugs[$i]}.so || exit 1
+    wait ${pids[$i]} || exit $?
+    mkdir -p $(dirname ${plug_dir}/${plugs[$i]}) || exit $?
+    mv ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so ${plug_dir}/${plugs[$i]}.so || exit $?
     if [ $(uname) = "Darwin" ] && [ -d ${DIR}/plugins/${plugs[$i]}/$(basename ${plugs[$i]}).so.dSYM ]; then
         if [ -d ${plug_dir}/${plugs[$i]}.so.dSYM ]; then
             rm -rf ${plug_dir}/${plugs[$i]}.so.dSYM

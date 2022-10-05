@@ -6,6 +6,8 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+#include "install.c"
+
 char lib_path[4096];
 
 static yed_lib_t           yed_lib;
@@ -30,11 +32,11 @@ int main(int argc, char **argv) {
 #endif
 
     if (getenv("_YED_DRIVER_CHLD") == NULL) {
-        if (strlen(INSTALLED_LIB_DIR)) {
+        if (strlen(installed_lib_dir())) {
             ld_lib_path      = getenv(LIB_PATH_ENV_VAR);
-            new_ld_lib_path  = malloc((ld_lib_path ? strlen(ld_lib_path) : 0) + 1 + strlen(INSTALLED_LIB_DIR) + 1);
+            new_ld_lib_path  = malloc((ld_lib_path ? strlen(ld_lib_path) : 0) + 1 + strlen(installed_lib_dir()) + 1);
             *new_ld_lib_path = 0;
-            strcat(new_ld_lib_path, INSTALLED_LIB_DIR);
+            strcat(new_ld_lib_path, installed_lib_dir());
             if (ld_lib_path != NULL) {
                 strcat(new_ld_lib_path, ":");
                 strcat(new_ld_lib_path, ld_lib_path);
@@ -55,8 +57,8 @@ int main(int argc, char **argv) {
             return 1;
         }
     } else {
-        if (strlen(INSTALLED_LIB_DIR)) {
-            strcat(lib_path, INSTALLED_LIB_DIR);
+        if (strlen(installed_lib_dir())) {
+            strcat(lib_path, installed_lib_dir());
             strcat(lib_path, "/");
         }
         strcat(lib_path, "libyed.so");
