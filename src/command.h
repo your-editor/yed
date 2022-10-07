@@ -6,12 +6,12 @@
 
 void yed_init_commands(void);
 
-yed_command yed_get_command(char *name);
-void yed_set_command(char *name, yed_command command);
-void yed_unset_command(char *name);
+yed_command yed_get_command(const char *name);
+void yed_set_command(const char *name, yed_command command);
+void yed_unset_command(const char *name);
 
-void yed_set_default_command(char *name, yed_command command);
-yed_command yed_get_default_command(char *name);
+void yed_set_default_command(const char *name, yed_command command);
+yed_command yed_get_default_command(const char *name);
 void yed_set_default_commands(void);
 
 void yed_clear_cmd_buff(void);
@@ -22,8 +22,8 @@ void yed_cmd_buff_delete(int idx);
 void yed_append_text_to_cmd_buff(const char *s);
 void yed_append_int_to_cmd_buff(int i);
 
-void yed_cprint(char *fmt, ...);
-void yed_cerr(char *fmt, ...);
+void yed_cprint(const char *fmt, ...);
+void yed_cerr(const char *fmt, ...);
 void yed_cprint_clear(void);
 
 void yed_draw_command_line(void);
@@ -32,7 +32,7 @@ void yed_command_take_key(int key);
 
 int yed_execute_command_from_split(array_t split);
 int yed_execute_command(char* name, int, char**);
-void yed_add_command(char *name, yed_command cmd);
+void yed_add_command(const char *name, yed_command cmd);
 
 #define DEF_DEFAULT_COMMAND(name) \
     void yed_default_command_##name(int, char**)
@@ -48,7 +48,6 @@ DEF_DEFAULT_COMMAND(unset);
 DEF_DEFAULT_COMMAND(toggle_var);
 DEF_DEFAULT_COMMAND(sh);
 DEF_DEFAULT_COMMAND(sh_silent);
-DEF_DEFAULT_COMMAND(buff_sh);
 DEF_DEFAULT_COMMAND(less);
 DEF_DEFAULT_COMMAND(echo);
 DEF_DEFAULT_COMMAND(cursor_move);
@@ -69,6 +68,7 @@ DEF_DEFAULT_COMMAND(cursor_buffer_end);
 DEF_DEFAULT_COMMAND(cursor_line);
 DEF_DEFAULT_COMMAND(word_under_cursor);
 DEF_DEFAULT_COMMAND(buffer);
+DEF_DEFAULT_COMMAND(buffer_hidden);
 DEF_DEFAULT_COMMAND(buffer_delete);
 DEF_DEFAULT_COMMAND(buffer_next);
 DEF_DEFAULT_COMMAND(buffer_prev);
@@ -82,10 +82,17 @@ DEF_DEFAULT_COMMAND(frame_vsplit);
 DEF_DEFAULT_COMMAND(frame_hsplit);
 DEF_DEFAULT_COMMAND(frame_next);
 DEF_DEFAULT_COMMAND(frame_prev);
+DEF_DEFAULT_COMMAND(frame_tree_next);
+DEF_DEFAULT_COMMAND(frame_tree_prev);
 DEF_DEFAULT_COMMAND(frame_move);
+DEF_DEFAULT_COMMAND(frame_set_position);
 DEF_DEFAULT_COMMAND(frame_resize);
 DEF_DEFAULT_COMMAND(frame_tree_resize);
+DEF_DEFAULT_COMMAND(frame_set_size);
+DEF_DEFAULT_COMMAND(frame_tree_set_size);
 DEF_DEFAULT_COMMAND(frame);
+DEF_DEFAULT_COMMAND(frame_name);
+DEF_DEFAULT_COMMAND(frame_unname);
 DEF_DEFAULT_COMMAND(insert);
 DEF_DEFAULT_COMMAND(simple_insert_string);
 DEF_DEFAULT_COMMAND(delete_back);
@@ -131,5 +138,6 @@ DEF_DEFAULT_COMMAND(feed_keys);
 DEF_DEFAULT_COMMAND(alias);
 DEF_DEFAULT_COMMAND(unalias);
 DEF_DEFAULT_COMMAND(repeat);
+DEF_DEFAULT_COMMAND(open_command_line_buffers);
 
 #endif

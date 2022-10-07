@@ -234,7 +234,7 @@ LOG_FN_ENTER();
     snprintf(buff, sizeof(buff),
              "(mkdir -p %s "
              "&& find %s/yed/start/* -maxdepth 1 -type f -exec cp {} %s/. \\; ) 2>&1",
-             get_config_path(), INSTALLED_SHARE_DIR, get_config_path());
+             get_config_path(), installed_share_dir(), get_config_path());
 
     output = yed_run_subproc(buff, &output_len, &status);
 
@@ -301,10 +301,10 @@ void yed_init_plugins(void) {
     ys->plugin_dirs = array_make(char*);
     ys->plugins     = tree_make(yed_plugin_name_t, yed_plugin_ptr_t);
 
-    if (strlen(DEFAULT_PLUG_DIR)) {
+    if (strlen(default_plug_dir())) {
         LOG_FN_ENTER();
-        yed_log("adding default plugin directory '%s'", DEFAULT_PLUG_DIR);
-        yed_add_plugin_dir(DEFAULT_PLUG_DIR);
+        yed_log("adding default plugin directory '%s'", default_plug_dir());
+        yed_add_plugin_dir(default_plug_dir());
         LOG_EXIT();
     }
 
@@ -366,6 +366,7 @@ int yed_load_plugin(char *plug_name) {
 
     plug->path                 = strdup(path_buff);
     plug->added_cmds           = array_make(char*);
+    plug->added_maps           = array_make(char*);
     plug->acquired_keys        = array_make(int);
     plug->added_bindings       = array_make(int);
     plug->added_key_sequences  = array_make(int);
@@ -419,7 +420,7 @@ do {                                          \
 void yed_plugin_uninstall_features(yed_plugin *plug) {
     tree_it(yed_command_name_t,
             yed_command)             cmd_it;
-    char                           **cmd_name_it, **style_name_it, **ft_name_it;
+    char                           **cmd_name_it, **map_name_it, **style_name_it, **ft_name_it;
     int                             *key_it;
     yed_event_handler               *handler_it;
     tree_it(yed_completion_name_t,
@@ -436,6 +437,11 @@ void yed_plugin_uninstall_features(yed_plugin *plug) {
         }
     }
     FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_cmds);
+
+    array_traverse(plug->added_maps, map_name_it) {
+        yed_remove_key_map(*map_name_it);
+    }
+    FREE_AND_ZERO_PLUGIN_STRING_ARRAY(plug->added_maps);
 
     array_traverse(plug->acquired_keys, key_it) {
         yed_release_virt_key(*key_it);
@@ -606,13 +612,22 @@ int yed_reload_plugins(void) {
     return 0;
 }
 
-void yed_plugin_set_command(yed_plugin *plug, char *name, yed_command command) {
+void yed_plugin_set_command(yed_plugin *plug, const char *name, yed_command command) {
     char *name_dup;
 
     yed_set_command(name, command);
 
     name_dup = strdup(name);
     array_push(plug->added_cmds, name_dup);
+}
+
+void yed_plugin_add_key_map(yed_plugin *plug, const char *mapname) {
+    char *name_dup;
+
+    yed_add_key_map(mapname);
+
+    name_dup = strdup(mapname);
+    array_push(plug->added_maps, name_dup);
 }
 
 int yed_plugin_acquire_virt_key(yed_plugin *plug) {
@@ -625,15 +640,27 @@ int yed_plugin_acquire_virt_key(yed_plugin *plug) {
     return key;
 }
 
-void yed_plugin_bind_key(yed_plugin *plug, int key, char *cmd_name, int n_args, char **args) {
+void yed_plugin_bind_key(yed_plugin *plug, int key, const char *cmd_name, int n_args, char **args) {
     yed_key_binding binding;
 
     binding.key    = key;
-    binding.cmd    = cmd_name;
+    binding.cmd    = (char*)cmd_name;
     binding.n_args = n_args;
     binding.args   = args;
 
     yed_bind_key(binding);
+    array_push(plug->added_bindings, key);
+}
+
+void yed_plugin_map_bind_key(yed_plugin *plug, const char *mapname, int key, const char *cmd_name, int n_args, char **args) {
+    yed_key_binding binding;
+
+    binding.key    = key;
+    binding.cmd    = (char*)cmd_name;
+    binding.n_args = n_args;
+    binding.args   = args;
+
+    yed_map_bind_key(mapname, binding);
     array_push(plug->added_bindings, key);
 }
 
@@ -667,7 +694,7 @@ void yed_plugin_add_event_handler(yed_plugin *plug, yed_event_handler handler) {
     yed_add_event_handler(handler);
 }
 
-void yed_plugin_set_style(yed_plugin *plug, char *name, yed_style *style) {
+void yed_plugin_set_style(yed_plugin *plug, const char *name, yed_style *style) {
     char *name_dup;
 
     yed_set_style(name, style);
@@ -712,10 +739,10 @@ void yed_add_plugin_dir(const char *s) {
     array_insert(ys->plugin_dirs, 0, s_dup);
 }
 
-void yed_plugin_set_completion(yed_plugin *plug, char *name, yed_completion comp) {
+void yed_plugin_set_completion(yed_plugin *plug, const char *name, yed_completion comp) {
     char *name_dup;
 
-    yed_set_completion(name, comp);
+    yed_set_completion((char*)name, comp);
     name_dup = strdup(name);
     array_push(plug->added_compls, name_dup);
 }

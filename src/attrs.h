@@ -1,15 +1,37 @@
 #ifndef __ATTRS_H__
 #define __ATTRS_H__
 
-#define ATTR_NORMAL      (0x0)
-#define ATTR_INVERSE     (0x1)
-#define ATTR_BOLD        (0x2)
-#define ATTR_UNDERLINE   (0x4)
-#define ATTR_16_LIGHT_FG (0x8)
-#define ATTR_16_LIGHT_BG (0x10)
-#define ATTR_16          (0x20)
-#define ATTR_256         (0x40)
-#define ATTR_RGB         (0x80)
+#define ATTR_KIND_NONE         (0x0)
+#define ATTR_KIND_16           (0x1)
+#define ATTR_KIND_256          (0x2)
+#define ATTR_KIND_RGB          (0x3)
+#define ATTR_FG_KIND_MASK      (0x3)
+#define ATTR_BG_KIND_MASK      (0xc)
+#define ATTR_FG_KIND_SHIFT     (0)
+#define ATTR_BG_KIND_SHIFT     (2)
+#define ATTR_FG_KIND(a)        (((a) & ATTR_FG_KIND_MASK) >> ATTR_FG_KIND_SHIFT)
+#define ATTR_BG_KIND(a)        (((a) & ATTR_BG_KIND_MASK) >> ATTR_BG_KIND_SHIFT)
+#define ATTR_FG_KIND_BITS(k)   (((k) & 0x3) << ATTR_FG_KIND_SHIFT)
+#define ATTR_BG_KIND_BITS(k)   (((k) & 0x3) << ATTR_BG_KIND_SHIFT)
+
+#define ATTR_SET_FG_KIND(a, k)        \
+do {                                  \
+    (a) &= ~ATTR_FG_KIND_MASK;        \
+    (a) |= (k) << ATTR_FG_KIND_SHIFT; \
+} while (0)
+
+#define ATTR_SET_BG_KIND(a, k)        \
+do {                                  \
+    (a) &= ~ATTR_BG_KIND_MASK;        \
+    (a) |= (k) << ATTR_BG_KIND_SHIFT; \
+} while (0)
+
+#define ATTR_NORMAL      (0x0  << 4)
+#define ATTR_INVERSE     (0x1  << 4)
+#define ATTR_BOLD        (0x2  << 4)
+#define ATTR_UNDERLINE   (0x4  << 4)
+#define ATTR_16_LIGHT_FG (0x8  << 4)
+#define ATTR_16_LIGHT_BG (0x10 << 4)
 
 #define ATTR_16_BLACK      (30)
 #define ATTR_16_RED        (31)

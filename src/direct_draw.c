@@ -4,7 +4,7 @@ void yed_init_direct_draw(void) {
     ys->direct_draws = array_make(yed_direct_draw_t*);
 }
 
-static yed_direct_draw_t * _yed_make_direct_draw(int row, int col, char *string) {
+static yed_direct_draw_t * _yed_make_direct_draw(int row, int col, const char *string) {
     yed_direct_draw_t *dd;
     int                n_glyphs;
     int                width;
@@ -28,7 +28,7 @@ static yed_direct_draw_t * _yed_make_direct_draw(int row, int col, char *string)
     return dd;
 }
 
-yed_direct_draw_t * yed_direct_draw(int row, int col, yed_attrs attrs, char *string) {
+yed_direct_draw_t * yed_direct_draw(int row, int col, yed_attrs attrs, const char *string) {
     yed_direct_draw_t *dd;
 
     dd        = _yed_make_direct_draw(row, col, string);
@@ -38,7 +38,7 @@ yed_direct_draw_t * yed_direct_draw(int row, int col, yed_attrs attrs, char *str
     return dd;
 }
 
-yed_direct_draw_t * yed_direct_draw_style(int row, int col, int scomp, char *string) {
+yed_direct_draw_t * yed_direct_draw_style(int row, int col, int scomp, const char *string) {
     yed_direct_draw_t *dd;
 
     dd        = _yed_make_direct_draw(row, col, string);

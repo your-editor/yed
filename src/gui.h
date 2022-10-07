@@ -30,13 +30,13 @@ static inline int        yed_gui_find_width(array_t strings);
 static inline void       yed_gui_init_list_menu(yed_gui_list_menu *menu, array_t strings);
 static inline void      _yed_gui_draw_list_menu(yed_gui_list_menu *menu);
 static inline int       _yed_gui_key_pressed_list_menu(yed_event *event, yed_gui_list_menu *menu);
-static inline void      _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_list_menu *menu);
+static inline int       _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_list_menu *menu);
 static inline void      _yed_gui_kill_list_menu(yed_gui_list_menu *menu);
 
 /* Base Functions */
 static inline void       yed_gui_draw(void *base);
 static inline int        yed_gui_key_pressed(yed_event *event, void *base);
-static inline void       yed_gui_mouse_pressed(yed_event *event, void *base);
+static inline int        yed_gui_mouse_pressed(yed_event *event, void *base);
 static inline void       yed_gui_kill(void *base);
 
 
@@ -162,7 +162,7 @@ static inline int _yed_gui_key_pressed_list_menu(yed_event *event, yed_gui_list_
     return 0;
 }
 
-static inline void _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_list_menu *menu) {
+static inline int _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_list_menu *menu) {
     int key;
 
     if (IS_MOUSE(event->key)) {
@@ -174,9 +174,9 @@ static inline void _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_li
                     (MOUSE_COL(event->key) >=  menu->base.left)                  &&
                     (MOUSE_COL(event->key) <= (menu->base.left + menu->max_width))) {
                         menu->selection = (MOUSE_ROW(event->key) - menu->base.top - 1);
-                        yed_gui_draw(menu);
-                        key = ENTER;
-                        yed_feed_keys(1, &key);
+                        event->cancel = 1;
+                        yed_gui_kill(menu);
+                        if (menu->selection >= 0) { return 1; }
                     } else {
                         yed_gui_kill(menu);
                     }
@@ -205,6 +205,8 @@ static inline void _yed_gui_mouse_pressed_list_menu(yed_event *event, yed_gui_li
             }
         }
     }
+
+    return 0;
 }
 
 /* Specialized Kill Functions */
@@ -239,13 +241,14 @@ static inline int yed_gui_key_pressed(yed_event *event, void* base) {
     return 0;
 }
 
-static inline void yed_gui_mouse_pressed(yed_event *event, void* base) {
+static inline int yed_gui_mouse_pressed(yed_event *event, void* base) {
     switch(((_yed_gui_base*)base)->kind) {
         case LIST_MENU:;
-            _yed_gui_mouse_pressed_list_menu(event, base);
+            return _yed_gui_mouse_pressed_list_menu(event, base);
             break;
         default:;
     }
+    return 0;
 }
 
 static inline void yed_gui_draw(void *base) {

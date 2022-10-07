@@ -7,6 +7,8 @@ void yed_init_buffers(void) {
     yed_get_log_buffer();
     yed_get_bindings_buffer();
     yed_get_vars_buffer();
+
+    LOG_EXIT();
 }
 
 yed_line yed_new_line(void) {
@@ -102,6 +104,12 @@ void yed_line_pop_glyph(yed_line *line) {
     line->n_glyphs     -= 1;
 }
 
+void yed_clear_line(yed_line *line) {
+    array_clear(line->chars);
+    line->visual_width = 0;
+    line->n_glyphs     = 0;
+}
+
 static int yed_buffer_add_line_no_undo_no_events(yed_buffer *buff) {
     u32      n_lines;
     yed_line new_line;
@@ -141,6 +149,7 @@ yed_buffer yed_new_buff(void) {
 yed_buffer *yed_create_buffer(char *name) {
     yed_buffer                                   *buff;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
+    yed_event                                     event;
 
     it = tree_lookup(ys->buffers, name);
 
@@ -154,6 +163,11 @@ yed_buffer *yed_create_buffer(char *name) {
     buff->name = strdup(name);
 
     tree_insert(ys->buffers, strdup(name), buff);
+
+    memset(&event, 0, sizeof(event));
+    event.kind   = EVENT_BUFFER_CREATED;
+    event.buffer = buff;
+    yed_trigger_event(&event);
 
     return buff;
 }
@@ -234,6 +248,10 @@ void yed_free_buffer(yed_buffer *buffer) {
     yed_free_undo_history(&buffer->undo_history);
 
     free(buffer);
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_BUFFER_POST_DELETE;
+    yed_trigger_event(&event);
 }
 
 
@@ -261,7 +279,7 @@ yed_buffer *yed_get_bindings_buffer(void) {
 void yed_update_bindings_buffer(void) {
     yed_buffer                          *bind_buff;
     int                                  row;
-    int                                  key;
+    yed_key_map_list                    *list;
     yed_key_binding                     *binding;
     char                                *key_str;
     int                                  i;
@@ -275,45 +293,30 @@ void yed_update_bindings_buffer(void) {
     yed_buff_clear_no_undo(bind_buff);
 
     row = 1;
-    for (key = 0; key < REAL_KEY_MAX; key += 1) {
-        binding = ys->real_key_map[key];
-        if (binding == NULL) { continue; }
-
-        key_str = yed_keys_to_string(1, &key);
-        if (key_str == NULL) { continue; }
-
-        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
-        free(key_str);
-
-        for (i = 0; i < binding->n_args; i += 1) {
-            strcat(line_buff, " \"");
-            strcat(line_buff, binding->args[i]);
-            strcat(line_buff, "\"");
-        }
-
+    for (list = ys->keymap_list; list != NULL; list = list->next) {
+        snprintf(line_buff, sizeof(line_buff), "%s%s:", list->map->name, list->map->enabled ? "" : "(disabled)");
         yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
-
         row += 1;
-    }
 
-    tree_traverse(ys->vkey_binding_map, it) {
-        binding = tree_it_val(it);
+        tree_traverse(list->map->binding_map, it) {
+            binding = tree_it_val(it);
 
-        key_str = yed_keys_to_string(1, &binding->key);
-        if (key_str == NULL) { continue; }
+            key_str = yed_keys_to_string(1, &binding->key);
+            if (key_str == NULL) { continue; }
 
-        snprintf(line_buff, sizeof(line_buff), "%-32s %s", key_str, binding->cmd);
-        free(key_str);
+            snprintf(line_buff, sizeof(line_buff), "  %-32s %s", key_str, binding->cmd);
+            free(key_str);
 
-        for (i = 0; i < binding->n_args; i += 1) {
-            strcat(line_buff, " '");
-            strcat(line_buff, binding->args[i]);
-            strcat(line_buff, "'");
+            for (i = 0; i < binding->n_args; i += 1) {
+                strcat(line_buff, " '");
+                strcat(line_buff, binding->args[i]);
+                strcat(line_buff, "'");
+            }
+
+            yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
+
+            row += 1;
         }
-
-        yed_buff_insert_string_no_undo(bind_buff, line_buff, row, 1);
-
-        row += 1;
     }
 
     bind_buff->flags |= BUFF_RD_ONLY;
@@ -331,6 +334,7 @@ void yed_update_vars_buffer(void) {
     tree_it(yed_var_name_t, yed_var_val_t)  vit;
     char                                    line_buff[1024];
     int                                     row;
+    int                                     i;
 
     vars_buff = yed_get_vars_buffer();
 
@@ -347,6 +351,9 @@ void yed_update_vars_buffer(void) {
     tree_traverse(ys->vars, vit) {
         snprintf(line_buff, sizeof(line_buff), "%-*s = %s", max_width, tree_it_key(vit), tree_it_val(vit));
         yed_buff_insert_string_no_undo(vars_buff, line_buff, row, 1);
+        for (i = 0; i < strlen(tree_it_val(vit)); i += 1) {
+            if (tree_it_val(vit)[i] == '\n') { row += 1; }
+        }
         row += 1;
     }
 
@@ -1006,6 +1013,8 @@ yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col) {
 
     line = yed_buff_get_line(buff, row);
     if (!line) { return NULL; }
+
+    if (col > line->visual_width) { return NULL; }
 
     idx = yed_line_col_to_idx(line, col);
     if (idx == -1) { return NULL; }

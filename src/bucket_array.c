@@ -185,6 +185,9 @@ void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *elem, int 
             /* Make a new empty bucket. */
             new_b   = new_bucket(array);
             spill_b = array_insert(array->buckets, b_idx + 1, new_b);
+
+            /* b has been invalidated since we added a new bucket. Get the (possibly) new address. */
+            b = array_item(array->buckets, b_idx);
         }
 
         if (spill_b->used) {
@@ -209,6 +212,7 @@ void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *elem, int 
      * By this point, we (better) have room in the current bucket
      * to insert an element.
      */
+    ASSERT(b->used <= b->capacity, "didn't split correctly");
     elem_slot = b->data + (elem_size * idx);
 
     if (idx < b->used) {

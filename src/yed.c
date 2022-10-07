@@ -3,69 +3,14 @@
 
 yed_state *ys;
 
-static int writer_started;
-static int write_pending;
-
-static void * writer(void *arg) {
-    (void)arg;
-
-    while (1) {
-        pthread_mutex_lock(&ys->write_ready_mtx);
-
-        writer_started = 1;
-
-        while (!write_pending) {
-            pthread_cond_wait(&ys->write_ready_cond, &ys->write_ready_mtx);
-        }
-
-        yed_render_screen();
-
-        write_pending = 0;
-
-        pthread_mutex_unlock(&ys->write_ready_mtx);
-        if (ys->status == YED_RELOAD_CORE) { break; }
-    }
-
-    return NULL;
-}
-
-static void kick_off_write(void) {
-try_again:;
-    pthread_mutex_lock(&ys->write_ready_mtx);
-    if (write_pending) {
-        pthread_mutex_unlock(&ys->write_ready_mtx);
-        goto try_again;
-    }
-    array_copy(ys->writer_buffer, ys->output_buffer);
-    array_clear(ys->output_buffer);
-    yed_diff_and_swap_screens();
-    write_pending = 1;
-    pthread_cond_signal(&ys->write_ready_cond);
-    pthread_mutex_unlock(&ys->write_ready_mtx);
-}
-
-static void kill_writer(void) {
-    void *junk;
-
-    kick_off_write();
-    pthread_join(ys->writer_id, &junk);
-}
-
-static void restart_writer(void) {
-    pthread_create(&ys->writer_id, NULL, writer, NULL);
-}
-
 static void * update_forcer(void *arg) {
-    char zero;
-
     (void)arg;
-    zero = 0;
 
     while (ys->status != YED_RELOAD_CORE && ys->update_hz >= MIN_UPDATE_HZ) {
         usleep(825000 * (1.0 / MIN(ys->update_hz, MAX_UPDATE_HZ)));
 
         if (!ys->skip_force_update) {
-            ioctl(0, TIOCSTI, &zero);
+            yed_force_update();
         } else {
             ys->skip_force_update = 0;
         }
@@ -146,13 +91,13 @@ static int parse_options(int argc, char **argv) {
                 printf("%d\n", YED_MAJOR_VERSION);
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-lib-dir") == 0) {
-                printf("%s\n", INSTALLED_LIB_DIR);
+                printf("%s\n", installed_lib_dir());
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-include-dir") == 0) {
-                printf("%s\n", INSTALLED_INCLUDE_DIR);
+                printf("%s\n", installed_include_dir());
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-default-plugin-dir") == 0) {
-                printf("%s\n", DEFAULT_PLUG_DIR);
+                printf("%s\n", default_plug_dir());
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-config-dir") == 0) {
                 printf("%s\n", get_config_path());
@@ -162,7 +107,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-std=gnu99 -shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                "-std=gnu99 -shared -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-cppflags") == 0) {
@@ -170,7 +115,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-shared -fPIC -I%s\n", INSTALLED_INCLUDE_DIR);
+                "-shared -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
@@ -178,7 +123,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-rdynamic -shared -fPIC -L%s -lyed\n", INSTALLED_LIB_DIR);
+                "-rdynamic -shared -fPIC -L%s -lyed\n", installed_lib_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--instrument") == 0) {
@@ -215,18 +160,32 @@ static void yed_tool_attach(void) {
 }
 
 void yed_draw_everything(void) {
+    yed_event event;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_PRE_DRAW_EVERYTHING;
+    yed_trigger_event(&event);
+
     yed_draw_background();   yed_reset_attr();
     yed_write_status_line(); yed_reset_attr();
     yed_draw_command_line(); yed_reset_attr();
     yed_update_frames();     yed_reset_attr();
     yed_do_direct_draws();   yed_reset_attr();
+
+    memset(&event, 0, sizeof(event));
+    event.kind = EVENT_POST_DRAW_EVERYTHING;
+    yed_trigger_event(&event);
+
+    yed_diff_and_swap_screens();
+    yed_render_screen();
 }
 
 yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     char                 cwd[4096];
-    char               **file_it;
     unsigned long long   start_time;
     int                  dev_null_fd;
+    int                  pipe_ret;
+    int                  fd_flags;
     char                *getcwd_ret;
     char               **it;
     array_t              split;
@@ -259,6 +218,11 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     dup2(dev_null_fd, 2);
     close(dev_null_fd);
 
+    pipe_ret = pipe(ys->signal_pipe_fds);
+    (void)pipe_ret;
+    fd_flags = fcntl(ys->signal_pipe_fds[0], F_GETFL);
+    fcntl(ys->signal_pipe_fds[0], F_SETFL, fd_flags | O_NONBLOCK);
+
     setlocale(LC_ALL, "en_US.utf8");
 
     getcwd_ret = getcwd(cwd, sizeof(cwd));
@@ -274,18 +238,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_log();
     yed_init_frame_trees();
     yed_init_direct_draw();
-
     yed_term_enter();
     yed_term_get_dim(&ys->term_rows, &ys->term_cols);
-
-    yed_init_output_stream();
     yed_init_screen();
-
-    pthread_mutex_init(&ys->write_ready_mtx, NULL);
-    pthread_cond_init(&ys->write_ready_cond, NULL);
-
-    pthread_create(&ys->writer_id, NULL, writer, NULL);
-    while (!writer_started) { usleep(100); }
     yed_init_commands();
     yed_init_keys();
     yed_init_search();
@@ -304,22 +259,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     }
     array_free(cmd_line_commands);
 
-    if (array_len(ys->options.files) >= 1) {
-        YEXE("frame-new");
-    }
-
-    array_traverse(ys->options.files, file_it) {
-        YEXE("buffer", *file_it);
-    }
-
-    if (array_len(ys->options.files) >= 1) {
-        YEXE("buffer", *(char**)array_item(ys->options.files, 0));
-    }
-    if (array_len(ys->options.files) > 1) {
-        YEXE("frame-vsplit");
-        YEXE("buffer", *(char**)array_item(ys->options.files, 1));
-        YEXE("frame-prev");
-    }
+    yed_execute_command("open-command-line-buffers",
+                        array_len(ys->options.files),
+                        array_data(ys->options.files));
 
     yed_draw_everything();
 
@@ -375,7 +317,6 @@ int yed_pump(void) {
         yed_service_reload(0);
     } else if (ys->status == YED_RELOAD_CORE) {
         yed_service_reload(1);
-        restart_writer();
         save_hz = ys->update_hz;
         ys->update_hz = 0;
         yed_set_update_hz(save_hz);
@@ -389,13 +330,6 @@ int yed_pump(void) {
     } else {
         memset(keys, 0, sizeof(keys));
     }
-
-
-    /*
-     * Give the writer thread the new screen update.
-     */
-    kick_off_write();
-
 
     memset(&event, 0, sizeof(event));
     event.kind = EVENT_PRE_PUMP;
@@ -441,7 +375,6 @@ LOG_EXIT();
             ys->status = YED_NORMAL;
         } else {
             yed_unload_plugin_libs();
-            kill_writer();
             kill_update_forcer();
         }
     }

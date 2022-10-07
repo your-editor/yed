@@ -105,7 +105,9 @@
 #define YED_SYN_CACHE_SIZE         (8192)
 #define YED_SYN_N_EVICTION_BUCKETS (4096)
 
-#ifdef YED_DEBUG
+/* #define YED_SYNTAX_DEBUG */
+
+#ifdef YED_SYNTAX_DEBUG
 
 #define DBG(...)                      \
 do {                                  \
@@ -186,6 +188,7 @@ typedef struct {
     regmatch_t        *matches;
     CACHE_TREE         caches;
     int                needs_state;
+    int                max_line;
     int                finalized;
 } yed_syntax;
 
@@ -625,7 +628,9 @@ static inline _yed_syntax_cache_entry *_yed_syntax_add_to_cache(yed_syntax *synt
 }
 
 static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffer) {
+#ifdef YED_SYNTAX_DEBUG
     u64                start;
+#endif
 
     CACHE_IT           it;
     _yed_syntax_cache  new_cache;
@@ -640,7 +645,9 @@ static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffe
 
     if (!syntax->finalized || !syntax->needs_state) { return; }
 
+#ifdef YED_SYNTAX_DEBUG
     start = measure_time_now_ms();
+#endif
 
     it = tree_lookup(syntax->caches, buffer);
 
@@ -707,7 +714,7 @@ static _yed_syntax_range *_yed_syntax_get_start_state(yed_syntax *syntax, yed_bu
     while (r < row) {
         line = yed_buff_get_line(buffer, r);
 
-        if (line->visual_width > 0) {
+        if (line->visual_width > 0 && line->visual_width <= syntax->max_line) {
             array_zero_term(line->chars);
             new_range = _yed_syntax_get_line_end_state(syntax, buffer, line, range);
             if (!new_range->one_line) { range = new_range; }
@@ -723,12 +730,13 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
     int                      started_at_top;
     _yed_syntax_cache_entry *it;
     int                      changed;
+#ifdef YED_SYNTAX_DEBUG
     int                      count;
+#endif
     _yed_syntax_range       *start_range;
     yed_line                *line;
     _yed_syntax_range       *end_range;
     int                      end_range_idx;
-    _yed_syntax_cache_entry  new_entry;
 
     if (array_len(cache->entries) == 0) {
         return 0;
@@ -745,7 +753,11 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
     DBG("fixup: row %d ->", it->row);
 
     changed = 0;
-    count   = 0;
+
+#ifdef YED_SYNTAX_DEBUG
+    count = 0;
+#endif
+
     while (it != array_last(cache->entries)) {
         start_range = *(_yed_syntax_range**)array_item(syntax->ranges, it->range_idx);
         line        = yed_buff_get_line(buffer, it->row);
@@ -774,7 +786,9 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
         }
 
         /* `it` is the correct next cache entry to use at this point. */
+#ifdef YED_SYNTAX_DEBUG
         count += 1;
+#endif
     }
 
 out:;
@@ -969,7 +983,6 @@ static inline const char * _yed_syntax_find_next_regex_match(yed_syntax *syntax,
 }
 
 static inline const char * _yed_syntax_find_next_range_start(yed_syntax *syntax, yed_line *line, const char *start, _yed_syntax_range **range_out, int *len_out) {
-    const char         *end;
     regmatch_t          match;
     const char         *match_start;
     _yed_syntax_range  *match_range;
@@ -979,7 +992,6 @@ static inline const char * _yed_syntax_find_next_range_start(yed_syntax *syntax,
     int                 eflags;
     int                 err;
 
-    end         = array_data(line->chars) + array_len(line->chars);
     match_start = NULL;
     match_range = NULL;
 
@@ -1013,7 +1025,6 @@ static inline const char * _yed_syntax_find_next_range_start(yed_syntax *syntax,
 static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_syntax_range *range, yed_line *line, const char *start, int *len_out) {
     const char *end;
     int         nmatch;
-    const char *match_start;
     regmatch_t  m;
     int         eflags;
     int         err;
@@ -1023,9 +1034,8 @@ static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_s
     nmatch = syntax->max_group + 1;
 
     while (start <= end) {
-        match_start = NULL;
-        eflags      = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
-        err         = regexec(&range->end, start, nmatch, syntax->matches, eflags);
+        eflags = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
+        err    = regexec(&range->end, start, nmatch, syntax->matches, eflags);
 
         if (!err) {
             memcpy(&m, syntax->matches, sizeof(m));
@@ -1069,7 +1079,6 @@ out:;
 static inline _yed_syntax_range *_yed_syntax_get_line_end_state(yed_syntax *syntax, yed_buffer *buffer, yed_line *line, _yed_syntax_range *start_range) {
     _yed_syntax_range *range;
     const char        *start;
-    const char        *end;
     const char        *str;
     const char        *next_range_start;
     const char        *range_end_start;
@@ -1079,9 +1088,10 @@ static inline _yed_syntax_range *_yed_syntax_get_line_end_state(yed_syntax *synt
 
     range            = start_range;
     start            = array_data(line->chars);
-    end              = start + array_len(line->chars);
     str              = start;
     next_range_start = NULL;
+
+    if (line->visual_width > syntax->max_line) { goto out; }
 
     if (range != syntax->global) {
         range_end_start = _yed_syntax_find_range_end(syntax, range, line, str, &range_end_len);
@@ -1114,30 +1124,32 @@ out:;
 }
 
 
-static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *line, array_t line_attrs, _yed_syntax_range *start_range) {
+static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *line, yed_event *event, _yed_syntax_range *start_range) {
     _yed_syntax_range *range;
-    const char    *str;
-    const char    *start;
-    const char    *line_end;
-    const char    *end;
-    const char    *range_end_start;
-    int            range_end_len;
-    int            cstart;
-    int            cend;
-    yed_attrs     *ait;
-    int            i;
-    const char    *next_kwd;
-    const char    *next_range_start;
-    const char    *next_match;
+    const char        *str;
+    const char        *start;
+    const char        *line_end;
+    const char        *end;
+    const char        *range_end_start;
+    int                range_end_len;
+    int                cstart;
+    int                cend;
+    int                i;
+    const char        *next_kwd;
+    const char        *next_range_start;
+    const char        *next_match;
     _yed_syntax_attr  *next_kwd_attr;
     _yed_syntax_attr  *next_match_attr;
     _yed_syntax_attr  *a;
-    int            next_kwd_len;
-    int            next_match_len;
-    int            next_range_start_len;
+    int                next_kwd_len;
+    int                next_match_len;
+    int                next_range_start_len;
     _yed_syntax_range *next_range;
-    const char    *first;
-    int            first_len;
+    const char        *first;
+    int                first_len;
+
+
+    if (line->visual_width > syntax->max_line) { return start_range; }
 
 #define NOT_SEARCHED    ((void*)~(u64)NULL)
 #define NEEDS_SEARCH(x) ((x) == NOT_SEARCHED || ((x) != NULL && (x) < str))
@@ -1157,8 +1169,7 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
                     : yed_line_idx_to_col(line, (range_end_start + range_end_len) - start);
 
         for (i = cstart; i < cend; i += 1) {
-            ait = array_item(line_attrs, i - 1);
-            yed_combine_attrs(ait, &range->attr->attr);
+            yed_eline_combine_col_attrs(event, i, &range->attr->attr);
         }
 
         if (range_end_start == NULL) {
@@ -1169,11 +1180,19 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
         }
     }
 
-    next_kwd         = NOT_SEARCHED;
-    next_range_start = NOT_SEARCHED;
-    next_match       = NOT_SEARCHED;
-    next_kwd_attr    = NULL;
-    next_match_attr  = NULL;
+    next_kwd             = NOT_SEARCHED;
+    next_range_start     = NOT_SEARCHED;
+    next_match           = NOT_SEARCHED;
+    next_kwd_len         = 0;
+    next_kwd_attr        = NULL;
+    next_match_len       = 0;
+    next_match_attr      = NULL;
+    next_range           = NULL;
+    next_range_start_len = 0;
+    first                = NULL;
+    first_len            = 0;
+    a                    = NULL;
+    range_end_start      = NULL;
 
     while (str < line_end) {
         /* Want to skip early as often as we can to avoid needless searches/regexecs. */
@@ -1224,8 +1243,7 @@ set_range:;
                         ? line->visual_width + 1
                         : yed_line_idx_to_col(line, (range_end_start + range_end_len) - start);
             for (i = cstart; i < cend; i += 1) {
-                ait = array_item(line_attrs, i - 1);
-                yed_combine_attrs(ait, &next_range->attr->attr);
+                yed_eline_combine_col_attrs(event, i, &next_range->attr->attr);
             }
 
             end       = range_end_start + range_end_len;
@@ -1259,8 +1277,7 @@ set_kwd:;
 
             if (a != NULL) {
                 for (i = cstart; i < cend; i += 1) {
-                    ait = array_item(line_attrs, i - 1);
-                    yed_combine_attrs(ait, &a->attr);
+                    yed_eline_combine_col_attrs(event, i, &a->attr);
                 }
             }
         }
@@ -1296,6 +1313,10 @@ static inline void yed_syntax_start(yed_syntax *syntax) {
 }
 
 static inline void yed_syntax_end(yed_syntax *syntax) {
+    if (!yed_get_var_as_int("syntax-max-line-length", &syntax->max_line)) {
+        syntax->max_line = 1000;
+    }
+
     syntax->matches = malloc(sizeof(*syntax->matches) * (syntax->max_group + 1));
 
     syntax->finalized = 1;
@@ -1489,7 +1510,6 @@ static inline const char * yed_syntax_get_regex_err(yed_syntax *syntax) {
 
 static inline void yed_syntax_line_event(yed_syntax *syntax, yed_event *event) {
     yed_line          *line;
-    array_t            line_attrs;
     _yed_syntax_range *start_range;
 
     if (!syntax->finalized) { return; }
@@ -1497,13 +1517,11 @@ static inline void yed_syntax_line_event(yed_syntax *syntax, yed_event *event) {
     line = yed_buff_get_line(event->frame->buffer, event->row);
     if (line == NULL || line->visual_width == 0) { return; }
 
-    line_attrs = event->line_attrs;
-
     array_zero_term(line->chars);
 
     start_range = _yed_syntax_get_start_state(syntax, event->frame->buffer, event->row);
 
-    _yed_syntax_line(syntax, line, line_attrs, start_range);
+    _yed_syntax_line(syntax, line, event, start_range);
 }
 
 static inline void yed_syntax_style_event(yed_syntax *syntax, yed_event *event) {

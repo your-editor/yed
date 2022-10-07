@@ -6,15 +6,23 @@ typedef enum {
     EVENT_FRAME_PRE_UPDATE,
     EVENT_FRAME_POST_UPDATE,
     EVENT_FRAME_PRE_BUFF_DRAW,
+    EVENT_FRAME_PRE_ACTIVATE,
     EVENT_FRAME_ACTIVATED,
     EVENT_FRAME_PRE_DELETE,
+    EVENT_FRAME_POST_DELETE,
     EVENT_FRAME_PRE_SET_BUFFER,
     EVENT_FRAME_POST_SET_BUFFER,
+    EVENT_FRAME_PRE_MOVE,
+    EVENT_FRAME_POST_MOVE,
+    EVENT_FRAME_PRE_RESIZE,
+    EVENT_FRAME_POST_RESIZE,
     EVENT_ROW_PRE_CLEAR,
     EVENT_LINE_PRE_DRAW,
+    EVENT_BUFFER_CREATED,
     EVENT_BUFFER_PRE_LOAD,
     EVENT_BUFFER_POST_LOAD,
     EVENT_BUFFER_PRE_DELETE,
+    EVENT_BUFFER_POST_DELETE,
     EVENT_BUFFER_PRE_SET_FT,
     EVENT_BUFFER_POST_SET_FT,
     EVENT_BUFFER_PRE_INSERT,
@@ -25,6 +33,7 @@ typedef enum {
     EVENT_BUFFER_POST_MOD,
     EVENT_BUFFER_PRE_WRITE,
     EVENT_BUFFER_POST_WRITE,
+    EVENT_BUFFER_PRE_FOCUS,
     EVENT_BUFFER_FOCUSED,
     EVENT_CURSOR_PRE_MOVE,
     EVENT_CURSOR_POST_MOVE,
@@ -52,6 +61,9 @@ typedef enum {
     EVENT_PLUGIN_MESSAGE,
     EVENT_PRE_DIRECT_DRAWS,
     EVENT_POST_DIRECT_DRAWS,
+    EVENT_PRE_DRAW_EVERYTHING,
+    EVENT_POST_DRAW_EVERYTHING,
+    EVENT_SIGNAL_RECEIVED,
     _EVENT_RESERVED_0,
     _EVENT_RESERVED_1,
     _EVENT_RESERVED_2,
@@ -79,7 +91,7 @@ typedef enum {
     N_BUFF_MOD_EVENTS,
 } yed_buff_mod_event;
 
-typedef struct {
+typedef struct yed_event_t {
     yed_event_kind_t            kind;
     yed_frame                  *frame;
     yed_buffer                 *buffer;
@@ -88,9 +100,10 @@ typedef struct {
     union { int                 col;
             int                 new_col; };
     yed_attrs                   row_base_attr;
-    array_t                     line_attrs;
+    array_t                     eline_attrs;
     array_t                     gutter_glyphs;
     array_t                     gutter_attrs;
+    const char                 *map;
     int                         key;
     char                       *glyph;
     int                         cancel;
@@ -109,6 +122,7 @@ typedef struct {
         union { const char     *string_data;
                 void           *v_data; };
     } plugin_message;
+    int signum;
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

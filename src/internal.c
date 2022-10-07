@@ -59,12 +59,6 @@ char * pretty_bytes(uint64_t n_bytes) {
     return r;
 }
 
-
-void yed_init_output_stream(void) {
-    ys->output_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
-    ys->writer_buffer = array_make_with_cap(char, 4 * ys->term_cols * ys->term_rows);
-}
-
 int output_buff_len(void) { return array_len(ys->output_buffer); }
 
 static char *itoa(char *p, unsigned x) {
@@ -117,6 +111,7 @@ out:;
 }
 
 void yed_service_reload(int core) {
+    yed_key_map_list                                *list;
     tree_it(yed_command_name_t, yed_command)         cmd_it;
     tree_it(yed_completion_name_t, yed_completion)   compl_it;
     tree_it(yed_style_name_t, yed_style_ptr_t)       style_it;
@@ -128,7 +123,9 @@ void yed_service_reload(int core) {
         tree_reset_fns(yed_style_name_t,      yed_style_ptr_t,       ys->styles);
         tree_reset_fns(yed_var_name_t,        yed_var_val_t,         ys->vars);
         tree_reset_fns(yed_buffer_name_t,     yed_buffer_ptr_t,      ys->buffers);
-        tree_reset_fns(int,                   yed_key_binding_ptr_t, ys->vkey_binding_map);
+        for (list = ys->keymap_list; list != NULL; list = list->next) {
+            tree_reset_fns(int, yed_key_binding_ptr_t, list->map->binding_map);
+        }
         tree_reset_fns(yed_command_name_t,    yed_command,           ys->commands);
         tree_reset_fns(yed_command_name_t,    yed_command,           ys->default_commands);
         tree_reset_fns(yed_completion_name_t, yed_completion,        ys->completions);
@@ -212,6 +209,10 @@ void yed_service_reload(int core) {
 
 static void start_update_forcer(void);
 
+void yed_force_update(void) {
+    yed_signal(YED_SIG_FORCE_UPDATE);
+}
+
 int yed_get_update_hz(void) { return ys->update_hz; }
 
 void yed_set_update_hz(int hz) {
@@ -227,10 +228,23 @@ void yed_set_update_hz(int hz) {
     if (need_to_start_updater) {
         start_update_forcer();
     }
+}
 
-    LOG_FN_ENTER();
-    yed_log("update rate: %d Hz", ys->update_hz);
-    LOG_EXIT();
+void yed_signal(char sig) {
+    int write_ret;
+
+    write_ret = write(ys->signal_pipe_fds[1], &sig, 1);
+    (void)write_ret;
+}
+
+void yed_handle_signal(char sig) {
+    switch (sig) {
+        case YED_SIG_FORCE_UPDATE:
+            break;
+        default:;
+            yed_log("unrecognized signal received: 0x%x", sig);
+            break;
+    }
 }
 
 int s_to_i(const char *s) {
@@ -243,6 +257,7 @@ int s_to_i(const char *s) {
 
 const char *u8_to_s(u8 u) { return _u8_to_s[u]; }
 
+#include "install.c"
 #include "array.c"
 #include "bucket_array.c"
 #include "term.c"

@@ -133,6 +133,25 @@ void yed_bind_key(yed_key_binding binding);
 void yed_unbind_key(int key);
 yed_key_binding * yed_get_key_binding(int key);
 
+typedef struct yed_key_map_t {
+    char                             *name;
+    tree(int, yed_key_binding_ptr_t)  binding_map;
+    int                               enabled;
+} yed_key_map;
+
+typedef struct yed_key_map_list_t {
+    yed_key_map               *map;
+    struct yed_key_map_list_t *next;
+} yed_key_map_list;
+
+void yed_add_key_map(const char *mapname);
+void yed_remove_key_map(const char *mapname);
+void yed_enable_key_map(const char *mapname);
+void yed_disable_key_map(const char *mapname);
+void yed_map_bind_key(const char *mapname, yed_key_binding binding);
+void yed_map_unbind_key(const char *mapname, int key);
+yed_key_binding *yed_map_get_key_binding(const char *mapname, int key);
+
 typedef struct {
     int len;
     int keys[MAX_SEQ_LEN];

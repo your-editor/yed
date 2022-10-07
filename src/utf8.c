@@ -41,10 +41,10 @@ int _yed_get_mbyte_width(yed_glyph g) {
  *
  *                                   - Brandon Kammerdiener, Feb 2020
  */
-void yed_get_string_info(char *bytes, int len, int *n_glyphs, int *width) {
-    char      *end;
-    int        _n_glyphs, _width;
-    yed_glyph *g;
+void yed_get_string_info(const char *bytes, int len, int *n_glyphs, int *width) {
+    const char *end;
+    int         _n_glyphs, _width;
+    yed_glyph  *g;
 
     end       = bytes + len;
     _n_glyphs = _width = 0;

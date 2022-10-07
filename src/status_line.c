@@ -72,24 +72,6 @@ static char *get_expanded(char *s) {
             array_free(chars);
             result = str;
             break;
-        case 'l':
-            if (ys->active_frame) {
-                istr = itoa(ibuff, ys->active_frame->cursor_line);
-                result = strdup(istr);
-            } else {
-                result = strdup("-");
-            }
-            break;
-        case 'p':
-            if (ys->active_frame && ys->active_frame->buffer) {
-                istr = itoa(ibuff,
-                              (100.0 * ys->active_frame->cursor_line)
-                            / (yed_buff_n_lines(ys->active_frame->buffer)));
-                result = strdup(istr);
-            } else {
-                result = strdup("-");
-            }
-            break;
         case 'F':
             if (ys->active_frame && ys->active_frame->buffer) {
                 str = yed_get_ft_name(ys->active_frame->buffer->ft);
@@ -98,6 +80,27 @@ static char *get_expanded(char *s) {
                     goto out;
                 }
                 result = strdup(str);
+            } else {
+                result = strdup("-");
+            }
+            break;
+        case 'l':
+            if (ys->active_frame) {
+                istr = itoa(ibuff, ys->active_frame->cursor_line);
+                result = strdup(istr);
+            } else {
+                result = strdup("-");
+            }
+            break;
+        case 'n':
+            result = strdup((ys->active_frame == NULL || ys->active_frame->name == NULL) ? "-" : ys->active_frame->name);
+            break;
+        case 'p':
+            if (ys->active_frame && ys->active_frame->buffer) {
+                istr = itoa(ibuff,
+                              (100.0 * ys->active_frame->cursor_line)
+                            / (yed_buff_n_lines(ys->active_frame->buffer)));
+                result = strdup(istr);
             } else {
                 result = strdup("-");
             }
@@ -167,6 +170,7 @@ out:;
                     array_push_n(chars, result, strlen(result));
             }
             array_zero_term(chars);
+            free(result);
             result = strdup(array_data(chars));
             array_free(chars);
         }
@@ -315,9 +319,11 @@ static void put_status_line_string(char *s, int start_col) {
     if (ys->active_style) {
         yed_set_attr(yed_active_style_get_status_line());
     } else {
-        inv.flags = ATTR_16 | ATTR_INVERSE;
-        inv.fg    = 0;
-        inv.bg    = 0;
+        inv.flags = ATTR_INVERSE;
+        ATTR_SET_FG_KIND(inv.flags, ATTR_KIND_16);
+
+        inv.fg = 0;
+        inv.bg = 0;
         yed_set_attr(inv);
     }
 
@@ -445,9 +451,10 @@ void yed_write_status_line(void) {
     if (ys->active_style) {
         yed_set_attr(yed_active_style_get_status_line());
     } else {
-        inv.flags = ATTR_16 | ATTR_INVERSE;
-        inv.fg    = 0;
-        inv.bg    = 0;
+        inv.flags = ATTR_INVERSE;
+        ATTR_SET_FG_KIND(inv.flags, ATTR_KIND_16);
+        inv.fg = 0;
+        inv.bg = 0;
         yed_set_attr(inv);
     }
     for (i = 0; i < ys->term_cols; i += 1) { yed_screen_print_n(" ", 1); }

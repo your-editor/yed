@@ -62,6 +62,11 @@ yed_line yed_new_line_with_cap(int len);
 void yed_free_line(yed_line *line);
 
 yed_line * yed_copy_line(yed_line *line);
+void yed_line_add_glyph(yed_line *line, yed_glyph g, int idx);
+void yed_line_append_glyph(yed_line *line, yed_glyph g);
+void yed_line_delete_glyph(yed_line *line, int idx);
+void yed_line_pop_glyph(yed_line *line);
+void yed_clear_line(yed_line *line);
 
 yed_buffer yed_new_buff(void);
 yed_buffer * yed_create_buffer(char *name);

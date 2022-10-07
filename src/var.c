@@ -6,8 +6,9 @@ void yed_init_vars(void) {
 
 void yed_set_default_vars(void) {
     yed_set_var("tab-width",                 XSTR(DEFAULT_TABW));
+    yed_set_var("cursor-line",               "no");
     yed_set_var("ctrl-h-is-backspace",       "yes");
-    yed_set_var("buffer-load-mode",          "map");
+    yed_set_var("buffer-load-mode",          "stream");
     yed_set_var("bracketed-paste-mode",      "on");
     yed_set_var("enable-search-cursor-move", "yes");
     yed_set_var("default-scroll-offset",     XSTR(DEFAULT_SCROLL_OFF));
@@ -16,12 +17,14 @@ void yed_set_default_vars(void) {
     yed_set_var("fill-string",               DEFAULT_FILL_STRING);
     yed_set_var("cursor-move-clears-search", "yes");
     yed_set_var("use-boyer-moore",           "no");
-    yed_set_var("status-line-left",           DEFAULT_STATUS_LINE_LEFT);
-    yed_set_var("status-line-center",         DEFAULT_STATUS_LINE_CENTER);
-    yed_set_var("status-line-right",          DEFAULT_STATUS_LINE_RIGHT);
+    yed_set_var("status-line-left",          DEFAULT_STATUS_LINE_LEFT);
+    yed_set_var("status-line-center",        DEFAULT_STATUS_LINE_CENTER);
+    yed_set_var("status-line-right",         DEFAULT_STATUS_LINE_RIGHT);
+    yed_set_var("screen-update-sync",        "yes");
+    yed_set_var("syntax-max-line-length",    XSTR(DEFAULT_SYNTAX_MAX_LINE_LENGTH));
 }
 
-void yed_set_var(char *var, char *val) {
+void yed_set_var(const char *var, const char *val) {
     tree_it(yed_var_name_t,
             yed_var_val_t)     it;
     yed_event                  evt;
@@ -40,13 +43,13 @@ void yed_set_var(char *var, char *val) {
 
     if (evt.cancel) { return; }
 
-    it = tree_lookup(ys->vars, var);
+    it = tree_lookup(ys->vars, (char*)var);
 
     if (!tree_it_good(it)) {
         tree_insert(ys->vars, strdup(var), strdup(val));
     } else {
         old_val = tree_it_val(it);
-        tree_insert(ys->vars, var, strdup(val));
+        tree_insert(ys->vars, (char*)var, strdup(val));
         free(old_val);
     }
 
@@ -54,7 +57,7 @@ void yed_set_var(char *var, char *val) {
     yed_trigger_event(&evt);
 }
 
-char *yed_get_var(char *var) {
+char *yed_get_var(const char *var) {
     tree_it(yed_var_name_t,
             yed_var_val_t)     it;
 
@@ -62,7 +65,7 @@ char *yed_get_var(char *var) {
         return NULL;
     }
 
-    it = tree_lookup(ys->vars, var);
+    it = tree_lookup(ys->vars, (char*)var);
 
     if (!tree_it_good(it)) {
         return NULL;
@@ -71,7 +74,7 @@ char *yed_get_var(char *var) {
     return tree_it_val(it);
 }
 
-void yed_unset_var(char *var) {
+void yed_unset_var(const char *var) {
     tree_it(yed_var_name_t,
             yed_var_val_t)       it;
     char                        *old_var,
@@ -82,7 +85,7 @@ void yed_unset_var(char *var) {
         return;
     }
 
-    it = tree_lookup(ys->vars, var);
+    it = tree_lookup(ys->vars, (char*)var);
 
     if (!tree_it_good(it)) {
         return;
@@ -99,7 +102,7 @@ void yed_unset_var(char *var) {
 
     if (evt.cancel) { return; }
 
-    tree_delete(ys->vars, var);
+    tree_delete(ys->vars, (char*)var);
     free(old_var);
     free(old_val);
 
@@ -108,7 +111,7 @@ void yed_unset_var(char *var) {
     yed_trigger_event(&evt);
 }
 
-int yed_var_is_truthy(char *var) {
+int yed_var_is_truthy(const char *var) {
     char *val;
 
     if (!(val = yed_get_var(var))) {
@@ -132,7 +135,7 @@ int yed_var_is_truthy(char *var) {
     return 1;
 }
 
-int yed_get_var_as_int(char *var, int *out) {
+int yed_get_var_as_int(const char *var, int *out) {
     char *val;
 
     if (!(val = yed_get_var(var))) {
@@ -144,16 +147,7 @@ int yed_get_var_as_int(char *var, int *out) {
     return 1;
 }
 
-int yed_get_tab_width(void) {
-    int tabw;
-
-    if (!yed_get_var_as_int("tab-width", &tabw)
-    ||  tabw <= 0) {
-        tabw = DEFAULT_TABW;
-    }
-
-    return tabw;
-}
+int yed_get_tab_width(void) { return ys->tabw; }
 
 int yed_get_default_scroll_offset(void) {
     int scroll_off;

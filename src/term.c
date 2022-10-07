@@ -40,9 +40,11 @@ int yed_term_enter(void) {
     yed_register_sigquit_handler();
     yed_register_sigstop_handler();
     yed_register_sigsegv_handler();
+    yed_register_sigabrt_handler();
     yed_register_sigill_handler();
     yed_register_sigfpe_handler();
     yed_register_sigbus_handler();
+    yed_register_sigchld_handler();
 
     printf(TERM_ALT_SCREEN);
     printf(TERM_ENABLE_BRACKETED_PASTE);
@@ -160,9 +162,6 @@ void sigstop_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGTSTP, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     ys->stopped = 1;
     yed_term_exit();
@@ -178,8 +177,6 @@ void sigcont_handler(int sig) {
 
         ys->stopped = 0;
         yed_term_enter();
-        pthread_mutex_unlock(&ys->write_ready_mtx);
-
         yed_check_for_resize();
         yed_handle_resize();
         yed_clear_screen();
@@ -202,9 +199,6 @@ void sigterm_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGTERM, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -219,9 +213,6 @@ void sigquit_handler(int sig) {
     act.sa_flags = 0;
     sigemptyset (&act.sa_mask);
     sigaction(SIGQUIT, &act, NULL);
-
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -254,9 +245,6 @@ void sigsegv_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGSEGV, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -266,6 +254,23 @@ void sigsegv_handler(int sig) {
     kill(0, SIGSEGV);
 }
 
+void sigabrt_handler(int sig) {
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction(SIGABRT, &act, NULL);
+
+    /* Exit the terminal. */
+    yed_term_exit();
+
+    print_fatal_signal_message_and_backtrace("SIGABRT");
+
+    /* Do the real signal */
+    kill(0, SIGABRT);
+}
+
 void sigill_handler(int sig) {
     struct sigaction act;
 
@@ -273,9 +278,6 @@ void sigill_handler(int sig) {
     act.sa_flags = 0;
     sigemptyset (&act.sa_mask);
     sigaction(SIGILL, &act, NULL);
-
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
 
     /* Exit the terminal. */
     yed_term_exit();
@@ -294,9 +296,6 @@ void sigfpe_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGFPE, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -314,9 +313,6 @@ void sigbus_handler(int sig) {
     sigemptyset (&act.sa_mask);
     sigaction(SIGBUS, &act, NULL);
 
-    /* Stop the writer thread. */
-    pthread_mutex_lock(&ys->write_ready_mtx);
-
     /* Exit the terminal. */
     yed_term_exit();
 
@@ -324,6 +320,16 @@ void sigbus_handler(int sig) {
 
     /* Do the real signal */
     kill(0, SIGBUS);
+}
+
+void sigchld_handler(int sig) {
+    yed_event event;
+
+    memset(&event, 0, sizeof(event));
+    event.kind   = EVENT_SIGNAL_RECEIVED;
+    event.signum = sig;
+
+    yed_trigger_event(&event);
 }
 
 void yed_register_sigwinch_handler(void) {
@@ -392,6 +398,17 @@ void yed_register_sigsegv_handler(void) {
     }
 }
 
+void yed_register_sigabrt_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigsegv_handler;
+    if (sigaction(SIGABRT, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGABRT");
+    }
+}
+
 void yed_register_sigill_handler(void) {
     struct sigaction sa;
 
@@ -422,6 +439,17 @@ void yed_register_sigbus_handler(void) {
     sa.sa_handler = sigbus_handler;
     if (sigaction(SIGBUS, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGBUS");
+    }
+}
+
+void yed_register_sigchld_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = sigchld_handler;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGCHLD");
     }
 }
 

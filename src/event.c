@@ -47,6 +47,10 @@ void yed_reload_default_event_handlers(void) {
     h.kind = EVENT_BUFFER_FOCUSED;
     h.fn   = yed_var_buffer_focus_handler;
     yed_add_event_handler(h);
+
+    h.kind = EVENT_CURSOR_PRE_MOVE;
+    h.fn   = yed_replace_cursor_handler;
+    yed_add_event_handler(h);
 }
 
 void yed_add_event_handler(yed_event_handler handler) {

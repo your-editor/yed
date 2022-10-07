@@ -7,29 +7,29 @@ PACKABLE_STYLE(vt_light) {
 
     memset(&s, 0, sizeof(s));
 
-    s.active.flags        = ATTR_16 | ATTR_16_LIGHT_BG;
+    s.active.flags        = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_BG_KIND_BITS(ATTR_KIND_16) | ATTR_16_LIGHT_BG;
     s.active.fg           = ATTR_16_BLACK;
     s.active.bg           = ATTR_16_GREY;
     s.active_border = s.active;
 
-    s.inactive.flags        = ATTR_16 | ATTR_16_LIGHT_BG;
+    s.inactive.flags        = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_BG_KIND_BITS(ATTR_KIND_16) | ATTR_16_LIGHT_BG;
     s.inactive.fg           = ATTR_16_BLACK;
     s.inactive.bg           = ATTR_16_GREY;
     s.inactive_border = s.inactive;
 
-    s.cursor_line.flags     = ATTR_16;
+    s.cursor_line.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_BG_KIND_BITS(ATTR_KIND_16);
     s.cursor_line.fg        = s.active.fg;
     s.cursor_line.bg        = ATTR_16_GREY;
 
     s.selection.flags     = ATTR_INVERSE;
 
-    s.search.flags        = ATTR_16 | ATTR_INVERSE;
+    s.search.flags        = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_INVERSE;
     s.search.fg           = ATTR_16_YELLOW;
 
-    s.search_cursor.flags = ATTR_16 | ATTR_INVERSE;
+    s.search_cursor.flags = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_INVERSE;
     s.search_cursor.fg    = ATTR_16_MAGENTA;
 
-    s.attention.flags     = ATTR_16;
+    s.attention.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.attention.fg        = ATTR_16_RED;
 
     s.status_line = s.active;
@@ -40,10 +40,10 @@ PACKABLE_STYLE(vt_light) {
     s.active_gutter       = s.active;
     s.inactive_gutter     = s.inactive;
 
-    s.code_comment.flags  = ATTR_16;
+    s.code_comment.flags  = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.code_comment.fg     = ATTR_16_RED;
 
-    s.code_keyword.flags  = ATTR_16;
+    s.code_keyword.flags  = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.code_keyword.fg     = ATTR_16_BLUE;
 
     s.code_control_flow   =
@@ -51,7 +51,7 @@ PACKABLE_STYLE(vt_light) {
 
     s.code_preprocessor   = s.code_keyword;
 
-    s.code_number.flags   = ATTR_16;
+    s.code_number.flags   = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.code_number.fg      = ATTR_16_MAGENTA;
 
     s.code_constant       = s.code_number;

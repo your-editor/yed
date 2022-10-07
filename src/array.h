@@ -57,25 +57,25 @@ void _array_copy(array_t *dst, array_t *src);
     ((array).used = 0)
 
 #define array_item(array, idx) \
-    ((array).data + ((array).elem_size * (idx)))
+    (void*)(((char*)(array).data + ((array).elem_size * (idx))))
 
 #define array_last(array) \
-    ((array).used ? ((array).data + ((array).elem_size * ((array).used - 1))) : NULL)
+    ((array).used ? (void*)((char*)(array).data + ((array).elem_size * ((array).used - 1))) : NULL)
 
 
-#define array_traverse(array, it)                                                \
-    for (it = (array).data;                                                      \
-         it < (__typeof(it))((array).data + ((array).used * (array).elem_size)); \
+#define array_traverse(array, it)                                                             \
+    for (it = (__typeof(it))(array).data;                                                     \
+         it < (__typeof(it))((char*)(array).data + ((array).used * (array).elem_size));       \
          it += 1)
 
-#define array_traverse_from(array, it, starting_idx)                             \
-    for (it = (array).data + ((starting_idx) * (array).elem_size);               \
-         it < (__typeof(it))((array).data + ((array).used * (array).elem_size)); \
+#define array_traverse_from(array, it, starting_idx)                                          \
+    for (it = (__typeof(it))((char*)(array).data + ((starting_idx) * (array).elem_size));     \
+         it < (__typeof(it))((char*)(array).data + ((array).used * (array).elem_size));       \
          it += 1)
 
-#define array_rtraverse(array, it)                                     \
-    for (it = (array).data + (((array).used - 1) * (array).elem_size); \
-         (array).used && it >= (__typeof(it))((array).data);           \
+#define array_rtraverse(array, it)                                                            \
+    for (it = (__typeof(it))((char*)(array).data + (((array).used - 1) * (array).elem_size)); \
+         (array).used && it >= (__typeof(it))((array).data);                                  \
          it -= 1)
 
 #define array_data(array) ((array).data)

@@ -37,6 +37,8 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
     if (!(*bleft & 1)) { *bwidth += 1; }
 
     /* Sanity checks and limitations. */
+    LIMIT(*height,  1, ys->term_rows - 2);
+    LIMIT(*width,   1, ys->term_cols);
     LIMIT(*btop,    1, ys->term_rows - 2);
     LIMIT(*bheight, 1, ys->term_rows - 2);
     LIMIT(*bleft,   1, ys->term_cols);
@@ -64,6 +66,7 @@ void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *
 yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width_f) {
     yed_frame *frame;
 
+
     LIMIT(top_f, 0.0, 1.0);
     LIMIT(left_f, 0.0, 1.0);
     LIMIT(height_f, 0.0, 1.0 - top_f);
@@ -73,6 +76,8 @@ yed_frame * yed_new_frame(float top_f, float left_f, float height_f, float width
     width_f  = roundf(width_f * (float)ys->term_cols) / (float)ys->term_cols;
 
     frame = malloc(sizeof(*frame));
+
+    memset(frame, 0, sizeof(*frame));
 
     frame->buffer       = NULL;
     frame->top_f        = top_f;
@@ -164,47 +169,88 @@ void yed_delete_frame(yed_frame *frame) {
         }
     }
 
+    array_free(frame->gutter_attrs);
+    array_free(frame->gutter_glyphs);
     array_free(frame->line_attrs);
+
+    if (frame->name != NULL) { free(frame->name); }
 
     free(frame);
 
     if (array_len(ys->frames) == 0) {
         ys->active_frame = ys->prev_active_frame = NULL;
     }
+
+    memset(&event, 0, sizeof(event));
+    event.kind  = EVENT_FRAME_POST_DELETE;
+
+    yed_trigger_event(&event);
+
 }
 
 static void frame_tree_leaf_visit_reset_cursor(yed_frame_tree *tree, void *arg) {
-/*     int save_row; */
-/*     int save_col; */
-
     (void)arg;
 
     yed_frame_hard_reset_cursor_x(tree->frame);
     yed_frame_hard_reset_cursor_y(tree->frame);
+}
 
-/*     save_row = tree->frame->cursor_line; */
-/*     save_col = tree->frame->cursor_col; */
-/*  */
-/*     yed_set_cursor_far_within_frame(tree->frame, 1, 1); */
-/*     yed_set_cursor_far_within_frame(tree->frame, save_row, save_col); */
+typedef struct {
+    int event_kind;
+    int was_cancelled;
+} frame_tree_leaf_visitor_event;
+
+static void frame_tree_leaf_visit_event(yed_frame_tree *tree, void *arg) {
+    frame_tree_leaf_visitor_event *e;
+    yed_event                      event;
+
+    e = arg;
+
+    memset(&event, 0, sizeof(event));
+    event.kind = e->event_kind;
+    event.frame = tree->frame;
+
+    yed_trigger_event(&event);
+
+    if (event.cancel) { e->was_cancelled = 1; }
 }
 
 yed_frame * yed_vsplit_frame_tree(yed_frame_tree *tree) {
-    yed_frame_tree *new_tree;
-    yed_frame      *new_frame;
+    frame_tree_leaf_visitor_event  e;
+    yed_frame_tree                *new_tree;
+    yed_frame                     *new_frame;
+
+    e.event_kind    = EVENT_FRAME_PRE_RESIZE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return NULL; }
 
     new_tree  = yed_frame_tree_vsplit(tree);
     new_frame = new_tree->child_trees[1]->frame;
+
+    e.event_kind = EVENT_FRAME_POST_RESIZE;
+    yed_frame_tree_leaves_do(new_tree->child_trees[0], frame_tree_leaf_visit_event, &e);
 
     return new_frame;
 }
 
 yed_frame * yed_hsplit_frame_tree(yed_frame_tree *tree) {
-    yed_frame_tree *new_tree;
-    yed_frame      *new_frame;
+    frame_tree_leaf_visitor_event  e;
+    yed_frame_tree                *new_tree;
+    yed_frame                     *new_frame;
+
+    e.event_kind    = EVENT_FRAME_PRE_RESIZE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return NULL; }
 
     new_tree  = yed_frame_tree_hsplit(tree);
     new_frame = new_tree->child_trees[1]->frame;
+
+    e.event_kind = EVENT_FRAME_POST_RESIZE;
+    yed_frame_tree_leaves_do(new_tree->child_trees[0], frame_tree_leaf_visit_event, &e);
 
     return new_frame;
 }
@@ -241,20 +287,87 @@ yed_frame * yed_hsplit_frame(yed_frame *frame) {
     return new_frame;
 }
 
+void yed_frame_set_size(yed_frame *frame, float height, float width) {
+    yed_frame_tree_set_size(frame->tree, height, width);
+}
+
+void yed_frame_tree_set_size(yed_frame_tree *tree, float height, float width) {
+    yed_frame_tree                *readjust_target;
+    frame_tree_leaf_visitor_event  e;
+
+    readjust_target = yed_frame_tree_get_root(tree);
+
+    e.event_kind    = EVENT_FRAME_PRE_RESIZE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return; }
+
+    LIMIT(height, 0.0, 1.0);
+    LIMIT(width,  0.0, 1.0);
+
+    readjust_target->height = height;
+    readjust_target->width  = width;
+
+    yed_frame_tree_recursive_readjust(readjust_target);
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_reset_cursor, NULL);
+
+    e.event_kind = EVENT_FRAME_POST_RESIZE;
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+}
+
+void yed_frame_set_pos(yed_frame *frame, float top, float left) {
+    yed_frame_tree_set_pos(frame->tree, top, left);
+}
+
+void yed_frame_tree_set_pos(yed_frame_tree *tree, float top, float left) {
+    yed_frame_tree                *readjust_target;
+    frame_tree_leaf_visitor_event  e;
+
+    readjust_target = yed_frame_tree_get_root(tree);
+
+    e.event_kind    = EVENT_FRAME_PRE_MOVE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return; }
+
+    LIMIT(top, 0.0, 1.0);
+    LIMIT(left,  0.0, 1.0);
+
+    readjust_target->top  = top;
+    readjust_target->left = left;
+
+    yed_frame_tree_recursive_readjust(readjust_target);
+
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_reset_cursor, NULL);
+
+    e.event_kind = EVENT_FRAME_POST_MOVE;
+    yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_event, &e);
+}
+
 void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
-    float           target_atop;
-    float           target_aleft;
-    float           target_aheight;
-    float           target_awidth;
-    float           sign_x, sign_y;
-    float           unit_x, unit_y;
-    yed_frame_tree *readjust_target;
-    yed_frame_tree *other;
-    float           atop;
-    float           aleft;
-    float           aheight;
-    float           awidth;
-    float           low_lim, hi_lim;
+    frame_tree_leaf_visitor_event  e;
+    float                          target_atop;
+    float                          target_aleft;
+    float                          target_aheight;
+    float                          target_awidth;
+    float                          sign_x, sign_y;
+    float                          unit_x, unit_y;
+    yed_frame_tree                *readjust_target;
+    yed_frame_tree                *other;
+    float                          atop;
+    float                          aleft;
+    float                          aheight;
+    float                          awidth;
+    float                          low_lim, hi_lim;
+
+    e.event_kind    = EVENT_FRAME_PRE_RESIZE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return; }
 
     sign_y = (rows < 0 ? -1.0 : 1.0);
     sign_x = (cols < 0 ? -1.0 : 1.0);
@@ -333,108 +446,31 @@ void yed_resize_frame_tree(yed_frame_tree *tree, int rows, int cols) {
     }
 
     yed_frame_tree_leaves_do(readjust_target, frame_tree_leaf_visit_reset_cursor, NULL);
+
+    e.event_kind = EVENT_FRAME_POST_RESIZE;
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_event, &e);
 }
 
 void yed_resize_frame(yed_frame *frame, int rows, int cols) {
     yed_resize_frame_tree(frame->tree, rows, cols);
-#if 0
-    float           sign_x, sign_y;
-    float           unit_x, unit_y;
-    int             save;
-    yed_frame_tree *tree;
-    yed_frame_tree *parent;
-    yed_frame_tree *other;
-    float           atop;
-    float           aleft;
-    float           aheight;
-    float           awidth;
-    float           low_lim, hi_lim;
-
-    sign_y = (rows < 0 ? -1.0 : 1.0);
-    sign_x = (cols < 0 ? -1.0 : 1.0);
-
-    rows = abs(rows);
-    cols = abs(cols);
-
-    if (yed_frame_is_tree_root(frame)) {
-        unit_y = sign_y / (float)ys->term_rows;
-        unit_x = sign_x / (float)ys->term_cols;
-
-        for (; rows > 0; rows -= 1) {
-            if (sign_y < 0.0 && frame->bheight - 1 < 1)                           { break; }
-            if (sign_y > 0.0 && frame->btop + frame->bheight > ys->term_rows - 2) { break; }
-
-            save = frame->bheight;
-            do {
-                frame->height_f += unit_y;
-                FRAME_RESET_RECT(frame);
-            } while (frame->bheight == save);
-        }
-        for (; cols > 0; cols -= 1) {
-            if (sign_x < 0.0 && frame->bwidth - 1 < 1)                        { break; }
-            if (sign_x > 0.0 && frame->bleft + frame->bwidth > ys->term_cols) { break; }
-
-            save = frame->bwidth;
-            do {
-                frame->width_f += unit_x;
-                FRAME_RESET_RECT(frame);
-            } while (frame->bwidth == save);
-        }
-
-        yed_frame_tree_set_relative_rect(frame->tree, frame->top_f, frame->left_f, frame->height_f, frame->width_f);
-
-        yed_frame_hard_reset_cursor_x(frame);
-        yed_frame_hard_reset_cursor_y(frame);
-    } else {
-        tree   = frame->tree;
-        parent = tree->parent;
-        other  = parent->child_trees[parent->child_trees[0] == tree];
-
-        yed_frame_tree_get_absolute_rect(parent, &atop, &aleft, &aheight, &awidth);
-
-        unit_y = (sign_y / aheight) / (float)(ys->term_rows - 2);
-        unit_x = (sign_x / awidth)  / (float)ys->term_cols;
-
-        if      (parent->split_kind == FTREE_VSPLIT) { rows = 0; unit_y = 0; }
-        else if (parent->split_kind == FTREE_HSPLIT) { cols = 0; unit_x = 0; }
-
-        for (; rows > 0; rows -= 1) {
-            low_lim = 1.0 - unit_y;
-            if (sign_y > 0.0 && tree->height + unit_y > low_lim) { break; }
-
-            hi_lim = sign_y * unit_y;
-            if (sign_y < 0.0 && tree->height + unit_y <= hi_lim) { break; }
-
-            tree->height  += unit_y;
-            other->height -= unit_y;
-            yed_frame_tree_recursive_readjust(parent);
-        }
-        for (; cols > 0; cols -= 1) {
-            low_lim = 1.0 - unit_x;
-            if (sign_x > 0.0 && tree->width + unit_x > low_lim) { break; }
-
-            hi_lim = sign_x * unit_x;
-            if (sign_x < 0.0 && tree->width + unit_x <= hi_lim) { break; }
-
-            tree->width  += unit_x;
-            other->width -= unit_x;
-            yed_frame_tree_recursive_readjust(parent);
-        }
-
-        yed_frame_tree_leaves_do(parent, frame_tree_leaf_visit_reset_cursor, NULL);
-    }
-#endif
 }
 
 void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols) {
-    float sign_x, sign_y;
-    float unit_x, unit_y;
-    float atop;
-    float aleft;
-    float aheight;
-    float awidth;
+    frame_tree_leaf_visitor_event e;
+    float                         sign_x, sign_y;
+    float                         unit_x, unit_y;
+    float                         atop;
+    float                         aleft;
+    float                         aheight;
+    float                         awidth;
 
     tree = yed_frame_tree_get_root(tree);
+
+    e.event_kind    = EVENT_FRAME_PRE_MOVE;
+    e.was_cancelled = 0;
+
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_event, &e);
+    if (e.was_cancelled) { return; }
 
     yed_frame_tree_get_absolute_rect(tree, &atop, &aleft, &aheight, &awidth);
 
@@ -461,60 +497,36 @@ void yed_move_frame_tree(yed_frame_tree *tree, int rows, int cols) {
         tree->left += unit_x;
         yed_frame_tree_recursive_readjust(tree);
     }
+
+    e.event_kind = EVENT_FRAME_POST_MOVE;
+    yed_frame_tree_leaves_do(tree, frame_tree_leaf_visit_event, &e);
 }
 
 void yed_move_frame(yed_frame *frame, int rows, int cols) {
     yed_move_frame_tree(frame->tree, rows, cols);
-#if 0
-    float sign_x, sign_y;
-    float unit_x, unit_y;
-    int   save;
-
-    if (yed_frame_is_tree_root(frame)) {
-        sign_y = (rows < 0 ? -1.0 : 1.0);
-        sign_x = (cols < 0 ? -1.0 : 1.0);
-
-        rows = abs(rows);
-        cols = abs(cols);
-
-        unit_y = sign_y / (float)ys->term_rows;
-        unit_x = sign_x / (float)ys->term_cols;
-
-        for (; rows > 0; rows -= 1) {
-            if (sign_y < 0.0 && frame->btop - 1 < 1)                              { break; }
-            if (sign_y > 0.0 && frame->btop + frame->bheight > ys->term_rows - 2) { break; }
-
-            save = frame->btop;
-            do {
-                frame->top_f += unit_y;
-                FRAME_RESET_RECT(frame);
-            } while (frame->btop == save);
-        }
-        for (; cols > 0; cols -= 1) {
-            if (unit_x < 0.0 && frame->bleft - 1 < 1)                         { break; }
-            if (unit_x > 0.0 && frame->bleft + frame->bwidth > ys->term_cols) { break; }
-
-            do {
-                frame->left_f += unit_x;
-                FRAME_RESET_RECT(frame);
-            } while (frame->bleft == save);
-        }
-
-        yed_frame_tree_set_relative_rect(frame->tree, frame->top_f, frame->left_f, frame->height_f, frame->width_f);
-
-        yed_frame_hard_reset_cursor_x(frame);
-        yed_frame_hard_reset_cursor_y(frame);
-    } else {
-        yed_move_frame_tree(frame->tree, rows, cols);
-        yed_frame_tree_leaves_do(yed_frame_tree_get_root(frame->tree), frame_tree_leaf_visit_reset_cursor, NULL);
-    }
-#endif
 }
 
 void yed_activate_frame(yed_frame *frame) {
+    yed_event event;
     int       buff_n_lines;
     int       save_cursor_line;
-    yed_event event;
+
+    if (frame == NULL || frame == ys->active_frame) { return; }
+
+    memset(&event, 0, sizeof(event));
+    event.kind  = EVENT_FRAME_PRE_ACTIVATE;
+    event.frame = frame;
+    yed_trigger_event(&event);
+
+    if (event.cancel) { return; }
+
+    if (frame->buffer != NULL) {
+        memset(&event, 0, sizeof(event));
+        event.kind   = EVENT_BUFFER_PRE_FOCUS;
+        event.frame  = frame;
+        event.buffer = frame->buffer;
+        yed_trigger_event(&event);
+    }
 
     if (ys->active_frame && ys->active_frame != frame) {
         ys->prev_active_frame = ys->active_frame;
@@ -589,8 +601,34 @@ out:
     return c;
 }
 
+static int _yed_draw_line_set_col_attrs(yed_frame *frame, array_t line_attrs, int col, yed_attrs *attrs) {
+    yed_attrs *ait;
+
+    if (col < 1)                                              { return 0; }
+    if (col <= frame->buffer_x_offset)                        { return 0; }
+    if (col - frame->buffer_x_offset > array_len(line_attrs)) { return 0; }
+
+    ait = array_item(line_attrs, col - frame->buffer_x_offset - 1);
+    memcpy(ait, attrs, sizeof(*ait));
+
+    return 1;
+}
+
+static int _yed_draw_line_combine_col_attrs(yed_frame *frame, array_t line_attrs, int col, yed_attrs *attrs) {
+    yed_attrs *ait;
+
+    if (col < 1)                                              { return 0; }
+    if (col <= frame->buffer_x_offset)                        { return 0; }
+    if (col - frame->buffer_x_offset > array_len(line_attrs)) { return 0; }
+
+    ait = array_item(line_attrs, col - frame->buffer_x_offset - 1);
+    yed_combine_attrs(ait, attrs);
+
+    return 1;
+}
+
 void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset, int x_offset) {
-    yed_attrs  cur_attr, base_attr, sel_attr, *attr_it;
+    yed_attrs  cur_attr, base_attr, sel_attr;
     int        col, n_col, first_idx, first_col, width_skip, col_off, width, n_bytes, i, nprint_glyph_pos;
     char       nprint_chars[2] = { '^', '?' };
     char      *bytes, *gutter_bytes;
@@ -629,7 +667,7 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * They might be modified later on.
      */
     array_clear(frame->line_attrs);
-    for (col = 1; col <= line->visual_width; col += 1) {
+    for (col = 0; col < frame->width; col += 1) {
         array_push(frame->line_attrs, base_attr);
     }
 
@@ -639,7 +677,6 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
      * line_attrs array.
      */
      if (ys->active_frame == frame && frame->buffer->has_selection) {
-        col = 1;
         if (ys->active_style) {
             sel_attr = yed_active_style_get_selection();
         } else {
@@ -647,11 +684,10 @@ void yed_frame_draw_line(yed_frame *frame, yed_line *line, int row, int y_offset
             sel_attr.flags |= ATTR_INVERSE;
         }
 
-        array_traverse(frame->line_attrs, attr_it) {
+        for (col = 1; col <= line->visual_width; col += 1) {
             if (yed_is_in_range(&frame->buffer->selection, row, col)) {
-                yed_combine_attrs(attr_it, &sel_attr);
+                _yed_draw_line_combine_col_attrs(frame, frame->line_attrs, col, &sel_attr);
             }
-            col += 1;
         }
     }
 
@@ -679,7 +715,7 @@ again_gutter:
     event.frame          = frame;
     event.row            = row;
     event.row_base_attr  = base_attr;
-    event.line_attrs     = frame->line_attrs;
+    event.eline_attrs    = frame->line_attrs;
     event.gutter_glyphs  = frame->gutter_glyphs;
     event.gutter_attrs   = frame->gutter_attrs;
 
@@ -687,7 +723,7 @@ again_gutter:
 
     if (frame->gutter_width != save_gutter_width) { goto again_gutter; }
 
-    frame->line_attrs    = event.line_attrs;
+    frame->line_attrs    = event.eline_attrs;
     frame->gutter_glyphs = event.gutter_glyphs;
     frame->gutter_attrs  = event.gutter_attrs;
 
@@ -760,19 +796,19 @@ again_gutter:
         if (*bytes == '\t') {
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
                 yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
-                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, col_off);
                 yed_set_attr(cur_attr);
                 yed_screen_print_n(" ", 1);
                 col_off += 1;
             }
-        } else if (n_bytes == 1 && !isprint(*bytes)) {
+        } else if (n_bytes == 1 && unlikely(!isprint(*bytes))) {
             nprint_chars[1] = _get_nprint_char(*(unsigned char*)bytes);
 
             nprint_glyph_pos = 0;
 
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
                 yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
-                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, col_off);
                 yed_set_attr(cur_attr);
                 yed_screen_print_n(nprint_chars + nprint_glyph_pos, 1);
                 col_off          += 1;
@@ -781,7 +817,7 @@ again_gutter:
         } else {
             if (col_off + width <= n_col) {
                 yed_set_cursor(frame->top + y_offset, frame->left + frame->gutter_width + col_off);
-                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, first_col + col_off - 1);
+                cur_attr = *(yed_attrs*)array_item(frame->line_attrs, col_off);
                 yed_set_attr(cur_attr);
                 yed_screen_print_n(bytes, n_bytes);
                 col_off += width;
@@ -897,23 +933,15 @@ void yed_frame_draw_buff(yed_frame *frame, yed_buffer *buff, int y_offset, int x
     yed_reset_attr();
 }
 
-void yed_frame_set_pos(yed_frame *frame, float top_f, float left_f) {
-    frame->top_f  = top_f;
-    frame->left_f = left_f;
-
-    FRAME_RESET_RECT(frame);
-
-    yed_frame_reset_cursor(frame);
-}
-
 void yed_frame_set_gutter_width(yed_frame *frame, int width) {
     if (width < 0) {
         width = 0;
     }
 
-    frame->gutter_width = width;
-
-    yed_frame_reset_cursor(frame);
+    if (frame->gutter_width != width) {
+        frame->gutter_width = width;
+        yed_frame_reset_cursor(frame);
+    }
 }
 
 void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
@@ -927,9 +955,19 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     }
 
     memset(&event, 0, sizeof(event));
-    event.kind  = EVENT_FRAME_PRE_SET_BUFFER;
-    event.frame = frame;
+    event.kind   = EVENT_FRAME_PRE_SET_BUFFER;
+    event.frame  = frame;
+    event.buffer = buff;
     yed_trigger_event(&event);
+
+    if (buff != NULL) {
+        memset(&event, 0, sizeof(event));
+        event.kind   = EVENT_BUFFER_PRE_FOCUS;
+        event.frame  = frame;
+        event.buffer = buff;
+        yed_trigger_event(&event);
+    }
+
 
     frame->buffer = buff;
 
@@ -943,6 +981,8 @@ void yed_frame_set_buff(yed_frame *frame, yed_buffer *buff) {
     if (buff) {
         yed_set_cursor_far_within_frame(frame, 1, 1);
         yed_set_cursor_within_frame(frame, buff->last_cursor_row, buff->last_cursor_col);
+    } else {
+        yed_frame_reset_cursor(frame);
     }
 
     event.kind = EVENT_FRAME_POST_SET_BUFFER;
@@ -1137,6 +1177,7 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
      * Update the cursor line.
      */
     f->cursor_line = f->buffer_y_offset + (f->cur_y - f->top + 1);
+    LIMIT(f->cursor_line, 1, buff_n_lines);
 }
 
 void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) {
@@ -1529,10 +1570,42 @@ void yed_frames_remove_buffer(yed_buffer *buff) {
 
     array_traverse(ys->frames, frame) {
         if ((*frame)->buffer == buff) {
-            yed_set_cursor_far_within_frame((*frame), 1, 1);
-            (*frame)->buffer = NULL;
+            yed_frame_set_buff(*frame, NULL);
         }
     }
+}
+
+yed_frame * yed_find_frame_by_name(const char *name) {
+    yed_frame **fit;
+
+    array_traverse(ys->frames, fit) {
+        if ((*fit)->name && strcmp((*fit)->name, name) == 0) {
+            return *fit;
+        }
+    }
+
+    return NULL;
+}
+
+int yed_frame_set_name(yed_frame *f, const char *name) {
+    yed_frame *search;
+
+    if (name == NULL) {
+        if (f->name != NULL) {
+            free(f->name);
+            f->name = NULL;
+        }
+        return 1;
+    }
+
+    search = yed_find_frame_by_name(name);
+
+    if (search != NULL) { return 0; }
+
+    if (f->name != NULL) { free(f->name); }
+    f->name = strdup(name);
+
+    return 1;
 }
 
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame) {
@@ -1546,4 +1619,25 @@ int yed_frame_is_tree_root(yed_frame *frame) {
     }
 
     return !frame->tree->parent;
+}
+
+yed_attrs * yed_eline_get_col_attrs(struct yed_event_t *event, int col) {
+    if (col < 1)                                                             { return NULL; }
+    if (event->kind != EVENT_LINE_PRE_DRAW)                                  { return NULL; }
+    if (col <= event->frame->buffer_x_offset)                                { return NULL; }
+    if (col - event->frame->buffer_x_offset > array_len(event->eline_attrs)) { return NULL; }
+
+    return array_item(event->eline_attrs, col - event->frame->buffer_x_offset - 1);
+}
+
+int yed_eline_set_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
+    if (event->kind != EVENT_LINE_PRE_DRAW) { return 0; }
+
+    return _yed_draw_line_set_col_attrs(event->frame, event->eline_attrs, col, attrs);
+}
+
+int yed_eline_combine_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
+    if (event->kind != EVENT_LINE_PRE_DRAW) { return 0; }
+
+    return _yed_draw_line_combine_col_attrs(event->frame, event->eline_attrs, col, attrs);
 }

@@ -9,13 +9,13 @@ PACKABLE_STYLE(vt) {
 
     s.selection.flags     = ATTR_INVERSE;
 
-    s.search.flags        = ATTR_16 | ATTR_INVERSE;
+    s.search.flags        = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_INVERSE;
     s.search.fg           = ATTR_16_YELLOW;
 
-    s.search_cursor.flags = ATTR_16 | ATTR_INVERSE;
+    s.search_cursor.flags = ATTR_FG_KIND_BITS(ATTR_KIND_16) | ATTR_INVERSE;
     s.search_cursor.fg    = ATTR_16_MAGENTA;
 
-    s.attention.flags     = ATTR_16;
+    s.attention.flags     = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.attention.fg        = ATTR_16_RED;
 
     s.status_line.flags   = ATTR_INVERSE;
@@ -23,18 +23,18 @@ PACKABLE_STYLE(vt) {
     s.active_gutter       = s.active;
     s.inactive_gutter     = s.inactive;
 
-    s.code_comment.flags  = ATTR_16;
+    s.code_comment.flags  = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.code_comment.fg     = ATTR_16_GREEN;
 
-    s.code_keyword.flags  = ATTR_16;
+    s.code_keyword.flags  = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.code_keyword.fg     = ATTR_16_BLUE;
 
-    s.code_control_flow       =
-    s.code_typename           = s.code_keyword;
+    s.code_control_flow   =
+    s.code_typename       = s.code_keyword;
 
     s.code_preprocessor   = s.code_keyword;
 
-    s.code_number.flags   = ATTR_16;
+    s.code_number.flags   = ATTR_FG_KIND_BITS(ATTR_KIND_16);
     s.code_number.fg      = ATTR_16_MAGENTA;
 
     s.code_constant       = s.code_number;

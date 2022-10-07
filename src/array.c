@@ -47,13 +47,15 @@ void _array_grow_if_needed(array_t *array) {
         }
 
         if (grow) {
-            data_save   = array->data;
-            array->data = malloc(array->capacity * array->elem_size);
-            memcpy(array->data, data_save, array->used * array->elem_size);
             if (array->should_free) {
-                free(data_save);
+                array->data = realloc(array->data, array->capacity * array->elem_size);
+                array->should_free = 1;
+            } else {
+                data_save   = array->data;
+                array->data = malloc(array->capacity * array->elem_size);
+                memcpy(array->data, data_save, array->used * array->elem_size);
+                array->should_free = 1;
             }
-            array->should_free = 1;
         }
     }
 }
@@ -78,13 +80,15 @@ void _array_grow_if_needed_to(array_t *array, int new_cap) {
         }
 
         if (grow) {
-            data_save   = array->data;
-            array->data = malloc(array->capacity * array->elem_size);
-            memcpy(array->data, data_save, array->used * array->elem_size);
             if (array->should_free) {
-                free(data_save);
+                array->data = realloc(array->data, array->capacity * array->elem_size);
+                array->should_free = 1;
+            } else {
+                data_save   = array->data;
+                array->data = malloc(array->capacity * array->elem_size);
+                memcpy(array->data, data_save, array->used * array->elem_size);
+                array->should_free = 1;
             }
-            array->should_free = 1;
         }
     }
 }

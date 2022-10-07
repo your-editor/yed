@@ -29,15 +29,15 @@ PACKABLE_STYLE(nord) {
     YED_PLUG_VERSION_CHECK();
 
     tc        = !!yed_get_var("truecolor");
-    attr_kind = tc ? ATTR_RGB : ATTR_256;
+    attr_kind = tc ? ATTR_KIND_RGB : ATTR_KIND_256;
 
     memset(&s, 0, sizeof(s));
 
-    s.active.flags        = attr_kind;
+    s.active.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.active.fg           = nord5;
     s.active.bg           = nord0;
 
-    s.inactive.flags      = attr_kind;
+    s.inactive.flags      = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.inactive.fg         = nord4;
     s.inactive.bg         = nord1;
 
@@ -46,58 +46,57 @@ PACKABLE_STYLE(nord) {
 
     s.inactive_border     = s.inactive;
 
-    s.cursor_line.flags   = attr_kind;
+    s.cursor_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.cursor_line.fg      = nord6;
     s.cursor_line.bg      = nord2;
 
-    s.search.flags        = attr_kind | ATTR_BOLD;
+    s.search.flags        = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.search.fg           = nord6;
     s.search.bg           = nord10;
 
-    s.search_cursor.flags = attr_kind | ATTR_BOLD;
+    s.search_cursor.flags = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.search_cursor.fg    = nord10;
     s.search_cursor.bg    = nord13;
 
-    s.selection.flags     = attr_kind;
+    s.selection.flags     = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind);
     s.selection.fg        = nord5;
     s.selection.bg        = nord2;
 
-    s.attention.flags     = attr_kind;
+    s.attention.flags     = ATTR_FG_KIND_BITS(attr_kind);
     s.attention.fg        = nord11;
 
-    s.associate.flags     = attr_kind;
+    s.associate.flags     = ATTR_FG_KIND_BITS(attr_kind);
     s.associate.fg        = nord12;
 
     s.command_line        = s.inactive;
 
-    s.status_line.flags   = attr_kind | ATTR_BOLD;
+    s.status_line.flags   = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.status_line.fg      = s.active.fg;
     s.status_line.bg      = nord3;
 
     s.active_gutter       = s.active;
     s.inactive_gutter     = s.inactive;
 
-    s.code_comment.flags  = attr_kind;
+    s.code_comment.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_comment.fg     = nord3_but_brighter;
 
-    s.code_keyword.flags  = attr_kind | ATTR_BOLD;
+    s.code_keyword.flags  = ATTR_FG_KIND_BITS(attr_kind) | ATTR_BOLD;
     s.code_keyword.fg     = nord9;
 
-    s.code_control_flow       =
-    s.code_typename           = s.code_keyword;
-
+    s.code_control_flow   =
+    s.code_typename       =
     s.code_preprocessor   = s.code_keyword;
 
-    s.code_fn_call.flags  = attr_kind;
+    s.code_fn_call.flags  = ATTR_FG_KIND_BITS(attr_kind);
     s.code_fn_call.fg     = nord8;
 
-    s.code_number.flags   = attr_kind;
+    s.code_number.flags   = ATTR_FG_KIND_BITS(attr_kind);
     s.code_number.fg      = nord15;
 
-    s.code_constant.flags = attr_kind;
+    s.code_constant.flags = ATTR_FG_KIND_BITS(attr_kind);
     s.code_constant.fg    = nord15;
 
-    s.code_string.flags   = attr_kind;
+    s.code_string.flags   = ATTR_FG_KIND_BITS(attr_kind);
     s.code_string.fg      = nord14;
 
     s.code_character      = s.code_string;
