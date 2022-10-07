@@ -1,6 +1,6 @@
 # Changelog
 
-## 1500 - 2022-8-12
+## 1500 - 2022-10-7
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
     - `yed_buff_get_glyph()` now returns `NULL` if the given position is the end of the line.
