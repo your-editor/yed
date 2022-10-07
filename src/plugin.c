@@ -44,6 +44,7 @@ int load_init(const char *path) {
                 break;
             case YED_PLUG_VER_MIS:
                 msg = "init plugin was rejected because it was compiled against an older version of yed and is not compatible with this version";
+                YEXE("log");
                 break;
         }
 
