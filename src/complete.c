@@ -286,7 +286,7 @@ static void get_all_buff_words(char *string, tree(str_t, empty_t) words) {
 
     include_special = yed_var_is_truthy("compl-words-include-special");
     if (!yed_get_var_as_int("compl-words-buffer-max-lines", &max_lines)) {
-        max_lines = DEFAULT_COMPL_WORD_BUFFER_MAX_LINES;
+        max_lines = DEFAULT_COMPL_WORDS_BUFFER_MAX_LINES;
     }
 
     tree_traverse(ys->buffers, it) {
