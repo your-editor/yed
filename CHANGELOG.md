@@ -1,5 +1,14 @@
 # Changelog
 
+## 1501 - 2022-12-16
+### Fixed
+    - A bug in buffer loading code caused us to miss out on an idx/col/glyph translation optimization.
+      Fixed it. Should improve performance all over the place.
+### Changed
+    - The `words` completion source is way faster now!
+### Added
+    - The default completion source `words` no longer scans special buffers with more than `compl-words-buffer-max-lines` lines.
+
 ## 1500 - 2022-10-7
 ### Fixed
     - Some macros contained code that caused compiler warnings or errors when compiled as C++.
