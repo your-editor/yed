@@ -226,9 +226,10 @@ static int complete_files_and_buffers(char *string, yed_completion_results *resu
 }
 
 static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_line *line) {
-    int  col, start_col;
+    int  len, col, start_col;
     char c, *word_start, *word;
 
+    len = strlen(string);
     col = 1;
 
     while (col < line->visual_width) {
@@ -249,7 +250,7 @@ static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_lin
             word_start = array_data(line->chars)
                          + yed_line_col_to_idx(line, start_col);
 
-            if (strncmp(string, word_start, col - start_col) == 0) {
+            if (strncmp(string, word_start, len) == 0) {
                 word = strndup(word_start, col - start_col);
                 tree_insert(words, word, (empty_t){});
             }
@@ -279,13 +280,19 @@ static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_lin
 
 static void get_all_buff_words(char *string, tree(str_t, empty_t) words) {
     int                                           include_special;
+    int                                           max_lines;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
     yed_line                                     *line;
 
     include_special = yed_var_is_truthy("compl-words-include-special");
+    if (!yed_get_var_as_int("compl-words-buffer-max-lines", &max_lines)) {
+        max_lines = DEFAULT_COMPL_WORD_BUFFER_MAX_LINES;
+    }
 
     tree_traverse(ys->buffers, it) {
         if (!include_special && tree_it_val(it)->flags & BUFF_SPECIAL) { continue; }
+        if (yed_buff_n_lines(tree_it_val(it)) > max_lines)             { continue; }
+
         bucket_array_traverse(tree_it_val(it)->lines, line) {
             get_all_line_words(string, words, line);
         }
