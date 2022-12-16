@@ -1200,6 +1200,7 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
         line.chars.used      = line_len;
         line.chars.capacity  = line_cap;
         line.visual_width    = 0;
+        line.n_glyphs        = 0;
 
         while (array_len(line.chars)
         &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
