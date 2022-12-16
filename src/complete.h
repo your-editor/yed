@@ -40,6 +40,7 @@ if (!tree_it_good((_it))) {                                             \
 }                                                                       \
                                                                         \
 array_clear((_res)->strings);                                           \
+array_grow_if_needed_to((_res)->strings, tree_len((_t)));               \
                                                                         \
 _key = tree_it_key((_it));                                              \
 while (strncmp(_key, (_str), _len) == 0) {                              \
