@@ -1333,7 +1333,10 @@ void _yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
     row = new_row - f->cursor_line;
     _yed_move_cursor_within_frame(f, row, 0);
 
-    line       = yed_buff_get_line(f->buffer, f->cursor_line);
+    line = yed_buff_get_line(f->buffer, f->cursor_line);
+    ASSERT(line != NULL, "didn't get line");
+    if (line == NULL) { return; }
+
     line_width = line->visual_width;
 
     if (new_col > line_width + 1) {
