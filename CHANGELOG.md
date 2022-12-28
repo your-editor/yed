@@ -7,7 +7,7 @@
 ### Changed
     - The `words` completion source is way faster now!
 ### Added
-    - The default completion source `words` no longer scans special buffers with more than `compl-words-buffer-max-lines` lines.
+    - The default completion source `words` no longer scans buffers with more than `compl-words-buffer-max-lines` lines.
 
 ## 1500 - 2022-10-7
 ### Fixed
