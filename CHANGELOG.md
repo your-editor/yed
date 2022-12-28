@@ -1,6 +1,6 @@
 # Changelog
 
-## 1501 - 2022-12-16
+## 1501 - 2022-12-28
 ### Fixed
     - A bug in buffer loading code caused us to miss out on an idx/col/glyph translation optimization.
       Fixed it. Should improve performance all over the place.
