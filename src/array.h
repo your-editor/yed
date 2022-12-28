@@ -21,6 +21,7 @@ void * _array_insert(array_t *array, int idx, void *elem);
 void _array_delete(array_t *array, int idx);
 void _array_zero_term(array_t *array);
 void _array_grow_if_needed(array_t *array);
+void _array_grow_if_needed_to(array_t *array, int new_cap);
 void _array_copy(array_t *dst, array_t *src);
 
 #define array_make(T) \
@@ -84,6 +85,9 @@ void _array_copy(array_t *dst, array_t *src);
 
 #define array_grow_if_needed(array) \
     (_array_grow_if_needed(&(array)))
+
+#define array_grow_if_needed_to(array, _new_cap) \
+    (_array_grow_if_needed_to(&(array), (_new_cap)))
 
 #define array_copy(dst, src) \
     (_array_copy(&(dst), &(src)))

@@ -225,10 +225,11 @@ static int complete_files_and_buffers(char *string, yed_completion_results *resu
     return yed_complete_multiple(sizeof(compls)/sizeof(compls[0]), (char**)compls, string, results);
 }
 
-static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
-    int  col, start_col;
+static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_line *line) {
+    int  len, col, start_col;
     char c, *word_start, *word;
 
+    len = strlen(string);
     col = 1;
 
     while (col < line->visual_width) {
@@ -249,9 +250,10 @@ static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
             word_start = array_data(line->chars)
                          + yed_line_col_to_idx(line, start_col);
 
-            word = strndup(word_start, col - start_col);
-
-            tree_insert(words, word, (empty_t){});
+            if (strncmp(string, word_start, len) == 0) {
+                word = strndup(word_start, col - start_col);
+                tree_insert(words, word, (empty_t){});
+            }
         } else if (!is_space(c)) {
             while (col <= line->visual_width) {
                 col += 1;
@@ -276,17 +278,23 @@ static void get_all_line_words(tree(str_t, empty_t) words, yed_line *line) {
     }
 }
 
-static void get_all_buff_words(tree(str_t, empty_t) words) {
+static void get_all_buff_words(char *string, tree(str_t, empty_t) words) {
     int                                           include_special;
+    int                                           max_lines;
     tree_it(yed_buffer_name_t, yed_buffer_ptr_t)  it;
     yed_line                                     *line;
 
     include_special = yed_var_is_truthy("compl-words-include-special");
+    if (!yed_get_var_as_int("compl-words-buffer-max-lines", &max_lines)) {
+        max_lines = DEFAULT_COMPL_WORDS_BUFFER_MAX_LINES;
+    }
 
     tree_traverse(ys->buffers, it) {
         if (!include_special && tree_it_val(it)->flags & BUFF_SPECIAL) { continue; }
+        if (yed_buff_n_lines(tree_it_val(it)) > max_lines)             { continue; }
+
         bucket_array_traverse(tree_it_val(it)->lines, line) {
-            get_all_line_words(words, line);
+            get_all_line_words(string, words, line);
         }
     }
 }
@@ -298,7 +306,7 @@ static int yed_default_completion_words(char *string, yed_completion_results *re
     char                    *key;
 
     t = tree_make(str_t, empty_t);
-    get_all_buff_words(t);
+    get_all_buff_words(string, t);
 
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
 
@@ -440,7 +448,7 @@ int get_buff_word_completion(char *in, char ***out) {
     in_len  = strlen(in);
     n_items = 0;
 
-    get_all_buff_words(words);
+    get_all_buff_words(in, words);
 
     it  = tree_gtr(words, in);
 
