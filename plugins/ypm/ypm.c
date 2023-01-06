@@ -1541,14 +1541,10 @@ next:;
 }
 
 static void row_handler(yed_event *event) {
-    yed_attrs assoc;
-
     if (event->frame->buffer != get_or_make_buffer("ypm-menu")) { return; }
     if (event->row != 15) { return; }
 
-    assoc = yed_active_style_get_associate();
-
-    event->row_base_attr = assoc;
+    event->row_base_attr = yed_parse_attrs("&active &associate");
 }
 
 
