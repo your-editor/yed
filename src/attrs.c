@@ -252,7 +252,7 @@ yed_attrs yed_parse_attrs(const char *string) {
             if (scomp != -1) {
                 ref_attrs = yed_get_active_style_scomp(scomp);
                 if (field_start == NULL) {
-                    attrs = ref_attrs;
+                    yed_combine_attrs(&attrs, &ref_attrs);
                 } else {
                     if (strcmp(field_start, "fg") == 0) {
                         ATTR_SET_FG_KIND(attrs.flags, ATTR_FG_KIND(ref_attrs.flags));

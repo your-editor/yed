@@ -1,5 +1,12 @@
 # Changelog
 
+## 1502 - 2023-1-6
+### Changed
+    - `yed_parse_attrs()` now merges attributes when referencing a style component (without a field specifier).
+      E.g. `yed_parse_attrs("&active &blue")` now merges blue onto the active foreground and background.
+      Previously, the `&blue` reference would simple overwrite everything with `blue`, which does not have a background color, resulting in blue foreground and a `NULL` background.
+      Now you will end up with `blue.fg` on top of `active.bg`.
+
 ## 1501 - 2022-12-28
 ### Fixed
     - A bug in buffer loading code caused us to miss out on an idx/col/glyph translation optimization.
