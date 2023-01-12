@@ -485,14 +485,16 @@ int yed_read_keys(int *input) {
             for (i = 0; i < p; i += 1) {
                 key = paste_keys[i];
 
-            if (key < REAL_KEY_MAX
-                &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
+                if (key < REAL_KEY_MAX
+                    &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
+
                     if (key == MBYTE) {
                         for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
                             array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
                         }
                     } else {
-                        if (key == NEWLINE) { key = ENTER; }
+                        if (key == ENTER) { key = NEWLINE; }
+
                         key_ch = (char)key;
                         array_push(ys->bracketed_paste_buff, key_ch);
                     }
@@ -524,8 +526,10 @@ static void handle_bracketed_paste(void) {
                 key = (int)git->c;
             }
 
+            if (key == NEWLINE) { continue; }
+
             if (key < REAL_KEY_MAX
-            &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
+            &&  (key == ENTER || key == TAB || key == MBYTE || !iscntrl(key))) {
                 sprintf(key_str_buff, "%d", key);
                 key_str = key_str_buff;
 
