@@ -1,5 +1,9 @@
 # Changelog
 
+## 1503 - 2023-1-12
+### Changed
+    - `simple-insert-string` now respects some escape characters such as newline.
+
 ## 1502 - 2023-1-6
 ### Changed
     - `yed_parse_attrs()` now merges attributes when referencing a style component (without a field specifier).

@@ -580,7 +580,7 @@ array_t sh_split(const char *s) {
                 end += 1;
                 prev = copy[end];
             }
-            q = 1;
+            q = 2;
         } else {
             while (end + 1 < len
             &&     !is_space(copy[end + 1])) {
@@ -598,13 +598,31 @@ array_t sh_split(const char *s) {
             sub_p = sub;
             for (i = 0; i < sub_len; i += 1) {
                 c = copy[start + i];
-                if (c == '\\'
-                &&  i < sub_len - 1
-                &&  (copy[start + i + 1] == '"'
-                || copy[start + i + 1] == '\''
-                || copy[start + i + 1] == '#')) {
+                if (c == '\\' && i < sub_len - 1) {
+                    if (q == 2 && copy[start + i + 1] != '\'') { goto single_quote_no_esc; }
+                    switch (copy[start + i + 1]) {
+                        case 'n':
+                            copy[start + i + 1] = '\n';
+                            break;
+                        case 'r':
+                            copy[start + i + 1] = '\r';
+                            break;
+                        case 't':
+                            copy[start + i + 1] = '\t';
+                            break;
+
+                        case '"':
+                        case '\'':
+                        case '#':
+                            break;
+
+                        default:
+                            copy[start + i + 1] = '\\';
+                    }
                     continue;
+single_quote_no_esc:;
                 }
+
                 *sub_p = c;
                 sub_p += 1;
             }

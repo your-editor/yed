@@ -2524,10 +2524,6 @@ void yed_default_command_simple_insert_string(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
     int         row, col;
-    int         tabw;
-    char       *git;
-    yed_glyph   g;
-    int         i;
 
     if (n_args != 1) {
         yed_cerr("expected 1 argument, but got %d", n_args);
@@ -2555,32 +2551,8 @@ void yed_default_command_simple_insert_string(int n_args, char **args) {
 
     row  = frame->cursor_line;
     col  = frame->cursor_col;
-    tabw = yed_get_tab_width();
-    git  = args[0];
 
-    yed_start_undo_record(frame, buff);
-    while (*git) {
-        g = *(yed_glyph*)git;
-        switch (*git) {
-            case ENTER:
-                yed_buff_insert_line(buff, row + 1);
-                row += 1;
-                col  = 1;
-                break;
-            case TAB:
-                g.c = ' ';
-                for (i = 0; i < tabw; i += 1) {
-                    yed_insert_into_line(buff, row, col, g);
-                    col += 1;
-                }
-                break;
-            default:
-                yed_insert_into_line(buff, row, col, g);
-                col += 1;
-        }
-        git += yed_get_glyph_len(g);
-    }
-    yed_end_undo_record(frame, buff);
+    yed_buff_insert_string(buff, args[0], row, col);
 
     if (ys->current_search) {
         if (yed_var_is_truthy("cursor-move-clears-search")) {
