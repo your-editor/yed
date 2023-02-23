@@ -1,5 +1,11 @@
 # Changelog
 
+## 1504 - 2023-2-23
+### Fixed
+    - Trigger the appropriate event when `EVENT_PLUGIN_POST_UNLOAD`.
+### Changed
+    - YPM: only update the list buffer when it is visible. This was taking up time in startup for no good reason.
+
 ## 1503 - 2023-1-12
 ### Changed
     - `simple-insert-string` now respects some escape characters such as newline.

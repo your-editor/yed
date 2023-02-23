@@ -137,7 +137,7 @@ int load_yed_lib(void) {
         force_yed_unload(yed_lib.handle);
     }
 
-    yed_lib.handle = dlopen(lib_path, RTLD_LAZY | RTLD_LOCAL);
+    yed_lib.handle = dlopen(lib_path, RTLD_LAZY | RTLD_GLOBAL);
 
     if (yed_lib.handle == NULL) {
         printf("[yed]! could not load 'libyed.so'\n%s\n", dlerror());

@@ -1455,8 +1455,16 @@ out:;
 LOG_EXIT();
 }
 
-static void plug_load_handler(yed_event *event)   { draw_list(); }
-static void plug_unload_handler(yed_event *event) { draw_list(); }
+static void plug_load_handler(yed_event *event) {
+    if (yed_buff_is_visible(get_or_make_buffer("ypm-menu"))) {
+        draw_list();
+    }
+}
+static void plug_unload_handler(yed_event *event) {
+    if (yed_buff_is_visible(get_or_make_buffer("ypm-menu"))) {
+        draw_list();
+    }
+}
 
 static void line_handler(yed_event *event) {
     yed_buffer *buff;

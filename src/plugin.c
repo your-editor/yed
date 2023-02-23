@@ -400,7 +400,7 @@ int yed_load_plugin(char *plug_name) {
 
     tree_insert(ys->plugins, strdup(plug_name), plug);
 
-    evt.kind = EVENT_PLUGIN_POST_UNLOAD;
+    evt.kind = EVENT_PLUGIN_POST_LOAD;
     yed_trigger_event(&evt);
 
     return YED_PLUG_SUCCESS;
