@@ -247,8 +247,8 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     yed_init_completions();
 
     LOG_FN_ENTER();
-
     yed_log("basic systems initialized");
+    LOG_EXIT();
 
     yed_init_plugins();
 
@@ -267,6 +267,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
 
     ys->start_time_ms = measure_time_now_ms() - start_time;
 
+    LOG_FN_ENTER();
     yed_log("\nStartup time: %llums", ys->start_time_ms);
     LOG_EXIT();
 
