@@ -1,5 +1,10 @@
 # Changelog
 
+## 1505 - 2023-3-9
+### Added
+    - Rectangular selection mode, which works with `yank-selection` and `delete-selection`!
+    - New command `select-rect`
+
 ## 1504 - 2023-2-23
 ### Fixed
     - Trigger the appropriate event when `EVENT_PLUGIN_POST_UNLOAD`.

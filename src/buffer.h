@@ -10,6 +10,7 @@ typedef struct yed_line_t {
 
 #define RANGE_NORMAL  (0x1)
 #define RANGE_LINE    (0x2)
+#define RANGE_RECT    (0x3)
 typedef struct {
     int kind;
     int locked;
@@ -25,6 +26,7 @@ typedef struct {
 #define BUFF_RD_ONLY              (0x2)
 #define BUFF_YANK_LINES           (0x4)
 #define BUFF_SPECIAL              (0x8)
+#define BUFF_YANK_RECT            (0x10)
 
 #define BUFF_FILL_STATUS_SUCCESS  (0)
 #define BUFF_FILL_STATUS_ERR_NOF  (1)

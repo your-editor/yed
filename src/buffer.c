@@ -1302,7 +1302,7 @@ void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c
     *r1 = MIN(range->anchor_row, range->cursor_row);
     *r2 = MAX(range->anchor_row, range->cursor_row);
 
-    if (range->kind == RANGE_NORMAL) {
+    if (range->kind == RANGE_NORMAL || range->kind == RANGE_RECT) {
         if (range->anchor_row == range->cursor_row) {
             *c1 = MIN(range->anchor_col, range->cursor_col);
             *c2 = MAX(range->anchor_col, range->cursor_col);
@@ -1325,6 +1325,10 @@ int yed_is_in_range(yed_range *range, int row, int col) {
 
     if (row < r1 || row > r2) {
         return 0;
+    }
+
+    if (range->kind == RANGE_RECT) {
+        return col >= c1 && col < c2;
     }
 
     if (range->kind == RANGE_NORMAL) {
@@ -1370,16 +1374,18 @@ void yed_buff_delete_selection(yed_buffer *buff) {
         for (i = r1; i <= r2; i += 1) {
             yed_buff_delete_line(buff, r1);
         }
-    } else if (r1 == r2) {
-        line1 = yed_buff_get_line(buff, r1);
-        ctmp = c1;
-        while (ctmp < c2) {
-            g     = yed_line_col_to_glyph(line1, c1);
-            width = yed_get_glyph_width(*g);
-            yed_delete_from_line(buff, r1, c1);
-            ctmp += width;
+    } else if (r1 == r2 || range->kind == RANGE_RECT) {
+        for (i = r1; i <= r2; i += 1) {
+            line1 = yed_buff_get_line(buff, i);
+            ctmp  = c1;
+            while (ctmp < c2 && c1 <= line1->visual_width) {
+                g = yed_line_col_to_glyph(line1, c1);
+                width = yed_get_glyph_width(*g);
+                yed_delete_from_line(buff, i, c1);
+                ctmp += width;
+            }
         }
-    } else {
+    } else if (range->kind == RANGE_NORMAL) {
         line1 = yed_buff_get_line(buff, r1);
         ASSERT(line1, "didn't get line1 in yed_buff_delete_selection()");
         n = 0;

@@ -154,6 +154,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("plugins-add-dir",                    plugins_add_dir);
     SET_DEFAULT_COMMAND("select",                             select);
     SET_DEFAULT_COMMAND("select-lines",                       select_lines);
+    SET_DEFAULT_COMMAND("select-rect",                        select_rect);
     SET_DEFAULT_COMMAND("select-off",                         select_off);
     SET_DEFAULT_COMMAND("yank-selection",                     yank_selection);
     SET_DEFAULT_COMMAND("paste-yank-buffer",                  paste_yank_buffer);
@@ -3126,6 +3127,38 @@ void yed_default_command_select_lines(int n_args, char **args) {
     buff->selection.cursor_col = frame->cursor_col;
 }
 
+void yed_default_command_select_rect(int n_args, char **args) {
+    yed_frame  *frame;
+    yed_buffer *buff;
+
+    if (n_args != 0) {
+        yed_cerr("expected 0 arguments, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    buff = frame->buffer;
+
+    buff->has_selection        = !buff->has_selection || buff->selection.kind != RANGE_RECT;
+    buff->selection.kind       = RANGE_RECT;
+    buff->selection.locked     = 0;
+    buff->selection.anchor_row = frame->cursor_line;
+    buff->selection.anchor_col = frame->cursor_col;
+    buff->selection.cursor_row = frame->cursor_line;
+    buff->selection.cursor_col = frame->cursor_col;
+}
+
 void yed_default_command_select_off(int n_args, char **args) {
     yed_frame  *frame;
     yed_buffer *buff;
@@ -3214,6 +3247,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
     r1  = c1 = r2 = c2 = 0;
     yed_range_sorted_points(sel, &r1, &c1, &r2, &c2);
     if (sel->kind == RANGE_LINE) {
+        yank_buff->flags &= ~(BUFF_YANK_RECT);
         yank_buff->flags |= BUFF_YANK_LINES;
         for (row = r1; row <= r2; row += 1) {
             yrow    = yed_buffer_add_line(yank_buff);
@@ -3224,8 +3258,21 @@ void yed_default_command_yank_selection(int n_args, char **args) {
                 col += yed_get_glyph_width(*g);
             }
         }
-    } else {
+    } else if (sel->kind == RANGE_RECT) {
         yank_buff->flags &= ~(BUFF_YANK_LINES);
+        yank_buff->flags |= BUFF_YANK_RECT;
+
+        for (row = r1; row <= r2; row += 1) {
+            yrow    = yed_buffer_add_line(yank_buff);
+            line_it = yed_buff_get_line(buff, row);
+            for (col = c1; col < c2 && col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_append_to_line(yank_buff, yrow, *g);
+                col += yed_get_glyph_width(*g);
+            }
+        }
+    } else {
+        yank_buff->flags &= ~(BUFF_YANK_LINES | BUFF_YANK_RECT);
         yrow    = yed_buffer_add_line(yank_buff);
         line_it = yed_buff_get_line(buff, r1);
         if (r1 == r2) {
@@ -3319,6 +3366,20 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             for (col = 1; col <= line_it->visual_width;) {
                 g = yed_line_col_to_glyph(line_it, col);
                 yed_append_to_line(buff, new_row, *g);
+                col += yed_get_glyph_width(*g);
+            }
+        }
+        yed_set_cursor_far_within_frame(frame, frame->cursor_line + 1, 1);
+    } else if (yank_buff->flags & BUFF_YANK_RECT) {
+        for (row = 1; row <= yank_buff_n_lines; row += 1) {
+            new_row = frame->cursor_line + row - 1;
+            while (yed_buff_n_lines(buff) < frame->cursor_line + row - 1) {
+                yed_buff_insert_line(buff, new_row);
+            }
+            line_it = yed_buff_get_line(yank_buff, row);
+            for (col = 1; col <= line_it->visual_width;) {
+                g = yed_line_col_to_glyph(line_it, col);
+                yed_insert_into_line(buff, new_row, MIN(frame->cursor_col + col - 1, yed_buff_get_line(buff, new_row)->visual_width + 1), *g);
                 col += yed_get_glyph_width(*g);
             }
         }
