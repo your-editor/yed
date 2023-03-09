@@ -2,7 +2,7 @@
 #define __VERSION_H__
 
 #define _YED_VERSION_MAJOR_PART  15
-#define _YED_VERSION_MINOR_PART  04
+#define _YED_VERSION_MINOR_PART  05
 
 
 #define _XYED_VERSION_CAT2(x, y) x##y
