@@ -3383,7 +3383,6 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 col += yed_get_glyph_width(*g);
             }
         }
-        yed_set_cursor_far_within_frame(frame, frame->cursor_line + 1, 1);
     } else {
         if (yank_buff_n_lines == 1) {
             line_it  = yed_buff_get_line(yank_buff, 1);
