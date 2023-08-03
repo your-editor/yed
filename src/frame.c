@@ -1645,6 +1645,4 @@ int yed_eline_combine_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
     if (event->kind != EVENT_LINE_PRE_DRAW) { return 0; }
 
     return _yed_draw_line_combine_col_attrs(event->frame, event->eline_attrs, col, attrs);
-}    /*
-     * Update the cursor line.
-     */
+}
