@@ -1147,11 +1147,13 @@ void yed_move_cursor_once_y_within_frame(yed_frame *f, int dir, int buff_n_lines
         new_y      = f->cur_y + dir;
 
         if (buff_big_enough_to_scroll) {
-            if (f->buffer_y_offset < buff_n_lines - f->height
+            if (dir > 0
+            && f->buffer_y_offset < buff_n_lines - f->height
             && new_y >= bot - scroll_off) {
 
                 f->buffer_y_offset += dir;
-            } else if (f->buffer_y_offset >= 1
+            } else if (dir < 0
+                   && f->buffer_y_offset >= 1
                    &&  new_y < f->top + scroll_off) {
 
                 f->buffer_y_offset += dir;
@@ -1643,4 +1645,6 @@ int yed_eline_combine_col_attrs(yed_event *event, int col, yed_attrs *attrs) {
     if (event->kind != EVENT_LINE_PRE_DRAW) { return 0; }
 
     return _yed_draw_line_combine_col_attrs(event->frame, event->eline_attrs, col, attrs);
-}
+}    /*
+     * Update the cursor line.
+     */
