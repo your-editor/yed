@@ -1235,6 +1235,8 @@ void _yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
               buff_big_enough_to_scroll;
     yed_line *line;
 
+    if (f->buffer == NULL) { return; }
+
     buff_n_lines = bucket_array_len(f->buffer->lines);
     if (buff_n_lines < 1) { return; }
 
@@ -1245,10 +1247,13 @@ void _yed_move_cursor_within_frame(yed_frame *f, int row, int n_glyphs) {
         yed_move_cursor_once_y_within_frame(f, dir, buff_n_lines, buff_big_enough_to_scroll);
     }
 
-    line       = yed_buff_get_line(f->buffer, f->cursor_line);
+    line = yed_buff_get_line(f->buffer, f->cursor_line);
+
+    if (line == NULL) { return; }
+
     line_width = line->visual_width;
 
-    if (line != NULL && row) {
+    if (row) {
         /*
          * Update x values tied to y.
          */
