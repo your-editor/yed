@@ -124,14 +124,6 @@ int yed_term_says_it_supports_truecolor(void) {
     return 1;
 }
 
-void yed_set_cursor(int row, int col) {
-    if (row < 1)    { row = 1; }
-    if (col < 1)    { col = 1; }
-
-    ys->screen_update->cur_y = row;
-    ys->screen_update->cur_x = col;
-}
-
 void yed_term_set_cursor_style(int style) {
     switch (style) {
         case TERM_CURSOR_STYLE_DEFAULT:

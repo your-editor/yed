@@ -75,7 +75,6 @@ void yed_term_set_timeout(int n_x_100_ms);
 int yed_term_get_dim(int *r, int *c);
 int yed_term_says_it_supports_truecolor(void);
 
-void yed_set_cursor(int row, int col);
 void yed_term_set_cursor_style(int style);
 
 void yed_register_sigwinch_handler(void);

@@ -1,20 +1,3 @@
-int _yed_get_mbyte_width(yed_glyph g) {
-    int     len, w;
-    wchar_t wch;
-
-    len = yed_get_glyph_len(g);
-
-    /* Reset the shift state. */
-    mbtowc(NULL, 0, 0);
-
-    mbtowc(&wch, (const char*)g.bytes, len);
-    w = wcwidth(wch);
-
-    if (unlikely(w <= 0)) { return 1; }
-
-    return w;
-}
-
 /*
  * @bad @todo
  * I think this is _technically_ incorrect code.

@@ -151,10 +151,10 @@ use_tree_c(yed_ft_name_t, empty_t, strcmp);
 #include "yed.h"
 #include "term.h"
 #include "attrs.h"
-#include "utf8.h"
-#include "screen.h"
 /* What would be in wcwidth.h: */
 int mk_wcwidth(wchar_t ucs);
+#include "utf8.h"
+#include "screen.h"
 #include "key.h"
 #include "ft.h"
 #include "undo.h"
@@ -276,6 +276,8 @@ typedef struct yed_state_t {
 } yed_state;
 
 extern yed_state *ys;
+
+#include "inlines.h"
 
 void clear_output_buff(void);
 int output_buff_len(void);

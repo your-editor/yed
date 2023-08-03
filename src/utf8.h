@@ -9,17 +9,6 @@ typedef union {
 
 #define G(c) ((yed_glyph){ .data = (c)})
 
-int _yed_get_mbyte_width(yed_glyph g);
-
-#define yed_get_glyph_width(g)          \
-    (unlikely((g).c == '\t')            \
-        ? ys->tabw                      \
-        : (likely((g).u_c <= 127)       \
-            ? (likely(isprint((g).c))   \
-                ? 1                     \
-                : 2)                    \
-            : _yed_get_mbyte_width(g)))
-
 /*
  * This is what the length table would look like:
  */
@@ -42,6 +31,34 @@ static const unsigned char _utf8_lens[] = {
     (likely(G_IS_ASCII(g))                    \
         ? 1                                   \
         : (int)(_utf8_lens[(g).u_c >> 3ULL]))
+
+
+__attribute__((always_inline))
+static inline int _yed_get_mbyte_width(yed_glyph g) {
+    int     len, w;
+    wchar_t wch;
+
+    len = yed_get_glyph_len(g);
+
+    /* Reset the shift state. */
+    mbtowc(NULL, 0, 0);
+
+    mbtowc(&wch, (const char*)g.bytes, len);
+    w = mk_wcwidth(wch);
+
+    if (unlikely(w <= 0)) { return 1; }
+
+    return w;
+}
+
+#define yed_get_glyph_width(g)          \
+    (likely((g).u_c <= 127)             \
+        ? (unlikely((g).c == '\t')      \
+            ? (ys->tabw)                \
+            : (likely(isprint((g).c))   \
+                ? 1                     \
+                : 2))                   \
+        : (_yed_get_mbyte_width(g)))
 
 void yed_get_string_info(const char *bytes, int len, int *n_glyphs, int *width);
 int yed_get_string_width(const char *s);

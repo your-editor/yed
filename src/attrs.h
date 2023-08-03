@@ -57,11 +57,15 @@ typedef struct {
     uint32_t bg;
 } yed_attrs;
 
-#define ZERO_ATTR    ((yed_attrs){ 0, 0, 0 })
+#define ZERO_ATTR ((yed_attrs){ 0, 0, 0 })
+
+#define ATTRS_EQ(_a, _b)          \
+    ( ((_a).fg    == (_b).fg)     \
+    & ((_a).bg    == (_b).bg)     \
+    & ((_a).flags == (_b).flags))
 
 void yed_get_attr_str(yed_attrs attr, char *buff_p);
 int  yed_attrs_eq(yed_attrs attr1, yed_attrs attr2);
-void yed_combine_attrs(yed_attrs *dst, yed_attrs *src);
 yed_attrs yed_parse_attrs(const char *string);
 
 #endif

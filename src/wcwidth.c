@@ -67,7 +67,8 @@ struct interval {
 };
 
 /* auxiliary function for binary search in interval table */
-static int bisearch(wchar_t ucs, const struct interval *table, int max) {
+__attribute__((always_inline))
+static inline int bisearch(wchar_t ucs, const struct interval *table, int max) {
   int min = 0;
   int mid;
 

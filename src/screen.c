@@ -36,38 +36,36 @@ void yed_clear_screen(void) {
     yed_resize_screen();
 }
 
-void yed_set_attr(yed_attrs attr) {
-    ys->screen_update->cur_attrs = attr;
-}
-
-void yed_reset_attr(void) {
-    yed_set_attr(ZERO_ATTR);
-}
-
-static void set_cell(int row, int col, yed_glyph g) {
-    yed_screen_cell *cell;
-
-    if (unlikely(row > ys->term_rows || col > ys->term_cols)) { return; }
-
-    cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
-
+__attribute__((always_inline))
+static inline void set_cellp(yed_screen_cell *cell, yed_glyph g) {
     cell->attrs = ys->screen_update->cur_attrs;
     cell->glyph = g;
 }
 
-static void set_cell_combine(int row, int col, yed_glyph g) {
-    yed_screen_cell *cell;
-
-    if (unlikely(row > ys->term_rows || col > ys->term_cols)) { return; }
-
-    cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
-
-    cell->attrs.flags &= ~(ATTR_BOLD);
-    cell->attrs.flags &= ~(ATTR_UNDERLINE);
-    cell->attrs.flags &= ~(ATTR_INVERSE);
+__attribute__((always_inline))
+static inline void set_cellp_combine(yed_screen_cell *cell, yed_glyph g) {
+    cell->attrs.flags &= ~(ATTR_BOLD | ATTR_UNDERLINE | ATTR_INVERSE);
 
     yed_combine_attrs(&cell->attrs, &ys->screen_update->cur_attrs);
     cell->glyph = g;
+}
+
+__attribute__((always_inline))
+static inline void set_cell(int row, int col, yed_glyph g) {
+    yed_screen_cell *cell;
+
+    cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
+
+    set_cellp(cell, g);
+}
+
+__attribute__((always_inline))
+static inline void set_cell_combine(int row, int col, yed_glyph g) {
+    yed_screen_cell *cell;
+
+    cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
+
+    set_cellp_combine(cell, g);
 }
 
 static void write_welcome(void) {
@@ -134,7 +132,7 @@ static void write_welcome(void) {
         }
 
         col = ((ys->term_cols / 2) - (oct_width / 2));
-        for (j = 0; j < strlen(oct[i]) - 1; j += 1) {
+        for (j = 0; j < oct_width - 1; j += 1) {
 
             if (col+j > ys->term_cols) {
                 break;
@@ -150,41 +148,45 @@ static void write_welcome(void) {
 }
 
 void yed_draw_background(void) {
-    int row;
-    int col;
+    int              n_cells;
+    yed_glyph        space;
+    yed_screen_cell *cell;
+    int              i;
 
     yed_set_attr(yed_active_style_get_inactive());
 
-    for (row = 1; row <= ys->term_rows; row += 1) {
-        for (col = 1; col <= ys->term_cols; col += 1) {
-            set_cell(row, col, G(' '));
-        }
+    n_cells = ys->term_rows * ys->term_cols;
+    space   = G(' ');
+    cell    = ys->screen_update->cells;
+
+    for (i = 0; i < n_cells; i += 1) {
+        set_cellp(cell, space);
+        cell += 1;
     }
 
     write_welcome();
 }
 
 void yed_diff_and_swap_screens(void) {
+    int              n_cells;
     yed_screen_cell *ucell;
     yed_screen_cell *rcell;
-    int              row;
-    int              col;
+    int              i;
     int              dirty;
 
-    ucell = ys->screen_update->cells;
-    rcell = ys->screen_render->cells;
+    n_cells = ys->term_rows * ys->term_cols;
+    ucell   = ys->screen_update->cells;
+    rcell   = ys->screen_render->cells;
 
-    for (row = 1; row <= ys->term_rows; row += 1) {
-        for (col = 1; col <= ys->term_cols; col += 1) {
-            dirty = (   rcell->glyph.data != ucell->glyph.data
-                     || !yed_attrs_eq(rcell->attrs, ucell->attrs));
+    for (i = 0; i < n_cells; i += 1) {
+        dirty =    (rcell->glyph.data != ucell->glyph.data)
+                || (!ATTRS_EQ(rcell->attrs, ucell->attrs));
 
-            *rcell       = *ucell;
-            rcell->dirty = dirty;
+        *rcell       = *ucell;
+        rcell->dirty = dirty;
 
-            ucell += 1;
-            rcell += 1;
-        }
+        ucell += 1;
+        rcell += 1;
     }
 }
 
@@ -254,7 +256,7 @@ void yed_render_screen(void) {
                     ys->screen_render->cur_x = col;
                 }
 
-                if (!yed_attrs_eq(cell->attrs, ys->screen_render->cur_attrs)) {
+                if (!ATTRS_EQ(cell->attrs, ys->screen_render->cur_attrs)) {
                     yed_get_attr_str(cell->attrs, buff);
                     WR(buff, strlen(buff));
                     ys->screen_render->cur_attrs = cell->attrs;
@@ -305,36 +307,35 @@ void yed_render_screen(void) {
 #undef WR
 }
 
-static void screen_print_n(const char *s, int n, int combine) {
+__attribute__((always_inline))
+static inline void screen_print_n(const char *s, int n, int combine) {
     const char *end;
     yed_glyph  *g;
     int         len;
-    yed_glyph   new_g;
     int         width;
+    yed_glyph   new_g;
     int         i;
 
     end = s + n;
 
     while (s < end) {
-        g   = (yed_glyph*)(void*)s;
-        len = yed_get_glyph_len(*g);
+        if (unlikely(   ys->screen_update->cur_y > ys->term_rows
+                     || ys->screen_update->cur_x > ys->term_cols)) {
 
-        new_g = G(0);
-        memcpy(&new_g, g, len);
-
-        if (combine) {
-            set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x, new_g);
-        } else {
-            set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x, new_g);
+            break;
         }
 
+        g     = (yed_glyph*)(void*)s;
+        len   = yed_get_glyph_len(*g);
         width = yed_get_glyph_width(*g);
+        new_g = G(0);
+        for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 
-        for (i = 1; i < width; i += 1) {
+        for (i = 0; i < width; i += 1) {
             if (combine) {
-                set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x + i, G(0));
+                set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? new_g : G(0));
             } else {
-                set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x + i, G(0));
+                set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? new_g : G(0));
             }
         }
 
@@ -347,4 +348,14 @@ static void screen_print_n(const char *s, int n, int combine) {
 void yed_screen_print(const char *s)               { if (!s) { return; } yed_screen_print_n(s, strlen(s));      }
 void yed_screen_print_n(const char *s, int n)      { if (!s) { return; } screen_print_n(s, n, 0);               }
 void yed_screen_print_over(const char *s)          { if (!s) { return; } yed_screen_print_n_over(s, strlen(s)); }
-void yed_screen_print_n_over(const char *s, int n) { if (!s) { return; } screen_print_n(s, strlen(s), 1);       }
+void yed_screen_print_n_over(const char *s, int n) { if (!s) { return; } screen_print_n(s, n, 1);               }
+
+void yed_screen_print_single_cell_glyph(yed_glyph g) {
+    set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x, g);
+    ys->screen_update->cur_x += 1;
+}
+
+void yed_screen_print_single_cell_glyph_over(yed_glyph g) {
+    set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x, g);
+    ys->screen_update->cur_x += 1;
+}
