@@ -1,5 +1,9 @@
 # Changelog
 
+## 1506 - 2023-8-3
+### Fixed
+    - Fixed an approximately 4 year old bug where the cursor could get stuck in the scroll offset region.
+
 ## 1505 - 2023-3-9
 ### Added
     - Rectangular selection mode, which works with `yank-selection` and `delete-selection`!
