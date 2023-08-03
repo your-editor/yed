@@ -90,6 +90,7 @@ void yed_trigger_event(yed_event *event) {
 
         len_before = array_len(ys->event_handlers[event->kind]);
 
+        event->aux_data = handler.aux_data;
         handler.fn(event);
 
         if (event->cancel) { break; }

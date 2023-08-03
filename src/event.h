@@ -93,6 +93,7 @@ typedef enum {
 
 typedef struct yed_event_t {
     yed_event_kind_t            kind;
+    void                       *aux_data;
     yed_frame                  *frame;
     yed_buffer                 *buffer;
     union { int                 row;
@@ -128,8 +129,9 @@ typedef struct yed_event_t {
 typedef void (*yed_event_handler_fn_t)(yed_event*);
 
 typedef struct {
-    yed_event_kind_t       kind;
-    yed_event_handler_fn_t fn;
+    yed_event_handler_fn_t  fn;
+    void                   *aux_data;
+    yed_event_kind_t        kind;
 } yed_event_handler;
 
 void yed_init_events(void);
