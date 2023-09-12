@@ -14,7 +14,14 @@ static inline void yed_reset_attr(void) {
 __attribute__((always_inline))
 static inline void yed_set_cursor(int row, int col) {
     ys->screen_update->cur_y = row < 1 ? 1 : row;
+    if (ys->screen_update->cur_y > ys->term_rows) {
+        ys->screen_update->cur_y = ys->term_rows;
+    }
+
     ys->screen_update->cur_x = col < 1 ? 1 : col;
+    if (ys->screen_update->cur_x > ys->term_cols) {
+        ys->screen_update->cur_x = ys->term_cols;
+    }
 }
 
 __attribute__((always_inline))
