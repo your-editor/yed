@@ -16,6 +16,8 @@ typedef enum {
     EVENT_FRAME_POST_MOVE,
     EVENT_FRAME_PRE_RESIZE,
     EVENT_FRAME_POST_RESIZE,
+    EVENT_FRAME_PRE_SCROLL, /* Not currently triggered, but reserved just in case. */
+    EVENT_FRAME_POST_SCROLL,
     EVENT_ROW_PRE_CLEAR,
     EVENT_LINE_PRE_DRAW,
     EVENT_BUFFER_CREATED,

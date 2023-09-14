@@ -1477,8 +1477,9 @@ void yed_frame_hard_reset_cursor_y(yed_frame *frame) {
 }
 
 void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
-    int buff_n_lines;
-    int old_off;
+    int       buff_n_lines;
+    int       old_off;
+    yed_event event;
 
     if (frame         == NULL) { return; }
     if (frame->buffer == NULL) { return; }
@@ -1502,6 +1503,12 @@ void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
     if (frame->buffer_y_offset != old_off) {
         yed_move_cursor_within_frame(frame, -rows, 0);
     }
+
+    memset(&event, 0, sizeof(event));
+    event.kind  = EVENT_FRAME_POST_SCROLL;
+    event.frame = frame;
+
+    yed_trigger_event(&event);
 }
 
 void yed_move_cursor_within_active_frame(int row, int col) {
