@@ -1,5 +1,18 @@
 # Changelog
 
+## 1600 - 2023-TBD
+### Fixed
+    - More compatibility fixes for plugins written in C++.
+### Changed
+    - Improved performance of screen diffing and general rendering efficiency.
+    - Use `-mcpu=native` on Apple Silicon builds in release mode.
+### Added
+    - New event `EVENT_FRAME_POST_SCROLL`.
+    - The `yed_event` and `yed_event_handler` structs now have an `aux_data` field, which plugins can use to package
+      custom data with events to handlers that they created. This is useful in creating event handlers that only operate
+      on specific plugin state. For example, `aux_data` may be a pointer to a specific buffer and a handler will ensure that
+      `event->buffer == event->aux_data` before doing anything to the buffer.
+
 ## 1506 - 2023-8-3
 ### Fixed
     - Fixed an approximately 4 year old bug where the cursor could get stuck in the scroll offset region.
