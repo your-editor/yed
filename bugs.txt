@@ -1,1 +1,0 @@
-syntax.h: a regex group could have a match, but zero length (like an anchor), this causes an infinite loop

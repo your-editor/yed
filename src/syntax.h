@@ -964,7 +964,7 @@ static inline const char * _yed_syntax_find_next_regex_match(yed_syntax *syntax,
             m = syntax->matches + rit->group;
 
             /* Find the match that occurs first in the string. */
-            if (m->rm_so != -1 && start + m->rm_eo <= end) {
+            if (m->rm_so != -1 && m->rm_eo > m->rm_so && start + m->rm_eo <= end) {
                 if (match_start == NULL || m->rm_so < first_match.rm_so) {
                     memcpy(&first_match, m, sizeof(first_match));
                     match_start = start + first_match.rm_so;
