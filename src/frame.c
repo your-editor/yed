@@ -1330,7 +1330,8 @@ void yed_move_cursor_within_frame(yed_frame *_f, int row, int n_glyphs) {
 
     if (_f->buffer_y_offset != old_buff_y_off) {
         memset(&event, 0, sizeof(event));
-        event.kind = EVENT_FRAME_POST_SCROLL;
+        event.kind  = EVENT_FRAME_POST_SCROLL;
+        event.frame = _f;
         yed_trigger_event(&event);
     }
 }
@@ -1412,7 +1413,8 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 
     if (f->buffer_y_offset != old_buff_y_off) {
         memset(&event, 0, sizeof(event));
-        event.kind = EVENT_FRAME_POST_SCROLL;
+        event.kind  = EVENT_FRAME_POST_SCROLL;
+        event.frame = f;
         yed_trigger_event(&event);
     }
 }
