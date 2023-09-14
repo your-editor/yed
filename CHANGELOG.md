@@ -14,6 +14,8 @@
       custom data with events to handlers that they created. This is useful in creating event handlers that only operate
       on specific plugin state. For example, `aux_data` may be a pointer to a specific buffer and a handler will ensure that
       `event->buffer == event->aux_data` before doing anything to the buffer.
+    - New default completion source `directories`.
+    - Command line completion for `plugins-add-dir` and `plugin-load`.
 
 ## 1506 - 2023-8-3
 ### Fixed

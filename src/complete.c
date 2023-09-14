@@ -135,7 +135,7 @@ static int yed_default_completion_plugins(char *string, yed_completion_results *
     return status;
 }
 
-static int yed_default_completion_files(char *string, yed_completion_results *results) {
+static int _yed_default_completion_files(char *string, yed_completion_results *results, int dironly) {
     char                    *orig;
     int                      expanded;
     char                     expanded_path[4096];
@@ -146,6 +146,7 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
     DIR                     *dir;
     struct dirent           *dent;
     char                     full_path[4096];
+    struct stat              st;
     char                     homeified_path[4096];
     tree_it(str_t, empty_t)  it;
     char                    *key;
@@ -195,6 +196,11 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
         }
         strcat(full_path, dent->d_name);
 
+        if (dironly) {
+            if (stat(full_path, &st) != 0) { continue; }
+            if (!(S_ISDIR(st.st_mode)))    { continue; }
+        }
+
         if (expanded) {
             if (homeify_path(full_path, homeified_path) != NULL) {
                 tree_insert(t, strdup(homeified_path), (empty_t){});
@@ -203,6 +209,8 @@ static int yed_default_completion_files(char *string, yed_completion_results *re
             tree_insert(t, strdup(full_path), (empty_t){});
         }
     }
+
+    closedir(dir);
 
     string = orig;
     FN_BODY_FOR_COMPLETE_FROM_TREE(string, t, it, results, status);
@@ -220,9 +228,79 @@ out:;
     return status;
 }
 
+static int yed_default_completion_files(char *string, yed_completion_results *results) {
+    return _yed_default_completion_files(string, results, 0);
+}
+
+static int yed_default_completion_directories(char *string, yed_completion_results *results) {
+    return _yed_default_completion_files(string, results, 1);
+}
+
 static int complete_files_and_buffers(char *string, yed_completion_results *results) {
     const char *compls[] = { "file", "buffer" };
     return yed_complete_multiple(sizeof(compls)/sizeof(compls[0]), (char**)compls, string, results);
+}
+
+static void collect_loadable_plugins_from_dir(const char *plug_dirn, const char *dirn, array_t *paths) {
+    DIR           *dir;
+    struct dirent *dent;
+    int            len;
+    char           path[4096];
+    struct stat    st;
+    char          *cpy;
+
+    if ((dir = opendir(dirn)) == NULL) { return; }
+
+    while ((dent = readdir(dir)) != NULL) {
+        len = strlen(dent->d_name);
+
+        if (len < 3
+        ||  strcmp(dent->d_name, ".")  == 0
+        ||  strcmp(dent->d_name, "..") == 0) {
+
+            continue;
+        }
+
+        snprintf(path, sizeof(path), "%s/%s", dirn, dent->d_name);
+
+        if (stat(path, &st) != 0) { continue; }
+
+        if (S_ISDIR(st.st_mode)) {
+            collect_loadable_plugins_from_dir(plug_dirn, path, paths);
+        } else if (S_ISREG(st.st_mode)) {
+            if (strcmp(dent->d_name + len - 3, ".so") == 0) {
+                cpy = strdup(path + strlen(plug_dirn) + 1);
+                cpy[strlen(cpy) - 3] = 0;
+                array_push(*paths, cpy);
+            }
+        }
+    }
+
+    closedir(dir);
+}
+
+static int complete_loadable_plugins(char *string, yed_completion_results *results) {
+    array_t   paths;
+    char    **it;
+    char     *dirn;
+    int       status;
+
+    paths = array_make(char*);
+
+    array_traverse(ys->plugin_dirs, it) {
+        dirn = *it;
+        collect_loadable_plugins_from_dir(dirn, dirn, &paths);
+    }
+
+    FN_BODY_FOR_COMPLETE_FROM_ARRAY(string,
+                                    array_len(paths),
+                                    (char**)array_data(paths),
+                                    results,
+                                    status);
+
+    free_string_array(paths);
+
+    return status;
 }
 
 static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_line *line) {
@@ -336,6 +414,7 @@ void yed_set_default_completions(void) {
     SET_DEFAULT_COMPL("ft",                          yed_default_completion_fts);
     SET_DEFAULT_COMPL("plugin",                      yed_default_completion_plugins);
     SET_DEFAULT_COMPL("file",                        yed_default_completion_files);
+    SET_DEFAULT_COMPL("directory",                   yed_default_completion_directories);
     SET_DEFAULT_COMPL("word",                        yed_default_completion_words);
 
     SET_DEFAULT_COMPL("bind-compl-arg-1",            yed_default_completion_commands);
@@ -348,11 +427,12 @@ void yed_set_default_completions(void) {
     SET_DEFAULT_COMPL("toggle-var-compl-arg-0",      yed_default_completion_variables);
     SET_DEFAULT_COMPL("style-compl-arg-0",           yed_default_completion_styles);
     SET_DEFAULT_COMPL("buffer-set-ft-compl-arg-0",   yed_default_completion_fts);
+    SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0", yed_default_completion_directories);
+    SET_DEFAULT_COMPL("plugin-load-compl-arg-0",     complete_loadable_plugins);
     SET_DEFAULT_COMPL("plugin-unload-compl-arg-0",   yed_default_completion_plugins);
     SET_DEFAULT_COMPL("plugin-toggle-compl-arg-0",   yed_default_completion_plugins);
     SET_DEFAULT_COMPL("plugin-path-compl-arg-0",     yed_default_completion_plugins);
     SET_DEFAULT_COMPL("find-in-buffer-compl-arg-0",  yed_default_completion_words);
-    SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0", yed_default_completion_files);
     SET_DEFAULT_COMPL("alias-compl-arg-1",           yed_default_completion_commands);
     SET_DEFAULT_COMPL("unalias-compl-arg-0",         yed_default_completion_commands);
     SET_DEFAULT_COMPL("repeat-compl-arg-1",          yed_default_completion_commands);
