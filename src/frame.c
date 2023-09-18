@@ -1420,7 +1420,9 @@ void yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 }
 
 void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col) {
-    int buff_n_lines;
+    int       buff_n_lines;
+    int       old_buff_y_off;
+    yed_event event;
 
     if (frame->buffer) {
         if (new_row <= 0) { new_row = 1; }
@@ -1430,6 +1432,8 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col)
 
         if ((new_row <  frame->buffer_y_offset + 1)
         ||  (new_row >= frame->buffer_y_offset + frame->height)) {
+
+            old_buff_y_off = frame->buffer_y_offset;
 
             frame->buffer_x_offset = 0;
             frame->buffer_y_offset = MIN(new_row, MAX(0, buff_n_lines - frame->height));
@@ -1442,6 +1446,13 @@ void yed_set_cursor_far_within_frame(yed_frame *frame, int new_row, int new_col)
                         frame->top + buff_n_lines - frame->buffer_y_offset - 1));
             frame->cursor_col      = 1;
             frame->cursor_line     = frame->buffer_y_offset + (frame->cur_y - frame->top + 1);
+
+            if (frame->buffer_y_offset != old_buff_y_off) {
+                memset(&event, 0, sizeof(event));
+                event.kind  = EVENT_FRAME_POST_SCROLL;
+                event.frame = frame;
+                yed_trigger_event(&event);
+            }
         }
 
         yed_set_cursor_within_frame(frame, new_row, new_col);
