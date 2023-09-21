@@ -34,7 +34,6 @@ int yed_term_enter(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
 
     yed_register_sigwinch_handler();
-    yed_register_sigstop_handler();
     yed_register_sigcont_handler();
     yed_register_sigterm_handler();
     yed_register_sigquit_handler();
@@ -45,6 +44,7 @@ int yed_term_enter(void) {
     yed_register_sigfpe_handler();
     yed_register_sigbus_handler();
     yed_register_sigchld_handler();
+    yed_register_sigpipe_handler();
 
     printf(TERM_ALT_SCREEN);
     printf(TERM_ENABLE_BRACKETED_PASTE);
@@ -443,6 +443,10 @@ void yed_register_sigchld_handler(void) {
     if (sigaction(SIGCHLD, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGCHLD");
     }
+}
+
+void yed_register_sigpipe_handler(void) {
+    sigignore(SIGPIPE);
 }
 
 int yed_check_for_resize(void) {

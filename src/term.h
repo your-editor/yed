@@ -88,6 +88,7 @@ void yed_register_sigill_handler(void);
 void yed_register_sigfpe_handler(void);
 void yed_register_sigbus_handler(void);
 void yed_register_sigchld_handler(void);
+void yed_register_sigpipe_handler(void);
 int yed_check_for_resize(void);
 void yed_handle_resize(void);
 void yed_term_enable_mouse_reporting(void);
