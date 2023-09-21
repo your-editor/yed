@@ -1509,7 +1509,8 @@ void yed_frame_hard_reset_cursor_y(yed_frame *frame) {
 
 void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
     int       buff_n_lines;
-    int       old_off;
+    int       new_off;
+    int       lim;
     yed_event event;
 
     if (frame         == NULL) { return; }
@@ -1518,22 +1519,27 @@ void yed_frame_scroll_buffer(yed_frame *frame, int rows) {
 
     buff_n_lines = bucket_array_len(frame->buffer->lines);
 
-    old_off = frame->buffer_y_offset;
+    if (buff_n_lines <= frame->height) { return; }
 
-    if (rows > 0
-    &&  frame->cursor_line - frame->buffer_y_offset - 1 <= frame->scroll_off) {
-        yed_move_cursor_within_frame(frame, rows, 0);
-    } else if (rows < 0
-    &&         frame->buffer_y_offset + frame->height - frame->cursor_line <= frame->scroll_off) {
-        yed_move_cursor_within_frame(frame, rows, 0);
+    new_off = frame->buffer_y_offset + rows;
+    LIMIT(new_off, 0, buff_n_lines - frame->height);
+
+    if (new_off == frame->buffer_y_offset) { return; }
+
+    if (rows > 0) {
+        lim = frame->buffer_y_offset + 1 + frame->scroll_off + rows;
+        if (lim > frame->cursor_line) {
+            yed_move_cursor_within_frame(frame, (lim - frame->cursor_line), 0);
+        }
+    } else {
+        lim = frame->buffer_y_offset + frame->height - frame->scroll_off - rows - 1;
+        if (lim <= frame->cursor_line) {
+            yed_move_cursor_within_frame(frame, (lim - frame->cursor_line - 1), 0);
+        }
     }
 
-    frame->buffer_y_offset += rows;
-    LIMIT(frame->buffer_y_offset, 0, buff_n_lines - frame->height);
-
-    if (frame->buffer_y_offset != old_off) {
-        yed_move_cursor_within_frame(frame, -rows, 0);
-    }
+    frame->cur_y           -= new_off - frame->buffer_y_offset;
+    frame->buffer_y_offset  = new_off;
 
     memset(&event, 0, sizeof(event));
     event.kind  = EVENT_FRAME_POST_SCROLL;

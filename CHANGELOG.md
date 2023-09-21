@@ -5,7 +5,8 @@
     - More compatibility fixes for plugins written in C++.
     - Fixed a possible endless loop in `syntax.h` when trying to highlight a zero-length regex match.
     - Fixed a bug where special buffers could not be created when the current working directory was `/`.
-    - Ignore SIGPIPE (check your write() error codes!).
+    - Ignore `SIGPIPE` (check your `write()` error codes!).
+    - Fixed a bug in `yed_frame_scroll_buffer()` that caused cursor inconsistencies.
 ### Changed
     - Improved performance of screen diffing and general rendering efficiency.
     - Use `-mcpu=native` on Apple Silicon builds in release mode.
