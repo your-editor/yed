@@ -446,7 +446,15 @@ void yed_register_sigchld_handler(void) {
 }
 
 void yed_register_sigpipe_handler(void) {
-    sigignore(SIGPIPE);
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = SIG_IGN;
+
+    if (sigaction(SIGPIPE, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGPIPE");
+    }
 }
 
 int yed_check_for_resize(void) {
