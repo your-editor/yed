@@ -15,6 +15,7 @@
 #endif
 #include <sys/ioctl.h>
 #include <termios.h>
+#define _XOPEN_SOURCE 500
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
