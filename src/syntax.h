@@ -441,6 +441,8 @@ static inline void _yed_syntax_cache_evict_one(yed_syntax *syntax, _yed_syntax_c
     int                      i;
     int                      idx;
 
+    (void)syntax;
+
     if (array_len(cache->entries) > 0) {
         it       = array_item(cache->entries, 0);
         min_row  = it->row;
@@ -477,7 +479,8 @@ static inline void _yed_syntax_cache_evict_one(yed_syntax *syntax, _yed_syntax_c
 }
 
 static inline int _yed_syntax_cache_is_full(yed_syntax *syntax, _yed_syntax_cache *cache) {
-    return array_len(cache->entries) == cache->size;
+    (void)syntax;
+    return (u32)array_len(cache->entries) == cache->size;
 }
 
 static inline void _yed_syntax_cache_evict_if_full(yed_syntax *syntax, _yed_syntax_cache *cache) {
@@ -491,6 +494,8 @@ static inline _yed_syntax_cache_entry *_yed_syntax_cache_lookup_exact(yed_syntax
     int                      r;
     int                      m;
     _yed_syntax_cache_entry *it;
+
+    (void)syntax;
 
     l = 0;
     r = array_len(cache->entries) - 1;
@@ -517,6 +522,8 @@ static inline _yed_syntax_cache_entry *_yed_syntax_cache_lookup_nearest(yed_synt
     int                      l;
     int                      r;
     int                      m;
+
+    (void)syntax;
 
     len = array_len(cache->entries);
     if (len == 0) { return NULL; }
@@ -552,6 +559,8 @@ static inline int _yed_syntax_cache_insert_point(yed_syntax *syntax, _yed_syntax
     int                      l;
     int                      r;
     int                      m;
+
+    (void)syntax;
 
     len = array_len(cache->entries);
     if (len == 0) { return 0; }
@@ -639,7 +648,7 @@ static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffe
     u32                bump;
     u32                lim;
     _yed_syntax_range *range;
-    int                row;
+    u32                row;
     yed_line          *line;
     _yed_syntax_range *new_range;
 
@@ -688,10 +697,10 @@ static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffe
     DBG("cache: %llu ms", measure_time_now_ms() - start);
 }
 
-static _yed_syntax_range *_yed_syntax_get_start_state(yed_syntax *syntax, yed_buffer *buffer, int row) {
+static _yed_syntax_range *_yed_syntax_get_start_state(yed_syntax *syntax, yed_buffer *buffer, u32 row) {
     _yed_syntax_cache       *cache;
     _yed_syntax_cache_entry *it;
-    int                      r;
+    u32                      r;
     _yed_syntax_range       *range;
     _yed_syntax_range       *new_range;
     yed_line                *line;
@@ -726,12 +735,12 @@ static _yed_syntax_range *_yed_syntax_get_start_state(yed_syntax *syntax, yed_bu
     return range;
 }
 
-static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer, _yed_syntax_cache *cache, int row) {
+static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer, _yed_syntax_cache *cache, u32 row) {
     int                      started_at_top;
     _yed_syntax_cache_entry *it;
     int                      changed;
 #ifdef YED_SYNTAX_DEBUG
-    int                      count;
+    u32                      count;
 #endif
     _yed_syntax_range       *start_range;
     yed_line                *line;
@@ -771,7 +780,7 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
         if ((it + 1)->row == it->row + 1) {
             /* Cache entry exists. */
 
-            if ((it + 1)->range_idx == end_range_idx) {
+            if ((it + 1)->range_idx == (u32)end_range_idx) {
                 /* The cache entry is correct, therefore all further cache entries are correct, so we're done! */
                 goto out;
             }
@@ -797,14 +806,14 @@ out:;
     return changed | started_at_top;
 }
 
-static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cache *cache, yed_buffer *buffer, int row, int mod_event) {
+static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cache *cache, yed_buffer *buffer, u32 row, int mod_event) {
     yed_line                *line;
     _yed_syntax_cache_entry *cache_entry;
     _yed_syntax_range       *cached_state;
     _yed_syntax_range       *start_state;
     _yed_syntax_range       *end_state;
     _yed_syntax_cache_entry *it;
-    int                      idx;
+    u32                      idx;
 
     if (!syntax->finalized) { return; }
 
@@ -829,9 +838,9 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
                 _yed_syntax_fixup_cache(syntax, buffer, cache, row);
             }
 
-            if (array_len(cache->entries) == cache->size - 1) {
+            if ((u32)array_len(cache->entries) == cache->size - 1) {
                 _yed_syntax_cache_evict_one(syntax, cache);
-            } else if (array_len(cache->entries) == cache->size) {
+            } else if ((u32)array_len(cache->entries) == cache->size) {
                 _yed_syntax_cache_evict_one(syntax, cache);
                 _yed_syntax_cache_evict_one(syntax, cache);
             }
@@ -844,7 +853,7 @@ static inline void _yed_syntax_cache_rebuild(yed_syntax *syntax, _yed_syntax_cac
         case BUFF_MOD_INSERT_LINE:
             if (yed_buff_n_lines(buffer) == 1) { break; }
 
-            if (row < yed_buff_n_lines(buffer)) {
+            if (row < (u32)yed_buff_n_lines(buffer)) {
                 array_rtraverse(cache->entries, it) {
                     if (it->row >= row) {
                         it->row += 1;
@@ -902,6 +911,8 @@ static inline const char * _yed_syntax_find_next_kwd(yed_syntax *syntax, _yed_sy
     int              word_len;
     const char      *word;
     _yed_syntax_kwd *lookup;
+
+    (void)syntax;
 
     g    = (yed_glyph*)(void*)start;
     gend = (yed_glyph*)(void*)end;
@@ -1085,6 +1096,8 @@ static inline _yed_syntax_range *_yed_syntax_get_line_end_state(yed_syntax *synt
     int                range_end_len;
     int                next_range_start_len;
     _yed_syntax_range *next_range;
+
+    (void)buffer;
 
     range            = start_range;
     start            = array_data(line->chars);
@@ -1527,6 +1540,8 @@ static inline void yed_syntax_line_event(yed_syntax *syntax, yed_event *event) {
 static inline void yed_syntax_style_event(yed_syntax *syntax, yed_event *event) {
     _yed_syntax_attr **ait;
     _yed_syntax_attr  *a;
+
+    (void)event;
 
     if (!syntax->finalized) { return; }
 
