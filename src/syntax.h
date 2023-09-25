@@ -236,7 +236,7 @@ static inline _yed_syntax_kwd * _yed_syntax_kwd_set_add(_yed_syntax_kwd_set *set
     if (len == 0) { return NULL; }
 
     _yed_syntax_kwd_set_ensure_list_for_len(set, len);
-    kwd_list = array_item(set->kwds_by_len, len - 1);
+    kwd_list = (array_t*)array_item(set->kwds_by_len, len - 1);
 
     idx = 0;
     array_traverse(*kwd_list, it) {
@@ -250,7 +250,7 @@ static inline _yed_syntax_kwd * _yed_syntax_kwd_set_add(_yed_syntax_kwd_set *set
 
     k.kwd = strdup(kwd);
 
-    return array_insert(*kwd_list, idx, k);
+    return (_yed_syntax_kwd*)array_insert(*kwd_list, idx, k);
 }
 
 static inline _yed_syntax_kwd * _yed_syntax_kwd_set_lookup(_yed_syntax_kwd_set *set, const char *kwd, int len) {
@@ -261,7 +261,7 @@ static inline _yed_syntax_kwd * _yed_syntax_kwd_set_lookup(_yed_syntax_kwd_set *
         return NULL;
     }
 
-    kwd_list = array_item(set->kwds_by_len, len - 1);
+    kwd_list = (array_t*)array_item(set->kwds_by_len, len - 1);
 
     array_traverse(*kwd_list, it) {
         if (it->kwd[0] > kwd[0]) {
@@ -285,7 +285,7 @@ static inline int _yed_syntax_line_get_word_len(yed_line *line, int col) {
     if (col > line->visual_width) { return 0; }
 
     g    = yed_line_col_to_glyph(line, col);
-    end  = (yed_glyph*)(void*)(array_data(line->chars) + array_len(line->chars));
+    end  = (yed_glyph*)(void*)((char*)array_data(line->chars) + array_len(line->chars));
     len  = 0;
     glen = yed_get_glyph_len(*g);
 
@@ -293,17 +293,17 @@ static inline int _yed_syntax_line_get_word_len(yed_line *line, int col) {
         if (is_alnum(g->c) || g->c == '_') {
             do {
                 len += (glen = yed_get_glyph_len(*g));
-                g    = (yed_glyph*)(((void*)g) + glen);
+                g    = (yed_glyph*)(((char*)g) + glen);
             } while (g < end && (is_alnum(g->c) || g->c == '_'));
         } else if (!is_space(g->c) && !is_alnum(g->c) && g->c != '_') {
             do {
                 len += (glen = yed_get_glyph_len(*g));
-                g    = (yed_glyph*)(((void*)g) + glen);
+                g    = (yed_glyph*)(((char*)g) + glen);
             } while (g < end && !is_space(g->c) && !is_alnum(g->c) && g->c != '_');
         } else if (is_space(g->c)) {
             do {
                 len += (glen = yed_get_glyph_len(*g));
-                g    = (yed_glyph*)(((void*)g) + glen);
+                g    = (yed_glyph*)(((char*)g) + glen);
             } while (g < end && is_space(g->c));
         } else {
             len = yed_get_glyph_len(*g);
@@ -444,9 +444,9 @@ static inline void _yed_syntax_cache_evict_one(yed_syntax *syntax, _yed_syntax_c
     (void)syntax;
 
     if (array_len(cache->entries) > 0) {
-        it       = array_item(cache->entries, 0);
+        it       = (_yed_syntax_cache_entry*)array_item(cache->entries, 0);
         min_row  = it->row;
-        it       = array_last(cache->entries);
+        it       = (_yed_syntax_cache_entry*)array_last(cache->entries);
         max_row  = it->row;
         distance = max_row - min_row;
 
@@ -502,7 +502,7 @@ static inline _yed_syntax_cache_entry *_yed_syntax_cache_lookup_exact(yed_syntax
 
     while (l <= r) {
         m  = (l + r) / 2;
-        it = array_item(cache->entries, m);
+        it = (_yed_syntax_cache_entry*)array_item(cache->entries, m);
 
         if (it->row < row) {
             l = m + 1;
@@ -528,18 +528,18 @@ static inline _yed_syntax_cache_entry *_yed_syntax_cache_lookup_nearest(yed_synt
     len = array_len(cache->entries);
     if (len == 0) { return NULL; }
 
-    it = array_item(cache->entries, 0);
+    it = (_yed_syntax_cache_entry*)array_item(cache->entries, 0);
     if (it->row > row) { return NULL; }
 
-    it = array_last(cache->entries);
-    if (it->row < row) { return array_last(cache->entries); }
+    it = (_yed_syntax_cache_entry*)array_last(cache->entries);
+    if (it->row < row) { return (_yed_syntax_cache_entry*)array_last(cache->entries); }
 
     l = 0;
     r = len - 1;
 
     while (l <= r) {
         m  = (l + r) / 2;
-        it = array_item(cache->entries, m);
+        it = (_yed_syntax_cache_entry*)array_item(cache->entries, m);
 
         if (it->row < row) {
             l = m + 1;
@@ -550,7 +550,7 @@ static inline _yed_syntax_cache_entry *_yed_syntax_cache_lookup_nearest(yed_synt
         }
     }
 
-    return array_item(cache->entries, r);
+    return (_yed_syntax_cache_entry*)array_item(cache->entries, r);
 }
 
 static inline int _yed_syntax_cache_insert_point(yed_syntax *syntax, _yed_syntax_cache *cache, u32 row) {
@@ -565,10 +565,10 @@ static inline int _yed_syntax_cache_insert_point(yed_syntax *syntax, _yed_syntax
     len = array_len(cache->entries);
     if (len == 0) { return 0; }
 
-    it = array_item(cache->entries, 0);
+    it = (_yed_syntax_cache_entry*)array_item(cache->entries, 0);
     if (it->row > row) { return 0; }
 
-    it = array_last(cache->entries);
+    it = (_yed_syntax_cache_entry*)array_last(cache->entries);
     if (it->row < row) { return len; }
 
     l = 0;
@@ -576,7 +576,7 @@ static inline int _yed_syntax_cache_insert_point(yed_syntax *syntax, _yed_syntax
 
     while (l <= r) {
         m  = (l + r) / 2;
-        it = array_item(cache->entries, m);
+        it = (_yed_syntax_cache_entry*)array_item(cache->entries, m);
 
         if (it->row < row) {
             l = m + 1;
@@ -599,20 +599,20 @@ static inline _yed_syntax_cache_entry *_yed_syntax_add_to_cache(yed_syntax *synt
     range_idx = _yed_syntax_get_range_idx(syntax, range);
     if (range_idx == -1) { range_idx = 0; }
 
-    it = array_last(cache->entries);
+    it = (_yed_syntax_cache_entry*)array_last(cache->entries);
 
     /* Fast path for building from scratch. */
     if (it == NULL) {
         new_entry.row       = row;
         new_entry.range_idx = range_idx;
         _yed_syntax_cache_evict_if_full(syntax, cache);
-        return array_push(cache->entries, new_entry);
+        return (_yed_syntax_cache_entry*)array_push(cache->entries, new_entry);
     } else {
         if (it->row < row) {
             new_entry.row       = row;
             new_entry.range_idx = range_idx;
             _yed_syntax_cache_evict_if_full(syntax, cache);
-            return array_push(cache->entries, new_entry);
+            return (_yed_syntax_cache_entry*)array_push(cache->entries, new_entry);
         } else if (it->row == row) {
             it->range_idx = range_idx;
             return it;
@@ -633,7 +633,7 @@ static inline _yed_syntax_cache_entry *_yed_syntax_add_to_cache(yed_syntax *synt
     new_entry.row       = row;
     new_entry.range_idx = range_idx;
 
-    return array_insert(cache->entries, idx, new_entry);
+    return (_yed_syntax_cache_entry*)array_insert(cache->entries, idx, new_entry);
 }
 
 static inline void _yed_syntax_build_cache(yed_syntax *syntax, yed_buffer *buffer) {
@@ -767,7 +767,7 @@ static inline int _yed_syntax_fixup_cache(yed_syntax *syntax, yed_buffer *buffer
     count = 0;
 #endif
 
-    while (it != array_last(cache->entries)) {
+    while (it != (_yed_syntax_cache_entry*)array_last(cache->entries)) {
         start_range = *(_yed_syntax_range**)array_item(syntax->ranges, it->range_idx);
         line        = yed_buff_get_line(buffer, it->row);
 
@@ -922,7 +922,7 @@ static inline const char * _yed_syntax_find_next_kwd(yed_syntax *syntax, _yed_sy
         if (len > 1) { goto next; }
 
         if (is_alpha(g->c) || g->c == '_') {
-            col      = yed_line_idx_to_col(line, ((void*)g) - ((void*)array_data(line->chars)));
+            col      = yed_line_idx_to_col(line, ((char*)g) - ((char*)array_data(line->chars)));
             word_len = _yed_syntax_line_get_word_len(line, col);
             word     = &g->c;
 
@@ -945,7 +945,7 @@ static inline const char * _yed_syntax_find_next_kwd(yed_syntax *syntax, _yed_sy
         }
 
 next:;
-        g = (yed_glyph*)(((void*)g) + len);
+        g = (yed_glyph*)(((char*)g) + len);
     }
 
     return NULL;
@@ -1041,11 +1041,11 @@ static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_s
     int         err;
     regex_t    *rit;
 
-    end    = array_data(line->chars) + array_len(line->chars);
+    end    = (char*)array_data(line->chars) + array_len(line->chars);
     nmatch = syntax->max_group + 1;
 
     while (start <= end) {
-        eflags = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
+        eflags = (start == (char*)array_data(line->chars)) ? 0 : REG_NOTBOL;
         err    = regexec(&range->end, start, nmatch, syntax->matches, eflags);
 
         if (!err) {
@@ -1055,7 +1055,7 @@ static inline const char * _yed_syntax_find_range_end(yed_syntax *syntax, _yed_s
                 /* We found a match for the end. Is it in a skip? */
 
                 array_traverse(range->skips, rit) {
-                    eflags = (start == array_data(line->chars)) ? 0 : REG_NOTBOL;
+                    eflags = (start == (char*)array_data(line->chars)) ? 0 : REG_NOTBOL;
                     err    = regexec(rit, start, nmatch, syntax->matches, eflags);
 
                     if (!err) {
@@ -1100,7 +1100,7 @@ static inline _yed_syntax_range *_yed_syntax_get_line_end_state(yed_syntax *synt
     (void)buffer;
 
     range            = start_range;
-    start            = array_data(line->chars);
+    start            = (char*)array_data(line->chars);
     str              = start;
     next_range_start = NULL;
 
@@ -1164,11 +1164,11 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
 
     if (line->visual_width > syntax->max_line) { return start_range; }
 
-#define NOT_SEARCHED    ((void*)~(u64)NULL)
+#define NOT_SEARCHED    ((char*)~(u64)NULL)
 #define NEEDS_SEARCH(x) ((x) == NOT_SEARCHED || ((x) != NULL && (x) < str))
 
     range    = start_range;
-    str      = array_data(line->chars);
+    str      = (char*)array_data(line->chars);
     start    = str;
     line_end = start + array_len(line->chars);
     end      = line_end;
@@ -1318,7 +1318,7 @@ static inline void yed_syntax_start(yed_syntax *syntax) {
     syntax->attr_stack = array_make(_yed_syntax_attr*);
     syntax->ranges     = array_make(_yed_syntax_range*);
 
-    syntax->global = malloc(sizeof(*syntax->global));
+    syntax->global = (_yed_syntax_range*)malloc(sizeof(*syntax->global));
     _yed_syntax_make_range(syntax->global);
     array_push(syntax->ranges, syntax->global);
 
@@ -1330,7 +1330,7 @@ static inline void yed_syntax_end(yed_syntax *syntax) {
         syntax->max_line = 1000;
     }
 
-    syntax->matches = malloc(sizeof(*syntax->matches) * (syntax->max_group + 1));
+    syntax->matches = (regmatch_t*)malloc(sizeof(*syntax->matches) * (syntax->max_group + 1));
 
     syntax->finalized = 1;
 }
@@ -1378,7 +1378,7 @@ static inline void yed_syntax_kwd(yed_syntax *syntax, const char *kwd) {
 static inline void yed_syntax_attr_push(yed_syntax *syntax, const char *str) {
     _yed_syntax_attr *a;
 
-    a = malloc(sizeof(*a));
+    a = (_yed_syntax_attr*)malloc(sizeof(*a));
 
     a->str  = strdup(str);
     a->attr = yed_parse_attrs(str);
@@ -1406,7 +1406,7 @@ static inline int _yed_syntax_add_regex(yed_syntax *syntax, const char *pattern,
     if (err) {
         err_len = regerror(err, &r.reg, NULL, 0);
         if (syntax->regex_err_str != NULL) { free(syntax->regex_err_str); }
-        syntax->regex_err_str = malloc(err_len);
+        syntax->regex_err_str = (char*)malloc(err_len);
         regerror(err, &r.reg, syntax->regex_err_str, err_len);
     } else {
         range = _yed_syntax_top_range(syntax);
@@ -1438,7 +1438,7 @@ static inline int yed_syntax_range_start(yed_syntax *syntax, const char *pattern
 
     if (_yed_syntax_top_range(syntax) != syntax->global) { return -1; }
 
-    range = malloc(sizeof(*range));
+    range = (_yed_syntax_range*)malloc(sizeof(*range));
 
     _yed_syntax_make_range(range);
 
@@ -1447,7 +1447,7 @@ static inline int yed_syntax_range_start(yed_syntax *syntax, const char *pattern
     if (err) {
         err_len = regerror(err, &range->start, NULL, 0);
         if (syntax->regex_err_str != NULL) { free(syntax->regex_err_str); }
-        syntax->regex_err_str = malloc(err_len);
+        syntax->regex_err_str = (char*)malloc(err_len);
         regerror(err, &range->start, syntax->regex_err_str, err_len);
         _yed_syntax_free_range(range);
     } else {
@@ -1472,7 +1472,7 @@ static inline int yed_syntax_range_end(yed_syntax *syntax, const char *pattern) 
     if (err) {
         err_len = regerror(err, &range->end, NULL, 0);
         if (syntax->regex_err_str != NULL) { free(syntax->regex_err_str); }
-        syntax->regex_err_str = malloc(err_len);
+        syntax->regex_err_str = (char*)malloc(err_len);
         regerror(err, &range->end, syntax->regex_err_str, err_len);
         _yed_syntax_free_range(range);
     } else {
@@ -1497,7 +1497,7 @@ static inline int yed_syntax_range_skip(yed_syntax *syntax, const char *pattern)
     if (err) {
         err_len = regerror(err, &reg, NULL, 0);
         if (syntax->regex_err_str != NULL) { free(syntax->regex_err_str); }
-        syntax->regex_err_str = malloc(err_len);
+        syntax->regex_err_str = (char*)malloc(err_len);
         regerror(err, &reg, syntax->regex_err_str, err_len);
     } else {
         array_push(range->skips, reg);
