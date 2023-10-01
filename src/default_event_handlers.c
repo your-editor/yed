@@ -23,6 +23,11 @@ static void yed_var_change_handler(yed_event *event) {
         }
     } else if (strcmp(event->var_name, "cursor-line") == 0) {
     } else if (strcmp(event->var_name, "fill-string") == 0) {
+    } else if (strcmp(event->var_name, "screen-fake-transparency") == 0) {
+        if (ys->screen_update != NULL) {
+            ys->screen_update->fake_transparency = yed_var_is_truthy("screen-fake-transparency");
+            yed_clear_screen();
+        }
     }
 
     if (yed_buff_is_visible(yed_get_vars_buffer())) {
