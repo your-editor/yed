@@ -6,6 +6,8 @@ void yed_init_screen(void) {
     ys->screen_update = &ys->screen1;
     ys->screen_render = &ys->screen2;
 
+    ys->screen_update->fake_transparency = yed_var_is_truthy("screen-fake-transparency");
+
     yed_resize_screen();
 }
 
@@ -48,6 +50,15 @@ static inline void set_cellp_combine(yed_screen_cell *cell, yed_glyph g) {
 
     yed_combine_attrs(&cell->attrs, &ys->screen_update->cur_attrs);
     cell->glyph = g;
+}
+
+__attribute__((always_inline))
+static inline yed_screen_cell *get_cell(int row, int col) {
+    yed_screen_cell *cell;
+
+    cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
+
+    return cell;
 }
 
 __attribute__((always_inline))
@@ -309,12 +320,21 @@ void yed_render_screen(void) {
 
 __attribute__((always_inline))
 static inline void screen_print_n(const char *s, int n, int combine) {
-    const char *end;
-    yed_glyph  *g;
-    int         len;
-    int         width;
-    yed_glyph   new_g;
-    int         i;
+    const char      *end;
+    yed_attrs        save_attrs;
+    yed_glyph       *g;
+    int              len;
+    int              width;
+    yed_screen_cell *cellp;
+    yed_glyph        new_g;
+    int              transparent;
+    int              i;
+    int              br;
+    int              bg;
+    int              bb;
+    int              fr;
+    int              fg;
+    int              fb;
 
     end = s + n;
 
@@ -331,12 +351,40 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         new_g = G(0);
         for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 
+        transparent = ys->screen_update->fake_transparency && combine && ATTR_BG_KIND(ys->screen_update->cur_attrs.flags) == ATTR_KIND_RGB;
+
+        if (transparent) {
+            cellp                        = get_cell(ys->screen_update->cur_y, ys->screen_update->cur_x);
+            save_attrs                   = ys->screen_update->cur_attrs;
+            ys->screen_update->cur_attrs = save_attrs;
+            br                           = (int)(0.95 * RGB_32_r(save_attrs.bg));
+            bg                           = (int)(0.95 * RGB_32_g(save_attrs.bg));
+            bb                           = (int)(0.95 * RGB_32_b(save_attrs.bg));
+
+            if (new_g.c == ' ') {
+                new_g = cellp->glyph;
+                fr                              = (int)(0.05 * RGB_32_r(cellp->attrs.fg));
+                fg                              = (int)(0.05 * RGB_32_g(cellp->attrs.fg));
+                fb                              = (int)(0.05 * RGB_32_b(cellp->attrs.fg));
+                ys->screen_update->cur_attrs.fg = RGB_32(br + fr, bg + fg, bb + fb);
+            }
+
+            fr                              = (int)(0.05 * RGB_32_r(cellp->attrs.bg));
+            fg                              = (int)(0.05 * RGB_32_g(cellp->attrs.bg));
+            fb                              = (int)(0.05 * RGB_32_b(cellp->attrs.bg));
+            ys->screen_update->cur_attrs.bg = RGB_32(br + fr, bg + fg, bb + fb);
+        }
+
         for (i = 0; i < width; i += 1) {
             if (combine) {
                 set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? new_g : G(0));
             } else {
                 set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? new_g : G(0));
             }
+        }
+
+        if (transparent) {
+            ys->screen_update->cur_attrs = save_attrs;
         }
 
         ys->screen_update->cur_x += width;
