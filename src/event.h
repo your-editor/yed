@@ -66,6 +66,7 @@ typedef enum {
     EVENT_PRE_DRAW_EVERYTHING,
     EVENT_POST_DRAW_EVERYTHING,
     EVENT_SIGNAL_RECEIVED,
+    EVENT_HIGHLIGHT_REQUEST,
     _EVENT_RESERVED_0,
     _EVENT_RESERVED_1,
     _EVENT_RESERVED_2,
@@ -103,7 +104,8 @@ typedef struct yed_event_t {
     union { int                 col;
             int                 new_col; };
     yed_attrs                   row_base_attr;
-    array_t                     eline_attrs;
+    union { array_t             eline_attrs;
+            array_t             highlight_lines_attrs; };
     array_t                     gutter_glyphs;
     array_t                     gutter_attrs;
     const char                 *map;
@@ -118,14 +120,16 @@ typedef struct yed_event_t {
             const char         *var_name; };
     int                         n_args;
     union { const char * const *args;
-            const char         *var_val; };
+            const char         *var_val;
+            const char         *highlight_string; };
     struct {
         const char             *message_id;
         const char             *plugin_id;
         union { const char     *string_data;
                 void           *v_data; };
     } plugin_message;
-    int signum;
+    union { int                 signum;
+            int                 ft; };
 } yed_event;
 
 typedef void (*yed_event_handler_fn_t)(yed_event*);

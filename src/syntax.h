@@ -1137,6 +1137,29 @@ out:;
 }
 
 
+static inline void _yed_syntax_line_apply(yed_event *event, int cstart, int cend, yed_attrs *attr) {
+    int      i;
+    array_t *line_attrs;
+
+    if (attr == NULL) { return; }
+
+    if (event->kind == EVENT_LINE_PRE_DRAW) {
+        for (i = cstart; i < cend; i += 1) {
+            yed_eline_combine_col_attrs(event, i, attr);
+        }
+    } else if (event->kind == EVENT_HIGHLIGHT_REQUEST) {
+        if (event->row < 1 || event->row - 1 >= array_len(event->highlight_lines_attrs)) { return; }
+
+        line_attrs = (array_t*)array_item(event->highlight_lines_attrs, event->row - 1);
+
+        for (i = cstart; i < cend; i += 1) {
+            if (i - 1 >= array_len(*line_attrs)) { break; }
+            yed_combine_attrs((yed_attrs*)array_item(*line_attrs, i - 1), attr);
+        }
+    }
+}
+
+
 static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *line, yed_event *event, _yed_syntax_range *start_range) {
     _yed_syntax_range *range;
     const char        *str;
@@ -1147,7 +1170,6 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
     int                range_end_len;
     int                cstart;
     int                cend;
-    int                i;
     const char        *next_kwd;
     const char        *next_range_start;
     const char        *next_match;
@@ -1181,9 +1203,7 @@ static inline _yed_syntax_range *_yed_syntax_line(yed_syntax *syntax, yed_line *
                     ? line->visual_width + 1
                     : yed_line_idx_to_col(line, (range_end_start + range_end_len) - start);
 
-        for (i = cstart; i < cend; i += 1) {
-            yed_eline_combine_col_attrs(event, i, &range->attr->attr);
-        }
+        _yed_syntax_line_apply(event, cstart, cend, &range->attr->attr);
 
         if (range_end_start == NULL) {
             return range;
@@ -1255,9 +1275,9 @@ set_range:;
             cend   = range_end_start == NULL
                         ? line->visual_width + 1
                         : yed_line_idx_to_col(line, (range_end_start + range_end_len) - start);
-            for (i = cstart; i < cend; i += 1) {
-                yed_eline_combine_col_attrs(event, i, &next_range->attr->attr);
-            }
+
+
+            _yed_syntax_line_apply(event, cstart, cend, &next_range->attr->attr);
 
             end       = range_end_start + range_end_len;
             first     = next_range_start + MAX(next_range_start_len, 1);
@@ -1288,11 +1308,7 @@ set_kwd:;
             cend   = yed_line_idx_to_col(line, (first + first_len) - start);
             str    = first + first_len;
 
-            if (a != NULL) {
-                for (i = cstart; i < cend; i += 1) {
-                    yed_eline_combine_col_attrs(event, i, &a->attr);
-                }
-            }
+            _yed_syntax_line_apply(event, cstart, cend, &a->attr);
         }
     }
 
@@ -1573,6 +1589,49 @@ static inline void yed_syntax_buffer_mod_event(yed_syntax *syntax, yed_event *ev
     if (tree_it_good(it)) {
         _yed_syntax_cache_rebuild(syntax, &tree_it_val(it), event->buffer, event->row, event->buff_mod_event);
     }
+}
+
+static inline void yed_syntax_highlight_request_event(yed_syntax *syntax, yed_event *event) {
+    yed_buffer         buff;
+    yed_attrs          za;
+    int                row;
+    yed_line          *line;
+    array_t            line_attrs;
+    array_t           *line_attrsp;
+    int                i;
+    _yed_syntax_range *start_range;
+
+    if (!syntax->finalized) { return; }
+
+    buff        = yed_new_buff();
+    buff.flags |= BUFF_NO_MOD_EVENTS;
+
+    yed_fill_buff_from_string(&buff, event->highlight_string, strlen(event->highlight_string));
+
+    za  = ZERO_ATTR;
+    row = 1;
+    bucket_array_traverse(buff.lines, line) {
+        line_attrs  = array_make(yed_attrs);
+        line_attrsp = (array_t*)array_push(event->highlight_lines_attrs, line_attrs);
+
+        if (line != NULL && line->visual_width >= 0) {
+            array_zero_term(line->chars);
+
+            for (i = 0; i < line->visual_width; i += 1) {
+                array_push(*line_attrsp, za);
+            }
+
+            start_range = _yed_syntax_get_start_state(syntax, &buff, row);
+
+            event->row = row;
+            _yed_syntax_line(syntax, line, event, start_range);
+        }
+
+
+        row += 1;
+    }
+
+    yed_destroy_buffer(&buff);
 }
 
 

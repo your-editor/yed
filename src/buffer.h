@@ -27,6 +27,7 @@ typedef struct {
 #define BUFF_YANK_LINES           (0x4)
 #define BUFF_SPECIAL              (0x8)
 #define BUFF_YANK_RECT            (0x10)
+#define BUFF_NO_MOD_EVENTS        (0x20)
 
 #define BUFF_FILL_STATUS_SUCCESS  (0)
 #define BUFF_FILL_STATUS_ERR_NOF  (1)
@@ -41,20 +42,20 @@ typedef struct {
 #define BUFF_WRITE_STATUS_ERR_UNK (3)
 
 typedef struct yed_buffer_t {
-    int                   kind;
-    int                   flags;
-    int                   ft;
-    char                 *name;
-    char                 *path;
-    bucket_array_t        lines;
-    yed_line             *get_line_cache;
-    int                   get_line_cache_row;
-    int                   has_selection;
-    yed_range             selection;
-    yed_undo_history      undo_history;
-    int                   last_cursor_row,
-                          last_cursor_col;
-    char                 *mmap_underlying_buff;
+    int               kind;
+    int               flags;
+    int               ft;
+    char             *name;
+    char             *path;
+    bucket_array_t    lines;
+    yed_line         *get_line_cache;
+    int               get_line_cache_row;
+    int               has_selection;
+    yed_range         selection;
+    yed_undo_history  undo_history;
+    int               last_cursor_row,
+                      last_cursor_col;
+    char             *underlying_buff;
 } yed_buffer;
 
 void yed_init_buffers(void);
@@ -76,6 +77,7 @@ yed_buffer * yed_get_buffer(char *name);
 yed_buffer * yed_get_or_create_special_rdonly_buffer(char *name);
 yed_buffer * yed_get_buffer_by_path(char *path);
 void yed_free_buffer(yed_buffer *buffer);
+void yed_destroy_buffer(yed_buffer *buffer);
 
 
 yed_buffer *yed_get_log_buffer(void);
@@ -129,6 +131,7 @@ int yed_buff_n_lines(yed_buffer *buff);
 int yed_fill_buff_from_file(yed_buffer *buff, char *path);
 int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long file_size);
 int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f);
+int yed_fill_buff_from_string(yed_buffer *buff, const char *s, unsigned long long len);
 int yed_write_buff_to_file(yed_buffer *buff, char *path);
 
 void yed_range_sorted_points(yed_range *range, int *r1, int *c1, int *r2, int *c2);
