@@ -113,6 +113,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-buffer-end",                  cursor_buffer_end);
     SET_DEFAULT_COMMAND("cursor-line",                        cursor_line);
     SET_DEFAULT_COMMAND("word-under-cursor",                  word_under_cursor);
+    SET_DEFAULT_COMMAND("forward-cursor-word",                forward_cursor_word);
     SET_DEFAULT_COMMAND("buffer",                             buffer);
     SET_DEFAULT_COMMAND("buffer-hidden",                      buffer_hidden);
     SET_DEFAULT_COMMAND("buffer-delete",                      buffer_delete);
@@ -1029,6 +1030,37 @@ void yed_default_command_word_under_cursor(int n_args, char **args) {
 
     if (word) {
         yed_cprint("'%s'", word);
+        free(word);
+    } else {
+        yed_cerr("cursor is not on a word");
+    }
+}
+
+void yed_default_command_forward_cursor_word(int n_args, char **args) {
+    yed_frame *frame;
+    char      *word;
+
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    word = yed_word_under_cursor();
+
+    if (word) {
+        YEXE(args[0], word);
         free(word);
     } else {
         yed_cerr("cursor is not on a word");

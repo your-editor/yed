@@ -20,6 +20,7 @@
       `event->buffer == event->aux_data` before doing anything to the buffer.
     - New default completion source `directories`.
     - Command line completion for `plugins-add-dir` and `plugin-load`.
+    - New command `forward-cursor-word` runs a given command, passing the word under the cursor as the argument. Useful in cases like `forward-cursor-word ctags-find`.
 
 ## 1506 - 2023-8-3
 ### Fixed

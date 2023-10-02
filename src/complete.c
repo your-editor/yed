@@ -407,35 +407,36 @@ do {                                           \
 } while (0)
 
 void yed_set_default_completions(void) {
-    SET_DEFAULT_COMPL("command",                     yed_default_completion_commands);
-    SET_DEFAULT_COMPL("buffer",                      yed_default_completion_buffers);
-    SET_DEFAULT_COMPL("variable",                    yed_default_completion_variables);
-    SET_DEFAULT_COMPL("style",                       yed_default_completion_styles);
-    SET_DEFAULT_COMPL("ft",                          yed_default_completion_fts);
-    SET_DEFAULT_COMPL("plugin",                      yed_default_completion_plugins);
-    SET_DEFAULT_COMPL("file",                        yed_default_completion_files);
-    SET_DEFAULT_COMPL("directory",                   yed_default_completion_directories);
-    SET_DEFAULT_COMPL("word",                        yed_default_completion_words);
+    SET_DEFAULT_COMPL("command",                         yed_default_completion_commands);
+    SET_DEFAULT_COMPL("buffer",                          yed_default_completion_buffers);
+    SET_DEFAULT_COMPL("variable",                        yed_default_completion_variables);
+    SET_DEFAULT_COMPL("style",                           yed_default_completion_styles);
+    SET_DEFAULT_COMPL("ft",                              yed_default_completion_fts);
+    SET_DEFAULT_COMPL("plugin",                          yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("file",                            yed_default_completion_files);
+    SET_DEFAULT_COMPL("directory",                       yed_default_completion_directories);
+    SET_DEFAULT_COMPL("word",                            yed_default_completion_words);
 
-    SET_DEFAULT_COMPL("bind-compl-arg-1",            yed_default_completion_commands);
-    SET_DEFAULT_COMPL("buffer-compl-arg-0",          complete_files_and_buffers);
-    SET_DEFAULT_COMPL("buffer-hidden-compl-arg-0",   complete_files_and_buffers);
-    SET_DEFAULT_COMPL("buffer-delete-compl-arg-0",   yed_default_completion_buffers);
-    SET_DEFAULT_COMPL("set-compl-arg-0",             yed_default_completion_variables);
-    SET_DEFAULT_COMPL("get-compl-arg-0",             yed_default_completion_variables);
-    SET_DEFAULT_COMPL("unset-compl-arg-0",           yed_default_completion_variables);
-    SET_DEFAULT_COMPL("toggle-var-compl-arg-0",      yed_default_completion_variables);
-    SET_DEFAULT_COMPL("style-compl-arg-0",           yed_default_completion_styles);
-    SET_DEFAULT_COMPL("buffer-set-ft-compl-arg-0",   yed_default_completion_fts);
-    SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0", yed_default_completion_directories);
-    SET_DEFAULT_COMPL("plugin-load-compl-arg-0",     complete_loadable_plugins);
-    SET_DEFAULT_COMPL("plugin-unload-compl-arg-0",   yed_default_completion_plugins);
-    SET_DEFAULT_COMPL("plugin-toggle-compl-arg-0",   yed_default_completion_plugins);
-    SET_DEFAULT_COMPL("plugin-path-compl-arg-0",     yed_default_completion_plugins);
-    SET_DEFAULT_COMPL("find-in-buffer-compl-arg-0",  yed_default_completion_words);
-    SET_DEFAULT_COMPL("alias-compl-arg-1",           yed_default_completion_commands);
-    SET_DEFAULT_COMPL("unalias-compl-arg-0",         yed_default_completion_commands);
-    SET_DEFAULT_COMPL("repeat-compl-arg-1",          yed_default_completion_commands);
+    SET_DEFAULT_COMPL("bind-compl-arg-1",                yed_default_completion_commands);
+    SET_DEFAULT_COMPL("buffer-compl-arg-0",              complete_files_and_buffers);
+    SET_DEFAULT_COMPL("buffer-hidden-compl-arg-0",       complete_files_and_buffers);
+    SET_DEFAULT_COMPL("buffer-delete-compl-arg-0",       yed_default_completion_buffers);
+    SET_DEFAULT_COMPL("set-compl-arg-0",                 yed_default_completion_variables);
+    SET_DEFAULT_COMPL("get-compl-arg-0",                 yed_default_completion_variables);
+    SET_DEFAULT_COMPL("unset-compl-arg-0",               yed_default_completion_variables);
+    SET_DEFAULT_COMPL("toggle-var-compl-arg-0",          yed_default_completion_variables);
+    SET_DEFAULT_COMPL("style-compl-arg-0",               yed_default_completion_styles);
+    SET_DEFAULT_COMPL("buffer-set-ft-compl-arg-0",       yed_default_completion_fts);
+    SET_DEFAULT_COMPL("plugins-add-dir-compl-arg-0",     yed_default_completion_directories);
+    SET_DEFAULT_COMPL("plugin-load-compl-arg-0",         complete_loadable_plugins);
+    SET_DEFAULT_COMPL("plugin-unload-compl-arg-0",       yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("plugin-toggle-compl-arg-0",       yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("plugin-path-compl-arg-0",         yed_default_completion_plugins);
+    SET_DEFAULT_COMPL("find-in-buffer-compl-arg-0",      yed_default_completion_words);
+    SET_DEFAULT_COMPL("alias-compl-arg-1",               yed_default_completion_commands);
+    SET_DEFAULT_COMPL("unalias-compl-arg-0",             yed_default_completion_commands);
+    SET_DEFAULT_COMPL("repeat-compl-arg-1",              yed_default_completion_commands);
+    SET_DEFAULT_COMPL("forward-cursor-word-compl-arg-0", yed_default_completion_commands);
 }
 
 int compute_common_prefix_len(char *in, int n_items, char **items) {
