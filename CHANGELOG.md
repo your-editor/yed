@@ -10,8 +10,10 @@
 ### Changed
     - Improved performance of screen diffing and general rendering efficiency.
     - Use `-mcpu=native` on Apple Silicon builds in release mode.
+    - `yed_screen_print_*over()` functions now fake transparency when `screen-fake-transparency` is truthy (on by default).
 ### Added
     - New event `EVENT_FRAME_POST_SCROLL`.
+    - New event `EVENT_HIGHLIGHT_REQUEST`. Plugins can now provide highlighting for arbitrary strings (not just lines in buffers) when requested.
     - The `yed_event` and `yed_event_handler` structs now have an `aux_data` field, which plugins can use to package
       custom data with events to handlers that they created. This is useful in creating event handlers that only operate
       on specific plugin state. For example, `aux_data` may be a pointer to a specific buffer and a handler will ensure that
