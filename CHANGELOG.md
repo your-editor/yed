@@ -12,6 +12,7 @@
     - Use `-mcpu=native` on Apple Silicon builds in release mode.
     - `yed_screen_print_*over()` functions now fake transparency when `screen-fake-transparency` is truthy (on by default).
 ### Added
+    - Support for italics in attributes.
     - New event `EVENT_FRAME_POST_SCROLL`.
     - New event `EVENT_HIGHLIGHT_REQUEST`. Plugins can now provide highlighting for arbitrary strings (not just lines in buffers) when requested.
     - The `yed_event` and `yed_event_handler` structs now have an `aux_data` field, which plugins can use to package

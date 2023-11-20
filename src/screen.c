@@ -46,7 +46,7 @@ static inline void set_cellp(yed_screen_cell *cell, yed_glyph g) {
 
 __attribute__((always_inline))
 static inline void set_cellp_combine(yed_screen_cell *cell, yed_glyph g) {
-    cell->attrs.flags &= ~(ATTR_BOLD | ATTR_UNDERLINE | ATTR_INVERSE);
+    cell->attrs.flags &= ~(ATTR_BOLD | ATTR_UNDERLINE | ATTR_ITALIC | ATTR_INVERSE);
 
     yed_combine_attrs(&cell->attrs, &ys->screen_update->cur_attrs);
     cell->glyph = g;

@@ -30,8 +30,9 @@ do {                                  \
 #define ATTR_INVERSE     (0x1  << 4)
 #define ATTR_BOLD        (0x2  << 4)
 #define ATTR_UNDERLINE   (0x4  << 4)
-#define ATTR_16_LIGHT_FG (0x8  << 4)
-#define ATTR_16_LIGHT_BG (0x10 << 4)
+#define ATTR_ITALIC      (0x8  << 4)
+#define ATTR_16_LIGHT_FG (0x10 << 4)
+#define ATTR_16_LIGHT_BG (0x20 << 4)
 
 #define ATTR_16_BLACK      (30)
 #define ATTR_16_RED        (31)
