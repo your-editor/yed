@@ -6,7 +6,7 @@ void yed_init_screen(void) {
     ys->screen_update = &ys->screen1;
     ys->screen_render = &ys->screen2;
 
-    ys->screen_update->fake_transparency = yed_var_is_truthy("screen-fake-transparency");
+    ys->screen_update->opacity = DEFAULT_FAKE_OPACITY;
 
     yed_resize_screen();
 }
@@ -327,6 +327,7 @@ static inline void screen_print_n(const char *s, int n, int combine) {
     int              width;
     yed_screen_cell *cellp;
     yed_glyph        new_g;
+    float            opacity;
     int              transparent;
     int              i;
     int              br;
@@ -351,27 +352,28 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         new_g = G(0);
         for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 
-        transparent = ys->screen_update->fake_transparency && combine && ATTR_BG_KIND(ys->screen_update->cur_attrs.flags) == ATTR_KIND_RGB;
+        opacity     = ys->screen_update->opacity;
+        transparent = opacity < 1.0 && opacity > 0 && combine && ATTR_BG_KIND(ys->screen_update->cur_attrs.flags) == ATTR_KIND_RGB;
 
         if (transparent) {
             cellp                        = get_cell(ys->screen_update->cur_y, ys->screen_update->cur_x);
             save_attrs                   = ys->screen_update->cur_attrs;
             ys->screen_update->cur_attrs = save_attrs;
-            br                           = (int)(0.95 * RGB_32_r(save_attrs.bg));
-            bg                           = (int)(0.95 * RGB_32_g(save_attrs.bg));
-            bb                           = (int)(0.95 * RGB_32_b(save_attrs.bg));
+            br                           = (int)(opacity * RGB_32_r(save_attrs.bg));
+            bg                           = (int)(opacity * RGB_32_g(save_attrs.bg));
+            bb                           = (int)(opacity * RGB_32_b(save_attrs.bg));
 
             if (new_g.c == ' ') {
                 new_g = cellp->glyph;
-                fr                              = (int)(0.05 * RGB_32_r(cellp->attrs.fg));
-                fg                              = (int)(0.05 * RGB_32_g(cellp->attrs.fg));
-                fb                              = (int)(0.05 * RGB_32_b(cellp->attrs.fg));
+                fr                              = (int)((1.0 - opacity) * RGB_32_r(cellp->attrs.fg));
+                fg                              = (int)((1.0 - opacity) * RGB_32_g(cellp->attrs.fg));
+                fb                              = (int)((1.0 - opacity) * RGB_32_b(cellp->attrs.fg));
                 ys->screen_update->cur_attrs.fg = RGB_32(br + fr, bg + fg, bb + fb);
             }
 
-            fr                              = (int)(0.05 * RGB_32_r(cellp->attrs.bg));
-            fg                              = (int)(0.05 * RGB_32_g(cellp->attrs.bg));
-            fb                              = (int)(0.05 * RGB_32_b(cellp->attrs.bg));
+            fr                              = (int)((1.0 - opacity) * RGB_32_r(cellp->attrs.bg));
+            fg                              = (int)((1.0 - opacity) * RGB_32_g(cellp->attrs.bg));
+            fb                              = (int)((1.0 - opacity) * RGB_32_b(cellp->attrs.bg));
             ys->screen_update->cur_attrs.bg = RGB_32(br + fr, bg + fg, bb + fb);
         }
 

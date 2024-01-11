@@ -10,7 +10,7 @@
 ### Changed
     - Improved performance of screen diffing and general rendering efficiency.
     - Use `-mcpu=native` on Apple Silicon builds in release mode.
-    - `yed_screen_print_*over()` functions now fake transparency when `screen-fake-transparency` is truthy (on by default).
+    - `yed_screen_print_*over()` functions now fake transparency when `screen-fake-opacity` is less than 1.0 (default 0.95).
 ### Added
     - Support for italics in attributes.
     - New event `EVENT_FRAME_POST_SCROLL`.

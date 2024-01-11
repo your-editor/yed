@@ -27,6 +27,8 @@ int yed_get_default_scroll_offset(void);
 
 #define DEFAULT_COMPL_WORDS_BUFFER_MAX_LINES 25000
 
+#define DEFAULT_FAKE_OPACITY 0.95
+
 int yed_var_is_truthy(const char *var);
 int yed_get_var_as_int(const char *var, int *out);
 

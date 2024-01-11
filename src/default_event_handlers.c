@@ -11,7 +11,9 @@ static void yed_bindings_buffer_focus_handler(yed_event *event) {
 }
 
 static void yed_var_change_handler(yed_event *event) {
-    int old_tabw;
+    int   old_tabw;
+    char *val;
+    float f;
 
     if (strcmp(event->var_name, "tab-width") == 0) {
         old_tabw = ys->tabw;
@@ -23,9 +25,16 @@ static void yed_var_change_handler(yed_event *event) {
         }
     } else if (strcmp(event->var_name, "cursor-line") == 0) {
     } else if (strcmp(event->var_name, "fill-string") == 0) {
-    } else if (strcmp(event->var_name, "screen-fake-transparency") == 0) {
+    } else if (strcmp(event->var_name, "screen-fake-opacity") == 0) {
         if (ys->screen_update != NULL) {
-            ys->screen_update->fake_transparency = yed_var_is_truthy("screen-fake-transparency");
+            f = 1.0;
+            if ((val = yed_get_var("screen-fake-opacity")) != NULL) {
+                sscanf(val, "%f", &f);
+                if (f < 0 || f > 1.0) {
+                    f = 1.0;
+                }
+            }
+            ys->screen_update->opacity = f;
             yed_clear_screen();
         }
     }

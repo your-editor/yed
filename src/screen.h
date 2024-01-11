@@ -12,7 +12,7 @@ typedef struct {
     int              cur_y;
     int              cur_x;
     yed_screen_cell *cells;
-    int              fake_transparency;
+    float            opacity;
 } yed_screen;
 
 void yed_init_screen(void);
