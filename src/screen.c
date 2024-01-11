@@ -356,6 +356,7 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         transparent = opacity < 1.0 && opacity > 0 && combine && ATTR_BG_KIND(ys->screen_update->cur_attrs.flags) == ATTR_KIND_RGB;
 
         if (transparent) {
+            opacity                      = sqrt(sqrt(opacity));
             cellp                        = get_cell(ys->screen_update->cur_y, ys->screen_update->cur_x);
             save_attrs                   = ys->screen_update->cur_attrs;
             ys->screen_update->cur_attrs = save_attrs;
