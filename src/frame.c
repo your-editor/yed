@@ -801,7 +801,7 @@ again_gutter:
                 yed_screen_print_n(" ", 1);
                 col_off += 1;
             }
-        } else if (n_bytes == 1 && unlikely(!isprint(*bytes))) {
+        } else if (n_bytes == 1 && unlikely(!is_print(*bytes))) {
             nprint_chars[1] = _get_nprint_char(*(unsigned char*)bytes);
 
             nprint_glyph_pos = 0;

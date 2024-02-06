@@ -55,7 +55,7 @@ static inline int _yed_get_mbyte_width(yed_glyph g) {
     (likely((g).u_c <= 127)             \
         ? (unlikely((g).c == '\t')      \
             ? (ys->tabw)                \
-            : (likely(isprint((g).c))   \
+            : (likely(is_print((g).c))  \
                 ? 1                     \
                 : 2))                   \
         : (_yed_get_mbyte_width(g)))

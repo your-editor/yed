@@ -56,3 +56,7 @@ static inline int is_alpha(int c) {
 static inline int is_alnum(int c) {
     return is_alpha(c) || is_digit(c);
 }
+
+static inline int is_print(int c) {
+    return ((unsigned int)c - 0x20) < 0x5f;
+}

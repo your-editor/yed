@@ -1363,7 +1363,7 @@ char *yed_keys_to_string(int n, int *keys) {
                 if (!yed_is_key(key)) { goto bad; }
 
                 if (key < ASCII_KEY_MAX) {
-                    if (!isprint(key)) { goto bad; }
+                    if (!is_print(key)) { goto bad; }
                     snprintf(key_buff, sizeof(key_buff), "%c", (char)key);
                 } else if (key >= VIRT_KEY_START) {
                     if (!yed_get_real_keys(key, &n_real_keys, real_keys)) { goto bad; }

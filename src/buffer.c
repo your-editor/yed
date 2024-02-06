@@ -262,6 +262,7 @@ yed_buffer *yed_get_yank_buffer(void) {
     yed_buffer *b;
     b = yed_get_or_create_special_rdonly_buffer("*yank");
     b->kind = BUFF_KIND_YANK;
+    b->flags |= BUFF_NO_MOD_EVENTS;
     return b;
 }
 
@@ -416,7 +417,7 @@ void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, 
             }
             row += 1;
             col  = 1;
-        } else if (!G_IS_ASCII(*g) || isprint(g->c)) {
+        } else if (!G_IS_ASCII(*g) || is_print(g->c)) {
             yed_insert_into_line_no_undo(buff, row, col, *g);
             col += yed_get_glyph_width(*g);
         }
@@ -709,7 +710,7 @@ void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col)
             }
             row += 1;
             col  = 1;
-        } else if (!G_IS_ASCII(*g) || isprint(g->c)) {
+        } else if (!G_IS_ASCII(*g) || is_print(g->c)) {
             yed_insert_into_line(buff, row, col, *g);
             col += yed_get_glyph_width(*g);
         }
@@ -1204,12 +1205,12 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
     bucket_array_pop(buff->lines);
 
     while (line_data = NULL, (line_len = getline(&line_data, &line_cap, f)) > 0) {
-        line.chars.data      = line_data;
-        line.chars.elem_size = 1;
-        line.chars.used      = line_len;
-        line.chars.capacity  = line_cap;
-        line.visual_width    = 0;
-        line.n_glyphs        = 0;
+        line.chars.data       = line_data;
+        line.chars.elem_size  = 1;
+        line.chars.used       = line_len;
+        line.chars.capacity   = line_cap;
+        line.visual_width     = 0;
+        line.n_glyphs         = 0;
 
         while (array_len(line.chars)
         &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
