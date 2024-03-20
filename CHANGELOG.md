@@ -1,6 +1,6 @@
 # Changelog
 
-## 1600 - 2023-TBD
+## 1600 - 2024-TBD
 ### Fixed
     - More compatibility fixes for plugins written in C++.
     - Fixed a possible endless loop in `syntax.h` when trying to highlight a zero-length regex match.
@@ -22,6 +22,7 @@
     - New default completion source `directories`.
     - Command line completion for `plugins-add-dir` and `plugin-load`.
     - New command `forward-cursor-word` runs a given command, passing the word under the cursor as the argument. Useful in cases like `forward-cursor-word ctags-find`.
+    - Support for ctrl-arrow keys.
 
 ## 1506 - 2023-8-3
 ### Fixed
