@@ -32,6 +32,7 @@
  *
  * A declarative interface for defining syntax.
  *
+ * Support for POSIX regex.h by default and PCRE2 when YED_SYNTAX_USE_PCRE2 is defined.
  *
  * === How to use this file:
  *
@@ -100,7 +101,12 @@
 
 #include <yed/internal.h>
 #include <yed/tree.h>
+
+#ifdef YED_SYNTAX_USE_PCRE2
+#include <pcre2posix.h>
+#else
 #include <regex.h>
+#endif
 
 #define YED_SYN_CACHE_SIZE         (8192)
 #define YED_SYN_N_EVICTION_BUCKETS (4096)
