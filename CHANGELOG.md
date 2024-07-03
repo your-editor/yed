@@ -1,6 +1,6 @@
 # Changelog
 
-## 1600 - 2024-TBD
+## 1600 - 2024-7-3
 ### Fixed
     - More compatibility fixes for plugins written in C++.
     - Fixed a possible endless loop in `syntax.h` when trying to highlight a zero-length regex match.
