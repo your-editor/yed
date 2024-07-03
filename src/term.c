@@ -34,7 +34,6 @@ int yed_term_enter(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
 
     yed_register_sigwinch_handler();
-    yed_register_sigstop_handler();
     yed_register_sigcont_handler();
     yed_register_sigterm_handler();
     yed_register_sigquit_handler();
@@ -45,6 +44,7 @@ int yed_term_enter(void) {
     yed_register_sigfpe_handler();
     yed_register_sigbus_handler();
     yed_register_sigchld_handler();
+    yed_register_sigpipe_handler();
 
     printf(TERM_ALT_SCREEN);
     printf(TERM_ENABLE_BRACKETED_PASTE);
@@ -122,14 +122,6 @@ int yed_term_says_it_supports_truecolor(void) {
     }
 
     return 1;
-}
-
-void yed_set_cursor(int row, int col) {
-    if (row < 1)    { row = 1; }
-    if (col < 1)    { col = 1; }
-
-    ys->screen_update->cur_y = row;
-    ys->screen_update->cur_x = col;
 }
 
 void yed_term_set_cursor_style(int style) {
@@ -450,6 +442,18 @@ void yed_register_sigchld_handler(void) {
     sa.sa_handler = sigchld_handler;
     if (sigaction(SIGCHLD, &sa, NULL) == -1) {
         ASSERT(0, "sigaction failed for SIGCHLD");
+    }
+}
+
+void yed_register_sigpipe_handler(void) {
+    struct sigaction sa;
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags   = 0;
+    sa.sa_handler = SIG_IGN;
+
+    if (sigaction(SIGPIPE, &sa, NULL) == -1) {
+        ASSERT(0, "sigaction failed for SIGPIPE");
     }
 }
 

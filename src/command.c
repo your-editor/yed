@@ -113,6 +113,7 @@ do {                                                              \
     SET_DEFAULT_COMMAND("cursor-buffer-end",                  cursor_buffer_end);
     SET_DEFAULT_COMMAND("cursor-line",                        cursor_line);
     SET_DEFAULT_COMMAND("word-under-cursor",                  word_under_cursor);
+    SET_DEFAULT_COMMAND("forward-cursor-word",                forward_cursor_word);
     SET_DEFAULT_COMMAND("buffer",                             buffer);
     SET_DEFAULT_COMMAND("buffer-hidden",                      buffer_hidden);
     SET_DEFAULT_COMMAND("buffer-delete",                      buffer_delete);
@@ -1029,6 +1030,37 @@ void yed_default_command_word_under_cursor(int n_args, char **args) {
 
     if (word) {
         yed_cprint("'%s'", word);
+        free(word);
+    } else {
+        yed_cerr("cursor is not on a word");
+    }
+}
+
+void yed_default_command_forward_cursor_word(int n_args, char **args) {
+    yed_frame *frame;
+    char      *word;
+
+    if (n_args != 1) {
+        yed_cerr("expected 1 argument, but got %d", n_args);
+        return;
+    }
+
+    if (!ys->active_frame) {
+        yed_cerr("no active frame");
+        return;
+    }
+
+    frame = ys->active_frame;
+
+    if (!frame->buffer) {
+        yed_cerr("active frame has no buffer");
+        return;
+    }
+
+    word = yed_word_under_cursor();
+
+    if (word) {
+        YEXE(args[0], word);
         free(word);
     } else {
         yed_cerr("cursor is not on a word");
@@ -3239,7 +3271,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
      * so we need to delete that too.
      */
     yed_buff_clear_no_undo(yank_buff);
-    yed_buff_delete_line(yank_buff, 1);
+    yed_buff_delete_line_no_undo(yank_buff, 1);
 
 
     /* Copy the selection into the yank buffer. */
@@ -3250,13 +3282,9 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         yank_buff->flags &= ~(BUFF_YANK_RECT);
         yank_buff->flags |= BUFF_YANK_LINES;
         for (row = r1; row <= r2; row += 1) {
-            yrow    = yed_buffer_add_line(yank_buff);
+            yrow    = yed_buffer_add_line_no_undo(yank_buff);
             line_it = yed_buff_get_line(buff, row);
-            for (col = 1; col <= line_it->visual_width;) {
-                g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(yank_buff, yrow, *g);
-                col += yed_get_glyph_width(*g);
-            }
+            yed_buff_set_line_no_undo(yank_buff, yrow, line_it);
         }
     } else if (sel->kind == RANGE_RECT) {
         yank_buff->flags &= ~(BUFF_YANK_LINES);
@@ -3290,11 +3318,7 @@ void yed_default_command_yank_selection(int n_args, char **args) {
             for (row = r1 + 1; row <= r2 - 1; row += 1) {
                 yrow    = yed_buffer_add_line(yank_buff);
                 line_it = yed_buff_get_line(buff, row);
-                for (col = 1; col <= line_it->visual_width;) {
-                    g = yed_line_col_to_glyph(line_it, col);
-                    yed_append_to_line(yank_buff, yrow, *g);
-                    col += yed_get_glyph_width(*g);
-                }
+                yed_buff_set_line_no_undo(yank_buff, yrow, line_it);
             }
             yrow    = yed_buffer_add_line(yank_buff);
             line_it = yed_buff_get_line(buff, r2);

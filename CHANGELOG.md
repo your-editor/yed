@@ -1,5 +1,32 @@
 # Changelog
 
+## 1600 - 2024-TBD
+### Fixed
+    - More compatibility fixes for plugins written in C++.
+    - Fixed a possible endless loop in `syntax.h` when trying to highlight a zero-length regex match.
+    - Fixed a bug where special buffers could not be created when the current working directory was `/`.
+    - Ignore `SIGPIPE` (check your `write()` error codes!).
+    - Fixed a bug in `yed_frame_scroll_buffer()` that caused cursor inconsistencies.
+    - Fixed a bug where closing a split frame could cause incorrect cursor position.
+### Changed
+    - Improved performance of screen diffing and general rendering efficiency.
+    - Use `-mcpu=native` on Apple Silicon builds in release mode.
+    - `yed_screen_print_*over()` functions now fake transparency when `screen-fake-opacity` is less than 1.0 (default 0.95).
+    - Other small performance improvements.
+### Added
+    - Support for italics in attributes.
+    - New event `EVENT_FRAME_POST_SCROLL`.
+    - New event `EVENT_HIGHLIGHT_REQUEST`. Plugins can now provide highlighting for arbitrary strings (not just lines in buffers) when requested.
+    - The `yed_event` and `yed_event_handler` structs now have an `aux_data` field, which plugins can use to package
+      custom data with events to handlers that they created. This is useful in creating event handlers that only operate
+      on specific plugin state. For example, `aux_data` may be a pointer to a specific buffer and a handler will ensure that
+      `event->buffer == event->aux_data` before doing anything to the buffer.
+    - New default completion source `directories`.
+    - Command line completion for `plugins-add-dir` and `plugin-load`.
+    - New command `forward-cursor-word` runs a given command, passing the word under the cursor as the argument. Useful in cases like `forward-cursor-word ctags-find`.
+    - Support for ctrl-arrow keys.
+    - Add support for the POSIX interface of PCRE2 in `syntax.h`. This allows syntax plugin build scripts to conditionally enable this regex engine and improve performance if it is available.
+
 ## 1506 - 2023-8-3
 ### Fixed
     - Fixed an approximately 4 year old bug where the cursor could get stuck in the scroll offset region.
@@ -68,7 +95,7 @@
     - `yed_frame_set_size()`: set the absolute size of the frame/parent frame tree.
     - `yed_frame_tree_set_size()`: set the absolute size of the parent frame tree.
     - New commands:
-        - `frame-name`, `frame-uname`, `frame-tree-next`, `frame-tree-prev`, `frame-set-position`, and `frame-tree-set-position`.
+        - `frame-name`, `frame-unname`, `frame-tree-next`, `frame-tree-prev`, `frame-set-position`, and `frame-tree-set-position`.
         - `open-command-line-buffers`: This command is run when `yed` starts and is passed the paths specified on the command line.
           By default it opens the buffers/frames/a split in the same way `yed` always has, but now that it's a command, it can be overridden.
         - `buffer-hidden`: Load a buffer, but do not create a frame or load it into one.

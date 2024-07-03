@@ -247,24 +247,19 @@ void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem) {
 }
 
 void * _bucket_array_push(bucket_array_t *array, void *elem) {
-    int       elem_size,
-              created_new_bucket;
+    int       elem_size;
     bucket_t *b;
     void     *elem_slot;
 
-    created_new_bucket = 0;
-    elem_size          = array->elem_size;
+    elem_size = array->elem_size;
 
-    if (array_len(array->buckets) == 0) {
-            b = bucket_array_add_new_bucket(array);
+    if (unlikely(array_len(array->buckets) == 0)) {
+        b = bucket_array_add_new_bucket(array);
     } else {
         b = array_last(array->buckets);
         if (b->used == b->capacity) {
             b = bucket_array_add_new_bucket(array);
         }
-    }
-
-    if (created_new_bucket) {
     }
 
     elem_slot = b->data + (elem_size * b->used);

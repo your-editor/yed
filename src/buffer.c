@@ -126,16 +126,12 @@ static int yed_buffer_add_line_no_undo_no_events(yed_buffer *buff) {
 }
 
 yed_buffer yed_new_buff(void) {
-    yed_buffer  buff;
+    yed_buffer buff;
+
+    memset(&buff, 0, sizeof(buff));
 
     buff.kind                 = BUFF_KIND_UNKNOWN;
     buff.lines                = bucket_array_make(1024, yed_line);
-    buff.get_line_cache       = NULL;
-    buff.get_line_cache_row   = 0;
-    buff.path                 = NULL;
-    buff.mmap_underlying_buff = NULL;
-    buff.has_selection        = 0;
-    buff.flags                = 0;
     buff.undo_history         = yed_new_undo_history();
     buff.last_cursor_row      = 1;
     buff.last_cursor_col      = 1;
@@ -215,9 +211,30 @@ yed_buffer * yed_get_or_create_special_rdonly_buffer(char *name) {
     return buff;
 }
 
+void yed_destroy_buffer(yed_buffer *buffer) {
+    yed_line *line;
+
+    if (buffer->name) {
+        free(buffer->name);
+    }
+    if (buffer->path) {
+        free(buffer->path);
+    }
+    if (buffer->underlying_buff) {
+        free(buffer->underlying_buff);
+    }
+
+    bucket_array_traverse(buffer->lines, line) {
+        yed_free_line(line);
+    }
+
+    bucket_array_free(buffer->lines);
+
+    yed_free_undo_history(&buffer->undo_history);
+}
+
 void yed_free_buffer(yed_buffer *buffer) {
-    yed_event  event;
-    yed_line  *line;
+    yed_event event;
 
     memset(&event, 0, sizeof(event));
     event.kind   = EVENT_BUFFER_PRE_DELETE;
@@ -228,24 +245,9 @@ void yed_free_buffer(yed_buffer *buffer) {
 
     if (buffer->name) {
         tree_delete(ys->buffers, buffer->name);
-        free(buffer->name);
     }
 
-    if (buffer->path) {
-        free(buffer->path);
-    }
-
-    if (buffer->mmap_underlying_buff) {
-        free(buffer->mmap_underlying_buff);
-    }
-
-    bucket_array_traverse(buffer->lines, line) {
-        yed_free_line(line);
-    }
-
-    bucket_array_free(buffer->lines);
-
-    yed_free_undo_history(&buffer->undo_history);
+    yed_destroy_buffer(buffer);
 
     free(buffer);
 
@@ -260,6 +262,7 @@ yed_buffer *yed_get_yank_buffer(void) {
     yed_buffer *b;
     b = yed_get_or_create_special_rdonly_buffer("*yank");
     b->kind = BUFF_KIND_YANK;
+    b->flags |= BUFF_NO_MOD_EVENTS;
     return b;
 }
 
@@ -414,7 +417,7 @@ void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, 
             }
             row += 1;
             col  = 1;
-        } else if (!G_IS_ASCII(*g) || isprint(g->c)) {
+        } else if (!G_IS_ASCII(*g) || is_print(g->c)) {
             yed_insert_into_line_no_undo(buff, row, col, *g);
             col += yed_get_glyph_width(*g);
         }
@@ -428,29 +431,31 @@ do {                                                 \
     if ((_buff)->flags & BUFF_RD_ONLY) { goto out; } \
 } while (0)
 
-#define DO_PRE_MOD_EVT(_buff, _kind, _row, _col)     \
-do {                                                 \
-    yed_event _event;                                \
-    memset(&_event, 0, sizeof(_event));              \
-    _event.kind           = EVENT_BUFFER_PRE_MOD;    \
-    _event.buffer         = (_buff);                 \
-    _event.buff_mod_event = (_kind);                 \
-    _event.row            = (_row);                  \
-    _event.col            = (_col);                  \
-    yed_trigger_event(&_event);                      \
-    if (_event.cancel) { goto out; }                 \
+#define DO_PRE_MOD_EVT(_buff, _kind, _row, _col)        \
+do {                                                    \
+    if ((_buff)->flags & BUFF_NO_MOD_EVENTS) { break; } \
+    yed_event _event;                                   \
+    memset(&_event, 0, sizeof(_event));                 \
+    _event.kind           = EVENT_BUFFER_PRE_MOD;       \
+    _event.buffer         = (_buff);                    \
+    _event.buff_mod_event = (_kind);                    \
+    _event.row            = (_row);                     \
+    _event.col            = (_col);                     \
+    yed_trigger_event(&_event);                         \
+    if (_event.cancel) { goto out; }                    \
 } while (0)
-#define DO_POST_MOD_EVT(_buff, _kind, _row, _col)    \
-do {                                                 \
-    yed_event _event;                                \
-    memset(&_event, 0, sizeof(_event));              \
-    _event.kind           = EVENT_BUFFER_POST_MOD;   \
-    _event.buffer         = (_buff);                 \
-    _event.buff_mod_event = (_kind);                 \
-    _event.row            = (_row);                  \
-    _event.col            = (_col);                  \
-    yed_trigger_event(&_event);                      \
-    (_buff)->flags |= BUFF_MODIFIED;                 \
+#define DO_POST_MOD_EVT(_buff, _kind, _row, _col)       \
+do {                                                    \
+    if ((_buff)->flags & BUFF_NO_MOD_EVENTS) { break; } \
+    yed_event _event;                                   \
+    memset(&_event, 0, sizeof(_event));                 \
+    _event.kind           = EVENT_BUFFER_POST_MOD;      \
+    _event.buffer         = (_buff);                    \
+    _event.buff_mod_event = (_kind);                    \
+    _event.row            = (_row);                     \
+    _event.col            = (_col);                     \
+    yed_trigger_event(&_event);                         \
+    (_buff)->flags |= BUFF_MODIFIED;                    \
 } while (0)
 
 void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g) {
@@ -705,7 +710,7 @@ void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col)
             }
             row += 1;
             col  = 1;
-        } else if (!G_IS_ASCII(*g) || isprint(g->c)) {
+        } else if (!G_IS_ASCII(*g) || is_print(g->c)) {
             yed_insert_into_line(buff, row, col, *g);
             col += yed_get_glyph_width(*g);
         }
@@ -1093,35 +1098,22 @@ cleanup:
     return status;
 }
 
-int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long file_size) {
-    int          i, line_len;
-    char        *file_data, *underlying_buff, *end, *scan, *tmp, c;
-    yed_line    *last_line,
-                 line;
-    yed_glyph   *g;
-
+int yed_fill_buff_from_string(yed_buffer *buff, const char *s, unsigned long long len) {
+    int       line_len;
+    char     *underlying_buff, *end, *scan, *tmp, c;
+    yed_line *last_line,
+              line;
 
     yed_buff_clear_no_undo(buff);
-
-    if (file_size == 0) {
-        return BUFF_FILL_STATUS_SUCCESS;
-    }
-
-    file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
-
-    if (file_data == MAP_FAILED) {
-        errno = 0;
-        return BUFF_FILL_STATUS_ERR_MAP;
-    }
 
     /*
      * Add 3 bytes of padding so that we don't violate anything
      * when we call yed_get_string_info().
      * See the comment there (src/utf8.c) for more info.
      */
-    underlying_buff = malloc(file_size + 3);
+    underlying_buff = malloc(len + 3);
 
-    memcpy(underlying_buff, file_data, file_size);
+    memcpy(underlying_buff, s, len);
 
     /*
      * This buffer is going to come to us with a pre-made
@@ -1134,7 +1126,7 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
 
 
     scan = underlying_buff;
-    end  = underlying_buff + file_size;
+    end  = underlying_buff + len;
 
     while (scan < end) {
         tmp      = memchr(scan, '\n', end - scan);
@@ -1152,8 +1144,6 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
             line_len -= 1;
         }
 
-        (void)g;
-        (void)i;
         yed_get_string_info(line.chars.data, line_len, &line.n_glyphs, &line.visual_width);
 
         bucket_array_push(buff->lines, line);
@@ -1162,9 +1152,6 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
 
         scan = tmp + 1;
     }
-
-    munmap(file_data, file_size);
-    buff->mmap_underlying_buff = underlying_buff;
 
     if (bucket_array_len(buff->lines) > 1) {
         last_line = bucket_array_last(buff->lines);
@@ -1175,6 +1162,29 @@ int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long fil
         line = yed_new_line();
         bucket_array_push(buff->lines, line);
     }
+
+    buff->underlying_buff = underlying_buff;
+
+    return BUFF_FILL_STATUS_SUCCESS;
+}
+
+int yed_fill_buff_from_file_map(yed_buffer *buff, int fd, unsigned long long file_size) {
+    char *file_data;
+
+    if (file_size == 0) {
+        return BUFF_FILL_STATUS_SUCCESS;
+    }
+
+    file_data = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
+
+    if (file_data == MAP_FAILED) {
+        errno = 0;
+        return BUFF_FILL_STATUS_ERR_MAP;
+    }
+
+    yed_fill_buff_from_string(buff, file_data, file_size);
+
+    munmap(file_data, file_size);
 
     return BUFF_FILL_STATUS_SUCCESS;
 }
@@ -1195,12 +1205,12 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
     bucket_array_pop(buff->lines);
 
     while (line_data = NULL, (line_len = getline(&line_data, &line_cap, f)) > 0) {
-        line.chars.data      = line_data;
-        line.chars.elem_size = 1;
-        line.chars.used      = line_len;
-        line.chars.capacity  = line_cap;
-        line.visual_width    = 0;
-        line.n_glyphs        = 0;
+        line.chars.data       = line_data;
+        line.chars.elem_size  = 1;
+        line.chars.used       = line_len;
+        line.chars.capacity   = line_cap;
+        line.visual_width     = 0;
+        line.n_glyphs         = 0;
 
         while (array_len(line.chars)
         &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {

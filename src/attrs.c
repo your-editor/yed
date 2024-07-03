@@ -82,36 +82,6 @@ int rgb_to_256(unsigned rgb) {
     return 16 + (36 * ri) + (6 * gi) + (bi);
 }
 
-void yed_combine_attrs(yed_attrs *dst, yed_attrs *src) {
-    if (!dst || !src)    { return; }
-
-    if (ATTR_FG_KIND(dst->flags) == ATTR_KIND_16
-    &&  ATTR_FG_KIND(src->flags) != ATTR_KIND_NONE
-    &&     (ATTR_FG_KIND(src->flags) != ATTR_KIND_16
-        || !(src->flags & ATTR_16_LIGHT_FG))) {
-
-        dst->flags &= ~ATTR_16_LIGHT_FG;
-    }
-
-    if (ATTR_BG_KIND(dst->flags) == ATTR_KIND_16
-    &&  ATTR_BG_KIND(src->flags) != ATTR_KIND_NONE
-    &&     (ATTR_BG_KIND(src->flags) != ATTR_KIND_16
-        || !(src->flags & ATTR_16_LIGHT_BG))) {
-        dst->flags &= ~ATTR_16_LIGHT_BG;
-    }
-
-    if (ATTR_FG_KIND(src->flags) != ATTR_KIND_NONE) {
-        ATTR_SET_FG_KIND(dst->flags, ATTR_FG_KIND(src->flags));
-        dst->fg = src->fg;
-    }
-    if (ATTR_BG_KIND(src->flags) != ATTR_KIND_NONE) {
-        ATTR_SET_BG_KIND(dst->flags, ATTR_BG_KIND(src->flags));
-        dst->bg = src->bg;
-    }
-
-    dst->flags |= src->flags & ~0xF;
-}
-
 #define BUFFCATN(buff_p, str, n) \
 do { memcpy((buff_p), (str), (n)); (buff_p) += (n); } while (0)
 
@@ -138,6 +108,10 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
 
     if (attr.flags & ATTR_BOLD) {
         BUFFCATN(buff_p, ";1", 2);
+    }
+
+    if (attr.flags & ATTR_ITALIC) {
+        BUFFCATN(buff_p, ";3", 2);
     }
 
     if (attr.flags & ATTR_UNDERLINE) {
@@ -207,9 +181,7 @@ void yed_get_attr_str(yed_attrs attr, char *buff_p) {
 }
 
 int yed_attrs_eq(yed_attrs attr1, yed_attrs attr2) {
-    return   (attr1.fg    == attr2.fg)
-           & (attr1.bg    == attr2.bg)
-           & (attr1.flags == attr2.flags);
+    return ATTRS_EQ(attr1, attr2);
 }
 
 yed_attrs yed_parse_attrs(const char *string) {
@@ -269,6 +241,9 @@ yed_attrs yed_parse_attrs(const char *string) {
                     } else if (strcmp(word, "underline") == 0) {
                         attrs.flags &= ~(ATTR_UNDERLINE);
                         attrs.flags |= ref_attrs.flags & ATTR_UNDERLINE;
+                    } else if (strcmp(word, "italic") == 0) {
+                        attrs.flags &= ~(ATTR_ITALIC);
+                        attrs.flags |= ref_attrs.flags & ATTR_ITALIC;
                     } else if (strcmp(word, "16-light-fg") == 0) {
                         attrs.flags &= ~(ATTR_16_LIGHT_FG);
                         attrs.flags |= ref_attrs.flags & ATTR_16_LIGHT_FG;
@@ -326,6 +301,7 @@ yed_attrs yed_parse_attrs(const char *string) {
             attrs.flags &= ~ATTR_INVERSE;
             attrs.flags &= ~ATTR_BOLD;
             attrs.flags &= ~ATTR_UNDERLINE;
+            attrs.flags &= ~ATTR_ITALIC;
             attrs.flags &= ~ATTR_16_LIGHT_FG;
             attrs.flags &= ~ATTR_16_LIGHT_BG;
         } else if (strcmp(word, "inverse") == 0) {
@@ -340,6 +316,10 @@ yed_attrs yed_parse_attrs(const char *string) {
             attrs.flags |= ATTR_UNDERLINE;
         } else if (strcmp(word, "no-underline") == 0) {
             attrs.flags &= ~ATTR_UNDERLINE;
+        } else if (strcmp(word, "italic") == 0) {
+            attrs.flags |= ATTR_ITALIC;
+        } else if (strcmp(word, "no-italic") == 0) {
+            attrs.flags &= ~ATTR_ITALIC;
         } else if (strcmp(word, "16-light-fg") == 0) {
             attrs.flags |= ATTR_16_LIGHT_FG;
         } else if (strcmp(word, "no-16-light-fg") == 0) {

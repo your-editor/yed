@@ -91,6 +91,24 @@ static int esc_sequence(int *input) {
                                 return 2;
                         }
                         return 6;
+                    } else if (c == '5') {
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        input[5] = c;
+                        switch (c) {
+                            case 'A':
+                                input[1] = CTRL_ARROW_UP;
+                                return 2;
+                            case 'B':
+                                input[1] = CTRL_ARROW_DOWN;
+                                return 2;
+                            case 'C':
+                                input[1] = CTRL_ARROW_RIGHT;
+                                return 2;
+                            case 'D':
+                                input[1] = CTRL_ARROW_LEFT;
+                                return 2;
+                        }
+                        return 6;
                     }
                     return 5;
                 } else if (c == '5') {
@@ -1170,6 +1188,14 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
             key_i = SHIFT_TAB;
         } else if (strcmp(key_str, "menu") == 0) {
             key_i = MENU_KEY;
+        } else if (strcmp(key_str, "ctrl-left") == 0) {
+            key_i = CTRL_ARROW_LEFT;
+        } else if (strcmp(key_str, "ctrl-right") == 0) {
+            key_i = CTRL_ARROW_RIGHT;
+        } else if (strcmp(key_str, "ctrl-up") == 0) {
+            key_i = CTRL_ARROW_UP;
+        } else if (strcmp(key_str, "ctrl-down") == 0) {
+            key_i = CTRL_ARROW_DOWN;
         } else if (sscanf(key_str, "ctrl-%c", &key_c)) {
             if (key_c != -1) {
                 if (key_c == '/') {
@@ -1282,6 +1308,19 @@ char *yed_keys_to_string(int n, int *keys) {
                 snprintf(key_buff, sizeof(key_buff), "ctrl-%c", 'a' + (key - CTRL_A));
                 break;
 
+            case CTRL_ARROW_LEFT:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-left");
+                break;
+            case CTRL_ARROW_RIGHT:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-right");
+                break;
+            case CTRL_ARROW_UP:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-up");
+                break;
+            case CTRL_ARROW_DOWN:
+                snprintf(key_buff, sizeof(key_buff), "ctrl-down");
+                break;
+
             case TAB:
                 snprintf(key_buff, sizeof(key_buff), "tab");
                 break;
@@ -1363,7 +1402,7 @@ char *yed_keys_to_string(int n, int *keys) {
                 if (!yed_is_key(key)) { goto bad; }
 
                 if (key < ASCII_KEY_MAX) {
-                    if (!isprint(key)) { goto bad; }
+                    if (!is_print(key)) { goto bad; }
                     snprintf(key_buff, sizeof(key_buff), "%c", (char)key);
                 } else if (key >= VIRT_KEY_START) {
                     if (!yed_get_real_keys(key, &n_real_keys, real_keys)) { goto bad; }

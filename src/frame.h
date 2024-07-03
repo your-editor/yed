@@ -72,8 +72,18 @@ int  yed_frame_set_name(yed_frame *f, const char *name);
 void frame_get_rect(yed_frame *frame, int *top,  int *left,  int *height,  int *width,
                                       int *btop, int *bleft, int *bheight, int *bwidth);
 
-#define FRAME_RESET_RECT(f) frame_get_rect((f), &(f)->top,  &(f)->left,  &(f)->height,  &(f)->width,\
-                                                &(f)->btop, &(f)->bleft, &(f)->bheight, &(f)->bwidth)
+#define FRAME_RESET_RECT(f)                                                    \
+do {                                                                           \
+    frame_get_rect((f), &(f)->top,  &(f)->left,  &(f)->height,  &(f)->width,   \
+                        &(f)->btop, &(f)->bleft, &(f)->bheight, &(f)->bwidth); \
+    yed_frame_hard_reset_cursor_x(f);                                          \
+} while (0)
+
+#define FRAME_RESET_RECT_NO_CURSOR_RESET(f)                                    \
+do {                                                                           \
+    frame_get_rect((f), &(f)->top,  &(f)->left,  &(f)->height,  &(f)->width,   \
+                        &(f)->btop, &(f)->bleft, &(f)->bheight, &(f)->bwidth); \
+} while (0)
 
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame);
 

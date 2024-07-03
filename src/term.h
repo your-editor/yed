@@ -75,7 +75,6 @@ void yed_term_set_timeout(int n_x_100_ms);
 int yed_term_get_dim(int *r, int *c);
 int yed_term_says_it_supports_truecolor(void);
 
-void yed_set_cursor(int row, int col);
 void yed_term_set_cursor_style(int style);
 
 void yed_register_sigwinch_handler(void);
@@ -89,6 +88,7 @@ void yed_register_sigill_handler(void);
 void yed_register_sigfpe_handler(void);
 void yed_register_sigbus_handler(void);
 void yed_register_sigchld_handler(void);
+void yed_register_sigpipe_handler(void);
 int yed_check_for_resize(void);
 void yed_handle_resize(void);
 void yed_term_enable_mouse_reporting(void);

@@ -23,6 +23,7 @@ void yed_set_default_vars(void) {
     yed_set_var("screen-update-sync",           "yes");
     yed_set_var("syntax-max-line-length",       XSTR(DEFAULT_SYNTAX_MAX_LINE_LENGTH));
     yed_set_var("compl-words-buffer-max-lines", XSTR(DEFAULT_COMPL_WORDS_BUFFER_MAX_LINES));
+    yed_set_var("screen-fake-opacity",          XSTR(DEFAULT_FAKE_OPACITY));
 }
 
 void yed_set_var(const char *var, const char *val) {

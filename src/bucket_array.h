@@ -72,28 +72,28 @@ int _bucket_array_iter_is_end(bucket_array_iter_t *it);
 void * _bucket_array_iter_item(bucket_array_iter_t *it);
 void _bucket_array_iter_next(bucket_array_iter_t *it);
 
-#define bucket_array_traverse(array, it)                                                 \
-    for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make(&(array), 0); \
-         !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                                \
-             && (((it) = _bucket_array_iter_item(&__ba_iter##__LINE__)), 1);             \
+#define bucket_array_traverse(array, it)                                                   \
+    for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make(&(array), 0);   \
+         !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                                  \
+             && (((it) = (__typeof(it))_bucket_array_iter_item(&__ba_iter##__LINE__)), 1); \
          _bucket_array_iter_next(&__ba_iter##__LINE__))
 
 #define bucket_array_traverse_from(array, it, starting_idx)                                                 \
     for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make_at(&(array), (starting_idx), 0); \
          !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                                                   \
-             && (((it) = _bucket_array_iter_item(&__ba_iter##__LINE__)), 1);                                \
+             && (((it) = (__typeof(it))_bucket_array_iter_item(&__ba_iter##__LINE__)), 1);                  \
          _bucket_array_iter_next(&__ba_iter##__LINE__))
 
-#define bucket_array_rtraverse(array, it)                                                \
-    for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make(&(array), 1); \
-         !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                                \
-             && (((it) = _bucket_array_iter_item(&__ba_iter##__LINE__)), 1);             \
+#define bucket_array_rtraverse(array, it)                                                  \
+    for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make(&(array), 1);   \
+         !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                                  \
+             && (((it) = (__typeof(it))_bucket_array_iter_item(&__ba_iter##__LINE__)), 1); \
          _bucket_array_iter_next(&__ba_iter##__LINE__))
 
 #define bucket_array_rtraverse_from(array, it, starting_idx)                                                \
     for (bucket_array_iter_t __ba_iter##__LINE__ = _bucket_array_iter_make_at(&(array), (starting_idx), 1); \
          !_bucket_array_iter_is_end(&__ba_iter##__LINE__)                                                   \
-             && (((it) = _bucket_array_iter_item(&__ba_iter##__LINE__)), 1);                                \
+             && (((it) = (__typeof(it))_bucket_array_iter_item(&__ba_iter##__LINE__)), 1);                  \
          _bucket_array_iter_next(&__ba_iter##__LINE__))
 
 #endif
