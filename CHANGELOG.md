@@ -12,6 +12,7 @@
     - Improved performance of screen diffing and general rendering efficiency.
     - Use `-mcpu=native` on Apple Silicon builds in release mode.
     - `yed_screen_print_*over()` functions now fake transparency when `screen-fake-opacity` is less than 1.0 (default 0.95).
+    - Other small performance improvements.
 ### Added
     - Support for italics in attributes.
     - New event `EVENT_FRAME_POST_SCROLL`.
@@ -24,6 +25,7 @@
     - Command line completion for `plugins-add-dir` and `plugin-load`.
     - New command `forward-cursor-word` runs a given command, passing the word under the cursor as the argument. Useful in cases like `forward-cursor-word ctags-find`.
     - Support for ctrl-arrow keys.
+    - Add support for the POSIX interface of PCRE2 in `syntax.h`. This allows syntax plugin build scripts to conditionally enable this regex engine and improve performance if it is available.
 
 ## 1506 - 2023-8-3
 ### Fixed
