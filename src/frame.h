@@ -79,6 +79,12 @@ do {                                                                           \
     yed_frame_hard_reset_cursor_x(f);                                          \
 } while (0)
 
+#define FRAME_RESET_RECT_NO_CURSOR_RESET(f)                                    \
+do {                                                                           \
+    frame_get_rect((f), &(f)->top,  &(f)->left,  &(f)->height,  &(f)->width,   \
+                        &(f)->btop, &(f)->bleft, &(f)->bheight, &(f)->bwidth); \
+} while (0)
+
 int yed_cell_is_in_frame(int row, int col, yed_frame *frame);
 
 int yed_frame_line_to_y(yed_frame *frame, int row);

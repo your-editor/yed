@@ -1110,7 +1110,7 @@ void yed_frame_update(yed_frame *frame) {
 
     yed_trigger_event(&update_event);
 
-    FRAME_RESET_RECT(frame);
+    FRAME_RESET_RECT_NO_CURSOR_RESET(frame);
     yed_frame_draw_border(frame);
 
     yed_trigger_event(&buff_draw_event);
