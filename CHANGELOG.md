@@ -7,6 +7,7 @@
     - Fixed a bug where special buffers could not be created when the current working directory was `/`.
     - Ignore `SIGPIPE` (check your `write()` error codes!).
     - Fixed a bug in `yed_frame_scroll_buffer()` that caused cursor inconsistencies.
+    - Fixed a bug where closing a split frame could cause incorrect cursor position.
 ### Changed
     - Improved performance of screen diffing and general rendering efficiency.
     - Use `-mcpu=native` on Apple Silicon builds in release mode.
