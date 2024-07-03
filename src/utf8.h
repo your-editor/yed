@@ -51,14 +51,24 @@ static inline int _yed_get_mbyte_width(yed_glyph g) {
     return w;
 }
 
-#define yed_get_glyph_width(g)          \
-    (likely((g).u_c <= 127)             \
-        ? (unlikely((g).c == '\t')      \
-            ? (ys->tabw)                \
-            : (likely(is_print((g).c))  \
-                ? 1                     \
-                : 2))                   \
-        : (_yed_get_mbyte_width(g)))
+/* #define yed_get_glyph_width(g)          \ */
+/*     (likely((g).u_c <= 127)             \ */
+/*         ? (unlikely((g).c == '\t')      \ */
+/*             ? (ys->tabw)                \ */
+/*             : (likely(is_print((g).c))  \ */
+/*                 ? 1                     \ */
+/*                 : 2))                   \ */
+/*         : (_yed_get_mbyte_width(g))) */
+
+#define yed_get_glyph_width(g)                 \
+    (likely(is_print((g).c))                   \
+        ? 1                                    \
+        : (((g).c == '\t')                     \
+            ? (ys->tabw)                       \
+            : (((g).u_c <= 127)                \
+                ? 2                            \
+                : (_yed_get_mbyte_width(g)))))
+
 
 void yed_get_string_info(const char *bytes, int len, int *n_glyphs, int *width);
 int yed_get_string_width(const char *s);
