@@ -896,7 +896,6 @@ static void draw_list(void) {
     yed_buffer *buff;
     array_t     plugs;
     plugin     *it;
-    yed_attrs   attr;
     int         start_row;
     int         max_width;
     int         max_desc_width;
@@ -978,11 +977,6 @@ static void draw_list(void) {
                         ((*it).loaded == 1) ? col_2_width+2 : col_2_width, ((*it).loaded == 1) ? "\xE2\x9C\x93" : "X",
                         max_desc_width + 1, (*it).plugin_description == NULL ? "<no description>" : (*it).plugin_description
                 );
-        ATTR_SET_FG_KIND(attr.flags, ATTR_KIND_16);
-        ATTR_SET_BG_KIND(attr.flags, ATTR_KIND_16);
-        attr.fg = ATTR_16_RED;
-        attr.bg = ATTR_16_BLACK;
-        yed_set_attr(attr);
         yed_buff_insert_string_no_undo(buff, plugin_line, start_row, 1);
     }
 
@@ -1501,9 +1495,9 @@ static void line_handler(yed_event *event) {
             git = yed_buff_get_glyph(buff, event->row, i);
             if (!git) { continue; }
             if (isalpha(git->c)) {
-                yed_combine_attrs(ait, &attr);
+                yed_eline_combine_col_attrs(event, i,  &attr);
             }
-            i += 1;
+            i += yed_get_glyph_width(*git);
         }
     } else if (event->row >= 19) {
         line = yed_buff_get_line(buff, event->row);
@@ -1521,7 +1515,7 @@ static void line_handler(yed_event *event) {
             if (table_col == 1) {
                 if (!isspace(git->c)) {
                     attr = yed_active_style_get_code_fn_call();
-                    yed_combine_attrs(ait, &attr);
+                    yed_eline_combine_col_attrs(event, i,  &attr);
                 }
             } else if (table_col == 2 || table_col == 3) {
                 if (strncmp(&git->c, chk, strlen(chk)) == 0) {
@@ -1535,15 +1529,15 @@ static void line_handler(yed_event *event) {
                     } else if (ATTR_FG_KIND(attr.flags) == ATTR_KIND_16) {
                         attr.fg = ATTR_16_GREEN;
                     }
-                    yed_combine_attrs(ait, &attr);
+                    yed_eline_combine_col_attrs(event, i,  &attr);
                 } else if (git->c == 'X') {
                     attr = yed_active_style_get_attention();
-                    yed_combine_attrs(ait, &attr);
+                    yed_eline_combine_col_attrs(event, i,  &attr);
                 }
             }
 
 next:;
-            i += 1;
+            i += yed_get_glyph_width(*git);
         }
     }
 }
