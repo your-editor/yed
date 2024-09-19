@@ -3387,11 +3387,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             new_row = frame->cursor_line + row;
             yed_buff_insert_line(buff, new_row);
             line_it = yed_buff_get_line(yank_buff, row);
-            for (col = 1; col <= line_it->visual_width;) {
-                g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(buff, new_row, *g);
-                col += yed_get_glyph_width(*g);
-            }
+            yed_buff_set_line(buff, new_row, line_it);
         }
         yed_set_cursor_far_within_frame(frame, frame->cursor_line + 1, 1);
     } else if (yank_buff->flags & BUFF_YANK_RECT) {
@@ -3441,11 +3437,7 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 new_row = frame->cursor_line + row - 1;
                 yed_buff_insert_line(buff, new_row);
                 line_it = yed_buff_get_line(yank_buff, row);
-                for (col = 1; col <= line_it->visual_width;) {
-                    g = yed_line_col_to_glyph(line_it, col);
-                    yed_append_to_line(buff, new_row, *g);
-                    col += yed_get_glyph_width(*g);
-                }
+                yed_buff_set_line(buff, new_row, line_it);
             }
             line_it  = yed_buff_get_line(yank_buff, yank_buff_n_lines);
             for (col = 1; col <= line_it->visual_width;) {
