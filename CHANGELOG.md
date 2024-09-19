@@ -1,5 +1,10 @@
 # Changelog
 
+## 1601 - 2024-9-19
+### Fixed
+    - Fixed performance issues for large yank buffer pastes.
+    - Fixed rectangular selection when the anchor position was further than the cursor position.
+
 ## 1600 - 2024-7-3
 ### Fixed
     - More compatibility fixes for plugins written in C++.
