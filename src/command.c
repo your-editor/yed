@@ -3290,6 +3290,14 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         yank_buff->flags &= ~(BUFF_YANK_LINES);
         yank_buff->flags |= BUFF_YANK_RECT;
 
+        if (sel->anchor_col <= sel->cursor_col) {
+            c1 = sel->anchor_col;
+            c2 = sel->cursor_col;
+        } else {
+            c1 = sel->cursor_col;
+            c2 = sel->anchor_col;
+        }
+
         for (row = r1; row <= r2; row += 1) {
             yrow    = yed_buffer_add_line(yank_buff);
             line_it = yed_buff_get_line(buff, row);

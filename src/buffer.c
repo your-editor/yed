@@ -1338,6 +1338,13 @@ int yed_is_in_range(yed_range *range, int row, int col) {
     }
 
     if (range->kind == RANGE_RECT) {
+        if (range->anchor_col <= range->cursor_col) {
+            c1 = range->anchor_col;
+            c2 = range->cursor_col;
+        } else {
+            c1 = range->cursor_col;
+            c2 = range->anchor_col;
+        }
         return col >= c1 && col < c2;
     }
 
@@ -1387,7 +1394,16 @@ void yed_buff_delete_selection(yed_buffer *buff) {
     } else if (r1 == r2 || range->kind == RANGE_RECT) {
         for (i = r1; i <= r2; i += 1) {
             line1 = yed_buff_get_line(buff, i);
-            ctmp  = c1;
+
+            if (range->anchor_col <= range->cursor_col) {
+                c1 = range->anchor_col;
+                c2 = range->cursor_col;
+            } else {
+                c1 = range->cursor_col;
+                c2 = range->anchor_col;
+            }
+
+            ctmp = c1;
             while (ctmp < c2 && c1 <= line1->visual_width) {
                 g = yed_line_col_to_glyph(line1, c1);
                 width = yed_get_glyph_width(*g);
