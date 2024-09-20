@@ -1,5 +1,11 @@
 # Changelog
 
+## 1700 - TBD
+### Fixed
+    - Update some basic structures to use 64-bit integers in places where they should have been.
+### Changed
+    - Use compiler flags to force inclusion of frame pointers.
+
 ## 1601 - 2024-9-19
 ### Fixed
     - Fixed performance issues for large yank buffer pastes.
