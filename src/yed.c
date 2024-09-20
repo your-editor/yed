@@ -107,7 +107,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-std=gnu99 -shared -fPIC -I%s\n", installed_include_dir());
+                "-std=gnu99 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -shared -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-cppflags") == 0) {
@@ -115,7 +115,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-shared -fPIC -I%s\n", installed_include_dir());
+                "-shared -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
@@ -123,7 +123,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
-                "-rdynamic -shared -fPIC -L%s -lyed\n", installed_lib_dir());
+                "-rdynamic -shared -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -L%s -lyed\n", installed_lib_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--instrument") == 0) {
