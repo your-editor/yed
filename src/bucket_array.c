@@ -11,7 +11,7 @@ bucket_t new_bucket(bucket_array_t *array) {
     return bucket;
 }
 
-bucket_array_t _bucket_array_make(int count, int elem_size) {
+bucket_array_t _bucket_array_make(u64 count, u64 elem_size) {
     bucket_array_t array;
 
     array.buckets   = array_make(bucket_t);
@@ -48,8 +48,8 @@ void _bucket_array_free(bucket_array_t *array) {
 #define BUCKET_ITEM(b, idx, elem_size) \
     ((b)->data + ((elem_size) * (idx)))
 
-int _get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
-    int       b_idx;
+u64 _get_bucket_and_elem_idx_for_idx(bucket_array_t *array, u64 *idx) {
+    u64       b_idx;
     bucket_t *b;
 
     if (array_len(array->buckets) == 0) {
@@ -72,8 +72,8 @@ int _get_bucket_and_elem_idx_for_idx(bucket_array_t *array, int *idx) {
     return -1;
 }
 
-int get_bucket_and_slot_idx_for_idx(bucket_array_t *array, int *idx) {
-    int       b_idx;
+u64 get_bucket_and_slot_idx_for_idx(bucket_array_t *array, u64 *idx) {
+    u64       b_idx;
     bucket_t *b, new_b;
 
     b_idx = 0;
@@ -98,9 +98,9 @@ int get_bucket_and_slot_idx_for_idx(bucket_array_t *array, int *idx) {
     return -1;
 }
 
-void * _bucket_array_item(bucket_array_t *array, int idx) {
+void * _bucket_array_item(bucket_array_t *array, u64 idx) {
     bucket_t *b;
-    int       b_idx;
+    u64       b_idx;
 
     b_idx = _get_bucket_and_elem_idx_for_idx(array, &idx);
     ASSERT(b_idx >= 0, "index out of bounds in _bucket_array_item()");
@@ -124,7 +124,7 @@ void *_bucket_array_last(bucket_array_t *array) {
     return BUCKET_ITEM(b, b->used - 1, array->elem_size);
 }
 
-void bucket_delete(bucket_array_t *array, int b_idx, int idx, int elem_size) {
+void bucket_delete(bucket_array_t *array, u64 b_idx, u64 idx, u64 elem_size) {
     void     *split;
     bucket_t *b;
 
@@ -149,8 +149,8 @@ void bucket_delete(bucket_array_t *array, int b_idx, int idx, int elem_size) {
     array->used -= 1;
 }
 
-void _bucket_array_delete(bucket_array_t *array, int idx) {
-    int b_idx;
+void _bucket_array_delete(bucket_array_t *array, u64 idx) {
+    u64 b_idx;
 
     if (idx == array->used - 1) {
         _bucket_array_pop(array);
@@ -163,7 +163,7 @@ void _bucket_array_delete(bucket_array_t *array, int idx) {
     bucket_delete(array, b_idx, idx, array->elem_size);
 }
 
-void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *elem, int elem_size) {
+void * bucket_insert(bucket_array_t *array, u64 b_idx, u64 idx, void *elem, u64 elem_size) {
     void     *elem_slot;
     bucket_t *b, *spill_b, *next_b, new_b;
 
@@ -229,8 +229,8 @@ void * bucket_insert(bucket_array_t *array, int b_idx, int idx, void *elem, int 
     return elem_slot;
 }
 
-void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem) {
-    int   b_idx;
+void * _bucket_array_insert(bucket_array_t *array, u64 idx, void *elem) {
+    u64   b_idx;
     void *new_elem;
 
     if (idx == array->used) {
@@ -247,7 +247,7 @@ void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem) {
 }
 
 void * _bucket_array_push(bucket_array_t *array, void *elem) {
-    int       elem_size;
+    u64       elem_size;
     bucket_t *b;
     void     *elem_slot;
 
@@ -273,7 +273,7 @@ void * _bucket_array_push(bucket_array_t *array, void *elem) {
 }
 
 void _bucket_array_pop(bucket_array_t *array) {
-    int       b_idx;
+    u64       b_idx;
     bucket_t *b;
 
     ASSERT(array_len(array->buckets) > 0, "can't pop from an empty bucket array");
@@ -297,7 +297,7 @@ void _bucket_array_clear(bucket_array_t *array) {
 }
 
 
-bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx, int dir) {
+bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, u64 idx, int dir) {
     bucket_array_iter_t iter;
 
     iter.array = array;
@@ -328,7 +328,7 @@ bucket_array_iter_t _bucket_array_iter_make(bucket_array_t *array, int dir) {
 }
 
 int _bucket_array_iter_is_end(bucket_array_iter_t *it) {
-    int n_buckets;
+    u64 n_buckets;
 
     if (it->direction == 1) {
         return it->elem_idx < 0;

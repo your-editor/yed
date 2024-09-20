@@ -5,23 +5,23 @@
 
 typedef struct {
     void *data;
-    int   elem_size;
-    int   used;
-    int   capacity;
+    u64   elem_size;
+    u64   used;
+    u64   capacity;
     int   should_free;
 } array_t;
 
-array_t _array_make(int elem_size);
-array_t _array_make_with_cap(int elem_size, int initial_cap);
+array_t _array_make(u64 elem_size);
+array_t _array_make_with_cap(u64 elem_size, u64 initial_cap);
 void _array_free(array_t *array);
 void * _array_push(array_t *array, void *elem);
-void * _array_push_n(array_t *array, void *elems, int n);
+void * _array_push_n(array_t *array, void *elems, u64 n);
 void * _array_next_elem(array_t *array);
-void * _array_insert(array_t *array, int idx, void *elem);
-void _array_delete(array_t *array, int idx);
+void * _array_insert(array_t *array, u64 idx, void *elem);
+void _array_delete(array_t *array, u64 idx);
 void _array_zero_term(array_t *array);
 void _array_grow_if_needed(array_t *array);
-void _array_grow_if_needed_to(array_t *array, int new_cap);
+void _array_grow_if_needed_to(array_t *array, u64 new_cap);
 void _array_copy(array_t *dst, array_t *src);
 
 #define array_make(T) \

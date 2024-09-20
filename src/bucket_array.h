@@ -4,7 +4,7 @@
 
 typedef struct bucket_t {
     void            *data;
-    uint32_t         used,
+    uint64_t         used,
                      capacity;
 } bucket_t;
 
@@ -12,18 +12,18 @@ typedef bucket_t *bucket_ptr_t;
 
 typedef struct {
     array_t  buckets;
-    uint32_t elem_size,
+    uint64_t elem_size,
              n_fit,
              used;
 } bucket_array_t;
 
-bucket_array_t _bucket_array_make(int count, int elem_size);
+bucket_array_t _bucket_array_make(u64 count, u64 elem_size);
 void _bucket_array_free(bucket_array_t *array);
-void * _bucket_array_item(bucket_array_t *array, int idx);
+void * _bucket_array_item(bucket_array_t *array, u64 idx);
 void * _bucket_array_last(bucket_array_t *array);
-void * _bucket_array_insert(bucket_array_t *array, int idx, void *elem);
+void * _bucket_array_insert(bucket_array_t *array, u64 idx, void *elem);
 void * _bucket_array_push(bucket_array_t *array, void *elem);
-void _bucket_array_delete(bucket_array_t *array, int idx);
+void _bucket_array_delete(bucket_array_t *array, u64 idx);
 void _bucket_array_pop(bucket_array_t *array);
 void _bucket_array_pop(bucket_array_t *array);
 
@@ -60,13 +60,13 @@ void _bucket_array_pop(bucket_array_t *array);
 
 typedef struct {
     bucket_array_t *array;
-    int             bucket_idx;
-    int             elem_idx;
+    u64             bucket_idx;
+    u64             elem_idx;
     int             direction; /* 0 is forwards, 1 is backwards */
 } bucket_array_iter_t;
 
 
-bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, int idx, int dir);
+bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, u64 idx, int dir);
 bucket_array_iter_t _bucket_array_iter_make(bucket_array_t *array, int dir);
 int _bucket_array_iter_is_end(bucket_array_iter_t *it);
 void * _bucket_array_iter_item(bucket_array_iter_t *it);

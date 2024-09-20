@@ -1,6 +1,6 @@
 #include "array.h"
 
-array_t _array_make(int elem_size) {
+array_t _array_make(u64 elem_size) {
     array_t a;
 
     a.data        = NULL;
@@ -12,7 +12,7 @@ array_t _array_make(int elem_size) {
     return a;
 }
 
-array_t _array_make_with_cap(int elem_size, int initial_cap) {
+array_t _array_make_with_cap(u64 elem_size, u64 initial_cap) {
     array_t a;
 
     a.data        = NULL;
@@ -60,7 +60,7 @@ void _array_grow_if_needed(array_t *array) {
     }
 }
 
-void _array_grow_if_needed_to(array_t *array, int new_cap) {
+void _array_grow_if_needed_to(array_t *array, u64 new_cap) {
     void *data_save;
     int   grow;
 
@@ -110,7 +110,7 @@ void * _array_push(array_t *array, void *elem) {
     return elem_slot;
 }
 
-void * _array_push_n(array_t *array, void *elems, int n) {
+void * _array_push_n(array_t *array, void *elems, u64 n) {
     void *elem_slot;
 
     if (unlikely(n == 0))    { return NULL; }
@@ -125,7 +125,7 @@ void * _array_push_n(array_t *array, void *elems, int n) {
     return elem_slot;
 }
 
-void * _array_insert(array_t *array, int idx, void *elem) {
+void * _array_insert(array_t *array, u64 idx, void *elem) {
     void *elem_slot;
 
     if (idx == array->used) {
@@ -149,7 +149,7 @@ void * _array_insert(array_t *array, int idx, void *elem) {
     return elem_slot;
 }
 
-void _array_delete(array_t *array, int idx) {
+void _array_delete(array_t *array, u64 idx) {
     void *split;
 
     ASSERT(idx < array->used, "can't delete from arbitrary place in array");
