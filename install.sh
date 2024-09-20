@@ -43,7 +43,7 @@ if [ $(uname) = "Darwin" ]; then
 fi
 
 LIB_C_FLAGS="-rdynamic -shared -fPIC -lm -lpthread"
-DRIVER_C_FLAGS="-Isrc -rdynamic -lm -lpthread"
+DRIVER_C_FLAGS="-Isrc -rdynamic -L${HOME}/.local/lib -lbkmalloc -lm -lpthread"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then
