@@ -299,13 +299,11 @@ void _bucket_array_clear(bucket_array_t *array) {
 
 bucket_array_iter_t _bucket_array_iter_make_at(bucket_array_t *array, u64 idx, int dir) {
     bucket_array_iter_t iter;
-    u64                 elem_idx;
 
     iter.array = array;
 
+    iter.bucket_idx = _get_bucket_and_elem_idx_for_idx(array, &idx);
     iter.elem_idx   = idx;
-    iter.bucket_idx = _get_bucket_and_elem_idx_for_idx(array, &elem_idx);
-    iter.elem_idx   = (i64)elem_idx;
     iter.direction  = dir;
 
     if (iter.elem_idx   == -1
