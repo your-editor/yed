@@ -3,18 +3,18 @@
 
 
 typedef struct bucket_t {
-    void            *data;
-    uint64_t         used,
-                     capacity;
+    void *data;
+    u64   used,
+          capacity;
 } bucket_t;
 
 typedef bucket_t *bucket_ptr_t;
 
 typedef struct {
-    array_t  buckets;
-    uint64_t elem_size,
-             n_fit,
-             used;
+    array_t buckets;
+    u64     elem_size,
+            n_fit,
+            used;
 } bucket_array_t;
 
 bucket_array_t _bucket_array_make(u64 count, u64 elem_size);
@@ -60,8 +60,8 @@ void _bucket_array_pop(bucket_array_t *array);
 
 typedef struct {
     bucket_array_t *array;
-    u64             bucket_idx;
-    u64             elem_idx;
+    i64             bucket_idx;
+    i64             elem_idx;
     int             direction; /* 0 is forwards, 1 is backwards */
 } bucket_array_iter_t;
 
