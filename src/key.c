@@ -194,6 +194,40 @@ static int esc_sequence(int *input) {
                         return 1;
                     }
                     return 5;
+                } else if (c == '7') {
+                    input[3] = c;
+                    if (read(0, &c, 1) == 0) { return 4; }
+                    input[4] = c;
+                    if (c == ';') {
+                        if (read(0, &c, 1) == 0) { return 5; }
+                        input[5] = c;
+                        if (c == '2') {
+                            if (read(0, &c, 1) == 0) { return 6; }
+                            input[6] = c;
+                            if (c == ';') {
+                                if (read(0, &c, 1) == 0) { return 7; }
+                                input[7] = c;
+                                if (c == '1') {
+                                    if (read(0, &c, 1) == 0) { return 8; }
+                                    input[8] = c;
+                                    if (c == '3') {
+                                        if (read(0, &c, 1) == 0) { return 9; }
+                                        input[8] = c;
+                                        if (c == '~') {
+                                            input[0] = ENTER;
+                                            return 1;
+                                        }
+                                        return 10;
+                                    }
+                                    return 9;
+                                }
+                                return 8;
+                            }
+                            return 7;
+                        }
+                        return 6;
+                    }
+                    return 5;
                 }
                 return 4;
             } else if (c == '~') {
