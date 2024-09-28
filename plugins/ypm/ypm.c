@@ -940,7 +940,7 @@ static void draw_list(void) {
 
     col_2_width = 9;
     col_3_width = MIN((sizeof(dash3_buff) / strlen("─")) - 1, max_desc_width + 1);
-    snprintf(line_buff, sizeof(line_buff), "%-*s │ %-*s │ %-*s │ %-*s│",
+    snprintf(line_buff, sizeof(line_buff), "%-*s │ %-*s │ %-*s │ %-*s",
                         max_width,   "Plugin",
                         col_2_width, "Installed",
                         col_2_width, "Loaded",
@@ -957,7 +957,7 @@ static void draw_list(void) {
     for (i = 0; i < col_3_width + 1; i += 1) { strcat(dash3_buff, "─"); }
 
     LOG_CMD_ENTER("ypm");
-    snprintf(line_buff, sizeof(line_buff), "%*s┼%*s┼%*s┼%*s┤",
+    snprintf(line_buff, sizeof(line_buff), "%*s┼%*s┼%*s┼%*s",
                         max_width + 1,   dash1_buff,
                         col_2_width + 2, dash2_buff,
                         col_2_width + 2, dash2_buff,
@@ -971,7 +971,7 @@ static void draw_list(void) {
     array_traverse(plugs, it) {
         start_row++;
         plugin_line[0] = 0;
-        sprintf(plugin_line, "%-*s │ %-*s │ %-*s │ %-*s│",
+        sprintf(plugin_line, "%-*s │ %-*s │ %-*s │ %-*s",
                         max_width,   (*it).plugin_name,
                         ((*it).installed == 1) ? col_2_width+2 : col_2_width, ((*it).installed == 1) ? "\xE2\x9C\x93" : "X",
                         ((*it).loaded == 1) ? col_2_width+2 : col_2_width, ((*it).loaded == 1) ? "\xE2\x9C\x93" : "X",
