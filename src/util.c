@@ -257,8 +257,8 @@ char * relative_path_if_subtree(const char *path, char *buff) {
 
     if (cwd_len >= strlen(a_path)) { goto abs; }
 
-    if (strncmp(a_path, ys->working_dir, cwd_len) == 0) {
-        strcat(buff, a_path + cwd_len + (cwd_len > 1));
+    if (strncmp(a_path, cwd, cwd_len) == 0) {
+        strcat(buff, a_path + cwd_len);
         return buff;
     }
 
