@@ -3,6 +3,7 @@
 ## 1700 - TBD
 ### Fixed
     - Update some basic structures to use 64-bit integers in places where they should have been.
+    - Visual fixups in *ypm-menu.
 ### Changed
     - Use compiler flags to force inclusion of frame pointers.
 
