@@ -353,7 +353,9 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 
         opacity     = ys->screen_update->opacity;
-        transparent = opacity < 1.0 && opacity > 0 && combine && ATTR_BG_KIND(ys->screen_update->cur_attrs.flags) == ATTR_KIND_RGB;
+        transparent =    combine
+                      && opacity < 1.0 && opacity > 0
+                      && ATTR_BG_KIND(ys->screen_update->cur_attrs.flags) == ATTR_KIND_RGB;
 
         if (transparent) {
             opacity                      = sqrt(sqrt(opacity));
