@@ -4,6 +4,7 @@
 ### Fixed
     - Update some basic structures to use 64-bit integers in places where they should have been.
     - Visual fixups in *ypm-menu.
+    - Fixed bug in relative_path_if_subtree() that would incorrectly substitute CWD under certain circumstances.
 ### Changed
     - Use compiler flags to force inclusion of frame pointers.
 

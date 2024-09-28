@@ -226,6 +226,7 @@ out:;
 char * relative_path_if_subtree(const char *path, char *buff) {
     int  is_subtree;
     char a_path[4096];
+    char cwd[4096];
     int  cwd_len;
 
     buff[0] = 0;
@@ -250,7 +251,9 @@ char * relative_path_if_subtree(const char *path, char *buff) {
      * a relative path by lopping off the current directory
      * portion of the path.
      */
-    cwd_len = strlen(ys->working_dir);
+    strcpy(cwd, ys->working_dir);
+    strcat(cwd, "/");
+    cwd_len = strlen(cwd);
 
     if (cwd_len >= strlen(a_path)) { goto abs; }
 
