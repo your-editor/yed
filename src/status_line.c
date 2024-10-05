@@ -249,7 +249,7 @@ static int get_status_line_string_width(char *s) {
     last_was_perc = 0;
 
     while ((&(git->c) < end)) {
-        len = yed_get_glyph_len(*git);
+        len = yed_get_glyph_len(git);
 
         if (len == 1) {
             if (last_was_perc) {
@@ -266,21 +266,21 @@ static int get_status_line_string_width(char *s) {
                     while (git->c != ')') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
-                        len = yed_get_glyph_len(*git);
+                        len = yed_get_glyph_len(git);
                     }
                     goto skip;
                 } else if (git->c == '[') {
                     while (git->c != ']') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
-                        len = yed_get_glyph_len(*git);
+                        len = yed_get_glyph_len(git);
                     }
                     goto skip;
                 } else if (git->c == '{') {
                     while (git->c != '}') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
-                        len = yed_get_glyph_len(*git);
+                        len = yed_get_glyph_len(git);
                     }
                     goto skip;
                 }
@@ -290,10 +290,10 @@ static int get_status_line_string_width(char *s) {
             } else if (git->c == '%') {
                 last_was_perc = 1;
             } else {
-                width += yed_get_glyph_width(*git);
+                width += yed_get_glyph_width(git);
             }
         } else {
-            width += yed_get_glyph_width(*git);
+            width += yed_get_glyph_width(git);
         }
 
         git = GBUMP(git, len);
@@ -334,7 +334,7 @@ static void put_status_line_string(char *s, int start_col) {
 
     while ((&(git->c) < end)) {
         width = 0;
-        len   = yed_get_glyph_len(*git);
+        len   = yed_get_glyph_len(git);
 
         if (len == 1) {
             if (last_was_perc) {
@@ -357,7 +357,7 @@ static void put_status_line_string(char *s, int start_col) {
                     while (git->c != ')') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
-                        len = yed_get_glyph_len(*git);
+                        len = yed_get_glyph_len(git);
                     }
                     goto skip;
                 } else if (git->c == '[') {
@@ -365,7 +365,7 @@ static void put_status_line_string(char *s, int start_col) {
                     while (git->c != ']') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
-                        len = yed_get_glyph_len(*git);
+                        len = yed_get_glyph_len(git);
                     }
                     goto skip;
                 } else if (git->c == '{') {
@@ -373,7 +373,7 @@ static void put_status_line_string(char *s, int start_col) {
                     while (git->c != '}') {
                         git = GBUMP(git, len);
                         if ((&(git->c) >= end)) { goto out; }
-                        len = yed_get_glyph_len(*git);
+                        len = yed_get_glyph_len(git);
                     }
                     goto skip;
                 }
@@ -384,12 +384,12 @@ static void put_status_line_string(char *s, int start_col) {
             } else if (git->c == '%') {
                 last_was_perc = 1;
             } else {
-                width = yed_get_glyph_width(*git);
+                width = yed_get_glyph_width(git);
                 if (col + (width - 1) > ys->term_cols) { break; }
                 yed_screen_print_n(&git->c, len);
             }
         } else {
-            width = yed_get_glyph_width(*git);
+            width = yed_get_glyph_width(git);
             if (col + (width - 1) > ys->term_cols) { break; }
             yed_screen_print_n(&git->c, len);
         }

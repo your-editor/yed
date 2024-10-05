@@ -371,21 +371,30 @@ void yed_cerr(const char *fmt, ...) {
 void yed_cprint_clear(void) { ys->clear_cmd_output = 1; }
 
 void yed_cmd_buff_push(char c) {
+    yed_glyph gc;
+
     array_push(ys->cmd_buff, c);
-    ys->cmd_cursor_x += yed_get_glyph_width(G(c));
+
+    gc = G(c);
+    ys->cmd_cursor_x += yed_get_glyph_width(&gc);
 }
 
 void yed_cmd_buff_pop(void) {
     char *c_p;
+    yed_glyph gc;
 
     c_p = array_last(ys->cmd_buff);
-    ys->cmd_cursor_x -= yed_get_glyph_width(G(*c_p));
+    gc = G(*c_p);
+    ys->cmd_cursor_x -= yed_get_glyph_width(&gc);
     array_pop(ys->cmd_buff);
 }
 
 void yed_cmd_buff_insert(int idx, char c) {
+    yed_glyph gc;
+
     array_insert(ys->cmd_buff, idx, c);
-    ys->cmd_cursor_x += yed_get_glyph_width(G(c));
+    gc = G(c);
+    ys->cmd_cursor_x += yed_get_glyph_width(&gc);
 }
 
 void yed_cmd_buff_delete(int idx) {
@@ -412,9 +421,9 @@ void yed_draw_command_line() {
     if (ys->interactive_command) {
         if (ys->cmd_prompt) {
             yed_glyph_traverse(ys->cmd_prompt, git) {
-                len += yed_get_glyph_width(*git);
+                len += yed_get_glyph_width(git);
                 if (len > ys->term_cols) { goto out; }
-                yed_screen_print_n(&git->c, yed_get_glyph_len(*git));
+                yed_screen_print_n(&git->c, yed_get_glyph_len(git));
             }
         }
     }
@@ -430,7 +439,7 @@ void yed_draw_command_line() {
             yed_set_attr(acmd);
         }
 
-        len += yed_get_glyph_width(*git);
+        len += yed_get_glyph_width(git);
         if (len > ys->term_cols) { goto out; }
 
         if (git->c == '\t') {
@@ -438,7 +447,7 @@ void yed_draw_command_line() {
                 yed_screen_print_n(" ", 1);
             }
         } else {
-            yed_screen_print_n(&git->c, yed_get_glyph_len(*git));
+            yed_screen_print_n(&git->c, yed_get_glyph_len(git));
         }
     }
 
@@ -2510,7 +2519,7 @@ void yed_default_command_insert(int n_args, char **args) {
         len = 0;
         idx = yed_line_col_to_idx(line, col);
         yed_line_glyph_traverse_from(*line, git, idx) {
-            yed_append_to_line(frame->buffer, frame->cursor_line + 1, *git);
+            yed_append_to_line(frame->buffer, frame->cursor_line + 1, git);
             len += 1;
         }
         for (; len > 0; len -= 1) {
@@ -2523,19 +2532,19 @@ void yed_default_command_insert(int n_args, char **args) {
             tabw = yed_get_tab_width();
             g.c = ' ';
             for (i = 0; i < tabw; i += 1) {
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, g);
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col + i, &g);
             }
             yed_move_cursor_within_frame(frame, 0, tabw);
         } else {
             if (key == SHIFT_TAB) {
                 g.c = '\t';
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, &g);
             } else if (key == MBYTE) {
                 g = ys->mbyte;
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, &g);
             } else {
                 g.c = key;
-                yed_insert_into_line(frame->buffer, frame->cursor_line, col, g);
+                yed_insert_into_line(frame->buffer, frame->cursor_line, col, &g);
             }
             yed_move_cursor_within_frame(frame, 0, 1);
         }
@@ -2658,7 +2667,7 @@ void yed_default_command_delete_back(int n_args, char **args) {
                 prev_line_width = previous_line->visual_width;
 
                 yed_line_glyph_traverse(*line, git) {
-                    yed_append_to_line(frame->buffer, frame->cursor_line - 1, *git);
+                    yed_append_to_line(frame->buffer, frame->cursor_line - 1, git);
                 }
 
                 /*
@@ -2753,7 +2762,7 @@ void yed_default_command_delete_forward(int n_args, char **args) {
                 next_line = yed_buff_get_line(frame->buffer, frame->cursor_line + 1);
 
                 yed_line_glyph_traverse(*next_line, git) {
-                    yed_append_to_line(frame->buffer, frame->cursor_line, *git);
+                    yed_append_to_line(frame->buffer, frame->cursor_line, git);
                 }
 
                 /*
@@ -3303,8 +3312,8 @@ void yed_default_command_yank_selection(int n_args, char **args) {
             line_it = yed_buff_get_line(buff, row);
             for (col = c1; col < c2 && col <= line_it->visual_width;) {
                 g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(yank_buff, yrow, *g);
-                col += yed_get_glyph_width(*g);
+                yed_append_to_line(yank_buff, yrow, g);
+                col += yed_get_glyph_width(g);
             }
         }
     } else {
@@ -3314,14 +3323,14 @@ void yed_default_command_yank_selection(int n_args, char **args) {
         if (r1 == r2) {
             for (col = c1; col < c2;) {
                 g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(yank_buff, yrow, *g);
-                col += yed_get_glyph_width(*g);
+                yed_append_to_line(yank_buff, yrow, g);
+                col += yed_get_glyph_width(g);
             }
         } else {
             for (col = c1; col <= line_it->visual_width;) {
                 g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(yank_buff, yrow, *g);
-                col += yed_get_glyph_width(*g);
+                yed_append_to_line(yank_buff, yrow, g);
+                col += yed_get_glyph_width(g);
             }
             for (row = r1 + 1; row <= r2 - 1; row += 1) {
                 yrow    = yed_buffer_add_line(yank_buff);
@@ -3332,8 +3341,8 @@ void yed_default_command_yank_selection(int n_args, char **args) {
             line_it = yed_buff_get_line(buff, r2);
             for (col = 1; col < c2;) {
                 g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(yank_buff, yrow, *g);
-                col += yed_get_glyph_width(*g);
+                yed_append_to_line(yank_buff, yrow, g);
+                col += yed_get_glyph_width(g);
             }
         }
     }
@@ -3407,8 +3416,8 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             line_it = yed_buff_get_line(yank_buff, row);
             for (col = 1; col <= line_it->visual_width;) {
                 g = yed_line_col_to_glyph(line_it, col);
-                yed_insert_into_line(buff, new_row, MIN(frame->cursor_col + col - 1, yed_buff_get_line(buff, new_row)->visual_width + 1), *g);
-                col += yed_get_glyph_width(*g);
+                yed_insert_into_line(buff, new_row, MIN(frame->cursor_col + col - 1, yed_buff_get_line(buff, new_row)->visual_width + 1), g);
+                col += yed_get_glyph_width(g);
             }
         }
     } else {
@@ -3419,8 +3428,8 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 yed_insert_into_line(buff,
                     frame->cursor_line,
                     frame->cursor_col + col - 1,
-                    *g);
-                col += yed_get_glyph_width(*g);
+                    g);
+                col += yed_get_glyph_width(g);
             }
         } else {
             last_row   = frame->cursor_line + 1;
@@ -3429,8 +3438,8 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             first_line = yed_buff_get_line(buff, first_row);
             for (col = frame->cursor_col; col <= first_line->visual_width;) {
                 g = yed_line_col_to_glyph(first_line, col);
-                yed_append_to_line(buff, last_row, *g);
-                col += yed_get_glyph_width(*g);
+                yed_append_to_line(buff, last_row, g);
+                col += yed_get_glyph_width(g);
             }
             while (first_line->visual_width >= frame->cursor_col) {
                 yed_pop_from_line(buff, first_row);
@@ -3438,8 +3447,8 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
             line_it  = yed_buff_get_line(yank_buff, 1);
             for (col = 1; col <= line_it->visual_width;) {
                 g = yed_line_col_to_glyph(line_it, col);
-                yed_append_to_line(buff, first_row, *g);
-                col += yed_get_glyph_width(*g);
+                yed_append_to_line(buff, first_row, g);
+                col += yed_get_glyph_width(g);
             }
             for (row = 2; row <= yank_buff_n_lines - 1; row += 1) {
                 new_row = frame->cursor_line + row - 1;
@@ -3453,8 +3462,8 @@ void yed_default_command_paste_yank_buffer(int n_args, char **args) {
                 yed_insert_into_line(buff,
                     frame->cursor_line + yank_buff_n_lines - 1,
                     col,
-                    *g);
-                col += yed_get_glyph_width(*g);
+                    g);
+                col += yed_get_glyph_width(g);
             }
         }
     }
@@ -3696,7 +3705,7 @@ void yed_replace_current_search_update_line(int idx, int row) {
     array_traverse(*markers, mark) {
         for (i = len - 1; i >= 0; i -= 1) {
             g = G(replacement[i]);
-            yed_insert_into_line(buff, row, *mark + (it * len), g);
+            yed_insert_into_line(buff, row, *mark + (it * len), &g);
         }
         it += 1;
     }

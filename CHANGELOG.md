@@ -7,6 +7,7 @@
     - Fixed bug in relative_path_if_subtree() that would incorrectly substitute CWD under certain circumstances.
 ### Changed
     - Use compiler flags to force inclusion of frame pointers.
+    - Changed every API call dealing with glyphs to pass by pointer since dereferencing all 4 bytes of a yed_glyph struct may be an out-of-bounds read in some cases.
 ### Added
     - Support for ASAN builds.
 

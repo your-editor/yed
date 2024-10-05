@@ -21,12 +21,12 @@ void yed__log_prints(const char *s, int len) {
 
     while (s < end) {
         g = (yed_glyph*)(void*)s;
-        glen = yed_get_glyph_len(*g);
+        glen = yed_get_glyph_len(g);
 
         if (g->c == '\n') {
             row = yed_buffer_add_line_no_undo(buff);
         } else {
-            yed_append_to_line_no_undo(buff, row, *g);
+            yed_append_to_line_no_undo(buff, row, g);
         }
 
         s += glen;

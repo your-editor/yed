@@ -745,10 +745,10 @@ again_gutter:
         for (gutter_bytes = event.gutter_glyphs.data;
             (void*)gutter_bytes < (event.gutter_glyphs.data + (event.gutter_glyphs.used * event.gutter_glyphs.elem_size)); ) {
 
-            width = yed_get_glyph_width(*(yed_glyph*)gutter_bytes);
+            width = yed_get_glyph_width((yed_glyph*)gutter_bytes);
             if (col_off + width > frame->gutter_width) { break; }
 
-            n_bytes  = yed_get_glyph_len(*(yed_glyph*)gutter_bytes);
+            n_bytes  = yed_get_glyph_len((yed_glyph*)gutter_bytes);
             cur_attr = *(yed_attrs*)array_item(frame->gutter_attrs, col_off);
 
             yed_set_attr(cur_attr);
@@ -790,8 +790,8 @@ again_gutter:
      * Now draw the rest of the line.
      */
     for (col_off = 0; col_off < n_col;) {
-        width   = yed_get_glyph_width(*(yed_glyph*)bytes);
-        n_bytes = yed_get_glyph_len(*(yed_glyph*)bytes);
+        width   = yed_get_glyph_width((yed_glyph*)bytes);
+        n_bytes = yed_get_glyph_len((yed_glyph*)bytes);
 
         if (*bytes == '\t') {
             for (i = width_skip; i < width && col_off < n_col; i += 1) {
@@ -1192,10 +1192,10 @@ void yed_move_cursor_once_x_within_frame(yed_frame *f, int dir, int line_width) 
 
     if (dir > 0 && f->cursor_col <= line->visual_width) {
         dir   = 1;
-        width = yed_get_glyph_width(*(yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col)));
+        width = yed_get_glyph_width((yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col)));
     } else if (dir < 0 && f->cursor_col > 1) {
         dir   = -1;
-        width = yed_get_glyph_width(*(yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
+        width = yed_get_glyph_width((yed_glyph*)array_item(line->chars, yed_line_col_to_idx(line, f->cursor_col - 1)));
     }
 
     old_x_off  = f->buffer_x_offset;
@@ -1368,12 +1368,12 @@ void _yed_set_cursor_within_frame(yed_frame *f, int new_row, int new_col) {
 
         if (dir == 1) {
             while (g < new_g) {
-                g           = ((void*)g) + yed_get_glyph_len(*g);
+                g           = ((void*)g) + yed_get_glyph_len(g);
                 glyph_dist += 1;
             }
         } else {
             while (new_g < g) {
-                new_g       = ((void*)new_g) + yed_get_glyph_len(*new_g);
+                new_g       = ((void*)new_g) + yed_get_glyph_len(new_g);
                 glyph_dist += 1;
             }
         }

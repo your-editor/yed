@@ -65,8 +65,8 @@ yed_line yed_new_line_with_cap(int len);
 void yed_free_line(yed_line *line);
 
 yed_line * yed_copy_line(yed_line *line);
-void yed_line_add_glyph(yed_line *line, yed_glyph g, int idx);
-void yed_line_append_glyph(yed_line *line, yed_glyph g);
+void yed_line_add_glyph(yed_line *line, yed_glyph *g, int idx);
+void yed_line_append_glyph(yed_line *line, yed_glyph *g);
 void yed_line_delete_glyph(yed_line *line, int idx);
 void yed_line_pop_glyph(yed_line *line);
 void yed_clear_line(yed_line *line);
@@ -97,14 +97,14 @@ int yed_line_normalize_col(yed_line *line, int col);
 yed_glyph * yed_buff_get_glyph(yed_buffer *buff, int row, int col);
 
 void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, int col);
-void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph g);
+void yed_append_to_line_no_undo(yed_buffer *buff, int row, yed_glyph *g);
 void yed_pop_from_line_no_undo(yed_buffer *buff, int row);
 void yed_line_clear_no_undo(yed_buffer *buff, int row);
 int yed_buffer_add_line_no_undo(yed_buffer *buff);
 void yed_buff_set_line_no_undo(yed_buffer *buff, int row, yed_line *line);
 yed_line * yed_buff_insert_line_no_undo(yed_buffer *buff, int row);
 void yed_buff_delete_line_no_undo(yed_buffer *buff, int row);
-void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, yed_glyph g);
+void yed_insert_into_line_no_undo(yed_buffer *buff, int row, int col, yed_glyph *g);
 void yed_delete_from_line_no_undo(yed_buffer *buff, int row, int col);
 void yed_buff_clear_no_undo(yed_buffer *buff);
 /*
@@ -113,14 +113,14 @@ void yed_buff_clear_no_undo(yed_buffer *buff);
  * This is meant to preserve undo/redo behavior.
  */
 void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col);
-void yed_append_to_line(yed_buffer *buff, int row, yed_glyph g);
+void yed_append_to_line(yed_buffer *buff, int row, yed_glyph *g);
 void yed_pop_from_line(yed_buffer *buff, int row);
 void yed_line_clear(yed_buffer *buff, int row);
 int yed_buffer_add_line(yed_buffer *buff);
 void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line);
 yed_line * yed_buff_insert_line(yed_buffer *buff, int row);
 void yed_buff_delete_line(yed_buffer *buff, int row);
-void yed_insert_into_line(yed_buffer *buff, int row, int col, yed_glyph g);
+void yed_insert_into_line(yed_buffer *buff, int row, int col, yed_glyph *g);
 void yed_delete_from_line(yed_buffer *buff, int row, int col);
 void yed_buff_clear(yed_buffer *buff);
 
@@ -147,12 +147,12 @@ void yed_update_line_visual_widths(void);
 #define yed_line_glyph_traverse(array, it)                                                  \
     for (it = (array).chars.data;                                                           \
          (void*)it < ((array).chars.data + ((array).chars.used * (array).chars.elem_size)); \
-         it = ((void*)it) + yed_get_glyph_len(*it))
+         it = ((void*)it) + yed_get_glyph_len(it))
 
 #define yed_line_glyph_traverse_from(array, it, starting_idx)                               \
     for (it = (array).chars.data + ((starting_idx) * (array).chars.elem_size);              \
          (void*)it < ((array).chars.data + ((array).chars.used * (array).chars.elem_size)); \
-         it = ((void*)it) + yed_get_glyph_len(*it))
+         it = ((void*)it) + yed_get_glyph_len(it))
 
 /*
  * NOTE: This is an O(n^2) traversal, so avoid if possible.

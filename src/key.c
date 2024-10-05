@@ -489,7 +489,7 @@ static int _yed_read_keys(int *input) {
         if (c == CTRL_H && ctrl_h_is_bs) { c = BACKSPACE; }
 
         g.c     = c;
-        n_bytes = yed_get_glyph_len(g);
+        n_bytes = yed_get_glyph_len(&g);
     }
 
     if (c == ESC) {
@@ -541,7 +541,7 @@ int yed_read_keys(int *input) {
                     &&  (key == ENTER || key == NEWLINE || key == TAB || key == MBYTE || !iscntrl(key))) {
 
                     if (key == MBYTE) {
-                        for (i = 0; i < yed_get_glyph_len(ys->mbyte); i += 1) {
+                        for (i = 0; i < yed_get_glyph_len(&ys->mbyte); i += 1) {
                             array_push(ys->bracketed_paste_buff, ys->mbyte.bytes[i]);
                         }
                     } else {
@@ -571,7 +571,7 @@ static void handle_bracketed_paste(void) {
 
     if (ys->interactive_command) {
         yed_glyph_traverse(data, git) {
-            if (yed_get_glyph_len(*git) > 1) {
+            if (yed_get_glyph_len(git) > 1) {
                 key       = MBYTE;
                 ys->mbyte = *git;
             } else {

@@ -1497,7 +1497,7 @@ static void line_handler(yed_event *event) {
             if (isalpha(git->c)) {
                 yed_eline_combine_col_attrs(event, i,  &attr);
             }
-            i += yed_get_glyph_width(*git);
+            i += yed_get_glyph_width(git);
         }
     } else if (event->row >= 19) {
         line = yed_buff_get_line(buff, event->row);
@@ -1537,7 +1537,7 @@ static void line_handler(yed_event *event) {
             }
 
 next:;
-            i += yed_get_glyph_width(*git);
+            i += yed_get_glyph_width(git);
         }
     }
 }

@@ -34,8 +34,8 @@ void yed_get_string_info(const char *bytes, int len, int *n_glyphs, int *width) 
 
     while (bytes < end) {
         g          = (yed_glyph*)bytes;
-        _width    += yed_get_glyph_width(*g);
-        bytes     += yed_get_glyph_len(*g);
+        _width    += yed_get_glyph_width(g);
+        bytes     += yed_get_glyph_len(g);
         _n_glyphs += 1;
     }
 

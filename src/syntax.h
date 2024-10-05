@@ -293,26 +293,26 @@ static inline int _yed_syntax_line_get_word_len(yed_line *line, int col) {
     g    = yed_line_col_to_glyph(line, col);
     end  = (yed_glyph*)(void*)((char*)array_data(line->chars) + array_len(line->chars));
     len  = 0;
-    glen = yed_get_glyph_len(*g);
+    glen = yed_get_glyph_len(g);
 
     if (glen == 1) {
         if (is_alnum(g->c) || g->c == '_') {
             do {
-                len += (glen = yed_get_glyph_len(*g));
+                len += (glen = yed_get_glyph_len(g));
                 g    = (yed_glyph*)(((char*)g) + glen);
             } while (g < end && (is_alnum(g->c) || g->c == '_'));
         } else if (!is_space(g->c) && !is_alnum(g->c) && g->c != '_') {
             do {
-                len += (glen = yed_get_glyph_len(*g));
+                len += (glen = yed_get_glyph_len(g));
                 g    = (yed_glyph*)(((char*)g) + glen);
             } while (g < end && !is_space(g->c) && !is_alnum(g->c) && g->c != '_');
         } else if (is_space(g->c)) {
             do {
-                len += (glen = yed_get_glyph_len(*g));
+                len += (glen = yed_get_glyph_len(g));
                 g    = (yed_glyph*)(((char*)g) + glen);
             } while (g < end && is_space(g->c));
         } else {
-            len = yed_get_glyph_len(*g);
+            len = yed_get_glyph_len(g);
         }
     } else {
         len = glen;
@@ -924,7 +924,7 @@ static inline const char * _yed_syntax_find_next_kwd(yed_syntax *syntax, _yed_sy
     gend = (yed_glyph*)(void*)end;
 
     while (g < gend) {
-        len = yed_get_glyph_len(*g);
+        len = yed_get_glyph_len(g);
         if (len > 1) { goto next; }
 
         if (is_alpha(g->c) || g->c == '_') {

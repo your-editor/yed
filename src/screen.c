@@ -273,9 +273,9 @@ void yed_render_screen(void) {
                     ys->screen_render->cur_attrs = cell->attrs;
                 }
 
-                WR(&cell->glyph.c, yed_get_glyph_len(cell->glyph));
+                WR(&cell->glyph.c, yed_get_glyph_len(&cell->glyph));
 
-                width = yed_get_glyph_width(cell->glyph);
+                width = yed_get_glyph_width(&cell->glyph);
                 ys->screen_render->cur_x += width;
             }
 
@@ -347,8 +347,8 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         }
 
         g     = (yed_glyph*)(void*)s;
-        len   = yed_get_glyph_len(*g);
-        width = yed_get_glyph_width(*g);
+        len   = yed_get_glyph_len(g);
+        width = yed_get_glyph_width(g);
         new_g = G(0);
         for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 

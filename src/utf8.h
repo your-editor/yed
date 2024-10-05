@@ -5,7 +5,7 @@ typedef union {
     unsigned char bytes[4];
 } yed_glyph;
 
-#define G_IS_ASCII(g) (!((g).u_c >> 7))
+#define G_IS_ASCII(g) (!((g)->u_c >> 7))
 
 #define G(c) ((yed_glyph){ .data = (c)})
 
@@ -30,11 +30,18 @@ static const unsigned char _utf8_lens[] = {
 #define yed_get_glyph_len(g)                  \
     (likely(G_IS_ASCII(g))                    \
         ? 1                                   \
-        : (int)(_utf8_lens[(g).u_c >> 3ULL]))
+        : (int)(_utf8_lens[(g)->u_c >> 3ULL]))
+
+
+static inline yed_glyph yed_glyph_copy(yed_glyph *g) {
+    yed_glyph cpy;
+    memcpy(&cpy.bytes, g->bytes, yed_get_glyph_len(g));
+    return cpy;
+}
 
 
 __attribute__((always_inline))
-static inline int _yed_get_mbyte_width(yed_glyph g) {
+static inline int _yed_get_mbyte_width(yed_glyph *g) {
     int     len, w;
     wchar_t wch;
 
@@ -43,7 +50,7 @@ static inline int _yed_get_mbyte_width(yed_glyph g) {
     /* Reset the shift state. */
     mbtowc(NULL, 0, 0);
 
-    mbtowc(&wch, (const char*)g.bytes, len);
+    mbtowc(&wch, (const char*)g->bytes, len);
     w = mk_wcwidth(wch);
 
     if (unlikely(w <= 0)) { return 1; }
@@ -61,11 +68,11 @@ static inline int _yed_get_mbyte_width(yed_glyph g) {
 /*         : (_yed_get_mbyte_width(g))) */
 
 #define yed_get_glyph_width(g)                 \
-    (likely(is_print((g).c))                   \
+    (likely(is_print((g)->c))                  \
         ? 1                                    \
-        : (((g).c == '\t')                     \
+        : (((g)->c == '\t')                    \
             ? (ys->tabw)                       \
-            : (((g).u_c <= 127)                \
+            : (((g)->u_c <= 127)               \
                 ? 2                            \
                 : (_yed_get_mbyte_width(g)))))
 
@@ -77,9 +84,9 @@ int yed_get_string_width(const char *s);
     u64 _yed_glyph_traverse_len = strlen((_s));                      \
     for ((_g) = (yed_glyph*)(void*)(_s);                             \
          ((char*)(void*)(_g)) < ((_s) + _yed_glyph_traverse_len);    \
-         (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len(*(_g))))
+         (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len((_g))))
 
 #define yed_glyph_traverse_n(_s, _n, _g)                             \
     for ((_g) = (yed_glyph*)(void*)(_s);                             \
          ((char*)(void*)(_g)) < ((_s) + (_n));                       \
-         (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len(*(_g))))
+         (_g) = (yed_glyph*)(((char*)(_g)) + yed_get_glyph_len((_g))))

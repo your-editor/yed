@@ -331,10 +331,10 @@ int yed_read_subproc_into_buffer_nb(yed_nb_subproc_t *nb_subproc) {
             } else if (g->c == '\n') {
                 last_row = yed_buffer_add_line_no_undo(nb_subproc->buffer);
             } else {
-                yed_append_to_line_no_undo(nb_subproc->buffer, last_row, *g);
+                yed_append_to_line_no_undo(nb_subproc->buffer, last_row, g);
             }
 
-            g = ((void*)g) + yed_get_glyph_len(*g);
+            g = ((void*)g) + yed_get_glyph_len(g);
         }
     }
 
