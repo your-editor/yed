@@ -25,7 +25,7 @@ void yed_screen_print(const char *s);
 void yed_screen_print_n(const char *s, int n);
 void yed_screen_print_over(const char *s);
 void yed_screen_print_n_over(const char *s, int n);
-void yed_screen_print_single_cell_glyph(yed_glyph g);
-void yed_screen_print_single_cell_glyph_over(yed_glyph g);
+void yed_screen_print_single_cell_glyph(yed_glyph *g);
+void yed_screen_print_single_cell_glyph_over(yed_glyph *g);
 
 #endif

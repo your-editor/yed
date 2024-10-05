@@ -31,12 +31,13 @@ char * yed_word_at_point(yed_frame *frame, int row, int col) {
         }
         word_start = array_item(line->chars, yed_line_col_to_idx(line, col));
         c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-        while (col <= line->visual_width
-        &&    (is_alnum(c) || c == '_')) {
-
+        while (is_alnum(c) || c == '_') {
             word_len += 1;
             col      += 1;
-            c         = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+            if (col > line->visual_width) { break; }
+
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         }
     } else {
         while (col > 1) {
@@ -50,12 +51,13 @@ char * yed_word_at_point(yed_frame *frame, int row, int col) {
         }
         word_start = array_item(line->chars, yed_line_col_to_idx(line, col));
         c          = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-        while (col <= line->visual_width
-        &&    (!is_alnum(c) && c != '_' && !is_space(c))) {
-
+        while (!is_alnum(c) && c != '_' && !is_space(c)) {
             word_len += 1;
             col      += 1;
-            c         = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+
+            if (col > line->visual_width) { break; }
+
+            c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
         }
     }
 

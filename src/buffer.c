@@ -388,7 +388,6 @@ void yed_buffer_set_ft(yed_buffer *buffer, int ft) {
 void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, int col) {
     yed_glyph *g;
     yed_line  *line;
-    yed_glyph  space;
     yed_glyph *line_last_glyph;
 
     if (strlen(str) == 0) { return; }
@@ -401,9 +400,8 @@ void yed_buff_insert_string_no_undo(yed_buffer *buff, const char *str, int row, 
     }
 
     line  = yed_buff_get_line(buff, row);
-    space = G(' ');
     while (line->visual_width < col - 1) {
-        yed_append_to_line_no_undo(buff, row, &space);
+        yed_append_to_line_no_undo(buff, row, GLYPH(" "));
     }
 
     while (*str) {
@@ -666,7 +664,6 @@ void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col)
     int         num_orig_undo_records;
     yed_glyph  *g;
     yed_line   *line;
-    yed_glyph   space;
     yed_glyph  *line_last_glyph;
 
     if (strlen(str) == 0) { return; }
@@ -696,9 +693,8 @@ void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col)
     }
 
     line  = yed_buff_get_line(buff, row);
-    space = G(' ');
     while (line->visual_width < col - 1) {
-        yed_append_to_line(buff, row, &space);
+        yed_append_to_line(buff, row, GLYPH(" "));
     }
 
     while (*str) {
@@ -766,7 +762,7 @@ void yed_line_clear(yed_buffer *buff, int row) {
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
     yed_line_glyph_rtraverse(*line, git) {
-        uact.g = *git;
+        uact.g = yed_glyph_copy(git);
         yed_push_undo_action(buff, &uact);
     }
 
@@ -796,14 +792,14 @@ void yed_buff_set_line(yed_buffer *buff, int row, yed_line *line) {
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
     yed_line_glyph_rtraverse(*old_line, git) {
-        uact.g = *git;
+        uact.g = yed_glyph_copy(git);
         yed_push_undo_action(buff, &uact);
     }
 
     uact.kind = UNDO_GLYPH_PUSH;
     uact.row  = row;
     yed_line_glyph_traverse(*line, git) {
-        uact.g = *git;
+        uact.g = yed_glyph_copy(git);
         yed_push_undo_action(buff, &uact);
     }
 
@@ -835,7 +831,7 @@ void yed_buff_delete_line(yed_buffer *buff, int row) {
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
     yed_line_glyph_rtraverse(*line, git) {
-        uact.g = *git;
+        uact.g = yed_glyph_copy(git);
         yed_push_undo_action(buff, &uact);
     }
 
@@ -868,7 +864,7 @@ void yed_delete_from_line(yed_buffer *buff, int row, int col) {
     uact.kind = UNDO_GLYPH_DEL;
     uact.row  = row;
     uact.col  = yed_line_normalize_col(yed_buff_get_line(buff, row),  col);
-    uact.g    = *yed_line_col_to_glyph(line, col);
+    uact.g    = yed_glyph_copy(yed_line_col_to_glyph(line, col));
 
     yed_push_undo_action(buff, &uact);
 
@@ -887,7 +883,7 @@ void yed_buff_clear(yed_buffer *buff) {
         uact.kind = UNDO_GLYPH_POP;
         uact.row  = row;
         yed_line_glyph_rtraverse(*line, git) {
-            uact.g = *git;
+            uact.g = yed_glyph_copy(git);
             yed_push_undo_action(buff, &uact);
         }
 

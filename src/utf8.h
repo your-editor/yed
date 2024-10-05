@@ -7,7 +7,6 @@ typedef union {
 
 #define G_IS_ASCII(g) (!((g)->u_c >> 7))
 
-#define G(c) ((yed_glyph){ .data = (c)})
 
 /*
  * This is what the length table would look like:
@@ -38,6 +37,8 @@ static inline yed_glyph yed_glyph_copy(yed_glyph *g) {
     memcpy(&cpy.bytes, g->bytes, yed_get_glyph_len(g));
     return cpy;
 }
+
+#define GLYPH(addr) ((yed_glyph*)(addr))
 
 
 __attribute__((always_inline))

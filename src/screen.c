@@ -39,17 +39,17 @@ void yed_clear_screen(void) {
 }
 
 __attribute__((always_inline))
-static inline void set_cellp(yed_screen_cell *cell, yed_glyph g) {
+static inline void set_cellp(yed_screen_cell *cell, yed_glyph *g) {
     cell->attrs = ys->screen_update->cur_attrs;
-    cell->glyph = g;
+    cell->glyph = yed_glyph_copy(g);
 }
 
 __attribute__((always_inline))
-static inline void set_cellp_combine(yed_screen_cell *cell, yed_glyph g) {
+static inline void set_cellp_combine(yed_screen_cell *cell, yed_glyph *g) {
     cell->attrs.flags &= ~(ATTR_BOLD | ATTR_UNDERLINE | ATTR_ITALIC | ATTR_INVERSE);
 
     yed_combine_attrs(&cell->attrs, &ys->screen_update->cur_attrs);
-    cell->glyph = g;
+    cell->glyph = yed_glyph_copy(g);
 }
 
 __attribute__((always_inline))
@@ -62,7 +62,7 @@ static inline yed_screen_cell *get_cell(int row, int col) {
 }
 
 __attribute__((always_inline))
-static inline void set_cell(int row, int col, yed_glyph g) {
+static inline void set_cell(int row, int col, yed_glyph *g) {
     yed_screen_cell *cell;
 
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
@@ -71,7 +71,7 @@ static inline void set_cell(int row, int col, yed_glyph g) {
 }
 
 __attribute__((always_inline))
-static inline void set_cell_combine(int row, int col, yed_glyph g) {
+static inline void set_cell_combine(int row, int col, yed_glyph *g) {
     yed_screen_cell *cell;
 
     cell = ys->screen_update->cells + ((row - 1) * ys->term_cols) + (col - 1);
@@ -153,25 +153,23 @@ static void write_welcome(void) {
                 continue;
             }
 
-            set_cell(l + i, (ys->term_cols / 2) - (oct_width / 2) + j, G(oct[i][j]));
+            set_cell(l + i, (ys->term_cols / 2) - (oct_width / 2) + j, GLYPH(&oct[i][j]));
         }
     }
 }
 
 void yed_draw_background(void) {
     int              n_cells;
-    yed_glyph        space;
     yed_screen_cell *cell;
     int              i;
 
     yed_set_attr(yed_active_style_get_inactive());
 
     n_cells = ys->term_rows * ys->term_cols;
-    space   = G(' ');
     cell    = ys->screen_update->cells;
 
     for (i = 0; i < n_cells; i += 1) {
-        set_cellp(cell, space);
+        set_cellp(cell, GLYPH(" "));
         cell += 1;
     }
 
@@ -349,7 +347,7 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         g     = (yed_glyph*)(void*)s;
         len   = yed_get_glyph_len(g);
         width = yed_get_glyph_width(g);
-        new_g = G(0);
+        new_g = (yed_glyph){ .data = 0 };
         for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 
         opacity     = ys->screen_update->opacity;
@@ -382,9 +380,9 @@ static inline void screen_print_n(const char *s, int n, int combine) {
 
         for (i = 0; i < width; i += 1) {
             if (combine) {
-                set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? new_g : G(0));
+                set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? &new_g : GLYPH(""));
             } else {
-                set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? new_g : G(0));
+                set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x + i, i == 0 ? &new_g : GLYPH(""));
             }
         }
 
@@ -403,12 +401,12 @@ void yed_screen_print_n(const char *s, int n)      { if (!s) { return; } screen_
 void yed_screen_print_over(const char *s)          { if (!s) { return; } yed_screen_print_n_over(s, strlen(s)); }
 void yed_screen_print_n_over(const char *s, int n) { if (!s) { return; } screen_print_n(s, n, 1);               }
 
-void yed_screen_print_single_cell_glyph(yed_glyph g) {
+void yed_screen_print_single_cell_glyph(yed_glyph *g) {
     set_cell(ys->screen_update->cur_y, ys->screen_update->cur_x, g);
     ys->screen_update->cur_x += 1;
 }
 
-void yed_screen_print_single_cell_glyph_over(yed_glyph g) {
+void yed_screen_print_single_cell_glyph_over(yed_glyph *g) {
     set_cell_combine(ys->screen_update->cur_y, ys->screen_update->cur_x, g);
     ys->screen_update->cur_x += 1;
 }

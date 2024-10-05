@@ -371,30 +371,22 @@ void yed_cerr(const char *fmt, ...) {
 void yed_cprint_clear(void) { ys->clear_cmd_output = 1; }
 
 void yed_cmd_buff_push(char c) {
-    yed_glyph gc;
-
     array_push(ys->cmd_buff, c);
 
-    gc = G(c);
-    ys->cmd_cursor_x += yed_get_glyph_width(&gc);
+    ys->cmd_cursor_x += yed_get_glyph_width(GLYPH(&c));
 }
 
 void yed_cmd_buff_pop(void) {
     char *c_p;
-    yed_glyph gc;
 
     c_p = array_last(ys->cmd_buff);
-    gc = G(*c_p);
-    ys->cmd_cursor_x -= yed_get_glyph_width(&gc);
+    ys->cmd_cursor_x -= yed_get_glyph_width(GLYPH(c_p));
     array_pop(ys->cmd_buff);
 }
 
 void yed_cmd_buff_insert(int idx, char c) {
-    yed_glyph gc;
-
     array_insert(ys->cmd_buff, idx, c);
-    gc = G(c);
-    ys->cmd_cursor_x += yed_get_glyph_width(&gc);
+    ys->cmd_cursor_x += yed_get_glyph_width(GLYPH(&c));
 }
 
 void yed_cmd_buff_delete(int idx) {
@@ -3688,7 +3680,6 @@ void yed_replace_current_search_update_line(int idx, int row) {
     yed_line   *line,
                *working_line;
     array_t    *markers;
-    yed_glyph   g;
 
     buff = ys->active_frame->buffer;
 
@@ -3704,8 +3695,7 @@ void yed_replace_current_search_update_line(int idx, int row) {
     it = 0;
     array_traverse(*markers, mark) {
         for (i = len - 1; i >= 0; i -= 1) {
-            g = G(replacement[i]);
-            yed_insert_into_line(buff, row, *mark + (it * len), &g);
+            yed_insert_into_line(buff, row, *mark + (it * len), GLYPH(replacement + i));
         }
         it += 1;
     }
