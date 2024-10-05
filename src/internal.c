@@ -49,9 +49,9 @@ char * pretty_bytes(uint64_t n_bytes) {
     r = calloc(64, 1);
 
     if (count - floor(count) == 0.0) {
-        sprintf(r, "%d", (int)count);
+        snprintf(r, 64, "%d", (int)count);
     } else {
-        sprintf(r, "%.2f", count);
+        snprintf(r, 64, "%.2f", count);
     }
 
     strcat(r, suffixes[s]);

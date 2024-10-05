@@ -213,6 +213,15 @@ void sigquit_handler(int sig) {
     kill(0, SIGQUIT);
 }
 
+#ifdef YED_ASAN
+static void print_asan_output(void) {
+    char buff[256];
+
+    snprintf(buff, sizeof(buff), "cat /tmp/asan.log.%d", getpid());
+    system(buff);
+}
+#endif
+
 void print_fatal_signal_message_and_backtrace(char *sig_name) {
     printf("\n" TERM_RED "yed has received a fatal signal (%s).\n", sig_name);
 #ifdef HAS_BACKTRACE
@@ -227,6 +236,9 @@ void print_fatal_signal_message_and_backtrace(char *sig_name) {
            "describing what happened.\n");
     printf(TERM_RESET);
     printf("\n");
+#ifdef YED_ASAN
+    print_asan_output();
+#endif
 }
 
 void sigsegv_handler(int sig) {

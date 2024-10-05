@@ -7,6 +7,8 @@
     - Fixed bug in relative_path_if_subtree() that would incorrectly substitute CWD under certain circumstances.
 ### Changed
     - Use compiler flags to force inclusion of frame pointers.
+### Added
+    - Support for ASAN builds.
 
 ## 1601 - 2024-9-19
 ### Fixed

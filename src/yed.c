@@ -107,6 +107,9 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
+#ifdef YED_ASAN
+                "-fsanitize=address -DYED_ASAN "
+#endif
                 "-std=gnu99 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -shared -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
@@ -115,6 +118,9 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
 #endif
+#ifdef YED_ASAN
+                "-fsanitize=address -DYED_ASAN "
+#endif
                 "-shared -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
@@ -122,6 +128,9 @@ static int parse_options(int argc, char **argv) {
                 printf(
 #ifdef YED_DEBUG
                 "-g -O0 -DYED_DEBUG -DYED_DO_ASSERTIONS "
+#endif
+#ifdef YED_ASAN
+                "-fsanitize=address -DYED_ASAN "
 #endif
                 "-rdynamic -shared -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -L%s -lyed\n", installed_lib_dir());
 

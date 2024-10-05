@@ -24,6 +24,10 @@ int main(int argc, char **argv) {
     char *new_ld_lib_path;
     int   exe_path_length;
     char *exe_path;
+#ifdef YED_ASAN
+    char *asan_options;
+    char *new_asan_options;
+#endif
 
 #ifdef __APPLE__
     #define LIB_PATH_ENV_VAR "DYLD_LIBRARY_PATH"
@@ -50,6 +54,22 @@ int main(int argc, char **argv) {
                 wai_getExecutablePath(exe_path, exe_path_length, NULL);
                 exe_path[exe_path_length] = 0;
             }
+
+#ifdef YED_ASAN
+
+#define ASAN_PATH_OPTION "log_path=/tmp/asan.log"
+
+            asan_options      = getenv("ASAN_OPTIONS");
+            new_asan_options  = malloc((asan_options ? strlen(asan_options) : 0) + 1 + strlen(ASAN_PATH_OPTION) + 1);
+            *new_asan_options = 0;
+            strcat(new_asan_options, ASAN_PATH_OPTION);
+            if (asan_options != NULL) {
+                strcat(new_asan_options, ":");
+                strcat(new_asan_options, asan_options);
+            }
+
+            setenv("ASAN_OPTIONS", new_asan_options, 1);
+#endif
 
             setenv(LIB_PATH_ENV_VAR, new_ld_lib_path, 1);
             setenv("_YED_DRIVER_CHLD", "1", 1);

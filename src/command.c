@@ -218,7 +218,7 @@ void yed_append_text_to_cmd_buff(const char *s) {
 void yed_append_int_to_cmd_buff(int i) {
     char s[16];
 
-    sprintf(s, "%d", i);
+    snprintf(s, sizeof(s), "%d", i);
 
     yed_append_text_to_cmd_buff(s);
 }
@@ -2925,25 +2925,25 @@ void yed_default_command_plugin_load(int n_args, char **args) {
         yed_cprint("loaded plugin '%s'", args[0]);
     } else {
         err_buff[0] = 0;
-        sprintf(err_buff, "('%s') -- ", args[0]);
+        snprintf(err_buff, sizeof(err_buff), "('%s') -- ", args[0]);
 
         switch (err) {
             case YED_PLUG_NOT_FOUND:
-                sprintf(err_buff + strlen(err_buff), "could not find plugin");
+                snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "could not find plugin");
                 break;
             case YED_PLUG_DLOAD_FAIL:
                 dlerr = dlerror();
                 if (dlerr) {
-                    sprintf(err_buff + strlen(err_buff), "%s\nthe plugin failed to load due to dynamic-loading errors", dlerr);
+                    snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "%s\nthe plugin failed to load due to dynamic-loading errors", dlerr);
                 } else {
-                    sprintf(err_buff + strlen(err_buff), "failed to load plugin for unknown reason");
+                    snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "failed to load plugin for unknown reason");
                 }
                 break;
             case YED_PLUG_NO_BOOT:
-                sprintf(err_buff + strlen(err_buff), "could not find symbol 'yed_plugin_boot'");
+                snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "could not find symbol 'yed_plugin_boot'");
                 break;
             case YED_PLUG_BOOT_FAIL:
-                sprintf(err_buff + strlen(err_buff), "'yed_plugin_boot' failed");
+                snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "'yed_plugin_boot' failed");
                 break;
             case YED_PLUG_VER_MIS:
                 yed_log("\n[!] the plugin was rejected because it was compiled against an older version of yed and is not compatible with this version");
@@ -3005,25 +3005,25 @@ void yed_default_command_plugin_toggle(int n_args, char **args) {
             yed_cprint("loaded plugin '%s'", args[0]);
         } else {
             err_buff[0] = 0;
-            sprintf(err_buff, "('%s') -- ", args[0]);
+            snprintf(err_buff, sizeof(err_buff), "('%s') -- ", args[0]);
 
             switch (err) {
                 case YED_PLUG_NOT_FOUND:
-                    sprintf(err_buff + strlen(err_buff), "could not find plugin");
+                    snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "could not find plugin");
                     break;
                 case YED_PLUG_DLOAD_FAIL:
                     dlerr = dlerror();
                     if (dlerr) {
-                        sprintf(err_buff + strlen(err_buff), "%s\nthe plugin failed to load due to dynamic-loading errors", dlerr);
+                        snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "%s\nthe plugin failed to load due to dynamic-loading errors", dlerr);
                     } else {
-                        sprintf(err_buff + strlen(err_buff), "failed to load plugin for unknown reason");
+                        snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "failed to load plugin for unknown reason");
                     }
                     break;
                 case YED_PLUG_NO_BOOT:
-                    sprintf(err_buff + strlen(err_buff), "could not find symbol 'yed_plugin_boot'");
+                    snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "could not find symbol 'yed_plugin_boot'");
                     break;
                 case YED_PLUG_BOOT_FAIL:
-                    sprintf(err_buff + strlen(err_buff), "'yed_plugin_boot' failed");
+                    snprintf(err_buff + strlen(err_buff), sizeof(err_buff) - strlen(err_buff), "'yed_plugin_boot' failed");
                     break;
                 case YED_PLUG_VER_MIS:
                     yed_log("\n[!] the plugin was rejected because it was compiled against an older version of yed and is not compatible with this version");

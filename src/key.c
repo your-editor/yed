@@ -582,7 +582,7 @@ static void handle_bracketed_paste(void) {
 
             if (key < REAL_KEY_MAX
             &&  (key == ENTER || key == TAB || key == MBYTE || !iscntrl(key))) {
-                sprintf(key_str_buff, "%d", key);
+                snprintf(key_str_buff, sizeof(key_str_buff), "%d", key);
                 key_str = key_str_buff;
 
                 yed_execute_command(ys->interactive_command, 1, &key_str);
@@ -615,7 +615,7 @@ void yed_take_key(int key) {
 
     binding = yed_get_key_binding(key);
 
-    sprintf(key_str_buff, "%d", key);
+    snprintf(key_str_buff, sizeof(key_str_buff), "%d", key);
     key_str = key_str_buff;
 
     if (ys->interactive_command) {

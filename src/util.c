@@ -416,7 +416,7 @@ int file_exists_in_path(const char *path, const char *name) {
 
         if (strlen(path) == 0) { continue; }
 
-        sprintf(buff, "%s/%s", path, name);
+        snprintf(buff, sizeof(buff), "%s/%s", path, name);
         if (access(buff, F_OK) == 0) {
             found = 1;
             goto out;

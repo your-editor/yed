@@ -971,7 +971,7 @@ static void draw_list(void) {
     array_traverse(plugs, it) {
         start_row++;
         plugin_line[0] = 0;
-        sprintf(plugin_line, "%-*s │ %-*s │ %-*s │ %-*s",
+        snprintf(plugin_line, sizeof(plugin_line), "%-*s │ %-*s │ %-*s │ %-*s",
                         max_width,   (*it).plugin_name,
                         ((*it).installed == 1) ? col_2_width+2 : col_2_width, ((*it).installed == 1) ? "\xE2\x9C\x93" : "X",
                         ((*it).loaded == 1) ? col_2_width+2 : col_2_width, ((*it).loaded == 1) ? "\xE2\x9C\x93" : "X",

@@ -212,7 +212,8 @@ int _yed_write_buffer_to_subproc_2(yed_buffer *buff, char *cmd, int *exit_status
     *output = array_data(out);
 
     do {
-        status = waitpid(pid, &wait_status, 0);
+        status = waitpid(pid, &wait_status, WNOHANG);
+
         if (status == -1) {
             status = errno;
             errno  = 0;
