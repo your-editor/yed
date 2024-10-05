@@ -62,7 +62,7 @@ void yedrc_load(int n_args, char **args) {
         strncat(line_accum, line, sizeof(line_accum) - strlen(line_accum) - 1);
 
         bw_scan = line_accum + strlen(line_accum) - 1;
-        while (bw_scan >= line_accum && isspace(*bw_scan)) { bw_scan -= 1; }
+        while (bw_scan > line_accum && isspace(*bw_scan)) { bw_scan -= 1; }
         bs_cont = *bw_scan == '\\';
 
         if (bs_cont) {
