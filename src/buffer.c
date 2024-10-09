@@ -745,7 +745,7 @@ void yed_pop_from_line(yed_buffer *buff, int row) {
 
     uact.kind = UNDO_GLYPH_POP;
     uact.row  = row;
-    uact.g    = *yed_line_col_to_glyph(line, line->visual_width);
+    uact.g    = yed_glyph_copy(yed_line_col_to_glyph(line, line->visual_width));
 
     yed_push_undo_action(buff, &uact);
 
