@@ -14,7 +14,7 @@ strip="no"
 
 execinfo_prefix=""
 
-asan="no"
+sanitizer=""
 
 if [ -z "$prefix" ]; then
     if [ "$(uname)" == "Darwin" ]; then

@@ -42,12 +42,12 @@ if [ $(uname) = "Darwin" ]; then
     fi
 fi
 
-if [ "${asan}x" = "yesx" ]; then
-    ASAN="-fsanitize=address -DYED_ASAN"
+if [ "${sanitizer}x" != "x" ]; then
+    SAN="-fsanitize=${sanitizer} -DYED_SAN=\"${sanitizer}\""
 fi
 
-LIB_C_FLAGS="${ASAN} -rdynamic -shared -fPIC -lm -lpthread"
-DRIVER_C_FLAGS="${ASAN} -Isrc -rdynamic -lm -lpthread"
+LIB_C_FLAGS="${SAN} -rdynamic -shared -fPIC -lm -lpthread"
+DRIVER_C_FLAGS="${SAN} -Isrc -rdynamic -lm -lpthread"
 
 strnstr_test_prg="#include <string.h>\nint main() { strnstr(\"haystack\", \"needle\", 8); return 0; }"
 if ! echo -e "${strnstr_test_prg}" | cc -Wall -x c -o /dev/null > /dev/null 2>&1 -; then

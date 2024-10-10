@@ -24,9 +24,9 @@ int main(int argc, char **argv) {
     char *new_ld_lib_path;
     int   exe_path_length;
     char *exe_path;
-#ifdef YED_ASAN
-    char *asan_options;
-    char *new_asan_options;
+#ifdef YED_SAN
+    char *san_options;
+    char *new_san_options;
 #endif
 
 #ifdef __APPLE__
@@ -55,20 +55,42 @@ int main(int argc, char **argv) {
                 exe_path[exe_path_length] = 0;
             }
 
-#ifdef YED_ASAN
+#ifdef YED_SAN
 
-#define ASAN_PATH_OPTION "log_path=/tmp/asan.log"
+#define ASAN_PATH_OPTION "log_path=/tmp/yed-san.log"
 
-            asan_options      = getenv("ASAN_OPTIONS");
-            new_asan_options  = malloc((asan_options ? strlen(asan_options) : 0) + 1 + strlen(ASAN_PATH_OPTION) + 1);
-            *new_asan_options = 0;
-            strcat(new_asan_options, ASAN_PATH_OPTION);
-            if (asan_options != NULL) {
-                strcat(new_asan_options, ":");
-                strcat(new_asan_options, asan_options);
+            san_options      = getenv("ASAN_OPTIONS");
+            new_san_options  = malloc((san_options ? strlen(san_options) : 0) + 1 + strlen(ASAN_PATH_OPTION) + 1);
+            *new_san_options = 0;
+            strcat(new_san_options, ASAN_PATH_OPTION);
+            if (san_options != NULL) {
+                strcat(new_san_options, ":");
+                strcat(new_san_options, san_options);
             }
 
-            setenv("ASAN_OPTIONS", new_asan_options, 1);
+            setenv("ASAN_OPTIONS", new_san_options, 1);
+
+            san_options      = getenv("UBSAN_OPTIONS");
+            new_san_options  = malloc((san_options ? strlen(san_options) : 0) + 1 + strlen(ASAN_PATH_OPTION) + 1);
+            *new_san_options = 0;
+            strcat(new_san_options, ASAN_PATH_OPTION);
+            if (san_options != NULL) {
+                strcat(new_san_options, ":");
+                strcat(new_san_options, san_options);
+            }
+
+            setenv("UBSAN_OPTIONS", new_san_options, 1);
+
+            san_options      = getenv("TSAN_OPTIONS");
+            new_san_options  = malloc((san_options ? strlen(san_options) : 0) + 1 + strlen(ASAN_PATH_OPTION) + 1);
+            *new_san_options = 0;
+            strcat(new_san_options, ASAN_PATH_OPTION);
+            if (san_options != NULL) {
+                strcat(new_san_options, ":");
+                strcat(new_san_options, san_options);
+            }
+
+            setenv("TSAN_OPTIONS", new_san_options, 1);
 #endif
 
             setenv(LIB_PATH_ENV_VAR, new_ld_lib_path, 1);

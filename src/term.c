@@ -213,11 +213,11 @@ void sigquit_handler(int sig) {
     kill(0, SIGQUIT);
 }
 
-#ifdef YED_ASAN
-static void print_asan_output(void) {
+#ifdef YED_SAN
+static void print_san_output(void) {
     char buff[256];
 
-    snprintf(buff, sizeof(buff), "cat /tmp/asan.log.%d", getpid());
+    snprintf(buff, sizeof(buff), "cat /tmp/yed-san.log.%d", getpid());
     system(buff);
 }
 #endif
@@ -236,8 +236,8 @@ void print_fatal_signal_message_and_backtrace(char *sig_name) {
            "describing what happened.\n");
     printf(TERM_RESET);
     printf("\n");
-#ifdef YED_ASAN
-    print_asan_output();
+#ifdef YED_SAN
+    print_san_output();
 #endif
 }
 
