@@ -175,5 +175,7 @@ void _array_copy(array_t *dst, array_t *src) {
     _array_grow_if_needed_to(dst, src->used);
 
     dst->used = src->used;
-    memcpy(dst->data, src->data, src->used * src->elem_size);
+    if (src->used) {
+        memcpy(dst->data, src->data, src->used * src->elem_size);
+    }
 }
