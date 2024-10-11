@@ -369,10 +369,14 @@ static void check_ypm_version(void) {
 
     snprintf(cmd, sizeof(cmd), "cd %s/ypm && git rev-parse --abbrev-ref HEAD", get_config_path());
     output = yed_run_subproc(cmd, &output_len, &status);
-    if (output != NULL && strlen(output) != 0 && status == 0) {
-        if (!sscanf(output, "v%d", &version)) {
-            version = 0;
+
+    if (output != NULL) {
+        if (strlen(output) != 0 && status == 0) {
+            if (!sscanf(output, "v%d", &version)) {
+                version = 0;
+            }
         }
+        free(output);
     }
 
     if (version == -1) {
