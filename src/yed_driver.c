@@ -6,6 +6,10 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+#ifdef __SANITIZE_ADDRESS__
+#include <sanitizer/lsan_interface.h>
+#endif
+
 #include "install.c"
 
 char lib_path[4096];
@@ -131,6 +135,12 @@ int main(int argc, char **argv) {
 #endif
 
         }
+
+#ifdef __SANITIZE_ADDRESS__
+        __lsan_do_leak_check();
+        __lsan_disable();
+#endif
+
     }
 }
 
