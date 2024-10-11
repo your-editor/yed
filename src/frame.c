@@ -783,7 +783,7 @@ again_gutter:
 
     first_col = (line->visual_width < x_offset) ? line->visual_width : x_offset + 1;
     first_idx = yed_line_col_to_idx(line, first_col);
-    bytes     = array_item(line->chars, first_idx);
+    bytes     = array_len(line->chars) == 0 ? NULL : array_item(line->chars, first_idx);
     width_skip = first_col - yed_line_idx_to_col(line, first_idx);
 
     /*

@@ -1,29 +1,3 @@
-/*
- * @bad @todo
- * I think this is _technically_ incorrect code.
- * The issue is that we're taking a pointer to arbitrary
- * bytes in a string and casting the pointer into a yed_glyph*.
- * Then we dereference it.
- * Imagine that our pointer is pointing at the last byte of
- * some memory region.
- * When we cast, we're allowed to touch (and may be implicitly
- * touching) 3 extra bytes (yed_glyph is 4 bytes).
- * This probably won't introduce any problems because we're only
- * ever explicitly reading the first byte of this memory, but if
- * the compiler decides that it needs to touch the other three bytes,
- * then we might segfault.
- *
- * I'm going to leave it for now so that it'll be fast, but just be
- * aware that this could induce crashes.
- *
- *                                   - Brandon Kammerdiener, Feb 2020
- *
- * UPDATE: A workaround for this issue is to make sure that the string
- * has at least 3 bytes of padding. This is implemented in
- * yed_fill_buff_from_file_map().
- *
- *                                   - Brandon Kammerdiener, Feb 2020
- */
 void yed_get_string_info(const char *bytes, int len, int *n_glyphs, int *width) {
     const char *end;
     int         _n_glyphs, _width;

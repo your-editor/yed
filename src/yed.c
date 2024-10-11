@@ -232,7 +232,7 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     fd_flags = fcntl(ys->signal_pipe_fds[0], F_GETFL);
     fcntl(ys->signal_pipe_fds[0], F_SETFL, fd_flags | O_NONBLOCK);
 
-    setlocale(LC_ALL, "en_US.utf8");
+    setlocale(LC_ALL, "en_US.UTF-8");
 
     getcwd_ret = getcwd(cwd, sizeof(cwd));
     (void)getcwd_ret;

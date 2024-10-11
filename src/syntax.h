@@ -1276,9 +1276,13 @@ set_range:;
             range = next_range;
 
             range_end_start = _yed_syntax_find_range_end(syntax, range, line, next_range_start + next_range_start_len, &range_end_len);
+            if (range_end_start == NULL) {
+                range_end_start = line_end;
+                range_end_len   = 0;
+            }
 
             cstart = yed_line_idx_to_col(line, next_range_start - start);
-            cend   = range_end_start == NULL
+            cend   = range_end_start == line_end
                         ? line->visual_width + 1
                         : yed_line_idx_to_col(line, (range_end_start + range_end_len) - start);
 
@@ -1314,7 +1318,9 @@ set_kwd:;
             cend   = yed_line_idx_to_col(line, (first + first_len) - start);
             str    = first + first_len;
 
-            _yed_syntax_line_apply(event, cstart, cend, &a->attr);
+            if (a != NULL) {
+                _yed_syntax_line_apply(event, cstart, cend, &a->attr);
+            }
         }
     }
 

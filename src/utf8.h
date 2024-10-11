@@ -1,7 +1,6 @@
 typedef union {
     char          c;
     unsigned char u_c;
-    uint32_t      data;
     unsigned char bytes[4];
 } yed_glyph;
 
@@ -52,6 +51,7 @@ static inline int _yed_get_mbyte_width(yed_glyph *g) {
     mbtowc(NULL, 0, 0);
 
     mbtowc(&wch, (const char*)g->bytes, len);
+
     w = mk_wcwidth(wch);
 
     if (unlikely(w <= 0)) { return 1; }

@@ -188,7 +188,10 @@ void yed_diff_and_swap_screens(void) {
     rcell   = ys->screen_render->cells;
 
     for (i = 0; i < n_cells; i += 1) {
-        dirty =    (rcell->glyph.data != ucell->glyph.data)
+        dirty =    (rcell->glyph.bytes[0] != ucell->glyph.bytes[0])
+                || (rcell->glyph.bytes[1] != ucell->glyph.bytes[1])
+                || (rcell->glyph.bytes[2] != ucell->glyph.bytes[2])
+                || (rcell->glyph.bytes[3] != ucell->glyph.bytes[3])
                 || (!ATTRS_EQ(rcell->attrs, ucell->attrs));
 
         *rcell       = *ucell;
@@ -246,7 +249,7 @@ void yed_render_screen(void) {
 
     for (row = 1; row <= ys->term_rows; row += 1) {
         for (col = 1; col <= ys->term_cols; col += 1) {
-            if (cell->dirty && cell->glyph.data) {
+            if (cell->dirty && cell->glyph.bytes[0]) {
                 screen_dirty = 1;
 
                 if (ys->screen_render->cur_y != row
@@ -347,7 +350,7 @@ static inline void screen_print_n(const char *s, int n, int combine) {
         g     = (yed_glyph*)(void*)s;
         len   = yed_get_glyph_len(g);
         width = yed_get_glyph_width(g);
-        new_g = (yed_glyph){ .data = 0 };
+        new_g = (yed_glyph){ .c = 0 };
         for (i = 0; i < len; i += 1) { new_g.bytes[i] = g->bytes[i]; }
 
         opacity     = ys->screen_update->opacity;
