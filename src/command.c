@@ -3,8 +3,7 @@ void yed_init_commands(void) {
     ys->default_commands = tree_make(yed_command_name_t, yed_command);
     yed_set_default_commands();
 
-    ys->cmd_buff       = array_make(char);
-    ys->log_name_stack = array_make(char*);
+    ys->cmd_buff = array_make(char);
 
     ys->cmd_prompt_hist     = array_make(char*);
     ys->cmd_prompt_readline = malloc(sizeof(*ys->cmd_prompt_readline));

@@ -184,9 +184,6 @@ void yed_merge_undo_records(struct yed_buffer_t *buffer) {
     array_push_n(new_last_record->actions,
                  array_data(last_record->actions),
                  array_len(last_record->actions));
-/*     array_traverse(last_record->actions, action) { */
-/*         array_push(new_last_record->actions, *action); */
-/*     } */
 
     new_last_record->end_cursor_row = last_record->end_cursor_row;
     new_last_record->end_cursor_col = last_record->end_cursor_col;

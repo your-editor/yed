@@ -1,14 +1,10 @@
 void yed_init_buffers(void) {
-    LOG_FN_ENTER();
-
     ys->buffers = tree_make(yed_buffer_name_t, yed_buffer_ptr_t);
 
     yed_get_yank_buffer();
     yed_get_log_buffer();
     yed_get_bindings_buffer();
     yed_get_vars_buffer();
-
-    LOG_EXIT();
 }
 
 yed_line yed_new_line(void) {
@@ -1226,6 +1222,9 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
         }
 
         bucket_array_push(buff->lines, line);
+    }
+    if (line_data != NULL) {
+        free(line_data);
     }
 
     if (bucket_array_len(buff->lines) > 1) {

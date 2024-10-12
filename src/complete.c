@@ -638,5 +638,7 @@ out:;
         free(key);
     }
 
+    tree_free(t);
+
     return status;
 }
