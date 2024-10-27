@@ -182,17 +182,32 @@ void yed_diff_and_swap_screens(void) {
     yed_screen_cell *rcell;
     int              i;
     int              dirty;
+    int              rlen;
+    int              ulen;
+    int              j;
 
     n_cells = ys->term_rows * ys->term_cols;
     ucell   = ys->screen_update->cells;
     rcell   = ys->screen_render->cells;
 
     for (i = 0; i < n_cells; i += 1) {
-        dirty =    (rcell->glyph.bytes[0] != ucell->glyph.bytes[0])
-                || (rcell->glyph.bytes[1] != ucell->glyph.bytes[1])
-                || (rcell->glyph.bytes[2] != ucell->glyph.bytes[2])
-                || (rcell->glyph.bytes[3] != ucell->glyph.bytes[3])
-                || (!ATTRS_EQ(rcell->attrs, ucell->attrs));
+        dirty = 0;
+        rlen  = yed_get_glyph_len(&rcell->glyph);
+        ulen  = yed_get_glyph_len(&ucell->glyph);
+
+        if (unlikely(rlen != ulen)) {
+            dirty = 1;
+        } else {
+            for (j = 0; j < rlen; j += 1) {
+                if (rcell->glyph.bytes[j] != ucell->glyph.bytes[j]) {
+                    dirty = 1;
+                    break;
+                }
+            }
+            if (!dirty) {
+                dirty = !ATTRS_EQ(rcell->attrs, ucell->attrs);
+            }
+        }
 
         *rcell       = *ucell;
         rcell->dirty = dirty;
