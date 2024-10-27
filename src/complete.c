@@ -304,27 +304,22 @@ static int complete_loadable_plugins(char *string, yed_completion_results *resul
 }
 
 static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_line *line) {
-    int  len, col, start_col;
+    int  len, col, start_col, is_wordc;
     char c, *word_start, *word;
 
-    len = strlen(string);
-    col = 1;
+    len       = strlen(string);
+    col       = 1;
+    start_col = 0;
 
-    while (col < line->visual_width) {
-        start_col = col;
+    while (col <= line->visual_width) {
+        c        = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+        is_wordc = is_alnum(c) || c == '_';
 
-        c = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-
-        if (is_alnum(c) || c == '_') {
-            while (col < line->visual_width) {
-                col += 1;
-                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
-
-                if (!is_alnum(c) && c != '_') {
-                    break;
-                }
+        if (is_wordc) {
+            if (!start_col) {
+                start_col = col;
             }
-
+        } else if (start_col) {
             word_start = array_data(line->chars)
                          + yed_line_col_to_idx(line, start_col);
 
@@ -332,26 +327,20 @@ static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_lin
                 word = strndup(word_start, col - start_col);
                 tree_insert(words, word, (empty_t){});
             }
-        } else if (!is_space(c)) {
-            while (col < line->visual_width) {
-                col += 1;
-                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
 
-                if (is_alnum(c) || c == '_' || is_space(c)) {
-                    break;
-                }
-            }
+            start_col = 0;
         }
 
-        if (is_space(c)) {
-            while (col < line->visual_width) {
-                col += 1;
-                c    = ((yed_glyph*)yed_line_col_to_glyph(line, col))->c;
+        col += 1;
+    }
 
-                if (!is_space(c)) {
-                    break;
-                }
-            }
+    if (start_col) {
+        word_start = array_data(line->chars)
+                        + yed_line_col_to_idx(line, start_col);
+
+        if (strncmp(string, word_start, len) == 0) {
+            word = strndup(word_start, col - start_col);
+            tree_insert(words, word, (empty_t){});
         }
     }
 }
