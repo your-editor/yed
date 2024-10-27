@@ -203,10 +203,16 @@ static int _yed_default_completion_files(char *string, yed_completion_results *r
 
         if (expanded) {
             if (homeify_path(full_path, homeified_path) != NULL) {
-                tree_insert(t, strdup(homeified_path), (empty_t){});
+                it = tree_lookup(t, homeified_path);
+                if (!tree_it_good(it)) {
+                    tree_insert(t, strdup(homeified_path), (empty_t){});
+                }
             }
         } else {
-            tree_insert(t, strdup(full_path), (empty_t){});
+            it = tree_lookup(t, full_path);
+            if (!tree_it_good(it)) {
+                tree_insert(t, strdup(full_path), (empty_t){});
+            }
         }
     }
 
@@ -306,6 +312,7 @@ static int complete_loadable_plugins(char *string, yed_completion_results *resul
 static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_line *line) {
     int  len, col, start_col, is_wordc;
     char c, *word_start, *word;
+    tree_it(str_t, empty_t) it;
 
     len       = strlen(string);
     col       = 1;
@@ -325,7 +332,12 @@ static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_lin
 
             if (strncmp(string, word_start, len) == 0) {
                 word = strndup(word_start, col - start_col);
-                tree_insert(words, word, (empty_t){});
+                it = tree_lookup(words, word);
+                if (tree_it_good(it)) {
+                    free(word);
+                } else {
+                    tree_insert(words, word, (empty_t){});
+                }
             }
 
             start_col = 0;
@@ -340,7 +352,12 @@ static void get_all_line_words(char *string, tree(str_t, empty_t) words, yed_lin
 
         if (strncmp(string, word_start, len) == 0) {
             word = strndup(word_start, col - start_col);
-            tree_insert(words, word, (empty_t){});
+            it = tree_lookup(words, word);
+            if (tree_it_good(it)) {
+                free(word);
+            } else {
+                tree_insert(words, word, (empty_t){});
+            }
         }
     }
 }
