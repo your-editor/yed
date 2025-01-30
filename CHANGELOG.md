@@ -9,6 +9,7 @@
 ### Changed
     - Use compiler flags to force inclusion of frame pointers.
     - Changed every API call dealing with glyphs to pass by pointer since dereferencing all 4 bytes of a yed_glyph struct may be an out-of-bounds read in some cases.
+    - No longer try to restore cursor shape to "default" on exit since some terminals don't define a default. In some cases, this was changing the shape from what the user had set in their terminal.
 ### Added
     - Support for ASAN builds.
 

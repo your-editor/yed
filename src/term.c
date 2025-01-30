@@ -83,7 +83,7 @@ int yed_term_exit(void) {
         return 0;
     }
 
-    printf("\e[%d q", TERM_CURSOR_STYLE_DEFAULT);
+/*     printf("\e[%d q", TERM_CURSOR_STYLE_DEFAULT); */
     printf(TERM_DISABLE_BRACKETED_PASTE);
     printf(TERM_STD_SCREEN);
     printf(TERM_CURSOR_SHOW);

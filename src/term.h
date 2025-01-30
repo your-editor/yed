@@ -65,6 +65,7 @@
 #define TERM_CURSOR_STYLE_BLINKING_BAR       (5)
 #define TERM_CURSOR_STYLE_STEADY_BAR         (6)
 
+
 int yed_term_enter(void);
 int yed_term_exit(void);
 
