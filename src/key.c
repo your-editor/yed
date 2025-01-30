@@ -1154,7 +1154,7 @@ int _yed_string_to_keys(const char *str, int *keys, int allow_meta) {
     int   n_keys;
     char *scan;
     int   save_wspc;
-    char  key_c;
+    signed char  key_c;
     int   key_i;
     int   meta;
     int   meta_result;
