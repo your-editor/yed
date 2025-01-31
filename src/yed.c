@@ -232,7 +232,12 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     fd_flags = fcntl(ys->signal_pipe_fds[0], F_GETFL);
     fcntl(ys->signal_pipe_fds[0], F_SETFL, fd_flags | O_NONBLOCK);
 
-    setlocale(LC_ALL, "en_US.UTF-8");
+    if (setlocale(LC_ALL, "en_US.UTF-8") == NULL) {
+        if (setlocale(LC_ALL, "C.UTF-8") == NULL) {
+            printf("failed to set a UTF-8 locale!\n");
+            exit(1);
+        }
+    }
 
     getcwd_ret = getcwd(cwd, sizeof(cwd));
     (void)getcwd_ret;
