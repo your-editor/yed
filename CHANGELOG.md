@@ -18,6 +18,8 @@
     - Support for ASAN builds.
     - Key sequences can be disabled without being deleted (the virt key is retained).
     - New core API functions: yed_enable_key_sequence, yed_disable_key_sequence, yed_is_key_sequence_enabled
+### Removed
+    - yed_get_undo_num_records: redundant with yed_num_undo_records
 
 ## 1601 - 2024-9-19
 ### Fixed

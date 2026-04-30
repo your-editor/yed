@@ -682,7 +682,7 @@ void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col)
 
     yed_start_undo_record(frame, buff);
 
-    num_orig_undo_records = yed_get_undo_num_records(buff);
+    num_orig_undo_records = yed_num_undo_records(buff);
 
     while (yed_buff_n_lines(buff) < row) {
         yed_buffer_add_line(buff);
@@ -716,7 +716,7 @@ void yed_buff_insert_string(yed_buffer *buff, const char *str, int row, int col)
 
     yed_end_undo_record(frame, buff);
 
-    while (yed_get_undo_num_records(buff) > num_orig_undo_records) {
+    while (yed_num_undo_records(buff) > num_orig_undo_records) {
         yed_merge_undo_records(buff);
     }
 }

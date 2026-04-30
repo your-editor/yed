@@ -42,10 +42,6 @@ void yed_reset_undo_history(yed_undo_history *history) {
     *history = yed_new_undo_history();
 }
 
-int yed_num_undo_records(yed_buffer *buffer) {
-    return array_len(buffer->undo_history.undo);
-}
-
 void yed_force_end_undo_record(yed_undo_history *history) {
     yed_undo_record *record;
 
@@ -157,7 +153,7 @@ void yed_cancel_undo_record(yed_frame *frame, yed_buffer *buffer) {
     history->current_record = NULL;
 }
 
-int yed_get_undo_num_records(struct yed_buffer_t *buffer) {
+int yed_num_undo_records(struct yed_buffer_t *buffer) {
     yed_undo_history *history;
 
     if (buffer->kind == BUFF_KIND_YANK)    { return -1; }
