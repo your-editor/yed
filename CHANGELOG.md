@@ -13,6 +13,7 @@
     - Changed every API call dealing with glyphs to pass by pointer since dereferencing all 4 bytes of a yed_glyph struct may be an out-of-bounds read in some cases.
     - No longer try to restore cursor shape to "default" on exit since some terminals don't define a default. In some cases, this was changing the shape from what the user had set in their terminal.
     - When a keymap is created or (re)enabled, it now moves to the front of the keymap list and will have precedence over other enabled keymaps.
+    - Do not send EVENT_BUFFER_{PRE,POST}_MOD when initially loading a buffer.
 ### Added
     - Support for ASAN builds.
     - Key sequences can be disabled without being deleted (the virt key is retained).

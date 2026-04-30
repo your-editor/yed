@@ -188,6 +188,7 @@ typedef struct {
 typedef struct yed_state_t {
     yed_lib_t                   *yed_lib;
     char                        *argv0;
+    int                          key_pipe_fds[2];
     array_t                      output_buffer;
     struct termios               sav_term;
     int                          term_cols,

@@ -1513,7 +1513,10 @@ static void buffer_common(int n_args, char **args, int hidden) {
         if (event.cancel) { goto out; }
 
         buffer = yed_create_buffer(name);
+
+        buffer->flags |= BUFF_NO_MOD_EVENTS;
         status = yed_fill_buff_from_file(buffer, a_path);
+        buffer->flags &= ~BUFF_NO_MOD_EVENTS;
 
         switch (status) {
             case BUFF_FILL_STATUS_ERR_DIR:

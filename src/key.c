@@ -464,27 +464,6 @@ static int _yed_read_keys(int *input) {
     nread = read(0, &c, 1);
     if (nread <= 0) { return 0; }
 
-#if 0
-    /*
-     * If we read a zero byte, somebody is probably trying to force an update on us.
-     * In that case, we need to clear out all zero bytes so that we don't accumulate
-     * a huge backlog of update requests.
-     */
-    if (c == 0) {
-        tcgetattr(0, &t);
-
-        t.c_cc[VTIME] = 0;
-        tcsetattr(0, TCSANOW, &t);
-
-        while ((nread = read(0, &c, 1) > 0) && c == 0);
-
-        t.c_cc[VTIME] = TERM_DEFAULT_READ_TIMEOUT;
-        tcsetattr(0, TCSANOW, &t);
-
-        if (nread <= 0) { return 0; }
-    }
-#endif
-
     n_bytes = 1;
 
     if (c != 0) {

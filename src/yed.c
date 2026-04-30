@@ -110,7 +110,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_SAN
                 "-fsanitize=" YED_SAN " -DYED_SAN=\"" YED_SAN "\" "
 #endif
-                "-std=gnu99 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -shared -fPIC -I%s\n", installed_include_dir());
+                "-std=gnu99 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-cppflags") == 0) {
@@ -121,7 +121,7 @@ static int parse_options(int argc, char **argv) {
 #ifdef YED_SAN
                 "-fsanitize=" YED_SAN " -DYED_SAN=\"" YED_SAN "\" "
 #endif
-                "-shared -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -I%s\n", installed_include_dir());
+                "-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -I%s\n", installed_include_dir());
 
                 do_exit = 1;
             } else if (strcmp(argv[i], "--print-ldflags") == 0) {
@@ -231,6 +231,9 @@ yed_state * yed_init(yed_lib_t *yed_lib, int argc, char **argv) {
     (void)pipe_ret;
     fd_flags = fcntl(ys->signal_pipe_fds[0], F_GETFL);
     fcntl(ys->signal_pipe_fds[0], F_SETFL, fd_flags | O_NONBLOCK);
+
+    pipe_ret = pipe(ys->key_pipe_fds);
+    (void)pipe_ret;
 
     if (setlocale(LC_ALL, "en_US.UTF-8") == NULL) {
         if (setlocale(LC_ALL, "C.UTF-8") == NULL) {
