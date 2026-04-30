@@ -157,6 +157,7 @@ void yed_map_unbind_key(const char *mapname, int key);
 yed_key_binding *yed_map_get_key_binding(const char *mapname, int key);
 
 typedef struct {
+    int enabled;
     int len;
     int keys[MAX_SEQ_LEN];
     int seq_key;
@@ -173,6 +174,9 @@ int yed_vadd_key_sequence(int len, ...);
 int yed_vget_key_sequence(int len, ...);
 int yed_vvadd_key_sequence(int len, va_list args);
 int yed_vvget_key_sequence(int len, va_list args);
+void yed_enable_key_sequence(int seq_key);
+void yed_disable_key_sequence(int seq_key);
+int yed_is_key_sequence_enabled(int seq_key);
 int yed_get_real_keys(int key, int *len, int *real_keys);
 
 

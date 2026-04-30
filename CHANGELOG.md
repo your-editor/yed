@@ -7,12 +7,16 @@
     - Fixed bug in relative_path_if_subtree() that would incorrectly substitute CWD under certain circumstances.
     - Fixed various memory bugs detected with new ASAN build support.
     - Fall back to setting C.UTF-8 locale when en_us.UTF-8 is not found and abort if we can't set a UTF-8 locale.
+    - Fixed bug where output could be truncated or throw an assertion when write encounters EINTR.
 ### Changed
     - Use compiler flags to force inclusion of frame pointers.
     - Changed every API call dealing with glyphs to pass by pointer since dereferencing all 4 bytes of a yed_glyph struct may be an out-of-bounds read in some cases.
     - No longer try to restore cursor shape to "default" on exit since some terminals don't define a default. In some cases, this was changing the shape from what the user had set in their terminal.
+    - When a keymap is created or (re)enabled, it now moves to the front of the keymap list and will have precedence over other enabled keymaps.
 ### Added
     - Support for ASAN builds.
+    - Key sequences can be disabled without being deleted (the virt key is retained).
+    - New core API functions: yed_enable_key_sequence, yed_disable_key_sequence, yed_is_key_sequence_enabled
 
 ## 1601 - 2024-9-19
 ### Fixed

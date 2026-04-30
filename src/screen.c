@@ -326,8 +326,17 @@ void yed_render_screen(void) {
         total_written = 0;
         while (total_written < array_len(ys->output_buffer)) {
             n = write(1, array_data(ys->output_buffer) + total_written, array_len(ys->output_buffer) - total_written);
-            ASSERT(n > 0, "failed to write output");
-            total_written += n;
+            if (n < 0) {
+                if (errno != EINTR) {
+                    errno = 0;
+                    ASSERT(0, "failed to write output");
+                } else {
+                    errno = 0;
+                    break;
+                }
+            } else {
+                total_written += n;
+            }
         }
     }
 

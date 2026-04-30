@@ -376,6 +376,8 @@ int yed_read_key_sequences(int len, int *input) {
          * we have so far.
          */
         array_traverse(ys->key_sequences, seq_it) {
+            if (!seq_it->enabled) { continue; }
+
             /* Only if there's more in the sequence to read.. */
             if (seq_it->len > len) {
                 found_a_partial_match = 1;
@@ -699,9 +701,11 @@ void yed_remove_key_map(const char *mapname) {
 }
 
 void yed_enable_key_map(const char *mapname) {
+    yed_key_map_list *prev;
     yed_key_map_list *list;
     yed_event         event;
 
+    prev = NULL;
     for (list = ys->keymap_list; list != NULL; list = list->next) {
         if (strcmp(list->map->name, mapname) == 0) {
             memset(&event, 0, sizeof(event));
@@ -711,6 +715,14 @@ void yed_enable_key_map(const char *mapname) {
 
             if (event.cancel) { break; }
 
+            if (prev != NULL) {
+                prev->next = list->next;
+            }
+            if (list != ys->keymap_list) {
+                list->next = ys->keymap_list;
+                ys->keymap_list = list;
+            }
+
             list->map->enabled = 1;
 
             event.kind = EVENT_KEY_POST_BIND;
@@ -718,6 +730,7 @@ void yed_enable_key_map(const char *mapname) {
 
             break;
         }
+        prev = list;
     }
 }
 
@@ -1115,6 +1128,40 @@ int yed_vvget_key_sequence(int len, va_list args) {
     }
 
     return yed_get_key_sequence(len, keys);
+}
+
+void yed_enable_key_sequence(int seq_key) {
+    yed_key_sequence *seq_it;
+
+    array_traverse(ys->key_sequences, seq_it) {
+        if (seq_it->seq_key == seq_key) {
+            seq_it->enabled = 1;
+            break;
+        }
+    }
+}
+
+void yed_disable_key_sequence(int seq_key) {
+    yed_key_sequence *seq_it;
+
+    array_traverse(ys->key_sequences, seq_it) {
+        if (seq_it->seq_key == seq_key) {
+            seq_it->enabled = 0;
+            break;
+        }
+    }
+}
+
+int yed_is_key_sequence_enabled(int seq_key) {
+    yed_key_sequence *seq_it;
+
+    array_traverse(ys->key_sequences, seq_it) {
+        if (seq_it->seq_key == seq_key) {
+            return seq_it->enabled;
+        }
+    }
+
+    return 0;
 }
 
 int yed_get_real_keys(int key, int *len, int *real_keys) {
