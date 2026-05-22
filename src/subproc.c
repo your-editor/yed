@@ -308,6 +308,8 @@ int yed_read_subproc_into_buffer_nb(yed_nb_subproc_t *nb_subproc) {
     char       buff[4096];
     yed_glyph *g_start;
     yed_glyph *g;
+    int        remaining;
+    int        glen;
     yed_line  *last_line;
 
     status = 0;
@@ -322,10 +324,25 @@ int yed_read_subproc_into_buffer_nb(yed_nb_subproc_t *nb_subproc) {
     exited = WIFEXITED(wait_status);
 
     last_row = yed_buff_n_lines(nb_subproc->buffer);
-    while ((n_read = read(nb_subproc->fd, buff, sizeof(buff))) > 0) {
+    for (;;) {
+        if (nb_subproc->partial_len > 0) {
+            memcpy(buff, nb_subproc->partial, nb_subproc->partial_len);
+        }
+        n_read = read(nb_subproc->fd, buff + nb_subproc->partial_len, sizeof(buff) - nb_subproc->partial_len);
+        if (n_read <= 0) { break; }
+        n_read += nb_subproc->partial_len;
+        nb_subproc->partial_len = 0;
 
         g_start = (yed_glyph*)(&buff[0]);
         for (g = g_start; ((void*)g) - ((void*)g_start) < n_read;) {
+            remaining = n_read - (int)(((char*)g) - ((char*)g_start));
+            glen      = yed_get_glyph_len(g);
+
+            if (glen > remaining) {
+                memcpy(nb_subproc->partial, g, remaining);
+                nb_subproc->partial_len = remaining;
+                break;
+            }
 
             if (g->c == '\r') { /* Ignore */
             } else if (g->c == '\n') {
@@ -334,7 +351,7 @@ int yed_read_subproc_into_buffer_nb(yed_nb_subproc_t *nb_subproc) {
                 yed_append_to_line_no_undo(nb_subproc->buffer, last_row, g);
             }
 
-            g = ((void*)g) + yed_get_glyph_len(g);
+            g = ((void*)g) + glen;
         }
     }
 

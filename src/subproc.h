@@ -41,6 +41,8 @@ typedef struct {
     yed_buffer *buffer;
     int         exit_status;
     int         err;
+    char        partial[4];
+    int         partial_len;
 } yed_nb_subproc_t;
 
 /*
