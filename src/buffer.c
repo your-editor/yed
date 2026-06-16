@@ -1201,12 +1201,13 @@ int yed_fill_buff_from_file_stream(yed_buffer *buff, FILE *f) {
     bucket_array_pop(buff->lines);
 
     while (line_data = NULL, (line_len = getline(&line_data, &line_cap, f)) > 0) {
-        line.chars.data       = line_data;
-        line.chars.elem_size  = 1;
-        line.chars.used       = line_len;
-        line.chars.capacity   = line_cap;
-        line.visual_width     = 0;
-        line.n_glyphs         = 0;
+        line.chars.data        = line_data;
+        line.chars.elem_size   = 1;
+        line.chars.used        = line_len;
+        line.chars.capacity    = line_cap;
+        line.chars.should_free = 1;
+        line.visual_width      = 0;
+        line.n_glyphs          = 0;
 
         while (array_len(line.chars)
         &&    ((c = *(char*)array_last(line.chars)) == '\n' || c == '\r')) {
